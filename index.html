@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Conchas de Raup</title>
+  <meta name="description" content="Explorador interactivo 3D del modelo geométrico de enrollamiento de conchas de David M. Raup (W, D, T, S)." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 32m-2 0a2 2 0 1 0 4 0a4 4 0 1 0-8 0a8 8 0 1 0 16 0a14 14 0 1 0-28 0a22 22 0 1 0 44 0' fill='none' stroke='%23115e59' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
+      chtml: { scale: 1.0, matchFontHeight: false },
+      options: { enableMenu: false },
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <header class="brand">
+        <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M32 32m-2 0a2 2 0 1 0 4 0a4 4 0 1 0-8 0a8 8 0 1 0 16 0a14 14 0 1 0-28 0a22 22 0 1 0 44 0" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" />
+        </svg>
+        <div>
+          <h1>Conchas de Raup</h1>
+          <p>Modelo geométrico de enrollamiento · Raup (1962, 1966)</p>
+        </div>
+      </header>
+
+      <section class="panel">
+        <label class="panel-title" for="preset">Preset</label>
+        <select id="preset" class="select"></select>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel-title">Parámetros de Raup</h2>
+        <div id="raup-params"></div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel-title">Geometría</h2>
+        <div id="geo-params"></div>
+        <div class="row-2">
+          <label class="field">
+            <span>Sentido</span>
+            <select id="hand" class="select">
+              <option value="1">Dextral</option>
+              <option value="-1">Sinistral</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Resolución</span>
+            <select id="quality" class="select">
+              <option value="low">Baja</option>
+              <option value="medium" selected>Media</option>
+              <option value="high">Alta</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel-title">Visualización</h2>
+        <div class="segmented" role="radiogroup" aria-label="Modo de render" id="mode">
+          <button type="button" data-mode="lines" aria-pressed="true">Líneas</button>
+          <button type="button" data-mode="solid" aria-pressed="false">Sólido</button>
+          <button type="button" data-mode="both" aria-pressed="false">Ambos</button>
+        </div>
+
+        <div class="colors">
+          <label class="color-field"><input type="color" id="lineColor" value="#1f2a37" /><span>Líneas</span></label>
+          <label class="color-field"><input type="color" id="shellColor" value="#e7d3b3" /><span>Concha</span></label>
+          <label class="color-field"><input type="color" id="bgColor" value="#f3f0e8" /><span>Fondo</span></label>
+        </div>
+
+        <div id="vis-params"></div>
+
+        <div class="toggles">
+          <label class="toggle"><input type="checkbox" id="hideHidden" checked /><span>Ocultar líneas traseras</span></label>
+          <label class="toggle"><input type="checkbox" id="bands" checked /><span>Bandas de crecimiento (sólido)</span></label>
+          <label class="toggle"><input type="checkbox" id="showAxis" /><span>Mostrar eje de enrollamiento</span></label>
+          <label class="toggle"><input type="checkbox" id="autoRotate" /><span>Autorrotación</span></label>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn" id="resetCam">Recentrar cámara</button>
+          <button type="button" class="btn" id="savePng">Guardar PNG</button>
+        </div>
+      </section>
+
+      <footer class="refs">
+        <p>Raup, D. M. (1962). Computer as aid in describing form in gastropod shells. <i>Science</i> 138, 150–152.</p>
+        <p>Raup, D. M. (1966). Geometric analysis of shell coiling: general problems. <i>J. Paleontology</i> 40, 1178–1190.</p>
+      </footer>
+    </aside>
+
+    <main class="main">
+      <section class="formula" id="formula">
+        <div class="formula-head">
+          <h2>Ecuación del modelo</h2>
+          <button type="button" class="link-btn" id="toggleFormula" aria-expanded="true">Ocultar</button>
+        </div>
+        <div class="formula-body" id="formulaBody">
+          <div class="formula-general">
+            \[
+              \mathbf{P}(\theta,\varphi) = W^{\theta/2\pi}
+              \begin{pmatrix}
+                (r_c + a\cos\varphi)\cos\theta \\
+                (r_c + a\cos\varphi)\sin\theta \\
+                -T\,r_c + b\sin\varphi
+              \end{pmatrix},
+              \quad
+              r_c = \tfrac{1+D}{2},\;\; a = \tfrac{1-D}{2},\;\; b = S\,a
+            \]
+          </div>
+          <div class="formula-live" id="formulaLive" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <div class="viewport" id="viewport">
+        <div class="hud" id="hud"></div>
+        <div class="hint">Arrastrar: rotar · Rueda: zoom · Clic derecho: panear</div>
+        <div class="loading" id="loading">Cargando Three.js…</div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
