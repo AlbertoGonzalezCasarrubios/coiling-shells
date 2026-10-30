@@ -5,7 +5,7 @@
  * "apertura") a lo largo de una espiral logarítmica alrededor de un eje fijo.
  * En cada revolución completa (Δθ = 2π) la curva generadora se escala por W.
  *
- * Convención (eje de enrollamiento = eje z matemático = eje Y de Three.js):
+ * Sistema matemático dextrógiro (x, y, z) con z = eje de enrollamiento:
  *
  *   g(θ)  = W^(θ / 2π)                       factor de crecimiento
  *   r_c   = (1 + D) / 2                       distancia del centro de la apertura al eje
@@ -13,14 +13,18 @@
  *   b     = S · a                             semieje axial de la elipse
  *
  *   x(θ,φ) = g · (r_c + a cos φ) · cos θ
- *   y(θ,φ) = g · (r_c + a cos φ) · sin θ · h  (h = ±1, dextral / sinistral)
+ *   y(θ,φ) = g · (r_c + a cos φ) · sin θ · ε  (ε = −1 dextral, +1 sinistral)
  *   z(θ,φ) = g · (−T · r_c + b sin φ)
  *
- * Así, en la apertura final (θ = 0, g = 1) el borde interno queda a distancia
- * D del eje y el externo a distancia 1, por lo que D = r_interno / r_externo,
- * tal y como lo define Raup. T es el desplazamiento axial del centro de la
- * curva generadora relativo a su desplazamiento radial.
- * θ recorre [−2π·N, 0]; el ápice (θ → −∞) está en el origen.
+ * En la apertura final (θ = 0, g = 1) el borde interno queda a distancia D del
+ * eje y el externo a distancia 1, de modo que D = r_interno / r_externo, como
+ * lo define Raup. θ recorre [−2π·N, 0]; el ápice (θ → −∞) está en el origen.
+ *
+ * Paso a Three.js (Y arriba): X = x, Y = z, Z = −y. Con hand = −ε:
+ *   Z = hand · g · (r_c + a cos φ) · sin θ
+ *
+ * Valva especular (bivalvos): reflexión respecto al plano de la apertura,
+ * y → −y (Z → −Z en Three.js).
  */
 
 /**
@@ -31,6 +35,8 @@
  * @param {number} p.S  forma de la curva generadora (b / a)
  * @param {number} p.turns        número de vueltas
  * @param {number} p.hand         +1 dextral, −1 sinistral
+ * @param {boolean} p.mirror      añadir la valva especular
+ * @param {number} p.grow         fracción del crecimiento mostrada (0, 1]
  * @param {number} p.segPerTurn   segmentos en θ por vuelta
  * @param {number} p.segPhi       segmentos en φ alrededor de la apertura
  * @param {number} p.spiralLines  nº de líneas espirales (a lo largo de θ)
@@ -43,6 +49,9 @@ export function buildShell(p) {
   const segPhi = p.segPhi;
   const nTheta = Math.max(2, Math.round(p.turns * p.segPerTurn));
   const thetaMin = -2 * Math.PI * p.turns;
+  const grow = p.grow ?? 1;
+  const cutRow = Math.max(1, Math.round(grow * nTheta));
+  const copies = p.mirror ? 2 : 1;
 
   const rc = (1 + D) / 2;
   const a = (1 - D) / 2;
@@ -50,8 +59,8 @@ export function buildShell(p) {
 
   const rows = nTheta + 1;
   const count = rows * segPhi;
-  const positions = new Float32Array(count * 3);
-  const colors = new Float32Array(count * 3);
+  const positions = new Float32Array(count * 3 * copies);
+  const colors = new Float32Array(count * 3 * copies);
 
   const cosPhi = new Float32Array(segPhi);
   const sinPhi = new Float32Array(segPhi);
@@ -75,8 +84,8 @@ export function buildShell(p) {
     for (let j = 0; j < segPhi; j++) {
       const R = g * (rc + a * cosPhi[j]);
       const x = R * ct;
-      const z = R * st;          // y matemático → z de Three.js
-      const y = g * (-T * rc + b * sinPhi[j]); // z matemático → y de Three.js
+      const z = R * st;
+      const y = g * (-T * rc + b * sinPhi[j]);
       const k = (i * segPhi + j) * 3;
       positions[k] = x;
       positions[k + 1] = y;
@@ -93,8 +102,22 @@ export function buildShell(p) {
     }
   }
 
+  if (p.mirror) {
+    const n = count * 3;
+    for (let k = 0; k < n; k += 3) {
+      positions[n + k] = positions[k];
+      positions[n + k + 1] = positions[k + 1];
+      positions[n + k + 2] = -positions[k + 2];
+    }
+    colors.copyWithin(n, 0, n);
+    const lo = minZ;
+    minZ = Math.min(minZ, -maxZ);
+    maxZ = Math.max(maxZ, -lo);
+  }
+
   // Normalizar: centrar en el origen y escalar a un tamaño fijo, para que la
-  // cámara no tenga que reencuadrar al cambiar los parámetros.
+  // cámara no tenga que reencuadrar al cambiar los parámetros. Se usa siempre
+  // la concha completa, así la animación de crecimiento no cambia de escala.
   const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2, cz = (minZ + maxZ) / 2;
   const extent = Math.max(maxX - minX, maxY - minY, maxZ - minZ) || 1;
   const scale = p.size / extent;
@@ -105,15 +128,25 @@ export function buildShell(p) {
   }
 
   // Triángulos de la superficie (la apertura es una curva cerrada en φ)
-  const indices = new Uint32Array(nTheta * segPhi * 6);
+  const triPerCopy = cutRow * segPhi * 6;
+  const indices = new Uint32Array(triPerCopy * copies);
   let t = 0;
-  for (let i = 0; i < nTheta; i++) {
-    for (let j = 0; j < segPhi; j++) {
-      const j1 = (j + 1) % segPhi;
-      const v00 = i * segPhi + j, v01 = i * segPhi + j1;
-      const v10 = (i + 1) * segPhi + j, v11 = (i + 1) * segPhi + j1;
-      indices[t++] = v00; indices[t++] = v10; indices[t++] = v01;
-      indices[t++] = v01; indices[t++] = v10; indices[t++] = v11;
+  for (let c = 0; c < copies; c++) {
+    const off = c * count;
+    const flip = c === 1; // la reflexión invierte la orientación de las caras
+    for (let i = 0; i < cutRow; i++) {
+      for (let j = 0; j < segPhi; j++) {
+        const j1 = (j + 1) % segPhi;
+        const v00 = off + i * segPhi + j, v01 = off + i * segPhi + j1;
+        const v10 = off + (i + 1) * segPhi + j, v11 = off + (i + 1) * segPhi + j1;
+        if (flip) {
+          indices[t++] = v00; indices[t++] = v01; indices[t++] = v10;
+          indices[t++] = v01; indices[t++] = v11; indices[t++] = v10;
+        } else {
+          indices[t++] = v00; indices[t++] = v10; indices[t++] = v01;
+          indices[t++] = v01; indices[t++] = v10; indices[t++] = v11;
+        }
+      }
     }
   }
 
@@ -122,18 +155,21 @@ export function buildShell(p) {
   const nSpiral = Math.min(p.spiralLines, segPhi);
   const usedPhi = new Set();
   for (let m = 0; m < nSpiral; m++) usedPhi.add(Math.round((m * segPhi) / nSpiral) % segPhi);
-  for (const j of usedPhi) {
-    for (let i = 0; i < nTheta; i++) lineIdx.push(i * segPhi + j, (i + 1) * segPhi + j);
-  }
-  const usedTheta = new Set([nTheta]);
+  const usedTheta = new Set([cutRow]);
   const totalRings = p.ringsPerTurn > 0 ? Math.floor(p.turns * p.ringsPerTurn) : 0;
   for (let m = 1; m <= totalRings; m++) {
     // contar desde la apertura hacia el ápice para que la apertura siempre tenga anillo
     const i = nTheta - Math.round((m * p.segPerTurn) / p.ringsPerTurn);
-    if (i >= 0) usedTheta.add(i);
+    if (i >= 0 && i <= cutRow) usedTheta.add(i);
   }
-  for (const i of usedTheta) {
-    for (let j = 0; j < segPhi; j++) lineIdx.push(i * segPhi + j, i * segPhi + ((j + 1) % segPhi));
+  for (let c = 0; c < copies; c++) {
+    const off = c * count;
+    for (const j of usedPhi) {
+      for (let i = 0; i < cutRow; i++) lineIdx.push(off + i * segPhi + j, off + (i + 1) * segPhi + j);
+    }
+    for (const i of usedTheta) {
+      for (let j = 0; j < segPhi; j++) lineIdx.push(off + i * segPhi + j, off + i * segPhi + ((j + 1) % segPhi));
+    }
   }
 
   return {
@@ -144,6 +180,6 @@ export function buildShell(p) {
     // Eje de enrollamiento en coordenadas normalizadas
     axis: { x: -cx * scale, z: -cz * scale, yTop: (maxY - cy) * scale, yBottom: (minY - cy) * scale },
     derived: { rc, a, b },
-    stats: { vertices: count, triangles: indices.length / 3 },
+    stats: { vertices: count * copies, triangles: indices.length / 3 },
   };
 }

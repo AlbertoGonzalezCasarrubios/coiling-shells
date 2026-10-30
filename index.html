@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Conchas de Raup</title>
-  <meta name="description" content="Explorador interactivo 3D del modelo geométrico de enrollamiento de conchas de David M. Raup (W, D, T, S)." />
+  <title>Raup's Shells</title>
+  <meta name="description" content="Interactive 3D explorer of David M. Raup's geometric model of shell coiling (W, D, T, S)." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 32m-2 0a2 2 0 1 0 4 0a4 4 0 1 0-8 0a8 8 0 1 0 16 0a14 14 0 1 0-28 0a22 22 0 1 0 44 0' fill='none' stroke='%23115e59' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -12,10 +12,12 @@
   <link rel="stylesheet" href="css/styles.css" />
 
   <script>
+    // Las fórmulas se componen al mostrarse (están ocultas al inicio)
     window.MathJax = {
       tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
-      chtml: { scale: 1.0, matchFontHeight: false },
+      chtml: { matchFontHeight: false },
       options: { enableMenu: false },
+      startup: { typeset: false },
     };
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
@@ -36,109 +38,165 @@
         <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
           <path d="M32 32m-2 0a2 2 0 1 0 4 0a4 4 0 1 0-8 0a8 8 0 1 0 16 0a14 14 0 1 0-28 0a22 22 0 1 0 44 0" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" />
         </svg>
-        <div>
-          <h1>Conchas de Raup</h1>
-          <p>Modelo geométrico de enrollamiento · Raup (1962, 1966)</p>
+        <div class="brand-text">
+          <h1 data-i18n="doc.title">Raup's Shells</h1>
+          <p data-i18n="brand.subtitle">Geometric model of shell coiling · Raup (1962, 1966)</p>
+        </div>
+        <div class="lang" role="group" data-i18n-title="lang.label">
+          <button type="button" data-lang="en" aria-pressed="true">EN</button>
+          <button type="button" data-lang="es" aria-pressed="false">ES</button>
         </div>
       </header>
 
       <section class="panel">
-        <label class="panel-title" for="preset">Preset</label>
+        <label class="panel-title" for="preset" data-i18n="preset.title">Preset</label>
         <select id="preset" class="select"></select>
       </section>
 
       <section class="panel">
-        <h2 class="panel-title">Parámetros de Raup</h2>
+        <h2 class="panel-title" data-i18n="raup.title">Raup parameters</h2>
         <div id="raup-params"></div>
       </section>
 
       <section class="panel">
-        <h2 class="panel-title">Geometría</h2>
+        <h2 class="panel-title" data-i18n="geo.title">Geometry</h2>
         <div id="geo-params"></div>
         <div class="row-2">
           <label class="field">
-            <span>Sentido</span>
+            <span data-i18n="geo.hand">Coiling</span>
             <select id="hand" class="select">
-              <option value="1">Dextral</option>
-              <option value="-1">Sinistral</option>
+              <option value="1" data-i18n="geo.dextral">Dextral</option>
+              <option value="-1" data-i18n="geo.sinistral">Sinistral</option>
             </select>
           </label>
-          <label class="field">
-            <span>Resolución</span>
-            <select id="quality" class="select">
-              <option value="low">Baja</option>
-              <option value="medium" selected>Media</option>
-              <option value="high">Alta</option>
-            </select>
-          </label>
+          <div class="field">
+            <span>&nbsp;</span>
+            <button type="button" class="btn toggle-btn" id="mirror" aria-pressed="false" data-i18n-title="geo.mirror.hint">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2v16M7 5 3 10l4 5M13 5l4 5-4 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span data-i18n="geo.mirror">Mirror valve</span>
+            </button>
+          </div>
         </div>
+        <button type="button" class="btn btn-wide" id="grow">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path id="growIcon" d="M6 4l10 6-10 6z" fill="currentColor"/></svg>
+          <span id="growLabel" data-i18n="geo.grow">Animate growth</span>
+        </button>
       </section>
 
+      <details class="drawer" id="morphoDrawer">
+        <summary><span data-i18n="morpho.title">Morphospace W – D</span></summary>
+        <div class="drawer-body">
+          <canvas id="morpho" class="morpho" height="210"></canvas>
+          <p class="note" data-i18n="morpho.hint">Click or drag to choose W and D.</p>
+        </div>
+      </details>
+
+      <details class="drawer">
+        <summary><span data-i18n="look.title">Appearance</span></summary>
+        <div class="drawer-body">
+          <div class="colors">
+            <label class="color-field"><input type="color" id="lineColor" value="#1f2a37" /><span data-i18n="look.lines">Lines</span></label>
+            <label class="color-field"><input type="color" id="shellColor" value="#e7d3b3" /><span data-i18n="look.shell">Shell</span></label>
+            <label class="color-field"><input type="color" id="bgColor" value="#f3f0e8" /><span data-i18n="look.bg">Background</span></label>
+          </div>
+          <label class="field">
+            <span data-i18n="look.quality">Mesh resolution</span>
+            <select id="quality" class="select">
+              <option value="low" data-i18n="look.low">Low</option>
+              <option value="medium" selected data-i18n="look.medium">Medium</option>
+              <option value="high" data-i18n="look.high">High</option>
+            </select>
+          </label>
+          <div id="vis-params"></div>
+          <div class="toggles">
+            <label class="toggle"><input type="checkbox" id="hideHidden" checked /><span data-i18n="look.hideHidden">Hide back lines</span></label>
+            <label class="toggle"><input type="checkbox" id="bands" checked /><span data-i18n="look.bands">Growth bands (solid)</span></label>
+            <label class="toggle"><input type="checkbox" id="showAxis" /><span data-i18n="look.axis">Show coiling axis</span></label>
+            <label class="toggle"><input type="checkbox" id="autoRotate" /><span data-i18n="look.autoRotate">Auto-rotate</span></label>
+          </div>
+        </div>
+      </details>
+
       <section class="panel">
-        <h2 class="panel-title">Visualización</h2>
-        <div class="segmented" role="radiogroup" aria-label="Modo de render" id="mode">
-          <button type="button" data-mode="lines" aria-pressed="true">Líneas</button>
-          <button type="button" data-mode="solid" aria-pressed="false">Sólido</button>
-          <button type="button" data-mode="both" aria-pressed="false">Ambos</button>
-        </div>
-
-        <div class="colors">
-          <label class="color-field"><input type="color" id="lineColor" value="#1f2a37" /><span>Líneas</span></label>
-          <label class="color-field"><input type="color" id="shellColor" value="#e7d3b3" /><span>Concha</span></label>
-          <label class="color-field"><input type="color" id="bgColor" value="#f3f0e8" /><span>Fondo</span></label>
-        </div>
-
-        <div id="vis-params"></div>
-
-        <div class="toggles">
-          <label class="toggle"><input type="checkbox" id="hideHidden" checked /><span>Ocultar líneas traseras</span></label>
-          <label class="toggle"><input type="checkbox" id="bands" checked /><span>Bandas de crecimiento (sólido)</span></label>
-          <label class="toggle"><input type="checkbox" id="showAxis" /><span>Mostrar eje de enrollamiento</span></label>
-          <label class="toggle"><input type="checkbox" id="autoRotate" /><span>Autorrotación</span></label>
-        </div>
-
+        <h2 class="panel-title" data-i18n="export.title">Export</h2>
         <div class="actions">
-          <button type="button" class="btn" id="resetCam">Recentrar cámara</button>
-          <button type="button" class="btn" id="savePng">Guardar PNG</button>
+          <button type="button" class="btn" id="savePng" data-i18n="export.png">Save PNG</button>
+          <button type="button" class="btn" id="saveStl" data-i18n="export.stl" data-i18n-title="export.stl.hint">STL (80 mm)</button>
         </div>
       </section>
 
       <footer class="refs">
-        <p>Raup, D. M. (1962). Computer as aid in describing form in gastropod shells. <i>Science</i> 138, 150–152.</p>
-        <p>Raup, D. M. (1966). Geometric analysis of shell coiling: general problems. <i>J. Paleontology</i> 40, 1178–1190.</p>
+        <p data-i18n-html="refs.short"></p>
       </footer>
     </aside>
 
     <main class="main">
-      <section class="formula" id="formula">
+      <section class="formula" id="formula" hidden>
         <div class="formula-head">
-          <h2>Ecuación del modelo</h2>
-          <button type="button" class="link-btn" id="toggleFormula" aria-expanded="true">Ocultar</button>
+          <h2 data-i18n="eq.title">Model equation</h2>
+          <button type="button" class="icon-btn" id="closeFormula" data-i18n-title="eq.close">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
         </div>
-        <div class="formula-body" id="formulaBody">
-          <div class="formula-general">
-            \[
-              \mathbf{P}(\theta,\varphi) = W^{\theta/2\pi}
-              \begin{pmatrix}
-                (r_c + a\cos\varphi)\cos\theta \\
-                (r_c + a\cos\varphi)\sin\theta \\
-                -T\,r_c + b\sin\varphi
-              \end{pmatrix},
-              \quad
-              r_c = \tfrac{1+D}{2},\;\; a = \tfrac{1-D}{2},\;\; b = S\,a
-            \]
+        <div class="formula-body">
+          <div class="formula-col">
+            <h3 data-i18n="eq.general">General form</h3>
+            <div id="formulaGeneral" class="math"></div>
+            <p class="note" data-i18n="eq.chirality"></p>
           </div>
-          <div class="formula-live" id="formulaLive" aria-live="polite"></div>
+          <div class="formula-col live">
+            <h3 data-i18n="eq.live">With current values</h3>
+            <div id="formulaLive" class="math" aria-live="polite"></div>
+          </div>
         </div>
       </section>
 
       <div class="viewport" id="viewport">
+        <div class="toolbar">
+          <div class="segmented" role="radiogroup" data-i18n-title="mode.label" id="mode">
+            <button type="button" data-mode="lines" aria-pressed="true" data-i18n="mode.lines">Lines</button>
+            <button type="button" data-mode="solid" aria-pressed="false" data-i18n="mode.solid">Solid</button>
+            <button type="button" data-mode="both" aria-pressed="false" data-i18n="mode.both">Both</button>
+          </div>
+          <button type="button" class="chip" id="toggleFormula" aria-pressed="false">
+            <span class="chip-sym">∑</span><span data-i18n="tb.equation">Equation</span>
+          </button>
+          <button type="button" class="chip" id="toggleAxes" aria-pressed="true" data-i18n-title="tb.axes.hint">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 15V3M5 15h12M5 15l-3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span data-i18n="tb.axes">Axes</span>
+          </button>
+          <button type="button" class="chip" id="openInfo">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="6.2" r="1.1" fill="currentColor"/></svg>
+            <span data-i18n="tb.info">About</span>
+          </button>
+        </div>
+
         <div class="hud" id="hud"></div>
-        <div class="hint">Arrastrar: rotar · Rueda: zoom · Clic derecho: panear</div>
-        <div class="loading" id="loading">Cargando Three.js…</div>
+
+        <div class="views" role="group" data-i18n-title="views.label">
+          <button type="button" data-view="iso" data-i18n="view.iso" data-i18n-title="view.iso.hint">3/4</button>
+          <button type="button" data-view="apertural" data-i18n="view.apertural" data-i18n-title="view.apertural.hint">Apertural</button>
+          <button type="button" data-view="dorsal" data-i18n="view.dorsal" data-i18n-title="view.dorsal.hint">Dorsal</button>
+          <button type="button" data-view="apical" data-i18n="view.apical" data-i18n-title="view.apical.hint">Apical</button>
+          <button type="button" data-view="umbilical" data-i18n="view.umbilical" data-i18n-title="view.umbilical.hint">Umbilical</button>
+          <button type="button" data-view="profile" data-i18n="view.profile" data-i18n-title="view.profile.hint">Profile</button>
+        </div>
+
+        <div class="hint" data-i18n="hint.controls">Drag: rotate · Wheel: zoom · Right-click: pan</div>
+        <div class="loading" id="loading" data-i18n="loading">Loading Three.js…</div>
       </div>
     </main>
   </div>
+
+  <dialog class="info" id="info" aria-labelledby="infoTitle">
+    <div class="info-head">
+      <h2 id="infoTitle" data-i18n="info.title">About this app</h2>
+      <button type="button" class="icon-btn" id="closeInfo" data-i18n-title="info.close">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="info-body" id="infoBody" data-i18n-html="info.body"></div>
+  </dialog>
 
   <script type="module" src="js/main.js"></script>
 </body>
