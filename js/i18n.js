@@ -52,6 +52,7 @@ export const STRINGS = {
     'morpho.bivalves': 'Bivalves & brachiopods',
     'look.title': 'Appearance',
     'look.colors': 'Colours',
+    'scale.hint': 'Slider scale: linear 1–10 (snails, ammonites) or logarithmic 1–10⁴ (bivalves)',
     'look.palette': 'Colour presets',
     'palette.light': 'Light',
     'palette.dark': 'Dark',
@@ -105,7 +106,7 @@ export const STRINGS = {
     'info.close': 'Close',
     'refs.short': 'Raup (1962) <i>Science</i> 138 · Raup (1966) <i>J. Paleontology</i> 40',
     params: {
-      W: { name: 'Whorl expansion rate', desc: 'Growth factor of the aperture per revolution (log scale)' },
+      W: { name: 'Whorl expansion rate', desc: 'Growth factor of the aperture per revolution' },
       D: { name: 'Distance from axis', desc: 'Umbilicus size: inner / outer radius of the aperture' },
       T: { name: 'Translation rate', desc: 'Displacement along the axis per unit of radial growth' },
       S: { name: 'Aperture shape', desc: 'Ellipse semi-axis ratio (axial / radial)' },
@@ -197,6 +198,7 @@ export const STRINGS = {
     'morpho.bivalves': 'Bivalvos y braquiópodos',
     'look.title': 'Apariencia',
     'look.colors': 'Colores',
+    'scale.hint': 'Escala del slider: lineal 1–10 (caracoles, ammonites) o logarítmica 1–10⁴ (bivalvos)',
     'look.palette': 'Paletas de color',
     'palette.light': 'Claro',
     'palette.dark': 'Oscuro',
@@ -250,7 +252,7 @@ export const STRINGS = {
     'info.close': 'Cerrar',
     'refs.short': 'Raup (1962) <i>Science</i> 138 · Raup (1966) <i>J. Paleontology</i> 40',
     params: {
-      W: { name: 'Expansión de la espiral', desc: 'Factor de crecimiento de la apertura por vuelta (escala log)' },
+      W: { name: 'Expansión de la espiral', desc: 'Factor de crecimiento de la apertura por vuelta' },
       D: { name: 'Distancia al eje', desc: 'Tamaño del ombligo: radio interno / externo de la apertura' },
       T: { name: 'Traslación vertical', desc: 'Desplazamiento a lo largo del eje por unidad de crecimiento radial' },
       S: { name: 'Forma de la apertura', desc: 'Razón de semiejes de la elipse (axial / radial)' },

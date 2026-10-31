@@ -16,7 +16,8 @@ import { setLang, getLang, t, tParam, tPreset, applyStatic, GENERAL_TEX, DEFS_TE
 const formatW = (v) => v.toFixed(v < 100 ? 2 : v < 1000 ? 1 : 0);
 
 const RAUP_PARAMS = [
-  { key: 'W', sym: 'W', min: 1, max: 10000, log: true, format: formatW, scale: ['1', '10⁴'] },
+  // Escala lineal 1–10 (gasterópodos, cefalópodos) o logarítmica 1–10⁴ (bivalvos)
+  { key: 'W', sym: 'W', min: 1, max: 10000, linMax: 10, step: 0.01, logToggle: true, format: formatW },
   { key: 'D', sym: 'D', min: 0, max: 0.9, step: 0.005, digits: 3 },
   { key: 'T', sym: 'T', min: 0, max: 10, step: 0.05, digits: 2 },
   { key: 'S', sym: 'S', min: 0.5, max: 2, step: 0.01, digits: 2 },
@@ -421,18 +422,19 @@ function createParam(def, container, { compact = false, onChange }) {
   const el = document.createElement('div');
   el.className = 'param' + (compact ? ' compact' : '');
   const id = `p-${def.key}`;
-  const rMin = def.log ? Math.log10(def.min) : def.min;
-  const rMax = def.log ? Math.log10(def.max) : def.max;
-  const rStep = def.log ? 0.001 : def.step;
-  const scale = def.scale || [def.min, def.max];
+  const toggle = def.logToggle
+    ? `<span class="scale-toggle" role="group">
+         <button type="button" data-scale="lin">Lin</button><button type="button" data-scale="log">Log</button>
+       </span>`
+    : '';
   el.innerHTML = `
     <div class="param-head">
       ${def.sym ? `<span class="param-sym">${def.sym}</span>` : ''}
       <label class="param-name" for="${id}"><strong></strong><small></small></label>
-      <input class="num" type="number" min="${def.min}" max="${def.max}" step="${def.log ? 'any' : def.step}" />
+      <input class="num" type="number" min="${def.min}" max="${def.max}" step="${def.logToggle ? 'any' : def.step}" />
     </div>
-    <input id="${id}" type="range" min="${rMin}" max="${rMax}" step="${rStep}" />
-    ${compact ? '' : `<div class="range-scale"><span>${scale[0]}</span><span>${scale[1]}</span></div>`}
+    <input id="${id}" type="range" />
+    ${compact ? '' : `<div class="range-scale"><span class="scale-min"></span>${toggle}<span class="scale-max"></span></div>`}
   `;
   container.appendChild(el);
 
@@ -440,19 +442,55 @@ function createParam(def, container, { compact = false, onChange }) {
   const num = el.querySelector('input[type=number]');
   const nameEl = el.querySelector('strong');
   const descEl = el.querySelector('small');
+  const scaleGroup = el.querySelector('.scale-toggle');
   const format = def.format || ((v) => f(v, def.digits));
+  let logScale = false;
+
+  const applyScale = () => {
+    const max = def.logToggle && !logScale ? def.linMax : def.max;
+    range.min = logScale ? Math.log10(def.min) : def.min;
+    range.max = logScale ? Math.log10(def.max) : max;
+    range.step = logScale ? 0.001 : def.step;
+    if (!compact) {
+      el.querySelector('.scale-min').textContent = def.min;
+      el.querySelector('.scale-max').textContent = logScale ? '10⁴' : max;
+    }
+    scaleGroup?.querySelectorAll('button').forEach((b) =>
+      b.setAttribute('aria-pressed', String((b.dataset.scale === 'log') === logScale))
+    );
+  };
 
   const set = (v, { fromNum = false } = {}) => {
     const clamped = Math.min(def.max, Math.max(def.min, v));
     state[def.key] = clamped;
-    range.value = def.log ? Math.log10(clamped) : clamped;
+    // Un valor fuera del rango lineal (p. ej. un bivalvo) pasa a escala logarítmica
+    if (def.logToggle && !logScale && clamped > def.linMax) {
+      logScale = true;
+      applyScale();
+    }
+    range.value = logScale ? Math.log10(clamped) : clamped;
     setFill(range);
     if (!fromNum) num.value = format(clamped);
   };
 
+  scaleGroup?.querySelectorAll('button').forEach((b) =>
+    b.addEventListener('click', () => {
+      const wantLog = b.dataset.scale === 'log';
+      if (wantLog === logScale) return;
+      logScale = wantLog;
+      applyScale();
+      if (!logScale && state[def.key] > def.linMax) {
+        set(def.linMax);
+        onChange(def.key);
+      } else {
+        set(state[def.key]);
+      }
+    })
+  );
+
   range.addEventListener('input', () => {
     const r = parseFloat(range.value);
-    set(def.log ? 10 ** r : r);
+    set(logScale ? 10 ** r : r);
     onChange(def.key);
   });
   num.addEventListener('input', () => {
@@ -469,8 +507,13 @@ function createParam(def, container, { compact = false, onChange }) {
     descEl.textContent = tr.desc || '';
     descEl.hidden = !tr.desc;
     num.setAttribute('aria-label', tr.name || def.key);
+    if (scaleGroup) {
+      scaleGroup.title = t('scale.hint');
+      scaleGroup.setAttribute('aria-label', scaleGroup.title);
+    }
   };
   relabel();
+  applyScale();
 
   controlsByKey[def.key] = { set, relabel };
   set(state[def.key]);
