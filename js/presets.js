@@ -36,14 +36,6 @@ export const PRESETS = {
     group: 'Bivalvos', name: 'Almeja (Venus)',
     W: 1000, D: 0.0, T: 0.35, S: 1.1, turns: 1, hand: 1, mirror: true,
   },
-  berberecho: {
-    group: 'Bivalvos', name: 'Berberecho (Cerastoderma)',
-    W: 60, D: 0.0, T: 0.15, S: 1.0, turns: 1, hand: 1, mirror: true,
-  },
-  mejillon: {
-    group: 'Bivalvos', name: 'Mejillón (Mytilus)',
-    W: 10000, D: 0.0, T: 1.1, S: 0.55, turns: 1, hand: 1, mirror: true,
-  },
 };
 
 export const DEFAULT_PRESET = 'caracol';

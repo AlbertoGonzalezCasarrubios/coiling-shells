@@ -29,8 +29,8 @@ const REFS = `
 
 export const STRINGS = {
   en: {
-    'doc.title': "Raup's Shells",
-    'brand.subtitle': 'Geometric model of shell coiling · Raup (1962, 1966)',
+    'doc.title': 'Theoretical Shell Morphology',
+    'brand.subtitle': "Raup's shell-coiling model (1962, 1966)",
     'lang.label': 'Language',
     'preset.title': 'Preset',
     'preset.custom': 'Custom',
@@ -52,6 +52,10 @@ export const STRINGS = {
     'morpho.bivalves': 'Bivalves & brachiopods',
     'look.title': 'Appearance',
     'look.colors': 'Colours',
+    'look.palette': 'Colour presets',
+    'palette.light': 'Light',
+    'palette.dark': 'Dark',
+    'palette.hint': 'Restore a predefined colour scheme',
     'look.lines': 'Lines',
     'look.shell': 'Shell',
     'look.bg': 'Background',
@@ -123,8 +127,6 @@ export const STRINGS = {
       nautilus: 'Chambered nautilus (Nautilus pompilius)',
       ammonite: 'Evolute ammonite (Dactylioceras)',
       almeja: 'Venus clam (Venus)',
-      berberecho: 'Cockle (Cerastoderma)',
-      mejillon: 'Mussel (Mytilus)',
     },
     'info.body': `
       <h3>Raup's model</h3>
@@ -161,13 +163,19 @@ export const STRINGS = {
         <li>Built with Three.js (WebGL) and MathJax. The current shell is stored in the URL, so you can share a link to it.</li>
       </ul>
 
+      <h3>Contact</h3>
+      <p>For any questions or comments, contact <strong>Alberto González Casarrubios</strong> (Universidad Complutense de Madrid): <a href="mailto:albert23@ucm.es">albert23@ucm.es</a>.</p>
+
+      <h3>License</h3>
+      <p>This work is licensed under <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)</a>. You may share and adapt it as long as you give appropriate credit, but not for commercial purposes.</p>
+
       <h3>References</h3>
       ${REFS}`,
   },
 
   es: {
-    'doc.title': 'Conchas de Raup',
-    'brand.subtitle': 'Modelo geométrico de enrollamiento · Raup (1962, 1966)',
+    'doc.title': 'Morfología teórica de conchas',
+    'brand.subtitle': 'Modelo de enrollamiento de Raup (1962, 1966)',
     'lang.label': 'Idioma',
     'preset.title': 'Preset',
     'preset.custom': 'Personalizado',
@@ -189,6 +197,10 @@ export const STRINGS = {
     'morpho.bivalves': 'Bivalvos y braquiópodos',
     'look.title': 'Apariencia',
     'look.colors': 'Colores',
+    'look.palette': 'Paletas de color',
+    'palette.light': 'Claro',
+    'palette.dark': 'Oscuro',
+    'palette.hint': 'Restaura una combinación de colores predefinida',
     'look.lines': 'Líneas',
     'look.shell': 'Concha',
     'look.bg': 'Fondo',
@@ -260,8 +272,6 @@ export const STRINGS = {
       nautilus: 'Nautilus (Nautilus pompilius)',
       ammonite: 'Ammonite evoluto (Dactylioceras)',
       almeja: 'Almeja (Venus)',
-      berberecho: 'Berberecho (Cerastoderma)',
-      mejillon: 'Mejillón (Mytilus)',
     },
     'info.body': `
       <h3>El modelo de Raup</h3>
@@ -297,6 +307,12 @@ export const STRINGS = {
         <li>El indicador de ejes muestra el sistema \\(x, y, z\\) de la ecuación (\\(z\\) = eje de enrollamiento). Los botones de vista usan las orientaciones estándar en malacología: apertural, dorsal (abapertural), apical, umbilical y perfil.</li>
         <li>Hecha con Three.js (WebGL) y MathJax. La concha actual se guarda en la URL, así que puedes compartir un enlace a ella.</li>
       </ul>
+
+      <h3>Contacto</h3>
+      <p>Para cualquier duda o comentario, contacta con <strong>Alberto González Casarrubios</strong> (Universidad Complutense de Madrid): <a href="mailto:albert23@ucm.es">albert23@ucm.es</a>.</p>
+
+      <h3>Licencia</h3>
+      <p>Esta obra está bajo una licencia <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">Creative Commons Atribución-NoComercial 4.0 Internacional (CC BY-NC 4.0)</a>. Puedes compartirla y adaptarla siempre que reconozcas la autoría, pero no con fines comerciales.</p>
 
       <h3>Referencias</h3>
       ${REFS}`,

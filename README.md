@@ -1,8 +1,8 @@
-# Raup's Shells · Conchas de Raup
+# Theoretical Shell Morphology · Morfología teórica de conchas
 
-Interactive 3D explorer of **David M. Raup's geometric model of shell coiling** (1962, 1966). The interface is in English by default and can be switched entirely to Spanish (EN / ES button).
+Interactive 3D explorer of the **theoretical morphology of coiled shells**, based on **David M. Raup's shell-coiling model** (1962, 1966). The interface opens in English and can be switched entirely to Spanish (EN / ES button).
 
-Explorador 3D interactivo del **modelo geométrico de enrollamiento de conchas de David M. Raup** (1962, 1966). Mueve los cuatro parámetros clásicos (W, D, T, S) y la concha se regenera en tiempo real. La interfaz está en inglés por defecto y se puede pasar entera a español con el botón EN / ES.
+Explorador 3D interactivo de la **morfología teórica de conchas enrolladas**, basado en el **modelo de enrollamiento de David M. Raup** (1962, 1966). Mueve los cuatro parámetros clásicos (W, D, T, S) y la concha se regenera en tiempo real. La interfaz se abre en inglés y se puede pasar entera a español con el botón EN / ES.
 
 Es una aplicación estática (HTML + CSS + JavaScript con módulos ES): no necesita compilación ni `npm install`. Three.js y MathJax se cargan desde jsDelivr.
 
@@ -47,8 +47,6 @@ Los valores son aproximaciones dentro del morfoespacio de Raup, no medidas de ej
 | Cefalópodos | Nautilus (*N. pompilius*) | 3.2 | 0.02 | 0 | 0.85 | |
 | | Ammonite evoluto (*Dactylioceras*) | 1.9 | 0.45 | 0 | 0.9 | |
 | Bivalvos | Almeja (*Venus*) | 1000 | 0 | 0.35 | 1.1 | ✓ |
-| | Berberecho (*Cerastoderma*) | 60 | 0 | 0.15 | 1.0 | ✓ |
-| | Mejillón (*Mytilus*) | 10000 | 0 | 1.1 | 0.55 | ✓ |
 
 ## Funcionalidades
 
@@ -59,10 +57,10 @@ Los valores son aproximaciones dentro del morfoespacio de Raup, no medidas de ej
 - **Panel de información** con el fundamento teórico, la ecuación, los bivalvos y el funcionamiento de la app.
 - **Morfoespacio W – D** interactivo con la curva D = 1/W y las regiones aproximadas de ammonoideos, gasterópodos y bivalvos; clic o arrastre para elegir W y D.
 - **Animación de crecimiento** desde el ápice hasta la apertura.
-- **Apariencia** en un cajón desplegable: colores, resolución de la malla, número de líneas, grosor de línea (px), opacidad, bandas de crecimiento, eje de enrollamiento y autorrotación.
+- **Apariencia** en un cajón desplegable: paletas de color predefinidas (claro y oscuro) para restaurar los colores, colores personalizados, resolución de la malla, número de líneas, grosor de línea (px), opacidad, bandas de crecimiento, eje de enrollamiento y autorrotación.
 - **Exportación** a PNG y a STL (80 mm, para impresión 3D o CAD; la apertura queda abierta, así que la malla no es estanca).
-- **Bilingüe** EN / ES; el idioma se recuerda en el navegador.
-- **Estado en la URL** (`#W=2.4&D=0.08&T=1.6&S=1&N=4.5&h=1&v=0&m=lines&l=en`) para compartir un enlace a una forma concreta.
+- **Bilingüe** EN / ES; la página siempre se abre en inglés.
+- **Estado en la URL** (`#W=2.4&D=0.08&T=1.6&S=1&N=4.5&h=1&v=0&m=lines`) para compartir un enlace a una forma concreta.
 
 ## Estructura
 
@@ -96,6 +94,16 @@ python3 -m http.server 8000
 3. Cada push a `main` ejecuta `.github/workflows/deploy.yml` y publica la web en `https://<usuario>.github.io/<repo>/`.
 
 Como todas las rutas son relativas, la app funciona en cualquier subruta sin configurar nada más.
+
+## Contacto
+
+Para cualquier duda o comentario: **Alberto González Casarrubios** (Universidad Complutense de Madrid) · [albert23@ucm.es](mailto:albert23@ucm.es)
+
+## Licencia
+
+© 2026 Alberto González Casarrubios. Esta obra está bajo una licencia [Creative Commons Atribución-NoComercial 4.0 Internacional (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/): se puede compartir y adaptar reconociendo la autoría, pero no con fines comerciales. El texto completo está en [LICENSE](LICENSE).
+
+Three.js (MIT) y MathJax (Apache-2.0) se cargan desde CDN y mantienen sus propias licencias.
 
 ## Referencias
 

@@ -253,6 +253,25 @@ input[type='range']::-moz-range-thumb {
 
 .refs { margin-top: auto; font-size: 11px; color: var(--muted); line-height: 1.45; border-top: 1px solid var(--border); padding-top: 12px; }
 .refs p { margin: 0; }
+.refs .license { margin-top: 6px; }
+.refs a, .info-body a { color: var(--accent); }
+
+.palettes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.palette {
+  display: flex; align-items: center; gap: 8px;
+  font: 500 12.5px var(--font);
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 9px;
+  cursor: pointer;
+}
+.palette:hover { border-color: var(--accent); }
+.palette:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.swatches { display: flex; }
+.swatches i { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--surface); }
+.swatches i + i { margin-left: -4px; }
 
 /* ---------- Main ---------- */
 .main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }

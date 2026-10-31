@@ -59,7 +59,7 @@ function pickShape(p) {
 }
 
 // ---------------------------------------------------------------------------
-// Estado compartible en la URL: #W=2.4&D=0.08&T=1.6&S=1&N=4.5&h=1&v=0&m=lines&l=en
+// Estado compartible en la URL: #W=2.4&D=0.08&T=1.6&S=1&N=4.5&h=1&v=0&m=lines
 // ---------------------------------------------------------------------------
 
 const HASH_KEYS = { W: 'W', D: 'D', T: 'T', S: 'S', N: 'turns', h: 'hand' };
@@ -73,9 +73,8 @@ for (const [short, key] of Object.entries(HASH_KEYS)) {
 if (fromHash.has('v')) state.mirror = fromHash.get('v') === '1';
 if (MODES.includes(fromHash.get('m'))) state.mode = fromHash.get('m');
 
-let storedLang = null;
-try { storedLang = localStorage.getItem('raup-lang'); } catch { /* almacenamiento no disponible */ }
-setLang(fromHash.get('l') || storedLang || 'en');
+// La página abre siempre en inglés; el español se elige con el botón EN / ES
+setLang('en');
 
 let hashTimer = 0;
 function writeHash() {
@@ -85,7 +84,6 @@ function writeHash() {
     for (const [short, key] of Object.entries(HASH_KEYS)) q.set(short, String(+Number(state[key]).toFixed(3)));
     q.set('v', state.mirror ? '1' : '0');
     q.set('m', state.mode);
-    q.set('l', getLang());
     history.replaceState(null, '', `#${q}`);
   }, 250);
 }
@@ -97,10 +95,17 @@ function writeHash() {
 const $ = (id) => document.getElementById(id);
 const viewport = $('viewport');
 
-if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-  $('lineColor').value = '#d9d2c3';
-  $('bgColor').value = '#14171c';
+const PALETTES = {
+  light: { line: '#2b3a4a', shell: '#e8d3b0', bg: '#f4f0e6' }, // tinta sobre papel
+  dark: { line: '#d8c08c', shell: '#e4cfae', bg: '#111821' },  // oro viejo sobre azul noche
+};
+
+function setPaletteInputs({ line, shell, bg }) {
+  $('lineColor').value = line;
+  $('shellColor').value = shell;
+  $('bgColor').value = bg;
 }
+setPaletteInputs(PALETTES[window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light']);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -566,6 +571,15 @@ $('lineColor').addEventListener('input', (e) => lineMat.color.set(e.target.value
 $('shellColor').addEventListener('input', (e) => solidMat.color.set(e.target.value));
 $('bgColor').addEventListener('input', (e) => scene.background.set(e.target.value));
 $('hideHidden').addEventListener('change', applyMode);
+document.querySelectorAll('[data-palette]').forEach((b) =>
+  b.addEventListener('click', () => {
+    const p = PALETTES[b.dataset.palette];
+    setPaletteInputs(p);
+    lineMat.color.set(p.line);
+    solidMat.color.set(p.shell);
+    scene.background.set(p.bg);
+  })
+);
 $('bands').addEventListener('change', (e) => {
   solidMat.vertexColors = e.target.checked;
   solidMat.needsUpdate = true;
@@ -632,8 +646,8 @@ const VIEWS = {
   iso: () => CAMERA_HOME.clone(),
   apertural: () => new THREE.Vector3(0, 0, state.hand), // la apertura mira hacia +Z en dextrales
   dorsal: () => new THREE.Vector3(0, 0, -state.hand),
-  apical: () => new THREE.Vector3(0, 1, 0.002),
-  umbilical: () => new THREE.Vector3(0, -1, 0.002),
+  apical: () => new THREE.Vector3(0, 1, 0.001),
+  umbilical: () => new THREE.Vector3(0, -1, 0.001),
   profile: () => new THREE.Vector3(1, 0, 0),
 };
 
@@ -641,27 +655,35 @@ let tween = null;
 const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
 
 function flyTo(name) {
+  // Consume la inercia pendiente de OrbitControls para que no gire al acabar la transición
+  controls.enableDamping = false;
+  controls.update();
+  controls.enableDamping = true;
+
   const offset = camera.position.clone().sub(controls.target);
   const dist = name === 'iso' ? CAMERA_HOME.length() : THREE.MathUtils.clamp(offset.length(), 7, 16);
-  tween = {
-    t0: performance.now(),
-    dur: 700,
-    fromDir: offset.clone().normalize(),
-    fromLen: offset.length(),
-    fromTarget: controls.target.clone(),
-    rot: new THREE.Quaternion().setFromUnitVectors(offset.clone().normalize(), VIEWS[name]().normalize()),
-    toLen: dist,
-  };
+  const from = new THREE.Spherical().setFromVector3(offset);
+  const to = new THREE.Spherical().setFromVector3(VIEWS[name]().normalize().multiplyScalar(dist));
+  // Acimut por el camino más corto
+  let dTheta = to.theta - from.theta;
+  dTheta = Math.atan2(Math.sin(dTheta), Math.cos(dTheta));
+  tween = { t0: performance.now(), dur: 700, from, dTheta, to, fromTarget: controls.target.clone() };
   document.querySelectorAll('.views button').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
 }
 
 function stepTween(now) {
   const u = Math.min(1, (now - tween.t0) / tween.dur);
   const e = easeInOut(u);
-  const q = new THREE.Quaternion().slerpQuaternions(new THREE.Quaternion(), tween.rot, e);
-  const dir = tween.fromDir.clone().applyQuaternion(q);
+  const { from, to } = tween;
+  // Interpolar acimut y elevación por separado mantiene la orientación continua
+  // también al llegar a las vistas apical y umbilical (sobre el eje vertical).
+  const sph = new THREE.Spherical(
+    THREE.MathUtils.lerp(from.radius, to.radius, e),
+    THREE.MathUtils.lerp(from.phi, to.phi, e),
+    from.theta + tween.dTheta * e
+  );
   const target = tween.fromTarget.clone().lerp(new THREE.Vector3(), e);
-  camera.position.copy(target).addScaledVector(dir, THREE.MathUtils.lerp(tween.fromLen, tween.toLen, e));
+  camera.position.copy(target).add(new THREE.Vector3().setFromSpherical(sph));
   controls.target.copy(target);
   camera.lookAt(target);
   if (u >= 1) tween = null;
@@ -844,7 +866,6 @@ $('saveStl').addEventListener('click', () => {
 
 function applyLanguage(lang) {
   setLang(lang);
-  try { localStorage.setItem('raup-lang', getLang()); } catch { /* almacenamiento no disponible */ }
   applyStatic();
   Object.values(controlsByKey).forEach((c) => c.relabel());
   buildPresetOptions();
@@ -856,7 +877,6 @@ function applyLanguage(lang) {
   delete infoBody.dataset.typeset;
   if (infoDialog.open) openInfo();
   if (!formulaPanel.hidden) setFormulaOpen(true);
-  writeHash();
 }
 
 document.querySelectorAll('.lang button').forEach((b) => b.addEventListener('click', () => applyLanguage(b.dataset.lang)));
