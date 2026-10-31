@@ -137,6 +137,11 @@ export const STRINGS = {
       almeja: 'Venus clam (Venus)',
     },
     'info.body': `
+      <blockquote class="quote">
+        <p>“The basic form of many coiled gastropod shells can be defined by four parameters. A digital computer with automatic plotting equipment can be used to make graphical reconstructions of a shell from any given values of the four parameters.”</p>
+        <cite>— David M. Raup, <i>Science</i> (1962)</cite>
+      </blockquote>
+
       <h3>Raup's model</h3>
       <p>Most coiled shells — snails, ammonoids, nautiloids, clams, brachiopods — grow by adding material at the margin of the aperture without changing their overall shape. Growth of this kind (self-similar or <em>gnomonic</em>) traces a <strong>logarithmic spiral</strong>. In the early 1960s David M. Raup used one of the first computer plotters to draw shells from this principle, and in 1966 showed that just four parameters describe an enormous variety of real forms.</p>
 
@@ -290,6 +295,12 @@ export const STRINGS = {
       almeja: 'Almeja (Venus)',
     },
     'info.body': `
+      <blockquote class="quote">
+        <p>“The basic form of many coiled gastropod shells can be defined by four parameters. A digital computer with automatic plotting equipment can be used to make graphical reconstructions of a shell from any given values of the four parameters.”</p>
+        <cite>— David M. Raup, <i>Science</i> (1962)</cite>
+        <p class="translation">«La forma básica de muchas conchas enrolladas de gasterópodos puede definirse mediante cuatro parámetros. Un ordenador digital con un trazador automático puede usarse para reconstruir gráficamente una concha a partir de cualquier valor de esos cuatro parámetros.»</p>
+      </blockquote>
+
       <h3>El modelo de Raup</h3>
       <p>La mayoría de las conchas enrolladas —caracoles, ammonoideos, nautiloideos, almejas, braquiópodos— crecen añadiendo material en el borde de la apertura sin cambiar su forma global. Este tipo de crecimiento (autosemejante o <em>gnomónico</em>) describe una <strong>espiral logarítmica</strong>. A principios de los años 60 David M. Raup usó uno de los primeros trazadores por ordenador para dibujar conchas a partir de este principio, y en 1966 demostró que bastan cuatro parámetros para describir una enorme variedad de formas reales.</p>
 

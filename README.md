@@ -2,15 +2,36 @@
 
 **▶ Live / En línea: https://albertogonzalezcasarrubios.github.io/aplicaciones-varias/shells-morphology/**
 
-Interactive 3D explorer of the **theoretical morphology of coiled shells**, based on **David M. Raup's shell-coiling model** (1962, 1966). The interface opens in English and can be switched entirely to Spanish (EN / ES button).
+> *"The basic form of many coiled gastropod shells can be defined by four parameters. A digital computer with automatic plotting equipment can be used to make graphical reconstructions of a shell from any given values of the four parameters."*
+>
+> — David M. Raup, *Science* (1962)
 
-Explorador 3D interactivo de la **morfología teórica de conchas enrolladas**, basado en el **modelo de enrollamiento de David M. Raup** (1962, 1966). Mueve los cuatro parámetros clásicos (W, D, T, S) y la concha se regenera en tiempo real. La interfaz se abre en inglés y se puede pasar entera a español con el botón EN / ES.
+> *«La forma básica de muchas conchas enrolladas de gasterópodos puede definirse mediante cuatro parámetros. Un ordenador digital con un trazador automático puede usarse para reconstruir gráficamente una concha a partir de cualquier valor de esos cuatro parámetros.»*
 
-Es una aplicación estática (HTML + CSS + JavaScript con módulos ES): no necesita compilación ni `npm install`. Three.js y MathJax se cargan desde jsDelivr.
+En 1962 los ordenadores ocupaban habitaciones enteras y los dibujos salían, línea a línea, de trazadores con plumilla. Aun así, David M. Raup vio en ellos una forma nueva de hacer paleontología: en lugar de limitarse a describir las conchas que existen, generar todas las que *podrían* existir y preguntarse por qué la naturaleza solo ha producido algunas. Esta app es una versión interactiva de aquella idea: mueve sus cuatro parámetros y la concha se reconstruye al instante.
 
-## El modelo
+*Interactive 3D explorer of the **theoretical morphology of coiled shells**, based on David M. Raup's shell-coiling model (1962, 1966). The interface opens in English and can be switched entirely to Spanish with the EN / ES button.*
 
-Una curva generadora (una elipse, la apertura) recorre una espiral logarítmica alrededor de un eje fijo y se escala en un factor W en cada vuelta completa. En un sistema dextrógiro con z como eje de enrollamiento:
+## La idea: crecer sin cambiar de forma
+
+Caracoles, ammonites, nautilos, almejas o braquiópodos crecen añadiendo material en el borde de la apertura, sin rehacer lo que ya tienen y sin cambiar su forma global. A este crecimiento autosemejante se le llama **gnomónico**, y su consecuencia geométrica es que la concha sigue una **espiral logarítmica**: cada vuelta es una copia ampliada de la anterior.
+
+Raup describió la concha como una curva (la apertura, aquí una elipse) que gira alrededor de un eje mientras crece y, en su caso, se desplaza a lo largo de él. Bastan cuatro números para fijar la forma.
+
+## Los cuatro parámetros
+
+| Parámetro | Qué controla | Qué verás al moverlo |
+|---|---|---|
+| **W** · expansión de la espiral | Cuánto crece la apertura en cada vuelta | Valores bajos (≈1,2–2): muchas vueltas apretadas. Valores altos: la última vuelta lo domina todo. Valores enormes (10²–10⁴): bivalvos |
+| **D** · distancia al eje | Lo lejos que pasa la apertura del eje de enrollamiento | D = 0: las vueltas tocan el eje, sin ombligo. D grande: un ombligo amplio y vueltas sueltas |
+| **T** · traslación | Cuánto baja la apertura a lo largo del eje mientras crece | T = 0: concha plana (planispiral), como un nautilo o un ammonite. T alto: una espira alta, como Turritella |
+| **S** · forma de la apertura | La proporción de la elipse que forma la apertura | S < 1: apertura ancha y baja. S > 1: apertura alta y estrecha |
+
+Además, puedes elegir el **número de vueltas** dibujadas (N) y el **sentido** del enrollamiento: **dextral** (la mayoría de los caracoles, que giran en sentido horario vistos desde el ápice) o **sinistral**.
+
+### La ecuación
+
+En un sistema de ejes con z como eje de enrollamiento, cada punto de la concha es:
 
 ```
 P(θ, φ) = W^(θ/2π) · ( (r_c + a·cos φ)·cos θ,
@@ -18,24 +39,46 @@ P(θ, φ) = W^(θ/2π) · ( (r_c + a·cos φ)·cos θ,
                        −T·r_c + b·sin φ )
 
 r_c = (1 + D) / 2      a = (1 − D) / 2      b = S · a
-θ ∈ [−2πN, 0],  φ ∈ [0, 2π),  ε = −1 dextral, +1 sinistral
 ```
 
-| Parámetro | Significado | Rango en la app |
-|---|---|---|
-| **W** | Tasa de expansión de la espiral: cuánto crece la apertura por vuelta | 1 – 10⁴ (slider logarítmico) |
-| **D** | Distancia de la curva generadora al eje (r interno / r externo): tamaño del ombligo | 0 – 0.9 |
-| **T** | Tasa de traslación: desplazamiento a lo largo del eje por unidad de desplazamiento radial | 0 – 10 |
-| **S** | Forma de la curva generadora: razón entre el semieje axial y el radial de la elipse | 0.5 – 2.0 |
-| N | Número de vueltas representadas (auxiliar, no forma parte del modelo de Raup) | 0.25 – 20 |
+- **θ** es el ángulo de giro alrededor del eje: tras una vuelta completa (2π) todo se ha multiplicado por W. Va de −2πN (el ápice) a 0 (la apertura final).
+- **φ** recorre el contorno de la apertura.
+- **r_c**, **a** y **b** son el centro y los semiejes de la elipse: así, en la apertura final el borde interno queda a distancia D del eje y el externo a distancia 1, que es justo como Raup definió D.
+- **ε** vale −1 en conchas dextrales y +1 en sinistrales.
 
-En la apertura final el borde interno está a distancia D del eje y el externo a distancia 1, que es la definición de D de Raup. La geometría se centra y escala para que la cámara no tenga que reencuadrarse al cambiar los parámetros.
+## El morfoespacio
 
-### Bivalvos
+Cada combinación de W, D, T y S es un punto en un espacio de conchas posibles: el **morfoespacio teórico**. El gran hallazgo de Raup fue que las conchas reales solo ocupan unas pocas regiones de ese espacio. Por ejemplo, en las conchas planas (T = 0) las vueltas solo se tocan si D ≤ 1/W; por encima de esa curva quedan separadas, una forma rarísima en la naturaleza. ¿Por qué está vacío el resto del espacio? Por restricciones funcionales, de desarrollo o simplemente históricas: es una de las preguntas que abrió la **morfología teórica**.
 
-Las mismas ecuaciones generan las valvas de los bivalvos (Raup, 1966): cada valva es una espiral logarítmica con **W muy alto** (≈10²–10⁴), D bajo y T pequeño, que solo completa una fracción de vuelta. La segunda valva es aproximadamente la imagen especular respecto al plano de la apertura (la comisura), `P' = (x, −y, z)`, y es lo que dibuja el botón **Mirror valve / Valva especular**. El modelo no representa la charnela, las conchas inequivalvas (ostras, vieiras) ni los braquiópodos, cuyas dos valvas son distintas.
+En la app, el panel **Morphospace W – D** dibuja este plano con la curva D = 1/W y las regiones aproximadas de ammonoideos, gasterópodos y bivalvos. Puedes pinchar en él para saltar a cualquier punto.
 
-### Presets
+## También bivalvos
+
+Las mismas ecuaciones generan las valvas de almejas, berberechos o mejillones (Raup, 1966). Cada valva es una espiral logarítmica con una **W enorme** (≈10²–10⁴), D bajo y T pequeño, que no llega a completar ni una vuelta: el umbo (el «pico» de la valva) es el ápice de la espiral. La segunda valva es, aproximadamente, la imagen especular de la primera respecto al plano por el que cierran las dos (la comisura). El botón **Mirror valve / Valva especular** la dibuja.
+
+El modelo es una simplificación: no incluye la charnela ni la ornamentación, y no sirve para conchas con dos valvas distintas, como ostras, vieiras o braquiópodos.
+
+## Cómo usar la app
+
+1. **Elige un preset** (caracol, Turritella, nautilo, ammonite, almeja…) para partir de una forma real.
+2. **Mueve W, D, T y S** y observa cómo cambia la concha. W tiene dos escalas: **Lin** (1–10, para afinar caracoles y ammonites) y **Log** (1–10⁴, para bivalvos); pasa sola a Log cuando W supera 10.
+3. **Explora el morfoespacio** en el panel desplegable: pincha o arrastra para elegir W y D.
+4. **Cambia el modo de dibujo**: *Lines* (malla de líneas, por defecto), *Solid* (superficie con luces y sombras) o *Both*.
+5. **Usa las vistas estándar** de la malacología: 3/4, apertural (de frente a la apertura), dorsal, apical (desde el ápice), umbilical (desde la base) y perfil. Con el ratón puedes rotar (arrastrar), hacer zoom (rueda) y desplazar (clic derecho).
+6. **Pulsa *Animate growth*** para ver crecer la concha desde el ápice hasta la apertura.
+7. **Abre *Equation*** para ver la fórmula general y la misma fórmula con los valores actuales, y ***About*** para una explicación del modelo.
+8. **Para ver solo la concha**, usa *Fullscreen* y *Hide info*.
+9. **Guarda o comparte** tu concha: exporta una imagen PNG o un modelo STL para impresión 3D, o copia la dirección de la página, que guarda la forma actual.
+
+En el panel **Appearance** puedes cambiar colores, grosor y densidad de las líneas, o volver a las paletas **Light** y **Dark** si pierdes los colores.
+
+| Tecla | Acción |
+|---|---|
+| F | Pantalla completa |
+| H | Ocultar / mostrar toda la información |
+| Esc | Salir de pantalla completa o volver a mostrar la información |
+
+## Presets
 
 Los valores son aproximaciones dentro del morfoespacio de Raup, no medidas de ejemplares concretos.
 
@@ -50,44 +93,9 @@ Los valores son aproximaciones dentro del morfoespacio de Raup, no medidas de ej
 | | Ammonite evoluto (*Dactylioceras*) | 1.9 | 0.45 | 0 | 0.9 | |
 | Bivalvos | Almeja (*Venus*) | 1000 | 0 | 0.35 | 1.1 | ✓ |
 
-## Funcionalidades
+## Para desarrolladores
 
-- **Modos de render**: *Líneas* (por defecto; líneas espirales y de crecimiento con eliminación de líneas ocultas), *Sólido* (`MeshStandardMaterial` con luz direccional, hemisférica, mapa de entorno y sombras suaves) y *Ambos*.
-- **Pantalla completa** (tecla F) y modo **ocultar info** (tecla H) para ver solo la concha, sin paneles ni controles.
-- **Vistas estándar** con transición suave: 3/4, apertural, dorsal, apical, umbilical y perfil.
-- **Indicador de ejes x, y, z** en la esquina (ocultable), coherente con el sistema de la ecuación.
-- **Ecuación** (general y con los valores actuales) en un panel desplegable con MathJax.
-- **Panel de información** con el fundamento teórico, la ecuación, los bivalvos y el funcionamiento de la app.
-- **Morfoespacio W – D** interactivo con la curva D = 1/W y las regiones aproximadas de ammonoideos, gasterópodos y bivalvos; clic o arrastre para elegir W y D.
-- **Animación de crecimiento** desde el ápice hasta la apertura.
-- **Apariencia** en un cajón desplegable: paletas de color predefinidas (claro y oscuro) para restaurar los colores, colores personalizados, resolución de la malla, número de líneas, grosor de línea (px), opacidad, bandas de crecimiento, eje de enrollamiento y autorrotación.
-- **Exportación** a PNG y a STL (80 mm, para impresión 3D o CAD; la apertura queda abierta, así que la malla no es estanca).
-- **Bilingüe** EN / ES; la página siempre se abre en inglés.
-- **Estado en la URL** (`#W=2.4&D=0.08&T=1.6&S=1&N=4.5&h=1&v=0&m=lines`) para compartir un enlace a una forma concreta.
-
-## Estructura
-
-```
-index.html                    Página, import map de Three.js y configuración de MathJax
-css/styles.css                Estilos (tema claro/oscuro automático, responsive)
-js/raup.js                    Matemática: malla paramétrica, líneas, valva especular, normalización
-js/presets.js                 Valores de los presets
-js/i18n.js                    Textos en inglés y español (incluido el panel de información)
-js/main.js                    Escena Three.js, UI, vistas, gizmo, morfoespacio, fórmulas y URL
-```
-
-## Ejecución local
-
-Los módulos ES no funcionan abriendo el archivo con `file://`, así que hay que servir la carpeta con cualquier servidor estático:
-
-```bash
-python3 -m http.server 8000
-# abrir http://localhost:8000
-```
-
-## Publicación
-
-La app forma parte del repositorio [aplicaciones-varias](https://github.com/AlbertoGonzalezCasarrubios/aplicaciones-varias), en la carpeta `shells-morphology/`, y GitHub Pages la publica en https://albertogonzalezcasarrubios.github.io/aplicaciones-varias/shells-morphology/. Como todas las rutas son relativas, funciona dentro de esa subcarpeta sin configurar nada.
+Los detalles técnicos (estructura del código, cómo se construye la malla, convenciones de ejes, renderizado y publicación) están en [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Contacto
 
@@ -96,8 +104,6 @@ Para cualquier duda o comentario: **Alberto González Casarrubios** (Universidad
 ## Licencia
 
 © 2026 Alberto González Casarrubios. Esta obra está bajo una licencia [Creative Commons Atribución-NoComercial 4.0 Internacional (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/): se puede compartir y adaptar reconociendo la autoría, pero no con fines comerciales. El texto completo está en [LICENSE](LICENSE).
-
-Three.js (MIT) y MathJax (Apache-2.0) se cargan desde CDN y mantienen sus propias licencias.
 
 ## Referencias
 
