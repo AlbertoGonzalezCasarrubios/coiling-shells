@@ -1,5 +1,7 @@
 # Theoretical Shell Morphology · Morfología teórica de conchas
 
+**▶ Live / En línea: https://albertogonzalezcasarrubios.github.io/aplicaciones-varias/shells-morphology/**
+
 Interactive 3D explorer of the **theoretical morphology of coiled shells**, based on **David M. Raup's shell-coiling model** (1962, 1966). The interface opens in English and can be switched entirely to Spanish (EN / ES button).
 
 Explorador 3D interactivo de la **morfología teórica de conchas enrolladas**, basado en el **modelo de enrollamiento de David M. Raup** (1962, 1966). Mueve los cuatro parámetros clásicos (W, D, T, S) y la concha se regenera en tiempo real. La interfaz se abre en inglés y se puede pasar entera a español con el botón EN / ES.
@@ -71,7 +73,6 @@ js/raup.js                    Matemática: malla paramétrica, líneas, valva es
 js/presets.js                 Valores de los presets
 js/i18n.js                    Textos en inglés y español (incluido el panel de información)
 js/main.js                    Escena Three.js, UI, vistas, gizmo, morfoespacio, fórmulas y URL
-.github/workflows/deploy.yml  Despliegue automático en GitHub Pages
 ```
 
 ## Ejecución local
@@ -83,17 +84,9 @@ python3 -m http.server 8000
 # abrir http://localhost:8000
 ```
 
-## Despliegue en GitHub Pages
+## Publicación
 
-1. Crea un repositorio en GitHub y súbelo:
-   ```bash
-   git remote add origin https://github.com/<usuario>/<repo>.git
-   git push -u origin main
-   ```
-2. En GitHub, ve a **Settings → Pages → Build and deployment → Source** y elige **GitHub Actions**.
-3. Cada push a `main` ejecuta `.github/workflows/deploy.yml` y publica la web en `https://<usuario>.github.io/<repo>/`.
-
-Como todas las rutas son relativas, la app funciona en cualquier subruta sin configurar nada más.
+La app forma parte del repositorio [aplicaciones-varias](https://github.com/AlbertoGonzalezCasarrubios/aplicaciones-varias), en la carpeta `shells-morphology/`, y GitHub Pages la publica en https://albertogonzalezcasarrubios.github.io/aplicaciones-varias/shells-morphology/. Como todas las rutas son relativas, funciona dentro de esa subcarpeta sin configurar nada.
 
 ## Contacto
 
