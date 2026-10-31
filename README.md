@@ -53,6 +53,7 @@ Los valores son aproximaciones dentro del morfoespacio de Raup, no medidas de ej
 ## Funcionalidades
 
 - **Modos de render**: *Líneas* (por defecto; líneas espirales y de crecimiento con eliminación de líneas ocultas), *Sólido* (`MeshStandardMaterial` con luz direccional, hemisférica, mapa de entorno y sombras suaves) y *Ambos*.
+- **Pantalla completa** (tecla F) y modo **ocultar info** (tecla H) para ver solo la concha, sin paneles ni controles.
 - **Vistas estándar** con transición suave: 3/4, apertural, dorsal, apical, umbilical y perfil.
 - **Indicador de ejes x, y, z** en la esquina (ocultable), coherente con el sistema de la ecuación.
 - **Ecuación** (general y con los valores actuales) en un panel desplegable con MathJax.

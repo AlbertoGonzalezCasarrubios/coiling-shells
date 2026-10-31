@@ -638,6 +638,49 @@ infoDialog.addEventListener('click', (e) => {
   if (e.target === infoDialog) infoDialog.close(); // clic en el fondo
 });
 
+// ---------------------------------------------------------------------------
+// Pantalla completa y modo "solo la concha"
+// ---------------------------------------------------------------------------
+
+const fsSupported = !!(viewport.requestFullscreen || viewport.webkitRequestFullscreen);
+const isFullscreen = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+
+function toggleFullscreen() {
+  if (isFullscreen()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  else (viewport.requestFullscreen || viewport.webkitRequestFullscreen).call(viewport);
+}
+
+function updateFullscreenButton() {
+  const on = isFullscreen();
+  $('toggleFullscreen').setAttribute('aria-pressed', String(on));
+  $('fsLabel').textContent = t(on ? 'tb.exitFullscreen' : 'tb.fullscreen');
+  $('fsIcon').setAttribute('d', on ? 'M7 3v4H3M13 3v4h4M17 13h-4v4M3 13h4v4' : 'M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4');
+}
+
+const isClean = () => document.body.classList.contains('clean');
+function setClean(on) {
+  document.body.classList.toggle('clean', on);
+  if (on) $('showInfo').focus({ preventScroll: true });
+}
+
+$('toggleFullscreen').hidden = !fsSupported; // p. ej. Safari en iPhone
+$('toggleFullscreen').addEventListener('click', toggleFullscreen);
+document.addEventListener('fullscreenchange', updateFullscreenButton);
+document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+$('hideInfo').addEventListener('click', () => setClean(true));
+$('showInfo').addEventListener('click', () => setClean(false));
+
+window.addEventListener('keydown', (e) => {
+  if (e.ctrlKey || e.metaKey || e.altKey || infoDialog.open) return;
+  if (e.target instanceof Element && e.target.closest('input, select, textarea')) return;
+  const key = e.key.toLowerCase();
+  if (key === 'f' && fsSupported) toggleFullscreen();
+  else if (key === 'h') setClean(!isClean());
+  else if (key === 'escape' && isClean() && !isFullscreen()) setClean(false);
+  else return;
+  e.preventDefault();
+});
+
 $('toggleAxes').addEventListener('click', (e) => {
   gizmo.visible = !gizmo.visible;
   e.currentTarget.setAttribute('aria-pressed', String(gizmo.visible));
@@ -913,6 +956,7 @@ function applyLanguage(lang) {
   Object.values(controlsByKey).forEach((c) => c.relabel());
   buildPresetOptions();
   updateGrowButton();
+  updateFullscreenButton();
   updateHud();
   drawMorpho();
   document.querySelectorAll('.lang button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === getLang())));
@@ -949,7 +993,7 @@ function renderFrame() {
   renderer.clear();
   renderer.render(scene, camera);
 
-  if (gizmo.visible) {
+  if (gizmo.visible && !isClean()) {
     const s = gizmo.size;
     const x = w - s - 8;
     const y = w < 760 ? 56 : 8; // por encima de la barra de vistas en pantallas estrechas

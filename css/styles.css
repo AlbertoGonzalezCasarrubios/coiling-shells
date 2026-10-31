@@ -38,6 +38,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 button { font-family: inherit; }
+[hidden] { display: none !important; }
 svg { flex: none; }
 
 .app {
@@ -410,6 +411,22 @@ input[type='range']::-moz-range-thumb {
 .hint { bottom: 58px; left: 12px; }
 .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); }
 .loading[hidden] { display: none; }
+
+/* ---------- Solo la concha: ocultar info / pantalla completa ---------- */
+.restore {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: none;
+  opacity: 0.35;
+  transition: opacity 0.2s;
+}
+.restore:hover, .restore:focus-visible { opacity: 1; }
+body.clean .restore { display: inline-flex; }
+body.clean :is(.sidebar, .formula, .toolbar, .hud, .views, .hint) { display: none !important; }
+body.clean .app { grid-template-columns: 1fr; }
+body.clean .main { height: 100vh; height: 100dvh; }
+.viewport:fullscreen { background: var(--bg); }
 
 /* ---------- Info dialog ---------- */
 .info {
