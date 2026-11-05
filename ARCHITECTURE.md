@@ -69,6 +69,11 @@ En `main.js`, el resultado se colorea entre el color de fondo y el del pigmento 
 
 Con el patrón activo, el material sólido usa la textura en lugar del color y de las bandas por vértice; al desactivarlo vuelve el color sólido.
 
+- **Controles simples y avanzados.** Los simples son magnitudes reales, no multiplicadores ocultos: el *tamaño del patrón* fija las células del borde (`nMax = 256 / tamaño`), el *tiempo de crecimiento* es `T`, la *irregularidad* es `noise` y la *cantidad de pigmento* solo desplaza el umbral del coloreado (sin volver a simular). Las constantes de las ecuaciones están en el desplegable avanzado, con sliders logarítmicos (`log: true` en `createParam`); con `zero: true`, la posición más a la izquierda vale exactamente 0.
+- **Cálculos obsoletos.** Si llega un cálculo nuevo mientras el *worker* sigue ocupado, se termina y se crea otro: al arrastrar un slider solo importa el último valor.
+- **Exterior e interior.** `raup.js` ordena los vértices de cada triángulo para que las caras frontales miren siempre hacia fuera del tubo, también en conchas dextrales y en la valva especular, porque ambas invierten la orientación. Así el exterior (`FrontSide`) lleva el color o el patrón, y el interior (`BackSide`) un `MeshPhysicalMaterial` claro con algo de iridiscencia, como el nácar.
+- **Ecuaciones.** El panel *Equation* tiene dos vistas, Raup y Meinhardt. La de Meinhardt muestra las ecuaciones del modelo activo y las mismas con los valores actuales, omitiendo los términos nulos.
+
 ## Renderizado (`js/main.js`)
 
 - **Modos.** *Lines* dibuja solo las líneas; *Solid*, la superficie con `MeshStandardMaterial`, luz direccional con sombras suaves, luz hemisférica y un mapa de entorno (`RoomEnvironment`); *Both*, las dos cosas.

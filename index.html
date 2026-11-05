@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Theoretical Shell Morphology</title>
-  <meta name="description" content="Theoretical morphology of coiled shells: interactive 3D explorer of David M. Raup's shell-coiling model (W, D, T, S)." />
+  <meta name="description" content="Theoretical morphology of coiled shells: interactive 3D explorer of David M. Raup's shell-coiling model (W, D, T, S), with optional pigmentation patterns from Hans Meinhardt's reaction–diffusion models." />
   <meta name="author" content="Alberto González Casarrubios" />
   <meta name="license" content="CC BY-NC 4.0" />
   <link rel="icon" type="image/svg+xml" href="favicon.svg?v=2" />
@@ -164,21 +164,8 @@
         </section>
 
         <section class="panel">
-          <h2 class="panel-title" data-i18n="pig.colors">Pigment colours</h2>
-          <div class="colors two">
-            <label class="color-field"><input type="color" id="pigBase" value="#f1e7d6" /><span data-i18n="pig.base">Background</span></label>
-            <label class="color-field"><input type="color" id="pigColor" value="#9c4a1f" /><span data-i18n="pig.pigment">Pigment</span></label>
-          </div>
-        </section>
-
-        <section class="panel">
-          <label class="panel-title" for="patternModel" data-i18n="pig.model">Model</label>
-          <select id="patternModel" class="select">
-            <option value="AI" data-i18n="pig.model.AI">Activator–inhibitor</option>
-            <option value="AS" data-i18n="pig.model.AS">Activator–substrate</option>
-          </select>
-          <h2 class="panel-title" data-i18n="pig.params">Parameters</h2>
-          <div id="pig-params"></div>
+          <h2 class="panel-title" data-i18n="pig.params">Pattern controls</h2>
+          <div id="pig-simple"></div>
           <div class="seed-row">
             <label class="field">
               <span data-i18n="pig.seed">Seed</span>
@@ -190,8 +177,32 @@
             </button>
           </div>
           <label class="toggle"><input type="checkbox" id="patternInsertion" /><span data-i18n="pig.insertion">Cell insertion</span></label>
-          <button type="button" class="btn btn-wide" id="savePattern" data-i18n="pig.save">Save pattern PNG</button>
         </section>
+
+        <section class="panel">
+          <h2 class="panel-title" data-i18n="pig.colors">Pigment colours</h2>
+          <div class="colors two">
+            <label class="color-field"><input type="color" id="pigBase" value="#f1e7d6" /><span data-i18n="pig.base">Background</span></label>
+            <label class="color-field"><input type="color" id="pigColor" value="#9c4a1f" /><span data-i18n="pig.pigment">Pigment</span></label>
+          </div>
+        </section>
+
+        <details class="drawer" id="pigAdvanced">
+          <summary><span data-i18n="pig.advanced">Advanced: model constants</span></summary>
+          <div class="drawer-body">
+            <p class="note" data-i18n="pig.advanced.hint"></p>
+            <label class="field">
+              <span data-i18n="pig.model">Model</span>
+              <select id="patternModel" class="select">
+                <option value="AI" data-i18n="pig.model.AI">Activator–inhibitor</option>
+                <option value="AS" data-i18n="pig.model.AS">Activator–substrate</option>
+              </select>
+            </label>
+            <div id="pig-params"></div>
+          </div>
+        </details>
+
+        <button type="button" class="btn btn-wide" id="savePattern" data-i18n="pig.save">Save pattern PNG</button>
       </div>
 
       <section class="panel">
@@ -212,6 +223,10 @@
       <section class="formula" id="formula" hidden>
         <div class="formula-head">
           <h2 data-i18n="eq.title">Model equation</h2>
+          <div class="segmented eq-view" role="radiogroup" id="eqView">
+            <button type="button" data-eq="raup" aria-pressed="true" data-i18n="tab.shape">Shape · Raup</button>
+            <button type="button" data-eq="meinhardt" aria-pressed="false" data-i18n="tab.pigment">Pigment · Meinhardt</button>
+          </div>
           <button type="button" class="icon-btn" id="closeFormula" data-i18n-title="eq.close">
             <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
           </button>
@@ -220,7 +235,7 @@
           <div class="formula-col">
             <h3 data-i18n="eq.general">General form</h3>
             <div id="formulaGeneral" class="math"></div>
-            <p class="note" data-i18n="eq.chirality"></p>
+            <p class="note" id="eqNote" data-i18n="eq.chirality"></p>
           </div>
           <div class="formula-col live">
             <h3 data-i18n="eq.live">With current values</h3>

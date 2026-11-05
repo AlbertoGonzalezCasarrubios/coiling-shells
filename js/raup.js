@@ -143,7 +143,10 @@ export function buildShell(p) {
   let t = 0;
   for (let c = 0; c < copies; c++) {
     const off = c * count;
-    const flip = c === 1; // la reflexión invierte la orientación de las caras
+    // Las caras frontales deben mirar hacia fuera del tubo (el exterior pigmentado).
+    // Tanto el sentido dextral como la reflexión de la valva especular invierten
+    // la orientación de los triángulos.
+    const flip = (c === 1) !== (hand > 0);
     for (let i = 0; i < cutRow; i++) {
       for (let j = 0; j < segPhi; j++) {
         const v00 = off + i * cols + j, v01 = v00 + 1;

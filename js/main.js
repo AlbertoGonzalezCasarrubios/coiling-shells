@@ -8,7 +8,10 @@ import { STLExporter } from 'three/addons/exporters/STLExporter.js';
 import { buildShell } from './raup.js';
 import { PRESETS, DEFAULT_PRESET, PATTERN_PRESETS, DEFAULT_PATTERN } from './presets.js';
 import { simulatePattern } from './meinhardt.js';
-import { setLang, getLang, t, tParam, tPreset, tPattern, applyStatic, GENERAL_TEX, DEFS_TEX, MIRROR_TEX } from './i18n.js';
+import {
+  setLang, getLang, t, tParam, tPreset, tPattern, applyStatic,
+  GENERAL_TEX, DEFS_TEX, MIRROR_TEX, AI_TEX, AS_TEX, GLOBAL_TEX,
+} from './i18n.js';
 
 // ---------------------------------------------------------------------------
 // Definición de controles (los textos están en i18n.js)
@@ -186,16 +189,35 @@ const lineMat = new LineMaterial({
 
 const axisMat = new THREE.LineDashedMaterial({ color: 0x2a9d8f, dashSize: 0.12, gapSize: 0.08 });
 
+solidMat.side = THREE.FrontSide; // exterior (las caras frontales miran hacia fuera)
+
+// Interior de la concha: sin pigmento y con un ligero brillo nacarado
+const innerMat = new THREE.MeshPhysicalMaterial({
+  color: '#f3eee6',
+  roughness: 0.28,
+  metalness: 0,
+  envMapIntensity: 0.8,
+  iridescence: 0.35,
+  iridescenceIOR: 1.3,
+  iridescenceThicknessRange: [250, 500],
+  side: THREE.BackSide,
+  polygonOffset: true,
+  polygonOffsetFactor: 1,
+  polygonOffsetUnits: 1,
+});
+
 const solid = new THREE.Mesh(new THREE.BufferGeometry(), solidMat);
 solid.castShadow = true;
 solid.receiveShadow = true;
+const inner = new THREE.Mesh(solid.geometry, innerMat);
+inner.receiveShadow = true;
 const occluder = new THREE.Mesh(solid.geometry, occluderMat);
 occluder.renderOrder = 0;
 const lines = new LineSegments2(new LineSegmentsGeometry(), lineMat);
 lines.renderOrder = 1;
 const axis = new THREE.Line(new THREE.BufferGeometry(), axisMat);
 axis.visible = false;
-scene.add(solid, occluder, lines, axis);
+scene.add(solid, inner, occluder, lines, axis);
 
 // ---------------------------------------------------------------------------
 // Indicador de ejes x, y, z (sistema de la ecuación: z = eje de enrollamiento)
@@ -293,6 +315,7 @@ function rebuild() {
   lines.geometry.dispose();
   solid.geometry = meshGeo;
   occluder.geometry = meshGeo;
+  inner.geometry = meshGeo;
   lines.geometry = lineGeo;
 
   const { x, z, yTop, yBottom } = shell.axis;
@@ -334,6 +357,7 @@ function updateHud() {
 function applyMode() {
   const m = state.mode;
   solid.visible = m !== 'lines';
+  inner.visible = solid.visible;
   lines.visible = m !== 'solid' && lines.geometry.attributes.instanceStart !== undefined;
   occluder.visible = m === 'lines' && $('hideHidden').checked;
   ground.visible = m !== 'lines';
@@ -373,12 +397,49 @@ function typeset(el, html) {
 }
 
 const f = (v, d) => Number(v).toFixed(d);
+/** Dos cifras significativas: para constantes que abarcan varios órdenes de magnitud. */
+const sig = (v) => (v === 0 ? '0' : v >= 100 ? v.toFixed(0) : String(+Number(v).toPrecision(2)));
+
+let formulaView = 'raup';
+
+const SOURCE_TEX = String.raw`\[ s_i = r_a\,(1 + \sigma\,\xi_i),\quad \xi_i \in [-1,\,1],\quad x = 1,\dots,N \]`;
 
 function generalTeX() {
+  if (formulaView === 'meinhardt') {
+    const isAS = pattern.model === 'AS';
+    return (isAS ? AS_TEX : AI_TEX) + (isAS && pattern.globalCtl > 0 ? GLOBAL_TEX : '') + SOURCE_TEX;
+  }
   return GENERAL_TEX + DEFS_TEX + (state.mirror ? MIRROR_TEX : '');
 }
 
+function meinhardtLiveTeX() {
+  const { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl, T } = pattern;
+  // Términos opcionales: se omiten cuando su coeficiente es 0
+  const term = (sign, c, tex) => (c > 0 ? ` ${sign} ${sig(c)}${tex ? String.raw`\,${tex}` : ''}` : '');
+  const lap = (v) => String.raw`\frac{\partial^2 ${v}}{\partial x^2}`;
+  const sat = kappa > 0 ? String.raw`(1+${sig(kappa)}\,a^2)` : '';
+  const basal = term('+', ba, '');
+  let eqs;
+  if (model === 'AS') {
+    const prod = String.raw`s\,b\left(\frac{a^2}{${sat || '1'}}${basal}\right)`;
+    eqs = String.raw`\begin{aligned}
+      \frac{\partial a}{\partial t} &= ${prod} - ${sig(ra)}\,a${term('+', Da, lap('a'))} \\
+      \frac{\partial b}{\partial t} &= ${sig(b2)} - ${prod}${term('-', r2, 'b')}${term('+', D2, lap('b'))}
+    \end{aligned}`;
+  } else {
+    eqs = String.raw`\begin{aligned}
+      \frac{\partial a}{\partial t} &= s\left(\frac{a^2}{h${sat ? String.raw`\,${sat}` : ''}}${basal}\right) - ${sig(ra)}\,a${term('+', Da, lap('a'))} \\
+      \frac{\partial h}{\partial t} &= s\,a^2 - ${sig(r2)}\,h${term('+', D2, lap('h'))}${term('+', b2, '')}
+    \end{aligned}`;
+  }
+  const global = model === 'AS' && globalCtl > 0 ? String.raw`\[ b_a^{\mathrm{ef}} = ${sig(ba)} + \frac{${sig(globalCtl)}}{1 + 40\,c} \]` : '';
+  const cells = Math.round(PATTERN_CELLS / pattern.size);
+  return String.raw`\[ ${eqs} \]` + global +
+    String.raw`\[ s_i = ${sig(ra)}\,(1 \pm ${sig(noise)}),\quad N = ${cells},\quad T = ${Math.round(T)} \]`;
+}
+
 function liveTeX() {
+  if (formulaView === 'meinhardt') return meinhardtLiveTeX();
   const { W, D, T, S, hand, turns } = state;
   const { rc, a, b } = lastBuild.derived;
   const R = `(${f(rc, 3)} + ${f(a, 3)}\\cos\\varphi)`;
@@ -408,13 +469,25 @@ function scheduleFormula() {
   }, 80);
 }
 
+function setFormulaView(view) {
+  formulaView = view;
+  document.querySelectorAll('#eqView [data-eq]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.eq === view)));
+  const note = $('eqNote');
+  note.dataset.i18n = view === 'meinhardt' ? 'eq.mein.note' : 'eq.chirality';
+  note.textContent = t(note.dataset.i18n);
+  if (!formulaPanel.hidden) {
+    typeset(note);
+    lastGeneral = '';
+    scheduleFormula();
+  }
+}
+
 function setFormulaOpen(open) {
   formulaPanel.hidden = !open;
   $('toggleFormula').setAttribute('aria-pressed', String(open));
   if (open) {
-    lastGeneral = '';
-    typeset(formulaPanel.querySelector('[data-i18n="eq.chirality"]'));
-    scheduleFormula();
+    // Desde la pestaña de pigmento se abren directamente las ecuaciones de Meinhardt
+    setFormulaView($('tab-pigment').hidden ? formulaView : 'meinhardt');
   }
 }
 
@@ -483,7 +556,7 @@ function createParam(def, container, { compact = false, onChange, target = state
   const scaleGroup = el.querySelector('.scale-toggle');
   const symEl = el.querySelector('.param-sym');
   const format = def.format || ((v) => f(v, def.digits));
-  let logScale = false;
+  let logScale = !!def.log;
 
   const applyScale = () => {
     const max = def.logToggle && !logScale ? def.linMax : def.max;
@@ -500,7 +573,8 @@ function createParam(def, container, { compact = false, onChange, target = state
   };
 
   const set = (v, { fromNum = false, fitScale = false } = {}) => {
-    const clamped = Math.min(def.max, Math.max(def.min, v));
+    // def.zero: por debajo del mínimo el valor es exactamente 0 (p. ej. sin difusión)
+    const clamped = def.zero && v < def.min ? 0 : Math.min(def.max, Math.max(def.min, v));
     target[def.key] = clamped;
     // Al cargar un preset, se vuelve a la escala lineal si el valor cabe en ella
     if (fitScale && def.logToggle && logScale && clamped <= def.linMax) {
@@ -512,7 +586,7 @@ function createParam(def, container, { compact = false, onChange, target = state
       logScale = true;
       applyScale();
     }
-    range.value = logScale ? Math.log10(clamped) : clamped;
+    range.value = logScale ? Math.log10(Math.max(clamped, def.min)) : clamped;
     setFill(range);
     if (!fromNum) num.value = format(clamped);
   };
@@ -534,7 +608,8 @@ function createParam(def, container, { compact = false, onChange, target = state
 
   range.addEventListener('input', () => {
     const r = parseFloat(range.value);
-    set(logScale ? 10 ** r : r);
+    if (def.zero && r <= parseFloat(range.min) + 1e-9) set(0);
+    else set(logScale ? 10 ** r : r);
     onChange(def.key);
   });
   num.addEventListener('input', () => {
@@ -674,6 +749,7 @@ $('showAxis').addEventListener('change', (e) => (axis.visible = e.target.checked
 $('autoRotate').addEventListener('change', (e) => (controls.autoRotate = e.target.checked));
 
 $('toggleFormula').addEventListener('click', () => setFormulaOpen(formulaPanel.hidden));
+document.querySelectorAll('#eqView [data-eq]').forEach((b) => b.addEventListener('click', () => setFormulaView(b.dataset.eq)));
 $('closeFormula').addEventListener('click', () => setFormulaOpen(false));
 $('openInfo').addEventListener('click', () => openInfo());
 document.querySelectorAll('.info-tabs [data-page]').forEach((b) => b.addEventListener('click', () => showInfoPage(b.dataset.page)));
@@ -997,14 +1073,15 @@ $('saveStl').addEventListener('click', () => {
 const PATTERN_ROWS = 768;   // filas del registro espacio-tiempo (ápice → apertura)
 const PATTERN_WIDTH = 512;  // columnas de la textura (vuelta completa a la apertura)
 const PATTERN_CELLS = 256;  // células del borde en la apertura
-const PATTERN_KEYS = ['model', 'Da', 'D2', 'ra', 'r2', 'kappa', 'ba', 'b2', 'noise', 'globalCtl', 'T', 'insertion', 'base', 'pigment'];
+const PATTERN_KEYS = ['model', 'Da', 'D2', 'ra', 'r2', 'kappa', 'ba', 'b2', 'noise', 'globalCtl', 'T', 'insertion', 'base', 'pigment', 'size', 'amount'];
+const PATTERN_DEFAULTS = { size: 1, amount: 0.5 };
 
-const pickPattern = (p) => Object.fromEntries(PATTERN_KEYS.map((k) => [k, p[k]]));
+const pickPattern = (p) => Object.fromEntries(PATTERN_KEYS.map((k) => [k, p[k] ?? PATTERN_DEFAULTS[k]]));
 
 const pattern = { on: false, preset: DEFAULT_PATTERN, seed: 7, ...pickPattern(PATTERN_PRESETS[DEFAULT_PATTERN]) };
 
 // Estado del patrón en la URL: pg=1 y los parámetros con prefijo p
-const PATTERN_HASH = { pm: 'model', pDa: 'Da', pD2: 'D2', pra: 'ra', pr2: 'r2', pk: 'kappa', pba: 'ba', pb2: 'b2', pn: 'noise', pgc: 'globalCtl', pT: 'T', ps: 'seed' };
+const PATTERN_HASH = { pm: 'model', pDa: 'Da', pD2: 'D2', pra: 'ra', pr2: 'r2', pk: 'kappa', pba: 'ba', pb2: 'b2', pn: 'noise', pgc: 'globalCtl', pT: 'T', ps: 'seed', pz: 'size', pa: 'amount' };
 if (fromHash.get('pg') === '1') {
   pattern.on = true;
   pattern.preset = PATTERN_PRESETS[fromHash.get('pp')] ? fromHash.get('pp') : 'custom';
@@ -1058,9 +1135,12 @@ function paintPattern() {
   if (!patternValues) return;
   const base = hexRgb(pattern.base);
   const pig = hexRgb(pattern.pigment);
+  const c = 1 - pattern.amount; // centro del umbral: más pigmento → umbral más bajo
   for (let i = 0, k = 0; i < patternValues.length; i++, k += 4) {
     const v = patternValues[i];
-    const t = v * v * (3 - 2 * v); // bordes del pigmento algo más nítidos
+    // Umbral desplazado por la cantidad de pigmento y suavizado (smoothstep)
+    const x = Math.min(1, Math.max(0, v - c + 0.5));
+    const t = x * x * (3 - 2 * x);
     patternPixels[k] = base[0] + (pig[0] - base[0]) * t;
     patternPixels[k + 1] = base[1] + (pig[1] - base[1]) * t;
     patternPixels[k + 2] = base[2] + (pig[2] - base[2]) * t;
@@ -1092,20 +1172,36 @@ function applyShellMaterial() {
   solidMat.color.set(withPattern ? '#ffffff' : $('shellColor').value);
   solidMat.vertexColors = !withPattern && $('bands').checked;
   solidMat.needsUpdate = true;
+  // El interior, más claro que el color de fondo del exterior
+  innerMat.color.set(withPattern ? pattern.base : $('shellColor').value).lerp(new THREE.Color('#ffffff'), 0.55);
 }
 
-// Cálculo en un Web Worker; si no está disponible, en el hilo principal
+// Cálculo en un Web Worker; si no está disponible, en el hilo principal.
+// Si llega un cálculo nuevo mientras otro sigue en marcha, se descarta el worker
+// ocupado en lugar de esperar: al arrastrar un slider solo importa el último valor.
 let patternWorker = null;
-try {
-  patternWorker = new Worker(new URL('./pigment-worker.js', import.meta.url), { type: 'module' });
-  patternWorker.onmessage = (e) => onPatternResult(e.data);
-  patternWorker.onerror = () => {
+let workerBusy = false;
+let workerFailed = false;
+
+function startWorker() {
+  try {
+    patternWorker = new Worker(new URL('./pigment-worker.js', import.meta.url), { type: 'module' });
+    patternWorker.onmessage = (e) => {
+      workerBusy = false;
+      onPatternResult(e.data);
+    };
+    patternWorker.onerror = () => {
+      patternWorker = null;
+      workerBusy = false;
+      workerFailed = true;
+      computePattern();
+    };
+  } catch {
     patternWorker = null;
-    computePattern();
-  };
-} catch {
-  patternWorker = null;
+    workerFailed = true;
+  }
 }
+startWorker();
 
 let patternJob = 0;
 let patternTimer = 0;
@@ -1117,11 +1213,21 @@ function computePattern() {
   const id = ++patternJob;
   const { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl, T, seed, insertion } = pattern;
   const p = { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl: model === 'AS' ? globalCtl : 0, T, seed, insertion };
-  const g = { W: state.W, turns: state.turns, rows: PATTERN_ROWS, width: PATTERN_WIDTH, nMax: PATTERN_CELLS };
+  // El tamaño del patrón es el número de células del borde (menos células, elementos mayores)
+  const nMax = Math.round(PATTERN_CELLS / pattern.size);
+  const g = { W: state.W, turns: state.turns, rows: PATTERN_ROWS, width: PATTERN_WIDTH, nMax };
   patternGeomKey = `${state.W}|${state.turns}`;
   $('patternStatus').hidden = false;
-  if (patternWorker) patternWorker.postMessage({ id, p, g });
-  else setTimeout(() => onPatternResult({ id, v: simulatePattern(p, g) }));
+  if (workerBusy && patternWorker) {
+    patternWorker.terminate();
+    startWorker();
+  }
+  if (patternWorker) {
+    workerBusy = true;
+    patternWorker.postMessage({ id, p, g });
+  } else if (workerFailed) {
+    setTimeout(() => onPatternResult({ id, v: simulatePattern(p, g) }));
+  }
 }
 
 function onPatternResult({ id, v }) {
@@ -1135,6 +1241,7 @@ function schedulePattern() {
   clearTimeout(patternTimer);
   if (patternNeeded()) patternTimer = setTimeout(computePattern, 80);
   writeHash();
+  if (formulaView === 'meinhardt') scheduleFormula();
 }
 
 // Con inserción de células el patrón depende del tamaño de cada vuelta (W y N)
@@ -1145,31 +1252,46 @@ function onGeometryForPattern() {
 // Controles
 const sub = (x, y) => `${x}<sub>${y}</sub>`;
 const second = () => (pattern.model === 'AS' ? 'b' : 'h');
-const PIG_PARAMS = [
-  { key: 'Da', id: 'pDa', sym: sub('D', 'a'), min: 0, max: 0.3, step: 0.001, digits: 3 },
-  { key: 'D2', id: 'pD2', sym: () => sub('D', second()), i18n: () => `D2.${pattern.model}`, min: 0, max: 15, step: 0.05, digits: 2 },
-  { key: 'ra', id: 'pra', sym: sub('r', 'a'), min: 0.001, max: 0.2, step: 0.001, digits: 3 },
-  { key: 'r2', id: 'pr2', sym: () => sub('r', second()), i18n: () => `r2.${pattern.model}`, min: 0, max: 0.2, step: 0.001, digits: 3 },
-  { key: 'kappa', id: 'pkappa', sym: 'κ', min: 0, max: 2, step: 0.01, digits: 2 },
-  { key: 'ba', id: 'pba', sym: sub('b', 'a'), min: 0, max: 0.1, step: 0.0005, digits: 4 },
-  { key: 'b2', id: 'pb2', sym: () => sub('b', second()), i18n: () => `b2.${pattern.model}`, min: 0, max: 0.1, step: 0.001, digits: 3 },
-  { key: 'noise', id: 'pnoise', sym: 'σ', min: 0, max: 0.5, step: 0.01, digits: 2 },
-  { key: 'globalCtl', id: 'pglobal', sym: 'g', min: 0, max: 0.05, step: 0.0005, digits: 4 },
-  { key: 'T', id: 'pT', i18n: 'pT', sym: 'τ', min: 500, max: 12000, step: 100, digits: 0 },
+// Controles simples: magnitudes intuitivas del modelo, de efecto gradual
+const PIG_SIMPLE = [
+  { key: 'size', id: 'pSize', i18n: 'pSize', log: true, min: 0.5, max: 2, digits: 2 },
+  { key: 'T', id: 'pT', i18n: 'pT', log: true, min: 500, max: 12000, format: (v) => v.toFixed(0) },
+  { key: 'noise', id: 'pnoise', i18n: 'pNoise', min: 0, max: 0.5, step: 0.01, digits: 2 },
+  { key: 'amount', id: 'pAmount', i18n: 'pAmount', min: 0.15, max: 0.85, step: 0.01, digits: 2 },
 ];
 
+// Constantes del modelo: escala logarítmica, con la posición izquierda = 0 cuando tiene sentido
+const PIG_ADVANCED = [
+  { key: 'Da', id: 'pDa', sym: sub('D', 'a'), log: true, zero: true, min: 0.0005, max: 0.5, format: sig },
+  { key: 'D2', id: 'pD2', sym: () => sub('D', second()), i18n: () => `D2.${pattern.model}`, log: true, zero: true, min: 0.001, max: 30, format: sig },
+  { key: 'ra', id: 'pra', sym: sub('r', 'a'), log: true, min: 0.002, max: 0.3, format: sig },
+  { key: 'r2', id: 'pr2', sym: () => sub('r', second()), i18n: () => `r2.${pattern.model}`, log: true, zero: true, min: 0.0005, max: 0.3, format: sig },
+  { key: 'kappa', id: 'pkappa', sym: 'κ', min: 0, max: 2, step: 0.01, digits: 2 },
+  { key: 'ba', id: 'pba', sym: sub('b', 'a'), log: true, zero: true, min: 0.0001, max: 0.1, format: sig },
+  { key: 'b2', id: 'pb2', sym: () => sub('b', second()), i18n: () => `b2.${pattern.model}`, log: true, zero: true, min: 0.0005, max: 0.1, format: sig },
+  { key: 'globalCtl', id: 'pglobal', sym: 'g', log: true, zero: true, min: 0.0005, max: 0.05, format: sig },
+];
+const PIG_PARAMS = [...PIG_SIMPLE, ...PIG_ADVANCED];
+
 const pigControls = {};
-PIG_PARAMS.forEach((d) => {
-  createParam(d, $('pig-params'), {
-    compact: true,
-    target: pattern,
-    onChange: () => {
-      markPatternCustom();
-      schedulePattern();
-    },
+for (const [defs, container] of [[PIG_SIMPLE, 'pig-simple'], [PIG_ADVANCED, 'pig-params']]) {
+  defs.forEach((d) => {
+    createParam(d, $(container), {
+      compact: true,
+      target: pattern,
+      onChange: (key) => {
+        if (key === 'amount') {
+          paintPattern(); // solo cambia el coloreado, no la simulación
+          writeHash();
+          return;
+        }
+        markPatternCustom();
+        schedulePattern();
+      },
+    });
+    pigControls[d.id] = controlsByKey[d.id];
   });
-  pigControls[d.id] = controlsByKey[d.id];
-});
+}
 
 const patternSel = $('patternPreset');
 function buildPatternOptions() {

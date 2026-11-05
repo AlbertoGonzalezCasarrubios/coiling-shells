@@ -67,6 +67,8 @@ Ese proceso es una **reacción-difusión**, la idea que Alan Turing propuso en 1
 - **Activador-inhibidor.** Si el inhibidor actúa rápido y llega lejos, los picos de activador son estables y dibujan **bandas a lo largo de la espiral** (como en *Cepaea nemoralis*). Si el inhibidor dura más que el activador, el sistema **oscila** y dibuja **rayas paralelas al borde** (como las llamas del *Nautilus*).
 - **Activador-sustrato.** La activación consume un sustrato que tarda en recuperarse, así que cada célula queda un tiempo **refractaria**. La activación avanza entonces como **ondas** que dibujan líneas oblicuas; cuando dos ondas chocan se aniquilan y forman una V. Con un **control global**, una señal común a todo el borde que dispara ondas nuevas cuando la actividad cae, aparecen los **triángulos** de *Oliva porphyria* (Meinhardt y Klingler, 1987).
 
+El pigmento se deposita en la capa externa de la concha, así que la app solo pinta el exterior: el interior de la apertura se ve claro, con un ligero brillo nacarado.
+
 Además, el borde se alarga a medida que la concha crece. Con la **inserción de células**, se añaden células nuevas al borde y los elementos del patrón mantienen su tamaño, intercalándose rayas nuevas; sin ella, el patrón crece a la vez que la concha.
 
 Unir la geometría de Raup con la pigmentación de Meinhardt no es una ocurrencia de esta app: es lo que hicieron Fowler, Meinhardt y Prusinkiewicz en 1992. El registro espacio-tiempo se envuelve sobre la concha: el borde da la vuelta a la apertura y el tiempo avanza con el enrollamiento.
@@ -80,7 +82,7 @@ Unir la geometría de Raup con la pigmentación de Meinhardt no es una ocurrenci
 5. **Usa las vistas estándar** de la malacología: 3/4, apertural (de frente a la apertura), dorsal, apical (desde el ápice), umbilical (desde la base) y perfil. Con el ratón puedes rotar (arrastrar), hacer zoom (rueda) y desplazar (clic derecho).
 6. **Pulsa *Animate growth*** para ver crecer la concha desde el ápice hasta la apertura.
 7. **Abre *Equation*** para ver la fórmula general y la misma fórmula con los valores actuales, y ***About*** para una explicación del modelo.
-8. **Píntala** en la pestaña **Pigment · Meinhardt**: elige un patrón (Nautilus, Cepaea u Oliva), pulsa *Apply pattern to shell* y cambia los parámetros, los colores o la semilla para ver cómo cambia el registro espacio-tiempo y la concha. El patrón es opcional: sin activarlo, la concha mantiene su color sólido.
+8. **Píntala** en la pestaña **Pigment · Meinhardt**: elige un patrón (Nautilus, Cepaea u Oliva) y pulsa *Apply pattern to shell*. Los controles simples cambian el patrón de forma gradual: **tamaño del patrón**, **tiempo de crecimiento**, **irregularidad**, **cantidad de pigmento** y la **semilla** (otra variación del mismo patrón). Si quieres tocar las constantes de las ecuaciones, abre el panel **Advanced**. El patrón es opcional: sin activarlo, la concha mantiene su color sólido. Las ecuaciones de Meinhardt, con los valores actuales, están en *Equation*.
 9. **Para ver solo la concha**, usa *Fullscreen* y *Hide info*.
 10. **Guarda o comparte** tu concha: exporta una imagen PNG o un modelo STL para impresión 3D, o copia la dirección de la página, que guarda la forma actual.
 
