@@ -3,6 +3,6 @@ import { simulatePattern } from './meinhardt.js';
 
 self.onmessage = (e) => {
   const { id, p, g } = e.data;
-  const v = simulatePattern(p, g);
-  self.postMessage({ id, v }, [v.buffer]);
+  const { values, state } = simulatePattern(p, g);
+  self.postMessage({ id, v: values, state }, [values.buffer]);
 };

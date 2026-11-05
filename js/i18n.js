@@ -43,8 +43,6 @@ const AS_TEX = String.raw`\[
 
 const GLOBAL_TEX = String.raw`\[ \frac{dc}{dt} = r_c\,\big(\langle a \rangle - c\big), \qquad b_a^{\mathrm{ef}} = b_a + \frac{g}{1 + 40\,c} \]`;
 
-const CA_TEX = String.raw`\[ x_i^{t+1} = f\big(x_{i-1}^{t},\,x_i^{t},\,x_{i+1}^{t}\big), \qquad f(p,q,r) = \Big\lfloor \frac{R}{2^{\,4p+2q+r}} \Big\rfloor \bmod 2 \]`;
-
 const MEIN_REFS = `
   <ul class="refs-list">
     <li>Turing, A. M. (1952). The chemical basis of morphogenesis. <i>Phil. Trans. R. Soc. B</i> 237, 37–72.</li>
@@ -52,7 +50,6 @@ const MEIN_REFS = `
     <li>Meinhardt, H. &amp; Klingler, M. (1987). A model for pattern formation on the shells of molluscs. <i>J. Theor. Biol.</i> 126, 63–89.</li>
     <li>Fowler, D. R., Meinhardt, H. &amp; Prusinkiewicz, P. (1992). Modeling seashells. <i>Computer Graphics (SIGGRAPH '92)</i> 26(2), 379–387.</li>
     <li>Meinhardt, H. (2009). <i>The Algorithmic Beauty of Sea Shells</i>, 4th ed. Springer.</li>
-    <li>Wolfram, S. (2002). <i>A New Kind of Science</i>. Wolfram Media.</li>
   </ul>`;
 
 export const STRINGS = {
@@ -110,9 +107,13 @@ export const STRINGS = {
     'tab.shape': 'Shape · Raup',
     'tab.pigment': 'Pigment · Meinhardt',
     'tab.label': 'Sections',
-    'pig.apply': 'Apply pattern to shell',
-    'pig.theory': 'Theory behind the model →',
-    'pig.apply.hint': 'Colour the shell with the simulated pigmentation instead of a solid colour',
+    'pig.theory': 'Theory →',
+    'pig.none': 'Solid colour',
+    'pig.mode': 'Controls',
+    'pig.mode.simple': 'Simple',
+    'pig.mode.advanced': 'Advanced',
+    'pig.state.extinct': 'No pattern: with these values the activator dies out and the shell stays unpigmented. Try a preset or one of the recipes below.',
+    'pig.state.uniform': 'No pattern: with these values the margin stays uniform. Try a preset or one of the recipes below.',
     'pig.preset': 'Pattern',
     'pig.custom': 'Custom',
     'pig.spacetime': 'Space–time record',
@@ -125,20 +126,16 @@ export const STRINGS = {
     'pig.model': 'Model',
     'pig.model.AI': 'Activator–inhibitor',
     'pig.model.AS': 'Activator–substrate',
-    'pig.model.CA': 'Cellular automaton (Wolfram)',
-    'eq.ca.gen': 'generations',
-    'eq.ca.err': 'error',
-    'eq.ca.note': 'x_i = 1: pigmented cell, 0: unpigmented · R: rule number (0–255)',
-    'pig.recipes': '<strong>How to change the type of pattern</strong><ul><li><b>Bands along the spiral</b>: activator–inhibitor with a far-reaching inhibitor (D<sub>h</sub> ≫ D<sub>a</sub>) that is faster than the activator (r<sub>h</sub> &gt; r<sub>a</sub>).</li><li><b>Stripes parallel to the margin</b>: activator–inhibitor with D<sub>h</sub> ≈ 0 (far left) and a longer-lived inhibitor (r<sub>h</sub> &lt; r<sub>a</sub>).</li><li><b>Oblique lines and triangles</b>: activator–substrate with a slowly recovering substrate (small b<sub>b</sub>); global control g &gt; 0 for triangles.</li><li><b>Triangles of all sizes</b>: cellular automaton, rule 30 (also try 18, 90, 110 or 150).</li></ul>',
+    'pig.recipes': '<strong>How to change the type of pattern</strong><ul><li><b>Bands along the spiral</b>: activator–inhibitor with a far-reaching inhibitor (D<sub>h</sub> ≫ D<sub>a</sub>) that is faster than the activator (r<sub>h</sub> &gt; r<sub>a</sub>).</li><li><b>Stripes parallel to the margin</b>: activator–inhibitor with D<sub>h</sub> ≈ 0 (far left) and a longer-lived inhibitor (r<sub>h</sub> &lt; r<sub>a</sub>).</li><li><b>Oblique lines and triangles</b>: activator–substrate with a slowly recovering substrate (small b<sub>b</sub>); global control g &gt; 0 for triangles.</li></ul>',
     'pig.params': 'Pattern controls',
     'pig.advanced': 'Advanced: model constants',
-    'pig.advanced.hint': 'Logarithmic sliders; the leftmost position is 0. Near some values the pattern changes abruptly: those are real thresholds of the model, where one type of pattern turns into another.',
+    'pig.advanced.hint': 'Here you control everything. Constants use logarithmic sliders whose leftmost position is 0. Near some values the pattern changes abruptly: those are real thresholds of the model, where one type of pattern turns into another. Changing the model loads constants that work for it.',
     'eq.mein.note': 'x: position along the margin (in cells) · t: time · s: source density of each cell',
     'pig.seed': 'Seed',
     'pig.newSeed': 'New seed',
     'pig.insertion': 'Cell insertion (the margin grows with the shell)',
     'pig.save': 'Save pattern PNG',
-    'pig.note': 'The pattern is drawn on the shell in Solid and Both modes. Without it, the shell keeps its solid colour.',
+    'pig.note': 'This tab paints the shell with the selected pattern. Choose “Solid colour” to go back to a plain shell.',
     'info.page.raup': 'Raup · shape',
     'info.page.meinhardt': 'Meinhardt · pigment',
     'info.page.app': 'App & credits',
@@ -200,14 +197,12 @@ export const STRINGS = {
       pT: { name: 'Growth time', desc: 'Simulated time from apex to aperture: more time, more stripes along the direction of growth' },
       pSize: { name: 'Pattern size', desc: 'Sets the number of cells along the margin: a larger pattern means fewer cells' },
       pNoise: { name: 'Irregularity', desc: 'Differences between cells (σ): from regular to irregular patterns' },
-      pRule: { name: 'Rule (Wolfram number)', desc: 'Each of the 256 rules decides the next state of a cell from itself and its two neighbours' },
-      pAmount: { name: 'Pigment amount', desc: 'How much of the pattern is coloured; it does not change the simulation' },
+      pAmount: { name: 'Pigment amount', desc: 'Lowers or raises the threshold above which pigment is laid down; it does not change the simulation' },
     },
     patterns: {
       nautilus: 'Nautilus — flame stripes',
       cepaea: 'Cepaea nemoralis — spiral bands',
       oliva: 'Oliva porphyria — tent pattern',
-      conus: 'Conus textile — rule 30',
     },
     presets: {
       'Gasterópodos': 'Gastropods',
@@ -286,12 +281,6 @@ export const STRINGS = {
         <li><strong>Oblique lines, zigzags and triangles</strong> (<i>Oliva</i>, many <i>Conus</i>): travelling waves, their collisions and new initiations.</li>
       </ul>
 
-      <h3>Cellular automata: rule 30 and <i>Conus textile</i></h3>
-      <p>Stephen Wolfram noticed that the triangles of <i>Conus textile</i> look strikingly like the output of a very simple <strong>elementary cellular automaton</strong>, his <em>rule 30</em>. Each cell of the margin is either pigmented (1) or not (0), and at each step its new state depends only on itself and its two neighbours. The 8 possible neighbourhoods and their outcomes are encoded in a single number \\(R\\) between 0 and 255:</p>
-      ${CA_TEX}
-      <p>A cellular automaton is a discrete abstraction, not a chemical mechanism: it shows that very simple local rules are enough to generate this complexity. Meinhardt's reaction–diffusion models with global control produce similar triangles from real chemistry. In the app, the <em>irregularity</em> control adds occasional copying errors, and one automaton generation corresponds to 2 units of growth time.</p>
-      <p>The shape of a <i>Conus</i> (a straight-sided cone with a narrow slit-like aperture) cannot be built with the elliptical generating curve used here. Raup's model allows any generating curve, but this app only uses ellipses, so the pattern is shown on whatever shell you choose.</p>
-
       <h3>Growth of the margin</h3>
       <p>A logarithmic spiral turning at a constant rate corresponds to growth at a constant relative rate, so every whorl gets the same simulation time. But the margin gets longer as the shell grows. With <strong>cell insertion</strong>, new cells are added at random positions in proportion to the size of the shell: pattern elements keep their absolute size and new stripes are intercalated, as in many real shells. Without it, the number of cells is fixed and the pattern simply scales with the shell, which is closer to shells like <i>Cepaea</i>, whose bands are present from the apex and just widen.</p>
 
@@ -299,13 +288,13 @@ export const STRINGS = {
       <p>The space–time record is wrapped onto the 3D surface: the position along the margin becomes the angle \\(\\varphi\\) around the aperture, and time becomes the coiling angle \\(\\theta\\). Fowler, Meinhardt and Prusinkiewicz (1992) combined both models in exactly this way, joining Raup's geometry with Meinhardt's pigmentation.</p>
 
       <h3>Simple and advanced controls</h3>
-      <p>The simple controls are not hidden multipliers: each one is a real quantity of the model. <em>Pattern size</em> sets the number of cells along the margin (256 at ×1): since diffusion is measured in cells, fewer cells make every element larger relative to the shell. <em>Growth time</em> is \\(T\\), <em>irregularity</em> is the cell-to-cell variation \\(\\sigma\\) of the source density, and <em>pigment amount</em> only changes how the activator concentration is turned into colour. The constants of the equations are in the advanced panel, on logarithmic sliders because they span several orders of magnitude.</p>
+      <p>The simple controls are not hidden multipliers: each one is a real quantity of the model. <em>Pattern size</em> sets the number of cells along the margin (256 at ×1): since diffusion is measured in cells, fewer cells make every element larger relative to the shell. <em>Growth time</em> is \\(T\\), <em>irregularity</em> is the cell-to-cell variation \\(\\sigma\\) of the source density, and <em>pigment amount</em> moves the pigmentation threshold. The <em>Advanced</em> view shows these same quantities together with the constants of the equations, on logarithmic sliders because they span several orders of magnitude, so everything can be controlled from there. Changing the model loads constants that work for it. If a combination of values forms no pattern (the activator dies out or the margin stays uniform), the app says so instead of rescaling tiny differences into a false pattern.</p>
 
       <h3>Only the outside is pigmented</h3>
       <p>The pigment is laid down in the outer layer of the shell, so the inside of the aperture is drawn unpigmented, with a light nacre-like sheen.</p>
 
       <h3>Simplifications</h3>
-      <p>The equations are integrated with an explicit Euler scheme, choosing a time step small enough to be stable, on a margin of 256 cells at the default pattern size. The pigment shown is the activator concentration, rescaled to the 2–99.5 % range. The presets are approximate reproductions of the pattern types, not fits to real specimens.</p>
+      <p>The equations are integrated with an explicit Euler scheme, choosing a time step small enough to be stable, on a margin of 256 cells at the default pattern size. Pigment is laid down where the activator, rescaled to its 2–99.5 % range (ignoring the initial transient at the apex), exceeds a threshold, as in Meinhardt's simulations; this gives sharp edges. The presets are approximate reproductions of the pattern types, not fits to real specimens.</p>
 
       <h3>References</h3>
       ${MEIN_REFS}`,
@@ -382,9 +371,13 @@ export const STRINGS = {
     'tab.shape': 'Forma · Raup',
     'tab.pigment': 'Pigmento · Meinhardt',
     'tab.label': 'Secciones',
-    'pig.apply': 'Aplicar patrón a la concha',
-    'pig.theory': 'Teoría del modelo →',
-    'pig.apply.hint': 'Colorea la concha con la pigmentación simulada en lugar de un color sólido',
+    'pig.theory': 'Teoría →',
+    'pig.none': 'Color sólido',
+    'pig.mode': 'Controles',
+    'pig.mode.simple': 'Simple',
+    'pig.mode.advanced': 'Avanzado',
+    'pig.state.extinct': 'Sin patrón: con estos valores el activador se extingue y la concha queda sin pigmento. Prueba un preset o una de las recetas de abajo.',
+    'pig.state.uniform': 'Sin patrón: con estos valores el borde queda uniforme. Prueba un preset o una de las recetas de abajo.',
     'pig.preset': 'Patrón',
     'pig.custom': 'Personalizado',
     'pig.spacetime': 'Registro espacio-tiempo',
@@ -397,20 +390,16 @@ export const STRINGS = {
     'pig.model': 'Modelo',
     'pig.model.AI': 'Activador-inhibidor',
     'pig.model.AS': 'Activador-sustrato',
-    'pig.model.CA': 'Autómata celular (Wolfram)',
-    'eq.ca.gen': 'generaciones',
-    'eq.ca.err': 'error',
-    'eq.ca.note': 'x_i = 1: célula pigmentada, 0: sin pigmento · R: número de regla (0–255)',
-    'pig.recipes': '<strong>Cómo cambiar de tipo de patrón</strong><ul><li><b>Bandas a lo largo de la espiral</b>: activador-inhibidor con un inhibidor de largo alcance (D<sub>h</sub> ≫ D<sub>a</sub>) más rápido que el activador (r<sub>h</sub> &gt; r<sub>a</sub>).</li><li><b>Rayas paralelas al borde</b>: activador-inhibidor con D<sub>h</sub> ≈ 0 (a la izquierda del todo) y un inhibidor de vida más larga (r<sub>h</sub> &lt; r<sub>a</sub>).</li><li><b>Líneas oblicuas y triángulos</b>: activador-sustrato con un sustrato que se recupera despacio (b<sub>b</sub> pequeño); control global g &gt; 0 para los triángulos.</li><li><b>Triángulos de todos los tamaños</b>: autómata celular, regla 30 (prueba también 18, 90, 110 o 150).</li></ul>',
+    'pig.recipes': '<strong>Cómo cambiar de tipo de patrón</strong><ul><li><b>Bandas a lo largo de la espiral</b>: activador-inhibidor con un inhibidor de largo alcance (D<sub>h</sub> ≫ D<sub>a</sub>) más rápido que el activador (r<sub>h</sub> &gt; r<sub>a</sub>).</li><li><b>Rayas paralelas al borde</b>: activador-inhibidor con D<sub>h</sub> ≈ 0 (a la izquierda del todo) y un inhibidor de vida más larga (r<sub>h</sub> &lt; r<sub>a</sub>).</li><li><b>Líneas oblicuas y triángulos</b>: activador-sustrato con un sustrato que se recupera despacio (b<sub>b</sub> pequeño); control global g &gt; 0 para los triángulos.</li></ul>',
     'pig.params': 'Controles del patrón',
     'pig.advanced': 'Avanzado: constantes del modelo',
-    'pig.advanced.hint': 'Sliders en escala logarítmica; la posición más a la izquierda es 0. Cerca de algunos valores el patrón cambia de golpe: son umbrales reales del modelo, donde un tipo de patrón se convierte en otro.',
+    'pig.advanced.hint': 'Aquí se controla todo. Las constantes usan sliders logarítmicos cuya posición más a la izquierda es 0. Cerca de algunos valores el patrón cambia de golpe: son umbrales reales del modelo, donde un tipo de patrón se convierte en otro. Al cambiar de modelo se cargan constantes que funcionan con él.',
     'eq.mein.note': 'x: posición a lo largo del borde (en células) · t: tiempo · s: densidad de fuente de cada célula',
     'pig.seed': 'Semilla',
     'pig.newSeed': 'Nueva semilla',
     'pig.insertion': 'Inserción de células (el borde crece con la concha)',
     'pig.save': 'Guardar patrón PNG',
-    'pig.note': 'El patrón se dibuja sobre la concha en los modos Sólido y Ambos. Sin él, la concha mantiene su color sólido.',
+    'pig.note': 'Esta pestaña pinta la concha con el patrón elegido. Elige «Color sólido» para volver a una concha lisa.',
     'info.page.raup': 'Raup · forma',
     'info.page.meinhardt': 'Meinhardt · pigmento',
     'info.page.app': 'App y créditos',
@@ -472,14 +461,12 @@ export const STRINGS = {
       pT: { name: 'Tiempo de crecimiento', desc: 'Tiempo simulado del ápice a la apertura: más tiempo, más rayas en la dirección de crecimiento' },
       pSize: { name: 'Tamaño del patrón', desc: 'Fija el número de células a lo largo del borde: un patrón mayor significa menos células' },
       pNoise: { name: 'Irregularidad', desc: 'Diferencias entre células (σ): de patrones regulares a irregulares' },
-      pRule: { name: 'Regla (número de Wolfram)', desc: 'Cada una de las 256 reglas decide el estado siguiente de una célula a partir de ella y de sus dos vecinas' },
-      pAmount: { name: 'Cantidad de pigmento', desc: 'Cuánto del patrón se colorea; no cambia la simulación' },
+      pAmount: { name: 'Cantidad de pigmento', desc: 'Baja o sube el umbral a partir del cual se deposita pigmento; no cambia la simulación' },
     },
     patterns: {
       nautilus: 'Nautilus — rayas en llama',
       cepaea: 'Cepaea nemoralis — bandas espirales',
       oliva: 'Oliva porphyria — triángulos',
-      conus: 'Conus textile — regla 30',
     },
     presets: {
       'Gasterópodos': 'Gasterópodos',
@@ -559,12 +546,6 @@ export const STRINGS = {
         <li><strong>Líneas oblicuas, zigzags y triángulos</strong> (<i>Oliva</i>, muchos <i>Conus</i>): ondas viajeras, sus choques y nuevos disparos.</li>
       </ul>
 
-      <h3>Autómatas celulares: la regla 30 y <i>Conus textile</i></h3>
-      <p>Stephen Wolfram observó que los triángulos de <i>Conus textile</i> se parecen muchísimo al resultado de un <strong>autómata celular elemental</strong> muy sencillo, su <em>regla 30</em>. Cada célula del borde está pigmentada (1) o no (0), y en cada paso su nuevo estado depende solo de ella y de sus dos vecinas. Los 8 vecindarios posibles y su resultado se codifican en un único número \\(R\\) entre 0 y 255:</p>
-      ${CA_TEX}
-      <p>Un autómata celular es una abstracción discreta, no un mecanismo químico: muestra que bastan reglas locales muy simples para generar esta complejidad. Los modelos de reacción-difusión de Meinhardt con control global producen triángulos parecidos a partir de química real. En la app, el control de <em>irregularidad</em> añade errores ocasionales al copiar el estado, y cada generación del autómata equivale a 2 unidades del tiempo de crecimiento.</p>
-      <p>La forma de un <i>Conus</i> (un cono de lados rectos con una apertura estrecha en forma de rendija) no se puede construir con la curva generadora elíptica que se usa aquí. El modelo de Raup admite cualquier curva generadora, pero esta app solo usa elipses, así que el patrón se muestra sobre la concha que elijas.</p>
-
       <h3>El crecimiento del borde</h3>
       <p>Una espiral logarítmica que gira a ritmo constante corresponde a un crecimiento con tasa relativa constante, así que cada vuelta recibe el mismo tiempo de simulación. Pero el borde se alarga a medida que la concha crece. Con <strong>inserción de células</strong>, se añaden células nuevas en posiciones al azar en proporción al tamaño de la concha: los elementos del patrón mantienen su tamaño absoluto y aparecen rayas nuevas intercaladas, como en muchas conchas reales. Sin ella, el número de células es fijo y el patrón simplemente escala con la concha, lo que se parece más a conchas como <i>Cepaea</i>, cuyas bandas existen desde el ápice y solo se ensanchan.</p>
 
@@ -572,13 +553,13 @@ export const STRINGS = {
       <p>El registro espacio-tiempo se envuelve sobre la superficie 3D: la posición a lo largo del borde pasa a ser el ángulo \\(\\varphi\\) alrededor de la apertura, y el tiempo, el ángulo de enrollamiento \\(\\theta\\). Fowler, Meinhardt y Prusinkiewicz (1992) combinaron los dos modelos exactamente así, uniendo la geometría de Raup con la pigmentación de Meinhardt.</p>
 
       <h3>Controles simples y avanzados</h3>
-      <p>Los controles simples no son multiplicadores ocultos: cada uno es una magnitud real del modelo. El <em>tamaño del patrón</em> fija el número de células a lo largo del borde (256 con ×1): como la difusión se mide en células, con menos células cada elemento es mayor en relación con la concha. El <em>tiempo de crecimiento</em> es \\(T\\), la <em>irregularidad</em> es la variación \\(\\sigma\\) de la densidad de fuente entre células, y la <em>cantidad de pigmento</em> solo cambia cómo se convierte la concentración de activador en color. Las constantes de las ecuaciones están en el panel avanzado, con sliders logarítmicos porque abarcan varios órdenes de magnitud.</p>
+      <p>Los controles simples no son multiplicadores ocultos: cada uno es una magnitud real del modelo. El <em>tamaño del patrón</em> fija el número de células a lo largo del borde (256 con ×1): como la difusión se mide en células, con menos células cada elemento es mayor en relación con la concha. El <em>tiempo de crecimiento</em> es \\(T\\), la <em>irregularidad</em> es la variación \\(\\sigma\\) de la densidad de fuente entre células, y la <em>cantidad de pigmento</em> desplaza el umbral de pigmentación. La vista <em>Avanzado</em> muestra estas mismas magnitudes junto con las constantes de las ecuaciones, con sliders logarítmicos porque abarcan varios órdenes de magnitud, así que desde ahí se controla todo. Al cambiar de modelo se cargan constantes que funcionan con él. Si una combinación de valores no forma patrón (el activador se extingue o el borde queda uniforme), la app lo indica en lugar de reescalar diferencias minúsculas hasta fabricar un patrón falso.</p>
 
       <h3>Solo se pigmenta el exterior</h3>
       <p>El pigmento se deposita en la capa externa de la concha, así que el interior de la apertura se dibuja sin pigmento, con un ligero brillo nacarado.</p>
 
       <h3>Simplificaciones</h3>
-      <p>Las ecuaciones se integran con un esquema de Euler explícito, con un paso de tiempo lo bastante pequeño para ser estable, sobre un borde de 256 células con el tamaño de patrón por defecto. El pigmento que se muestra es la concentración de activador, reescalada al intervalo entre los percentiles 2 y 99,5. Los presets son reproducciones aproximadas de los tipos de patrón, no ajustes a ejemplares reales.</p>
+      <p>Las ecuaciones se integran con un esquema de Euler explícito, con un paso de tiempo lo bastante pequeño para ser estable, sobre un borde de 256 células con el tamaño de patrón por defecto. El pigmento se deposita donde el activador, reescalado entre sus percentiles 2 y 99,5 (sin contar el transitorio inicial del ápice), supera un umbral, como en las simulaciones de Meinhardt; así los bordes son nítidos. Los presets son reproducciones aproximadas de los tipos de patrón, no ajustes a ejemplares reales.</p>
 
       <h3>Referencias</h3>
       ${MEIN_REFS}`,
@@ -602,7 +583,7 @@ export const STRINGS = {
   },
 };
 
-export { GENERAL_TEX, DEFS_TEX, MIRROR_TEX, AI_TEX, AS_TEX, GLOBAL_TEX, CA_TEX };
+export { GENERAL_TEX, DEFS_TEX, MIRROR_TEX, AI_TEX, AS_TEX, GLOBAL_TEX };
 
 let current = 'en';
 

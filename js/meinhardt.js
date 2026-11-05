@@ -22,18 +22,9 @@
  * el borde, sigue la actividad media; cuando las ondas se aniquilan y la
  * actividad cae, c baja y favorece el disparo de ondas nuevas, que es el
  * mecanismo de ramificación de los triángulos de Oliva porphyria.
- *
- * Autómata celular elemental (Wolfram): cada célula está pigmentada (1) o no (0)
- * y su estado siguiente depende de ella y de sus dos vecinas según el número de
- * regla R (0–255): x_i' = bit (4·x_{i−1} + 2·x_i + x_{i+1}) de R. La regla 30
- * produce triángulos de todos los tamaños, muy parecidos a los de Conus textile.
- * Es un modelo discreto, no un mecanismo químico.
  */
 
-export const MODELS = ['AI', 'AS', 'CA'];
-
-/** Unidades del tiempo T por generación del autómata (T = 6000 → 3000 generaciones). */
-export const CA_TIME_PER_STEP = 2;
+export const MODELS = ['AI', 'AS'];
 
 /** Generador pseudoaleatorio con semilla (mulberry32): el mismo patrón para la misma semilla. */
 export function rng32(seed) {
@@ -63,10 +54,11 @@ export function rng32(seed) {
  * @param {number} g.rows       filas del resultado
  * @param {number} g.width      columnas del resultado (se remuestrea el borde)
  * @param {number} g.nMax       células en la apertura
- * @returns {Float32Array} pigmento normalizado 0–1, rows × width
+ * @returns {{ values: Float32Array, state: 'pattern'|'uniform'|'extinct' }}
+ *   values: activador normalizado 0–1 (rows × width); state indica si se formó
+ *   un patrón, si el borde quedó uniforme o si el activador se extinguió
  */
 export function simulatePattern(p, g) {
-  if (p.model === 'CA') return simulateAutomaton(p, g);
   const { rows, width, nMax } = g;
   const nMin = 8;
   const rand = rng32(p.seed);
@@ -175,85 +167,35 @@ export function simulatePattern(p, g) {
     }
   }
 
-  normalize(out);
-  return out;
-}
-
-/** Tamaño relativo de la concha en cada fila (1 en la apertura). */
-function shellSizes(g) {
-  const lnW = Math.log(Math.max(g.W, 1.0001));
-  const size = new Float64Array(g.rows);
-  for (let i = 0; i < g.rows; i++) {
-    const theta = -2 * Math.PI * g.turns * (1 - i / (g.rows - 1));
-    size[i] = Math.exp((theta / (2 * Math.PI)) * lnW);
-  }
-  return size;
+  // El transitorio inicial (primer cuarto, vueltas diminutas del ápice) no cuenta
+  // ni para el diagnóstico ni para la escala
+  const state = normalize(out, Math.floor(rows / 4) * width);
+  return { values: out, state };
 }
 
 /**
- * Autómata celular elemental de Wolfram sobre el borde (periódico).
- * p.rule: número de regla (0–255); p.noise: probabilidad de error al copiar el
- * estado (×2 %), que rompe la regularidad como las imperfecciones reales.
+ * Escala robusta a 0–1 usando percentiles, para que un pico aislado no apague el
+ * resto. Si el activador se extinguió o el borde quedó prácticamente uniforme, no
+ * se reescala: amplificar diferencias minúsculas fabricaría un patrón falso.
  */
-function simulateAutomaton(p, g) {
-  const { rows, width, nMax } = g;
-  const nMin = 8;
-  const rand = rng32(p.seed);
-  const rule = Math.round(p.rule) & 255;
-  const flip = p.noise * 0.02;
-  const size = shellSizes(g);
-
-  let n = p.insertion ? Math.max(nMin, Math.round(nMax * size[0])) : nMax;
-  let x = new Uint8Array(nMax);
-  let nx = new Uint8Array(nMax);
-  for (let i = 0; i < n; i++) x[i] = rand() < 0.5 ? 1 : 0;
-
-  const out = new Float32Array(rows * width);
-  const stepsPerRow = p.T / CA_TIME_PER_STEP / rows;
-  let carry = 0;
-
-  for (let row = 0; row < rows; row++) {
-    if (p.insertion) {
-      const target = Math.min(nMax, Math.max(nMin, Math.round(nMax * size[row])));
-      while (n < target) {
-        const k = Math.floor(rand() * n);
-        x.copyWithin(k + 1, k, n);
-        n++;
-      }
-    }
-
-    carry += stepsPerRow;
-    const steps = Math.floor(carry);
-    carry -= steps;
-    for (let step = 0; step < steps; step++) {
-      for (let i = 0; i < n; i++) {
-        const l = x[i === 0 ? n - 1 : i - 1];
-        const r = x[i === n - 1 ? 0 : i + 1];
-        let v = (rule >> ((l << 2) | (x[i] << 1) | r)) & 1;
-        if (flip > 0 && rand() < flip) v ^= 1;
-        nx[i] = v;
-      }
-      [x, nx] = [nx, x];
-    }
-
-    // Cada célula es un bloque nítido (sin interpolar: el autómata es discreto)
-    const base = row * width;
-    for (let k = 0; k < width; k++) out[base + k] = x[Math.floor((k / width) * n)];
-  }
-  return out;
-}
-
-/** Escala robusta a 0–1 usando percentiles, para que un pico aislado no apague el resto. */
-function normalize(v) {
+function normalize(v, skip = 0) {
   const sample = [];
-  const stride = Math.max(1, Math.floor(v.length / 20000));
-  for (let i = 0; i < v.length; i += stride) sample.push(v[i]);
+  const stride = Math.max(1, Math.floor((v.length - skip) / 20000));
+  for (let i = skip; i < v.length; i += stride) sample.push(v[i]);
   sample.sort((x, y) => x - y);
   const lo = sample[Math.floor(sample.length * 0.02)];
   const hi = sample[Math.min(sample.length - 1, Math.floor(sample.length * 0.995))];
-  const span = hi - lo || 1;
+  let state = 'pattern';
+  if (hi < 1e-4) state = 'extinct';
+  else if ((hi - lo) / hi < 0.05) state = 'uniform';
+  if (state !== 'pattern') {
+    v.fill(0);
+    return state;
+  }
+  const span = hi - lo;
   for (let i = 0; i < v.length; i++) {
     const x = (v[i] - lo) / span;
     v[i] = x < 0 ? 0 : x > 1 ? 1 : x;
   }
+  return state;
 }

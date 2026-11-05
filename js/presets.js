@@ -53,7 +53,7 @@ export const PATTERN_PRESETS = {
   nautilus: {
     // Oscilación: el inhibidor vive más que el activador → rayas en llama paralelas al borde
     model: 'AI', Da: 0.01, D2: 0, ra: 0.08, r2: 0.02, kappa: 0.2, ba: 0.05, b2: 0,
-    noise: 0.3, globalCtl: 0, T: 3000, insertion: true, base: '#f1e7d6', pigment: '#9c4a1f',
+    noise: 0.3, globalCtl: 0, T: 3000, insertion: true, amount: 0.62, base: '#f1e7d6', pigment: '#9c4a1f',
   },
   cepaea: {
     // Picos estables (inhibición lateral de largo alcance) → bandas espirales
@@ -63,13 +63,11 @@ export const PATTERN_PRESETS = {
   oliva: {
     // Ondas viajeras por agotamiento del sustrato + control global → zigzags y triángulos
     model: 'AS', Da: 0.004, D2: 0, ra: 0.05, r2: 0, kappa: 0.5, ba: 0.0005, b2: 0.02,
-    noise: 0.3, globalCtl: 0.01, T: 8000, insertion: false, base: '#e6c6b0', pigment: '#4b2a3c',
-  },
-
-  conus: {
-    // Autómata celular elemental de Wolfram, regla 30 → triángulos de todos los tamaños
-    model: 'CA', rule: 30, noise: 0, T: 3000, insertion: false, size: 2, base: '#f5ecdc', pigment: '#5a2d14',
+    noise: 0.3, globalCtl: 0.01, T: 8000, insertion: false, amount: 0.6, base: '#e6c6b0', pigment: '#4b2a3c',
   },
 };
 
 export const DEFAULT_PATTERN = 'nautilus';
+
+/** Preset de referencia de cada modelo: sus constantes se cargan al cambiar de modelo. */
+export const MODEL_REFERENCE = { AI: 'nautilus', AS: 'oliva' };
