@@ -328,7 +328,6 @@ function rebuild() {
 
   ground.position.y = yBottom - 0.002;
 
-  updateHud();
   writeHash();
   scheduleFormula();
   drawMorpho();
@@ -348,10 +347,6 @@ function fixSeamNormals(n, { rows, cols, copies, count }) {
       n[i0 + 2] = n[i1 + 2] = z / len;
     }
   }
-}
-
-function updateHud() {
-  if (lastBuild) $('hud').textContent = t('hud.stats', lastBuild.stats.vertices, lastBuild.stats.triangles);
 }
 
 function applyMode() {
@@ -910,17 +905,21 @@ controls.addEventListener('start', () => {
 // ---------------------------------------------------------------------------
 
 const morpho = $('morpho');
+const morphoOv = $('morphoOv');
 const morphoDrawer = $('morphoDrawer');
-const MORPHO = { l: 34, r: 10, t: 10, b: 26, h: 210, logMax: 4 };
+const MORPHO = { l: 34, r: 10, t: 10, b: 26, logMax: 4 };
+// En el visor la altura se adapta al ancho del panel (más estrecho en móvil)
+const morphoHeight = (canvas) => (canvas === morpho ? 210 : Math.round(THREE.MathUtils.clamp(canvas.clientWidth * 0.68, 130, 200)));
 const MORPHO_REGIONS = [
   { cx: 2.6, cy: 0.17, rx: 1.35, ry: 0.17, color: '#8a5cb8' },  // bivalvos y braquiópodos
   { cx: 0.45, cy: 0.14, rx: 0.42, ry: 0.14, color: '#3f7fbf' }, // gasterópodos
   { cx: 0.33, cy: 0.36, rx: 0.22, ry: 0.27, color: '#c77d2e' }, // ammonoideos
 ];
 
-function morphoScales() {
-  const w = morpho.clientWidth;
-  const { l, r, t: top, b, h, logMax } = MORPHO;
+function morphoScales(canvas) {
+  const w = canvas.clientWidth;
+  const h = morphoHeight(canvas);
+  const { l, r, t: top, b, logMax } = MORPHO;
   return {
     w,
     x: (lw) => l + (lw / logMax) * (w - l - r),
@@ -932,15 +931,21 @@ function morphoScales() {
   };
 }
 
+/** Dibuja el morfoespacio en la barra lateral y en el visor 3D, si están visibles. */
 function drawMorpho() {
-  if (!morphoDrawer.open) return;
+  if (morphoDrawer.open) drawMorphoOn(morpho);
+  if (!$('ovMorpho').hidden) drawMorphoOn(morphoOv);
+}
+
+function drawMorphoOn(canvas) {
   const dpr = Math.min(window.devicePixelRatio, 2);
-  const { w, x, y } = morphoScales();
+  const h = morphoHeight(canvas);
+  canvas.style.height = `${h}px`;
+  const { w, x, y } = morphoScales(canvas);
   if (!w) return;
-  morpho.style.height = `${MORPHO.h}px`;
-  morpho.width = w * dpr;
-  morpho.height = MORPHO.h * dpr;
-  const ctx = morpho.getContext('2d');
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   const css = getComputedStyle(document.documentElement);
@@ -1025,19 +1030,22 @@ function drawMorpho() {
 }
 
 function pickMorpho(e) {
-  const rect = morpho.getBoundingClientRect();
-  const { lw, d } = morphoScales().inv(e.clientX - rect.left, e.clientY - rect.top);
+  const canvas = e.currentTarget;
+  const rect = canvas.getBoundingClientRect();
+  const { lw, d } = morphoScales(canvas).inv(e.clientX - rect.left, e.clientY - rect.top);
   controlsByKey.W.set(10 ** THREE.MathUtils.clamp(lw, 0, 4));
   controlsByKey.D.set(d);
   onShapeChange();
 }
-morpho.addEventListener('pointerdown', (e) => {
-  morpho.setPointerCapture(e.pointerId);
-  pickMorpho(e);
-});
-morpho.addEventListener('pointermove', (e) => {
-  if (morpho.hasPointerCapture(e.pointerId)) pickMorpho(e);
-});
+for (const canvas of [morpho, morphoOv]) {
+  canvas.addEventListener('pointerdown', (e) => {
+    canvas.setPointerCapture(e.pointerId);
+    pickMorpho(e);
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (canvas.hasPointerCapture(e.pointerId)) pickMorpho(e);
+  });
+}
 morphoDrawer.addEventListener('toggle', drawMorpho);
 
 // ---------------------------------------------------------------------------
@@ -1177,7 +1185,8 @@ function paintPattern() {
 function drawSpacetime() {
   const w = spacetime.clientWidth;
   const h = spacetime.clientHeight;
-  if (!w || !h) return;
+  // El perfil se dibuja aunque la pestaña esté oculta: también se ve sobre el visor 3D
+  if (!w || !h) return drawProfile();
   const dpr = Math.min(window.devicePixelRatio, 2);
   spacetime.width = Math.round(w * dpr);
   spacetime.height = Math.round(h * dpr);
@@ -1204,19 +1213,38 @@ new ResizeObserver(drawSpacetime).observe(spacetime);
  * (inhibidor o sustrato), cada una relativa a su máximo, y el umbral de pigmento.
  */
 function drawProfile() {
-  const w = profileCanvas.clientWidth;
-  const h = profileCanvas.clientHeight;
+  const row = profileRow ?? PATTERN_ROWS - 1;
+  const label = `${t('pig.profile.time')} ${Math.round((100 * row) / (PATTERN_ROWS - 1))} %`;
+  const css = getComputedStyle(document.documentElement);
+  const accent = css.getPropertyValue('--accent').trim();
+  // El activador va en el color del texto (se lee con cualquier pigmento y tema); la zona pigmentada, en el del pigmento
+  document.querySelectorAll('.lg-a').forEach((el) => el.style.setProperty('--lg', css.getPropertyValue('--text').trim()));
+  document.querySelectorAll('.lg-b').forEach((el) => el.style.setProperty('--lg', accent));
+  $('profileTime').textContent = label;
+  drawProfileOn(profileCanvas, row, css);
+
+  // Versión superpuesta en el visor 3D: solo tiene sentido con un patrón aplicado
+  if ($('ovProfile').hidden) return;
+  const has = pattern.on && !!patternValues;
+  $('ovProfileBody').hidden = !has;
+  $('ovProfileEmpty').hidden = has;
+  $('ovProfileTime').textContent = has ? label : '';
+  $('ovProfileRow').value = Math.round((1000 * row) / (PATTERN_ROWS - 1));
+  setFill($('ovProfileRow'));
+  if (has) drawProfileOn($('profileOv'), row, css);
+}
+
+function drawProfileOn(canvas, row, css) {
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
   if (!w || !h) return;
   const dpr = Math.min(window.devicePixelRatio, 2);
-  profileCanvas.width = Math.round(w * dpr);
-  profileCanvas.height = Math.round(h * dpr);
-  const ctx = profileCanvas.getContext('2d');
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  const ctx = canvas.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const row = profileRow ?? PATTERN_ROWS - 1;
-  $('profileTime').textContent = `${t('pig.profile.time')} ${Math.round((100 * row) / (PATTERN_ROWS - 1))} %`;
   if (!patternValues || !patternSecond) return;
 
-  const css = getComputedStyle(document.documentElement);
   const pad = 8;
   const x = (k) => (k / (PROFILE_WIDTH - 1)) * w;
   const y = (v) => pad + (1 - v) * (h - 2 * pad);
@@ -1225,7 +1253,7 @@ function drawProfile() {
 
   // Zona pigmentada: activador por encima del umbral
   ctx.fillStyle = pattern.pigment;
-  ctx.globalAlpha = 0.22;
+  ctx.globalAlpha = 0.4;
   ctx.beginPath();
   ctx.moveTo(0, y(threshold));
   for (let k = 0; k < PROFILE_WIDTH; k++) ctx.lineTo(x(k), y(Math.max(threshold, aAt(k))));
@@ -1253,10 +1281,16 @@ function drawProfile() {
     ctx.stroke();
   };
   line((k) => patternSecond[row * PROFILE_WIDTH + k], css.getPropertyValue('--accent').trim(), 1.6, [5, 3]);
-  line(aAt, pattern.pigment, 2, []);
+  line(aAt, css.getPropertyValue('--text').trim(), 1.8, []);
   ctx.setLineDash([]);
 }
 new ResizeObserver(drawProfile).observe(profileCanvas);
+
+// El instante también se elige con el slider del perfil superpuesto
+$('ovProfileRow').addEventListener('input', (e) => {
+  profileRow = Math.round((e.target.value / 1000) * (PATTERN_ROWS - 1));
+  drawSpacetime();
+});
 
 // Elegir el instante del perfil sobre el registro espacio-tiempo (vista avanzada)
 function pickProfileRow(e) {
@@ -1490,11 +1524,12 @@ function markPatternCustom() {
   updateGallerySelection();
 }
 
-/** El patrón solo se ve sobre la superficie: en modo líneas se pasa a sólido. */
+/** El color se ve sobre la superficie: se quitan las líneas y se pasa a sólido. */
 function ensureSurfaceMode() {
-  if (state.mode === 'lines') {
+  if (state.mode !== 'solid') {
     state.mode = 'solid';
     applyMode();
+    writeHash();
   }
 }
 
@@ -1508,6 +1543,7 @@ function setPatternOn(on) {
   applyShellMaterial();
   updateGallerySelection();
   writeHash();
+  drawProfile();
 }
 
 function selectPattern(key) {
@@ -1530,8 +1566,14 @@ function syncPatternControls() {
   $('pigBase').value = pattern.base;
   $('pigColor').value = pattern.pigment;
   $('pigBody').hidden = !pattern.on;
-  $('profileSecond').textContent = t(pattern.model === 'AS' ? 'pig.profile.b' : 'pig.profile.h');
+  setSecondLabel();
   updateGallerySelection();
+}
+
+function setSecondLabel() {
+  const label = t(pattern.model === 'AS' ? 'pig.profile.b' : 'pig.profile.h');
+  $('profileSecond').textContent = label;
+  $('ovProfileSecond').textContent = label;
 }
 
 // Vista simple o avanzada: la avanzada muestra también las constantes del modelo
@@ -1585,7 +1627,8 @@ $('savePattern').addEventListener('click', () => {
   if (patternValues) download(patternCanvas.toDataURL('image/png'), `meinhardt_${pattern.preset}_seed${pattern.seed}.png`);
 });
 
-// Pestañas Forma | Pigmento. Entrar en Pigmento ya es para colorear la concha.
+// Pestañas Forma | Pigmento. Al entrar en Pigmento la concha pasa a sólido, en
+// color liso: el patrón lo elige el usuario en la galería.
 function showTab(name) {
   document.querySelectorAll('.tabs [data-tab]').forEach((b) => {
     const on = b.dataset.tab === name;
@@ -1596,7 +1639,7 @@ function showTab(name) {
   $('tab-pigment').hidden = name !== 'pigment';
   if (name === 'pigment') {
     computeThumbs();
-    if (!pattern.on) setPatternOn(true);
+    ensureSurfaceMode();
     drawSpacetime();
   }
 }
@@ -1615,6 +1658,33 @@ syncPatternControls();
 if (pattern.on) computePattern();
 
 // ---------------------------------------------------------------------------
+// Gráficos superpuestos en el visor 3D (desactivados por defecto)
+// ---------------------------------------------------------------------------
+
+const graphsMenu = $('graphsMenu');
+$('ovMorphoToggle').addEventListener('change', (e) => {
+  $('ovMorpho').hidden = !e.target.checked;
+  drawMorpho();
+});
+$('ovProfileToggle').addEventListener('change', (e) => {
+  $('ovProfile').hidden = !e.target.checked;
+  drawProfile();
+});
+document.addEventListener('pointerdown', (e) => {
+  if (graphsMenu.open && !graphsMenu.contains(e.target)) graphsMenu.open = false;
+});
+graphsMenu.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    graphsMenu.open = false;
+    graphsMenu.querySelector('summary').focus();
+  }
+});
+new ResizeObserver(() => {
+  if (!$('ovMorpho').hidden) drawMorphoOn(morphoOv);
+  if (!$('ovProfile').hidden) drawProfile();
+}).observe($('overlays'));
+
+// ---------------------------------------------------------------------------
 // Idioma
 // ---------------------------------------------------------------------------
 
@@ -1625,7 +1695,6 @@ function applyLanguage(lang) {
   buildPresetOptions();
   updateGrowButton();
   updateFullscreenButton();
-  updateHud();
   drawMorpho();
   document.querySelectorAll('.lang button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === getLang())));
   // applyStatic reemplaza el HTML con TeX sin componer
@@ -1633,7 +1702,7 @@ function applyLanguage(lang) {
   if (infoDialog.open) openInfo();
   updateGalleryLabels();
   updatePatternMessage();
-  $('profileSecond').textContent = t(pattern.model === 'AS' ? 'pig.profile.b' : 'pig.profile.h');
+  setSecondLabel();
   Object.values(pigControls).forEach((c) => c.relabel());
   drawSpacetime();
   if (!formulaPanel.hidden) setFormulaOpen(true);

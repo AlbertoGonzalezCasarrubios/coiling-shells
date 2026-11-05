@@ -275,6 +275,16 @@
             <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 15V3M5 15h12M5 15l-3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
             <span data-i18n="tb.axes">Axes</span>
           </button>
+          <details class="chip-menu" id="graphsMenu">
+            <summary class="chip" data-i18n-title="tb.graphs.hint">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3v14h14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 13.5c2-6 3.5-8 5-3s3 4 6-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              <span data-i18n="tb.graphs">Graphs</span>
+            </summary>
+            <div class="menu">
+              <label class="toggle"><input type="checkbox" id="ovMorphoToggle" /><span data-i18n="graphs.morpho">Position in the morphospace</span></label>
+              <label class="toggle"><input type="checkbox" id="ovProfileToggle" /><span data-i18n="graphs.profile">Activator and inhibitor on the margin</span></label>
+            </div>
+          </details>
           <button type="button" class="chip" id="openInfo">
             <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="6.2" r="1.1" fill="currentColor"/></svg>
             <span data-i18n="tb.info">About</span>
@@ -294,7 +304,28 @@
           <span data-i18n="tb.showInfo">Show info</span>
         </button>
 
-        <div class="hud" id="hud"></div>
+        <div class="overlays" id="overlays">
+          <section class="overlay" id="ovMorpho" hidden>
+            <h3 data-i18n="morpho.title">Morphospace W – D</h3>
+            <canvas id="morphoOv" class="morpho"></canvas>
+          </section>
+          <section class="overlay" id="ovProfile" hidden>
+            <div class="panel-row">
+              <h3 data-i18n="pig.profile">Margin profile</h3>
+              <span class="status" id="ovProfileTime"></span>
+            </div>
+            <div id="ovProfileBody">
+              <canvas id="profileOv" class="profile"></canvas>
+              <div class="profile-legend">
+                <span class="lg-a" data-i18n="pig.profile.a">Activator a</span>
+                <span class="lg-b" id="ovProfileSecond">Inhibitor h</span>
+                <span class="lg-t" data-i18n="pig.profile.threshold">pigment threshold</span>
+              </div>
+              <input type="range" id="ovProfileRow" min="0" max="1000" step="1" value="1000" data-i18n-title="graphs.time" />
+            </div>
+            <p class="note" id="ovProfileEmpty" data-i18n="graphs.profile.empty" hidden></p>
+          </section>
+        </div>
 
         <div class="views" role="group" data-i18n-title="views.label">
           <button type="button" data-view="iso" data-i18n="view.iso" data-i18n-title="view.iso.hint">3/4</button>
@@ -321,7 +352,7 @@
     <div class="info-tabs" role="tablist" data-i18n-title="info.pages">
       <button type="button" role="tab" data-page="raup" aria-selected="true" data-i18n="info.page.raup">Raup · shape</button>
       <button type="button" role="tab" data-page="meinhardt" aria-selected="false" tabindex="-1" data-i18n="info.page.meinhardt">Meinhardt · pigment</button>
-      <button type="button" role="tab" data-page="app" aria-selected="false" tabindex="-1" data-i18n="info.page.app">App &amp; credits</button>
+      <button type="button" role="tab" data-page="app" aria-selected="false" tabindex="-1" data-i18n="info.page.app">Credits</button>
     </div>
     <div class="info-body" id="infoBody">
       <div class="info-page" data-page="raup" role="tabpanel" data-i18n-html="info.raup"></div>

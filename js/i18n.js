@@ -41,12 +41,13 @@ const AS_TEX = String.raw`\[
   \end{aligned}
 \]`;
 
-const GLOBAL_TEX = String.raw`\[ \frac{dc}{dt} = r_c\,\big(\langle a \rangle - c\big), \qquad b_a^{\mathrm{ef}} = b_a + \frac{g}{1 + 40\,c} \]`;
+const GLOBAL_TEX = String.raw`\[ \frac{dc}{dt} = 0.02\,\big(\langle a \rangle - c\big), \qquad b_a^{\mathrm{ef}} = b_a + \frac{g}{1 + 40\,c} \]`;
 
 const MEIN_REFS = `
   <ul class="refs-list">
     <li>Turing, A. M. (1952). The chemical basis of morphogenesis. <i>Phil. Trans. R. Soc. B</i> 237, 37–72.</li>
     <li>Gierer, A. &amp; Meinhardt, H. (1972). A theory of biological pattern formation. <i>Kybernetik</i> 12, 30–39.</li>
+    <li>Ermentrout, B., Campbell, J. &amp; Oster, G. (1986). A model for shell patterns based on neural activity. <i>The Veliger</i> 28, 369–388.</li>
     <li>Meinhardt, H. &amp; Klingler, M. (1987). A model for pattern formation on the shells of molluscs. <i>J. Theor. Biol.</i> 126, 63–89.</li>
     <li>Fowler, D. R., Meinhardt, H. &amp; Prusinkiewicz, P. (1992). Modeling seashells. <i>Computer Graphics (SIGGRAPH '92)</i> 26(2), 379–387.</li>
     <li>Meinhardt, H. (2009). <i>The Algorithmic Beauty of Sea Shells</i>, 4th ed. Springer.</li>
@@ -104,6 +105,12 @@ export const STRINGS = {
     'tb.equation': 'Equation',
     'tb.info': 'About',
     'tb.axes': 'Axes',
+    'tb.graphs': 'Graphs',
+    'tb.graphs.hint': 'Show charts on top of the 3D view',
+    'graphs.morpho': 'Position in the morphospace (W – D)',
+    'graphs.profile': 'Activator and inhibitor on the margin',
+    'graphs.profile.empty': 'Choose a pattern in the Pigment tab to see the activator and the inhibitor or substrate along the margin.',
+    'graphs.time': 'Moment of growth shown in the profile',
     'tab.shape': 'Shape · Raup',
     'tab.pigment': 'Pigment · Meinhardt',
     'tab.label': 'Sections',
@@ -136,17 +143,17 @@ export const STRINGS = {
     'pig.recipes': '<strong>How to change the type of pattern</strong><ul><li><b>Bands along the spiral</b>: activator–inhibitor with a far-reaching inhibitor (D<sub>h</sub> ≫ D<sub>a</sub>) that is faster than the activator (r<sub>h</sub> &gt; r<sub>a</sub>).</li><li><b>Stripes parallel to the margin</b>: activator–inhibitor with D<sub>h</sub> ≈ 0 (far left) and a longer-lived inhibitor (r<sub>h</sub> &lt; r<sub>a</sub>).</li><li><b>Oblique lines and triangles</b>: activator–substrate with a slowly recovering substrate (small b<sub>b</sub>); global control g &gt; 0 for triangles.</li></ul>',
     'pig.params': 'Pattern controls',
     'pig.advanced': 'Advanced: model constants',
-    'pig.advanced.hint': 'Here you control everything. Constants use logarithmic sliders whose leftmost position is 0. Near some values the pattern changes abruptly: those are real thresholds of the model, where one type of pattern turns into another. Changing the model loads constants that work for it.',
+    'pig.advanced.hint': 'Every constant of the equations. The constants span several orders of magnitude, so their sliders are logarithmic; the leftmost position is 0, which switches that term off. Near some values the pattern jumps from one type to another: these are real thresholds of the model. Changing the model loads constants that work for it.',
     'eq.mein.note': 'x: position along the margin (in cells) · t: time · s: source density of each cell',
     'pig.seed': 'Seed',
     'pig.newSeed': 'New seed',
     'pig.insertion': 'Growing margin (cell insertion)',
     'pig.insertion.desc': 'On: new cells are added to the margin as the shell grows, so pattern elements keep their real size and new stripes appear between the old ones. Off: the margin always has the same cells and the whole pattern simply grows with the shell.',
     'pig.save': 'Save pattern PNG',
-    'pig.note': 'This tab paints the shell with the selected pattern. Choose “Solid colour” to go back to a plain shell.',
+    'pig.note': 'The shell starts in a plain colour. Choose a pattern to paint it; each one is computed from Meinhardt’s equations, not drawn. “Solid colour” takes you back to a plain shell.',
     'info.page.raup': 'Raup · shape',
     'info.page.meinhardt': 'Meinhardt · pigment',
-    'info.page.app': 'App & credits',
+    'info.page.app': 'Credits',
     'info.pages': 'About sections',
     'tb.fullscreen': 'Fullscreen',
     'tb.exitFullscreen': 'Exit fullscreen',
@@ -176,9 +183,8 @@ export const STRINGS = {
     'view.umbilical.hint': 'From the base, into the umbilicus',
     'view.profile.hint': 'Side view, aperture seen edge-on',
     'hint.controls': 'Drag: rotate · Wheel: zoom · Right-click: pan · F: fullscreen · H: hide info',
-    'hud.stats': (v, t) => `${v.toLocaleString('en')} vertices · ${t.toLocaleString('en')} triangles`,
     loading: 'Loading Three.js…',
-    'info.title': 'About this app',
+    'info.title': 'About',
     'info.close': 'Close',
     params: {
       W: { name: 'Whorl expansion rate', desc: 'Growth factor of the aperture per revolution' },
@@ -190,18 +196,18 @@ export const STRINGS = {
       ringsPerTurn: { name: 'Growth lines per whorl' },
       lineWidth: { name: 'Line width (px)' },
       lineOpacity: { name: 'Line opacity' },
-      Da: { name: 'Activator diffusion' },
-      'D2.AI': { name: 'Inhibitor diffusion' },
-      'D2.AS': { name: 'Substrate diffusion' },
-      ra: { name: 'Activator decay' },
-      'r2.AI': { name: 'Inhibitor decay' },
-      'r2.AS': { name: 'Substrate decay' },
-      kappa: { name: 'Saturation' },
-      ba: { name: 'Basal activator production' },
-      'b2.AI': { name: 'Basal inhibitor production' },
-      'b2.AS': { name: 'Substrate production' },
+      Da: { name: 'Activator diffusion', desc: 'How fast the activator spreads to neighbouring cells' },
+      'D2.AI': { name: 'Inhibitor diffusion', desc: 'Range of the inhibition: high values give stable bands; near 0, oscillations and stripes' },
+      'D2.AS': { name: 'Substrate diffusion', desc: 'How fast the substrate spreads back into depleted cells' },
+      ra: { name: 'Activator decay', desc: 'Higher values, shorter-lived activator; it also sets the time scale of the pattern' },
+      'r2.AI': { name: 'Inhibitor decay', desc: 'Below the activator decay, the inhibitor outlives the activator and the margin oscillates' },
+      'r2.AS': { name: 'Substrate decay', desc: 'Loss of substrate in addition to its consumption by the reaction' },
+      kappa: { name: 'Saturation', desc: 'Limits self-enhancement: broader, flatter peaks' },
+      ba: { name: 'Basal activator production', desc: 'A little activator everywhere, so activation can start again' },
+      'b2.AI': { name: 'Basal inhibitor production', desc: 'A little inhibitor everywhere: makes activation harder to start' },
+      'b2.AS': { name: 'Substrate production', desc: 'How fast the substrate is replenished: low values, slow recovery and wide gaps between waves' },
       noise: { name: 'Cell-to-cell noise' },
-      globalCtl: { name: 'Global control' },
+      globalCtl: { name: 'Global control', desc: 'Strength of the hormone-like signal that triggers new waves when total activity drops' },
       pT: { name: 'Growth time', desc: 'Simulated time from apex to aperture: more time, more stripes along the direction of growth' },
       pSize: { name: 'Pattern size', desc: 'Sets the number of cells along the margin: a larger pattern means fewer cells' },
       pNoise: { name: 'Irregularity', desc: 'Differences between cells (σ): from regular to irregular patterns' },
@@ -231,94 +237,126 @@ export const STRINGS = {
         <cite>— David M. Raup, <i>Science</i> (1962)</cite>
       </blockquote>
 
-      <h3>Raup's model</h3>
-      <p>Most coiled shells — snails, ammonoids, nautiloids, clams, brachiopods — grow by adding material at the margin of the aperture without changing their overall shape. Growth of this kind (self-similar or <em>gnomonic</em>) traces a <strong>logarithmic spiral</strong>. In the early 1960s David M. Raup used one of the first computer plotters to draw shells from this principle, and in 1966 showed that just four parameters describe an enormous variety of real forms.</p>
+      <h3>Growing without changing shape</h3>
+      <p>A snail, an ammonite or a clam never remodels the part of the shell it has already built: it only adds new material at the edge of the aperture. If each new increment has the same proportions as the previous one, the shell gets larger but keeps its shape. This is called <strong>gnomonic</strong> or self-similar growth, and the curve that grows in this way is the <strong>logarithmic spiral</strong>, in which the distance to the centre is multiplied by the same factor in every turn. That is why a young snail looks like a scaled-down copy of an adult.</p>
+      <p>In the 1960s the palaeontologist David M. Raup turned this principle into a computer program that could draw a coiled shell from just four numbers. This let him explore not only the shells that exist, but every shell that <em>could</em> exist.</p>
+
+      <h3>The four parameters</h3>
+      <p>Imagine the aperture as a closed curve, here an ellipse, lying in a plane that contains the coiling axis. As the animal grows, this curve turns around the axis, gets larger and slides along the axis. Four numbers describe that movement:</p>
+      <ul>
+        <li><strong>\\(W\\) — whorl expansion rate.</strong> The factor by which the aperture grows in one full turn: with \\(W = 2\\) each whorl is twice as large as the one before. Low values (about 1.2 to 3) give many tightly packed whorls, as in most snails and ammonites. Very high values (hundreds to thousands) give a shell that is almost all aperture and completes only a small fraction of a turn, as in clams.</li>
+        <li><strong>\\(D\\) — distance from the axis.</strong> The distance from the axis to the inner edge of the aperture, divided by the distance to its outer edge. With \\(D = 0\\) the inner edge touches the axis, so the whorls close it up (no umbilicus). As \\(D\\) increases, a hollow opens along the axis (the umbilicus), until the tube coils loosely like a ram's horn.</li>
+        <li><strong>\\(T\\) — translation rate.</strong> How far the aperture slides along the axis compared with how far it moves away from it. With \\(T = 0\\) all the whorls lie in one plane (planispiral shells such as the nautilus, ammonites or <i>Planorbis</i>). Small values give low spires, as in the garden snail or <i>Trochus</i>; large values give tall, slender spires, as in <i>Turritella</i>.</li>
+        <li><strong>\\(S\\) — shape of the aperture.</strong> The ratio between the axial and the radial semi-axis of the ellipse. \\(S = 1\\) is a circle, \\(S > 1\\) an aperture taller than it is wide, and \\(S < 1\\) a flattened one.</li>
+      </ul>
+      <p>Two more settings are needed to draw a shell, although they do not change its proportions. The <strong>coiling direction</strong>: most snails are <em>dextral</em>, so with the apex up and the aperture facing you the aperture is on the right; <em>sinistral</em> shells, such as <i>Physa</i>, are their mirror images. And the <strong>number of whorls</strong> \\(N\\), which only sets how much of the spiral is drawn.</p>
 
       <h3>The equation</h3>
-      <p>A generating curve — here an ellipse that represents the aperture — lies in a plane containing the coiling axis \\(z\\) and is swept around it. After one full revolution (\\(\\Delta\\theta = 2\\pi\\)) every linear dimension has been multiplied by \\(W\\), so at angle \\(\\theta\\) the scale is \\(W^{\\theta/2\\pi}\\):</p>
+      <p>Each point of the shell is located by two angles. \\(\\theta\\) says how far along the spiral it is: \\(\\theta = 0\\) is the final aperture and negative values go back towards the apex. \\(\\varphi\\) says where it is around the aperture. After one full turn (\\(\\Delta\\theta = 2\\pi\\)) all lengths have been multiplied by \\(W\\), so at angle \\(\\theta\\) the scale factor is \\(W^{\\theta/2\\pi}\\):</p>
       ${GENERAL_TEX}
       ${DEFS_TEX}
-      <ul>
-        <li><strong>\\(W\\) — whorl expansion rate.</strong> How much the aperture grows per revolution. Low values give many tight whorls; very high values give a shell that is almost all aperture.</li>
-        <li><strong>\\(D\\) — distance from the axis.</strong> Ratio between the inner and outer edge of the aperture measured from the axis. \\(D = 0\\): the whorls touch the axis (no umbilicus); large \\(D\\): wide open umbilicus.</li>
-        <li><strong>\\(T\\) — translation rate.</strong> How far the generating curve moves along the axis relative to its radial growth. \\(T = 0\\) gives a planispiral shell (nautilus, ammonites); high values give tall spires (Turritella).</li>
-        <li><strong>\\(S\\) — shape of the generating curve.</strong> Axial / radial semi-axis ratio of the ellipse.</li>
-        <li>\\(\\varepsilon\\) chooses the coiling direction: −1 dextral (clockwise seen from the apex), +1 sinistral. \\(N\\) is just the number of whorls drawn.</li>
-      </ul>
-      <p>With this normalisation the outer edge of the final aperture lies at distance 1 from the axis and the inner edge at distance \\(D\\), matching Raup's definition. The apex is at the origin (\\(\\theta \\to -\\infty\\)).</p>
+      <p>The bracket contains the aperture: an ellipse with radial semi-axis \\(a\\) and axial semi-axis \\(b = S\\,a\\), whose centre lies at distance \\(r_c\\) from the axis. The factors \\(\\cos\\theta\\) and \\(\\sin\\theta\\) make it turn around the axis, the term \\(-T\\,r_c\\) moves it along the axis, and the factor in front makes it grow. \\(\\varepsilon = -1\\) for dextral shells and \\(+1\\) for sinistral ones.</p>
+      <p>With this normalisation the final aperture has its outer edge at distance 1 from the axis and its inner edge at distance \\(D\\), exactly as Raup defined it. The apex is at the origin, which the spiral approaches without ever reaching (\\(\\theta \\to -\\infty\\)).</p>
+
+      <h3>Reading the drawing</h3>
+      <p>In line mode the grid itself shows the geometry. Lines that run along the spiral (constant \\(\\varphi\\)) follow the path of one point of the aperture as the shell grows, like the spiral cords of many snails. Lines that go around the tube (constant \\(\\theta\\)) are <strong>growth lines</strong>: successive positions of the aperture, like the fine growth lines visible on real shells.</p>
+      <p>The view buttons give the standard orientations used in malacology: <em>apertural</em> (facing the aperture, apex up), <em>dorsal</em> or abapertural (from the opposite side), <em>apical</em> (from the apex, looking down the axis), <em>umbilical</em> (from below) and <em>profile</em> (from the side, with the aperture seen edge-on).</p>
 
       <h3>Theoretical morphospace</h3>
-      <p>Each combination of \\(W, D, T, S\\) is a point in a space of possible shells. For planispiral shells (\\(T = 0\\)) successive whorls just touch when \\(D = 1/W\\); above that curve they separate, a form that is very rare in nature. Raup's key finding was that real shells occupy only small regions of this space, which raises the question of why the rest is empty — functional, developmental or historical constraints. The <em>Morphospace</em> panel in the sidebar shows this plane.</p>
+      <p>Every combination of \\(W, D, T\\) and \\(S\\) is a point in a space of possible shells: the <strong>theoretical morphospace</strong>. Raup drew it as a cube with axes \\(W\\), \\(D\\) and \\(T\\). For planispiral shells there is an important boundary in the \\(W\\)–\\(D\\) plane: successive whorls just touch when \\(D = 1/W\\). Below that curve each whorl overlaps the one before; above it the whorls separate and the tube coils freely, a form that is rare (it occurs in some fossil groups, in a few snails and in the living cephalopod <i>Spirula</i>).</p>
+      <p>When Raup placed real shells in this space, he found that they occupy only a few small regions. Most gastropods have low \\(W\\) and small \\(D\\); ammonoids have low \\(W\\) and a wider range of \\(D\\); bivalves and brachiopods have very high \\(W\\). Most of the space is empty. Some of the missing forms would be mechanically weak or impractical to live in, some cannot be built by the way a particular group grows, and some simply never evolved. The morphospace turns this question into something that can be measured and compared.</p>
+      <p>The <em>Morphospace</em> panel in the sidebar shows where the current shell lies; it can also be shown on the 3D view from the <em>Graphs</em> menu. Click or drag on it to move to another point.</p>
 
       <h3>Bivalves</h3>
-      <p>The same equations produce the valves of clams, cockles and mussels. Each valve is a logarithmic spiral with a <strong>very high \\(W\\)</strong> (roughly \\(10^2\\)–\\(10^4\\) or more), a low \\(D\\) and a small \\(T\\), so it completes only a fraction of a whorl: the beak (umbo) is the apex. The second valve is approximately the mirror image across the plane of the aperture (the commissure), which the <em>Mirror valve</em> button draws:</p>
+      <p>The same equation produces the valves of clams and cockles. Each valve is a logarithmic spiral with a very high \\(W\\) (roughly \\(10^2\\) to \\(10^4\\) or more), a small \\(D\\) and a small \\(T\\), so it completes only part of a turn. The beak, or umbo, is the apex. A higher \\(W\\) gives a flatter valve; a lower \\(W\\) gives a prominent, curled umbo.</p>
+      <p>In equivalve bivalves the second valve is the mirror image of the first across the plane where the two valves meet (the commissure). This is what the <em>Mirror valve</em> button draws:</p>
       ${MIRROR_TEX}
-      <p>The model ignores hinge teeth, the ligament and ornament, and it cannot represent inequivalve shells (oysters, scallops) or brachiopods, whose two valves differ.</p>
+      <p>The mirror construction does not apply to oysters and scallops, whose two valves are different, or to brachiopods: although they look like clams, their two valves are dorsal and ventral rather than left and right, and are not mirror images of each other.</p>
+
+      <h3>What the model leaves out</h3>
+      <p>Raup's model is deliberately minimal. It assumes that the aperture keeps the same shape and orientation throughout life, so it ignores changes of proportion with age (allometry). It also assumes that the aperture lies in a plane containing the axis and that growth is perfectly regular. It does not include ornament (ribs, spines, varices, keels), the thickened lip of adult snails, internal structures such as the septa of ammonites and nautiloids, or the hinge of bivalves. Its value is not in reproducing one species in detail, but in showing how much of the diversity of shells follows from a few simple rules of growth.</p>
 
       <h3>References</h3>
       ${REFS}`,
     'info.meinhardt': `
-      <h3>Painting with chemistry</h3>
-      <p>A mollusc only adds pigment where the shell grows: along the margin of the aperture. Whatever happens there, cell by cell, is frozen into the shell as it grows. A shell pattern is therefore a <strong>record in time of a one-dimensional process</strong>: the horizontal direction along the margin is space \\(x\\), and the direction of growth is time. This was Hans Meinhardt's key insight, and it is why the panel in the <em>Pigment</em> tab shows a space–time diagram.</p>
+      <h3>A pattern that records its own history</h3>
+      <p>A mollusc can only add pigment where it adds shell: along the edge of the aperture, where the mantle secretes new material. Once laid down, the pigment cannot be changed; the shell simply grows beyond it. A shell pattern is therefore a <strong>record in time of a one-dimensional process</strong>. The direction along the margin is space (\\(x\\)) and the direction of growth is time. Reading a shell from the apex to the aperture is like watching, frame by frame, what happened along the margin throughout the animal's life.</p>
+      <p>This was the central idea of Hans Meinhardt's work, and it is why the <em>Pigment</em> tab shows a <strong>space–time record</strong>: a flat image in which the horizontal axis is the margin and the vertical axis is time. That image is then wrapped onto the 3D shell.</p>
 
-      <h3>Local activation, long-range inhibition</h3>
-      <p>Following Turing (1952), Gierer and Meinhardt (1972) showed that patterns arise spontaneously from two interacting substances: an <strong>activator</strong> \\(a\\) that enhances its own production (autocatalysis), and an antagonist that diffuses faster and keeps it in check. A small random excess of activator grows locally, while the fast-spreading antagonist prevents activation nearby. The result is a regular pattern that nobody "drew".</p>
+      <h3>Local activation and long-range inhibition</h3>
+      <p>How can cells that only interact with their neighbours produce a regular pattern? Alan Turing (1952) showed that two substances that react and diffuse can break a uniform state on their own. Gierer and Meinhardt (1972) identified the essential ingredients: an <strong>activator</strong> that promotes its own production (autocatalysis), and an <strong>antagonist</strong> that acts over a longer distance.</p>
+      <p>A small random excess of activator at one point grows, because the activator amplifies itself. The antagonist spreads further and suppresses activation in the surroundings. The result is a peak of activation with a zone of inhibition around it, so the margin fills with peaks at fairly regular distances. No cell "knows" the pattern: it emerges from the interactions. The antagonism can work in two ways, and each produces a different family of patterns.</p>
 
       <h3>Activator–inhibitor model</h3>
       ${AI_TEX}
+      <p>The activator \\(a\\) promotes its own production (the term \\(a^2\\)) and also the production of an inhibitor \\(h\\), which slows it down (\\(h\\) in the denominator). Each substance decays at its own rate (\\(r_a\\), \\(r_h\\)) and spreads to neighbouring cells by diffusion (\\(D_a\\), \\(D_h\\)). The remaining terms are:</p>
       <ul>
-        <li>\\(s\\) is the <em>source density</em>: each cell's ability to perform the reaction. It varies slightly from cell to cell (the <em>noise</em> parameter), which is what starts the patterns.</li>
-        <li>\\(r_a, r_h\\) are decay rates and \\(D_a, D_h\\) diffusion rates; \\(b_a, b_h\\) are small basal productions; \\(\\kappa\\) saturates the autocatalysis and makes peaks broader.</li>
-        <li>If the inhibitor is fast (\\(r_h > r_a\\)) and spreads far (\\(D_h \\gg D_a\\)), the peaks are <strong>stable in time</strong> and draw bands along the direction of growth.</li>
-        <li>If the inhibitor lives longer than the activator (\\(r_h < r_a\\)), each burst of activation is shut down by its own inhibitor and the system <strong>oscillates</strong>, drawing stripes parallel to the margin.</li>
+        <li>\\(s\\), the <strong>source density</strong>: the ability of each cell to carry out the reaction. It varies slightly from one cell to the next, and these small differences are the seeds of the pattern.</li>
+        <li>\\(b_a\\) and \\(b_h\\): small basal productions. \\(b_a\\) keeps a little activator everywhere, so activation can start again after it has faded.</li>
+        <li>\\(\\kappa\\): saturation. Activator production cannot increase without limit, so the peaks become broader and flatter.</li>
+      </ul>
+      <p>The type of pattern depends mainly on how fast and how far the inhibitor acts compared with the activator:</p>
+      <ul>
+        <li>If the inhibitor spreads much further than the activator (\\(D_h \\gg D_a\\)) and reacts quickly (\\(r_h > r_a\\)), the peaks are <strong>stable</strong>. Each active spot on the margin stays active for a long time and draws a <strong>band along the direction of growth</strong>.</li>
+        <li>If the inhibitor barely spreads but lasts longer than the activator (\\(r_h < r_a\\)), each burst of activation builds up the inhibitor that later switches it off, and the cell <strong>oscillates</strong>. Neighbouring cells pull each other into step, so they switch on and off together, and each burst draws a <strong>stripe parallel to the margin</strong>, that is, parallel to the growth lines.</li>
       </ul>
 
       <h3>Activator–substrate model</h3>
       ${AS_TEX}
-      <p>Here autocatalysis consumes a substrate \\(b\\) that is produced at rate \\(b_b\\). Where activation is high the substrate is <strong>depleted</strong>, and the cell needs time to recover before it can be activated again: it becomes <strong>refractory</strong>. Activation then spreads to neighbouring cells as a <strong>travelling wave</strong>, which draws an oblique line on the shell. When two waves meet they <strong>annihilate</strong>, because each runs into the refractory wake of the other, and the lines form a V.</p>
+      <p>Here the antagonist is not an inhibitor but a <strong>substrate</strong> \\(b\\) that the activator needs and <strong>consumes</strong>. The substrate is produced everywhere at rate \\(b_b\\) and spreads by diffusion (\\(D_b\\)). Where activation is high, the substrate is used up and the activation cannot last there. It passes to the neighbouring cells, which still have substrate, while the cell left behind becomes <strong>refractory</strong>: it needs time to rebuild its substrate before it can be activated again.</p>
+      <p>Activation therefore travels along the margin as a <strong>wave</strong>, and as the shell grows the moving wave leaves an <strong>oblique line</strong>. When two waves moving in opposite directions meet, each runs into the depleted wake of the other and both <strong>disappear</strong>, closing a V. Where the substrate has recovered, a new wave can start spontaneously and split into two waves moving apart, which opens an inverted V.</p>
 
       <h3>Global control: the triangles of <i>Oliva porphyria</i></h3>
-      <p>Meinhardt and Klingler (1987) explained the tent pattern of <i>Oliva</i> with a third substance that is shared by the whole margin, like a hormone. It measures the total activity: when waves annihilate and activity drops, the signal falls and makes it easier to trigger new waves, which split into new lines and close the triangles. This app uses a simplified version of that mechanism:</p>
+      <p>Annihilating and branching waves produce zigzags, but not the large triangles of <i>Oliva porphyria</i>, where new lines start at many places at the same time. Meinhardt and Klingler (1987) explained them with an additional substance shared by the whole animal, like a hormone. It measures the total activity of the margin: when many waves annihilate and activity drops, the signal falls, and this makes it easier for new waves to start everywhere. This app uses a simplified version of the mechanism, which acts on the basal activator production:</p>
       ${GLOBAL_TEX}
+      <p>\\(c\\) follows the mean activator \\(\\langle a \\rangle\\) with a delay, and \\(g\\) sets the strength of the control. With \\(g = 0\\) there is no global signal.</p>
 
-      <h3>Which pattern comes from which dynamics</h3>
+      <h3>Which pattern comes from which mechanism</h3>
       <ul>
-        <li><strong>Bands along the spiral</strong> (<i>Cepaea nemoralis</i>): stable activator peaks.</li>
-        <li><strong>Stripes parallel to the margin</strong> (the flames of <i>Nautilus</i>): oscillation; the irregularity comes from weak coupling between cells.</li>
-        <li><strong>Oblique lines, zigzags and triangles</strong> (<i>Oliva</i>, many <i>Conus</i>): travelling waves, their collisions and new initiations.</li>
+        <li><strong>Bands along the spiral</strong>, as in the banded snail <i>Cepaea nemoralis</i>: stable activator peaks (activator–inhibitor with a far-reaching inhibitor).</li>
+        <li><strong>Stripes parallel to the growth lines</strong>, like the flames of <i>Nautilus</i>: oscillations synchronised between neighbouring cells (activator–inhibitor with a long-lived inhibitor). Their irregular, branching outline comes from the differences between cells.</li>
+        <li><strong>Oblique lines, zigzags and triangles</strong>, as in <i>Oliva</i> and many cone shells: travelling waves, their annihilation and branching and, for the triangles, global control (activator–substrate).</li>
       </ul>
+      <p>A small change in a single constant can turn one type into another. The same mechanism, with slightly different rates, explains very different shells.</p>
 
-      <h3>Growth of the margin</h3>
-      <p>A logarithmic spiral turning at a constant rate corresponds to growth at a constant relative rate, so every whorl gets the same simulation time. But the margin gets longer as the shell grows. With <strong>cell insertion</strong>, new cells are added at random positions in proportion to the size of the shell: pattern elements keep their absolute size and new stripes are intercalated, as in many real shells. Without it, the number of cells is fixed and the pattern simply scales with the shell, which is closer to shells like <i>Cepaea</i>, whose bands are present from the apex and just widen.</p>
+      <h3>Seeing the antagonist at work</h3>
+      <p>The pigment only shows the activator, but the antagonist is what shapes it. The <em>margin profile</em> plots, for one moment of growth, the activator and the inhibitor (or substrate) along the margin, together with the pigment threshold. In a band pattern each activator peak sits on a broad cushion of inhibitor; in a wave pattern the substrate drops just behind each moving peak. Choose the moment by clicking on the space–time record in the advanced controls, or with the slider of the profile shown on the 3D view (<em>Graphs</em> menu).</p>
+
+      <h3>A margin that grows</h3>
+      <p>A logarithmic spiral turning at a constant rate means that the shell grows at a constant relative rate, so each whorl takes the same amount of time. But the margin also gets longer: with \\(W = 2\\) the perimeter of the aperture doubles in every whorl. There are two possibilities.</p>
+      <ul>
+        <li>If <strong>new cells are inserted</strong> into the margin as it grows, the pattern elements keep their real size and new stripes or bands appear between the old ones, as in many real shells.</li>
+        <li>If the number of cells stays fixed, the cells simply become larger and the whole pattern widens with the shell, like the bands of <i>Cepaea</i>, which are already present near the apex and only broaden.</li>
+      </ul>
+      <p>The <em>Growing margin</em> option, in the advanced controls, chooses between the two.</p>
 
       <h3>From the record to the shell</h3>
-      <p>The space–time record is wrapped onto the 3D surface: the position along the margin becomes the angle \\(\\varphi\\) around the aperture, and time becomes the coiling angle \\(\\theta\\). Fowler, Meinhardt and Prusinkiewicz (1992) combined both models in exactly this way, joining Raup's geometry with Meinhardt's pigmentation.</p>
+      <p>The space–time record is wrapped onto Raup's surface: the position along the margin becomes the angle \\(\\varphi\\) around the aperture, and time becomes the coiling angle \\(\\theta\\). Fowler, Meinhardt and Prusinkiewicz (1992) joined the two models in this way. Pigment is laid down wherever the activator exceeds a threshold, so the edges of the pattern are sharp. Only the outer layer of the shell is pigmented, so the inside of the aperture is shown without pigment, with a light pearly sheen.</p>
 
-      <h3>Simple and advanced controls</h3>
-      <p>The simple controls are not hidden multipliers: each one is a real quantity of the model. <em>Pattern size</em> sets the number of cells along the margin (256 at ×1): since diffusion is measured in cells, fewer cells make every element larger relative to the shell. <em>Growth time</em> is \\(T\\), <em>irregularity</em> is the cell-to-cell variation \\(\\sigma\\) of the source density, and <em>pigment amount</em> moves the pigmentation threshold. The <em>Advanced</em> view shows these same quantities together with the constants of the equations, on logarithmic sliders because they span several orders of magnitude, so everything can be controlled from there. Changing the model loads constants that work for it. If a combination of values forms no pattern (the activator dies out or the margin stays uniform), the app says so instead of rescaling tiny differences into a false pattern. The advanced view also shows the <em>margin profile</em>: the activator and the inhibitor (or substrate) along the margin at the moment you pick on the space–time record, with the pigmentation threshold, which is the clearest way to see local activation and lateral inhibition at work.</p>
+      <h3>What the controls mean</h3>
+      <ul>
+        <li><strong>Pattern size</strong>: the number of cells along the margin. Diffusion acts between neighbouring cells, so with fewer cells each element covers a larger part of the shell.</li>
+        <li><strong>Growth time</strong>: the time covered from the apex to the aperture. With more time, oscillations and waves complete more cycles and leave more stripes and lines.</li>
+        <li><strong>Irregularity</strong>: how much the source density varies between cells. Low values give regular patterns; high values give irregular, branching ones.</li>
+        <li><strong>Pigment amount</strong>: moves the threshold above which pigment is laid down. It makes the dark areas wider or narrower without changing the dynamics underneath.</li>
+        <li><strong>Seed</strong>: chooses the random differences between cells. Each seed gives a different but equally valid individual, just as no two shells of the same species are identical.</li>
+      </ul>
+      <p>The advanced controls give access to every constant of the equations. Near certain values the pattern changes abruptly from one type to another: these are real thresholds of the model, not errors. If a combination forms no pattern at all, because the activator dies out or the margin stays uniform, the app says so instead of showing an empty shell.</p>
 
-      <h3>Only the outside is pigmented</h3>
-      <p>The pigment is laid down in the outer layer of the shell, so the inside of the aperture is drawn unpigmented, with a light nacre-like sheen.</p>
-
-      <h3>Simplifications</h3>
-      <p>The equations are integrated with an explicit Euler scheme, choosing a time step small enough to be stable, on a margin of 256 cells at the default pattern size. Pigment is laid down where the activator, rescaled to its 2–99.5 % range (ignoring the initial transient at the apex), exceeds a threshold, as in Meinhardt's simulations; this gives sharp edges. The presets are approximate reproductions of the pattern types, not fits to real specimens.</p>
+      <h3>Limits of the models</h3>
+      <p>These are minimal models. The real molecules have not been identified in any mollusc, and the margin is treated as a closed ring of equivalent cells. Ermentrout, Campbell and Oster (1986) proposed instead that the pattern is controlled by nerves in the mantle, an idea that leads to very similar dynamics of local excitation and lateral inhibition. The presets reproduce the type of pattern of each species, not a fit to real specimens. Even so, the models capture something real: a few rules, with different rates, explain the whole range from bands and flames to zigzags and triangles, including details such as lines that branch or annihilate when they meet, which are seen on real shells.</p>
 
       <h3>References</h3>
       ${MEIN_REFS}`,
     'info.app': `
-      <h3>How the app works</h3>
-      <ul>
-        <li>The surface is evaluated on a grid of \\(\\theta \\times \\varphi\\) points and each cell is split into two triangles. It is regenerated on every slider change.</li>
-        <li>Lines of constant \\(\\varphi\\) are <em>spiral lines</em>; lines of constant \\(\\theta\\) are <em>growth lines</em>, the successive positions of the aperture.</li>
-        <li>The shell is centred and scaled to a fixed size, so the coordinates are relative: only the shape matters, not the absolute size.</li>
-        <li>In line mode, hidden lines are removed by drawing the surface into the depth buffer only.</li>
-        <li>The axes gizmo shows the \\(x, y, z\\) frame of the equation (\\(z\\) = coiling axis). The view buttons use the standard orientations of malacology: apertural, dorsal (abapertural), apical, umbilical and profile.</li>
-        <li>The pigmentation is simulated in a background thread (a Web Worker) and applied to the mesh as a texture: the position along the aperture is the horizontal texture coordinate and \\(\\theta\\) the vertical one.</li>
-        <li>Built with Three.js (WebGL) and MathJax. The current shell is stored in the URL, so you can share a link to it.</li>
-      </ul>
+      <h3>Author</h3>
+      <p><strong>Alberto González Casarrubios</strong>, Universidad Complutense de Madrid. For questions, suggestions or errors, write to <a href="mailto:albert23@ucm.es">albert23@ucm.es</a>.</p>
 
-      <h3>Contact</h3>
-      <p>For any questions or comments, contact <strong>Alberto González Casarrubios</strong> (Universidad Complutense de Madrid): <a href="mailto:albert23@ucm.es">albert23@ucm.es</a>.</p>
+      <h3>How to cite</h3>
+      <p>González Casarrubios, A. (2026). <i>Theoretical Shells: Form and Colour</i>. <a href="https://albertogonzalezcasarrubios.github.io/aplicaciones-varias/shells-morphology/" target="_blank" rel="noopener">albertogonzalezcasarrubios.github.io/aplicaciones-varias/shells-morphology</a></p>
+
+      <h3>Source code</h3>
+      <p>The source code and its technical documentation are on <a href="https://github.com/AlbertoGonzalezCasarrubios/aplicaciones-varias/tree/main/shells-morphology" target="_blank" rel="noopener">GitHub</a>.</p>
 
       <h3>License</h3>
       <p>This work is licensed under <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)</a>. You may share and adapt it as long as you give appropriate credit, but not for commercial purposes.</p>`,
@@ -375,6 +413,12 @@ export const STRINGS = {
     'tb.equation': 'Ecuación',
     'tb.info': 'Info',
     'tb.axes': 'Ejes',
+    'tb.graphs': 'Gráficos',
+    'tb.graphs.hint': 'Mostrar gráficos sobre la vista 3D',
+    'graphs.morpho': 'Posición en el morfoespacio (W – D)',
+    'graphs.profile': 'Activador e inhibidor en el borde',
+    'graphs.profile.empty': 'Elige un patrón en la pestaña Pigmento para ver el activador y el inhibidor o el sustrato a lo largo del borde.',
+    'graphs.time': 'Instante del crecimiento que muestra el perfil',
     'tab.shape': 'Forma · Raup',
     'tab.pigment': 'Pigmento · Meinhardt',
     'tab.label': 'Secciones',
@@ -407,17 +451,17 @@ export const STRINGS = {
     'pig.recipes': '<strong>Cómo cambiar de tipo de patrón</strong><ul><li><b>Bandas a lo largo de la espiral</b>: activador-inhibidor con un inhibidor de largo alcance (D<sub>h</sub> ≫ D<sub>a</sub>) más rápido que el activador (r<sub>h</sub> &gt; r<sub>a</sub>).</li><li><b>Rayas paralelas al borde</b>: activador-inhibidor con D<sub>h</sub> ≈ 0 (a la izquierda del todo) y un inhibidor de vida más larga (r<sub>h</sub> &lt; r<sub>a</sub>).</li><li><b>Líneas oblicuas y triángulos</b>: activador-sustrato con un sustrato que se recupera despacio (b<sub>b</sub> pequeño); control global g &gt; 0 para los triángulos.</li></ul>',
     'pig.params': 'Controles del patrón',
     'pig.advanced': 'Avanzado: constantes del modelo',
-    'pig.advanced.hint': 'Aquí se controla todo. Las constantes usan sliders logarítmicos cuya posición más a la izquierda es 0. Cerca de algunos valores el patrón cambia de golpe: son umbrales reales del modelo, donde un tipo de patrón se convierte en otro. Al cambiar de modelo se cargan constantes que funcionan con él.',
+    'pig.advanced.hint': 'Todas las constantes de las ecuaciones. Abarcan varios órdenes de magnitud, así que sus sliders son logarítmicos; la posición de la izquierda del todo es 0 y anula ese término. Cerca de algunos valores el patrón salta de un tipo a otro: son umbrales reales del modelo. Al cambiar de modelo se cargan constantes que funcionan con él.',
     'eq.mein.note': 'x: posición a lo largo del borde (en células) · t: tiempo · s: densidad de fuente de cada célula',
     'pig.seed': 'Semilla',
     'pig.newSeed': 'Nueva semilla',
     'pig.insertion': 'Borde que crece (inserción de células)',
     'pig.insertion.desc': 'Activado: al crecer la concha se añaden células al borde, así que los elementos del patrón mantienen su tamaño real y aparecen rayas nuevas entre las antiguas. Desactivado: el borde tiene siempre las mismas células y todo el patrón simplemente crece con la concha.',
     'pig.save': 'Guardar patrón PNG',
-    'pig.note': 'Esta pestaña pinta la concha con el patrón elegido. Elige «Color sólido» para volver a una concha lisa.',
+    'pig.note': 'La concha empieza en un color liso. Elige un patrón para pintarla: cada uno se calcula con las ecuaciones de Meinhardt, no está dibujado. «Color sólido» vuelve a la concha lisa.',
     'info.page.raup': 'Raup · forma',
     'info.page.meinhardt': 'Meinhardt · pigmento',
-    'info.page.app': 'App y créditos',
+    'info.page.app': 'Créditos',
     'info.pages': 'Secciones de la información',
     'tb.fullscreen': 'Pantalla completa',
     'tb.exitFullscreen': 'Salir de pantalla completa',
@@ -447,9 +491,8 @@ export const STRINGS = {
     'view.umbilical.hint': 'Desde la base, hacia el ombligo',
     'view.profile.hint': 'Vista lateral, apertura de canto',
     'hint.controls': 'Arrastrar: rotar · Rueda: zoom · Clic derecho: panear · F: pantalla completa · H: ocultar info',
-    'hud.stats': (v, t) => `${v.toLocaleString('es')} vértices · ${t.toLocaleString('es')} triángulos`,
     loading: 'Cargando Three.js…',
-    'info.title': 'Acerca de esta app',
+    'info.title': 'Información',
     'info.close': 'Cerrar',
     params: {
       W: { name: 'Expansión de la espiral', desc: 'Factor de crecimiento de la apertura por vuelta' },
@@ -461,18 +504,18 @@ export const STRINGS = {
       ringsPerTurn: { name: 'Líneas de crecimiento / vuelta' },
       lineWidth: { name: 'Grosor de línea (px)' },
       lineOpacity: { name: 'Opacidad de líneas' },
-      Da: { name: 'Difusión del activador' },
-      'D2.AI': { name: 'Difusión del inhibidor' },
-      'D2.AS': { name: 'Difusión del sustrato' },
-      ra: { name: 'Decaimiento del activador' },
-      'r2.AI': { name: 'Decaimiento del inhibidor' },
-      'r2.AS': { name: 'Decaimiento del sustrato' },
-      kappa: { name: 'Saturación' },
-      ba: { name: 'Producción basal del activador' },
-      'b2.AI': { name: 'Producción basal del inhibidor' },
-      'b2.AS': { name: 'Producción de sustrato' },
+      Da: { name: 'Difusión del activador', desc: 'Lo rápido que el activador pasa a las células vecinas' },
+      'D2.AI': { name: 'Difusión del inhibidor', desc: 'Alcance de la inhibición: con valores altos, bandas estables; cerca de 0, oscilaciones y rayas' },
+      'D2.AS': { name: 'Difusión del sustrato', desc: 'Lo rápido que el sustrato vuelve a las células agotadas' },
+      ra: { name: 'Decaimiento del activador', desc: 'Con valores altos el activador dura menos; también marca la escala de tiempo del patrón' },
+      'r2.AI': { name: 'Decaimiento del inhibidor', desc: 'Si es menor que el del activador, el inhibidor dura más y el borde oscila' },
+      'r2.AS': { name: 'Decaimiento del sustrato', desc: 'Pérdida de sustrato aparte de la que consume la reacción' },
+      kappa: { name: 'Saturación', desc: 'Limita la autocatálisis: picos más anchos y planos' },
+      ba: { name: 'Producción basal del activador', desc: 'Un poco de activador en todas partes, para que la activación pueda reiniciarse' },
+      'b2.AI': { name: 'Producción basal del inhibidor', desc: 'Un poco de inhibidor en todas partes: dificulta que empiece la activación' },
+      'b2.AS': { name: 'Producción de sustrato', desc: 'Lo rápido que se repone el sustrato: con valores bajos se recupera despacio y las ondas quedan más separadas' },
       noise: { name: 'Ruido entre células' },
-      globalCtl: { name: 'Control global' },
+      globalCtl: { name: 'Control global', desc: 'Intensidad de la señal, parecida a una hormona, que dispara ondas nuevas cuando baja la actividad total' },
       pT: { name: 'Tiempo de crecimiento', desc: 'Tiempo simulado del ápice a la apertura: más tiempo, más rayas en la dirección de crecimiento' },
       pSize: { name: 'Tamaño del patrón', desc: 'Fija el número de células a lo largo del borde: un patrón mayor significa menos células' },
       pNoise: { name: 'Irregularidad', desc: 'Diferencias entre células (σ): de patrones regulares a irregulares' },
@@ -503,94 +546,126 @@ export const STRINGS = {
         <p class="translation">«La forma básica de muchas conchas enrolladas de gasterópodos puede definirse mediante cuatro parámetros. Un ordenador digital con un trazador automático puede usarse para reconstruir gráficamente una concha a partir de cualquier valor de esos cuatro parámetros.»</p>
       </blockquote>
 
-      <h3>El modelo de Raup</h3>
-      <p>La mayoría de las conchas enrolladas —caracoles, ammonoideos, nautiloideos, almejas, braquiópodos— crecen añadiendo material en el borde de la apertura sin cambiar su forma global. Este tipo de crecimiento (autosemejante o <em>gnomónico</em>) describe una <strong>espiral logarítmica</strong>. A principios de los años 60 David M. Raup usó uno de los primeros trazadores por ordenador para dibujar conchas a partir de este principio, y en 1966 demostró que bastan cuatro parámetros para describir una enorme variedad de formas reales.</p>
+      <h3>Crecer sin cambiar de forma</h3>
+      <p>Un caracol, un ammonite o una almeja nunca rehacen la parte de la concha que ya han construido: solo añaden material nuevo en el borde de la apertura. Si cada incremento tiene las mismas proporciones que el anterior, la concha se hace más grande pero conserva su forma. Es el crecimiento <strong>gnomónico</strong> o autosemejante, y la curva que crece así es la <strong>espiral logarítmica</strong>: en cada vuelta, la distancia al centro se multiplica por el mismo factor. Por eso un caracol joven parece una copia a escala de un adulto.</p>
+      <p>En los años 60, el paleontólogo David M. Raup convirtió este principio en un programa de ordenador capaz de dibujar una concha enrollada a partir de solo cuatro números. Así pudo estudiar no solo las conchas que existen, sino todas las que <em>podrían</em> existir.</p>
+
+      <h3>Los cuatro parámetros</h3>
+      <p>Imagina la apertura como una curva cerrada (aquí, una elipse) situada en un plano que contiene el eje de enrollamiento. A medida que el animal crece, esa curva gira alrededor del eje, aumenta de tamaño y se desliza a lo largo de él. Cuatro números describen ese movimiento:</p>
+      <ul>
+        <li><strong>\\(W\\): tasa de expansión de la espiral.</strong> Cuánto crece la apertura en una vuelta completa: con \\(W = 2\\), cada vuelta mide el doble que la anterior. Con valores bajos (entre 1,2 y 3, aproximadamente) salen muchas vueltas apretadas, como en la mayoría de caracoles y ammonites. Con valores muy altos (de cientos a miles), la concha es casi toda apertura y apenas recorre una fracción de vuelta, como en las almejas.</li>
+        <li><strong>\\(D\\): distancia al eje.</strong> La distancia del eje al borde interno de la apertura dividida entre la distancia a su borde externo. Con \\(D = 0\\), el borde interno toca el eje y las vueltas lo cierran por completo (no hay ombligo). Al aumentar \\(D\\) se abre un hueco a lo largo del eje, el ombligo, hasta que el tubo se enrolla suelto, como un cuerno de carnero.</li>
+        <li><strong>\\(T\\): tasa de traslación.</strong> Cuánto se desplaza la apertura a lo largo del eje en comparación con lo que se aleja de él. Con \\(T = 0\\), todas las vueltas quedan en un mismo plano: son las conchas planispirales, como el nautilus, los ammonites o <i>Planorbis</i>. Con valores pequeños, la espira es baja, como en el caracol de jardín o en <i>Trochus</i>; con valores grandes, alta y esbelta, como en <i>Turritella</i>.</li>
+        <li><strong>\\(S\\): forma de la apertura.</strong> La razón entre el semieje axial y el radial de la elipse. \\(S = 1\\) es un círculo; con \\(S > 1\\), la apertura es más alta que ancha, y con \\(S < 1\\), aplanada.</li>
+      </ul>
+      <p>Para dibujar una concha hacen falta dos ajustes más, aunque no cambian sus proporciones. Uno es el <strong>sentido de enrollamiento</strong>. La mayoría de los caracoles son <em>dextrales</em>: con el ápice hacia arriba y la apertura de frente, la apertura queda a la derecha. Las conchas <em>sinistrales</em>, como las de <i>Physa</i>, son su imagen especular. El otro es el <strong>número de vueltas</strong> \\(N\\), que solo indica qué parte de la espiral se dibuja.</p>
 
       <h3>La ecuación</h3>
-      <p>Una curva generadora —aquí una elipse que representa la apertura— está en un plano que contiene el eje de enrollamiento \\(z\\) y gira a su alrededor. Tras una revolución completa (\\(\\Delta\\theta = 2\\pi\\)) todas las dimensiones lineales se han multiplicado por \\(W\\), así que en el ángulo \\(\\theta\\) la escala es \\(W^{\\theta/2\\pi}\\):</p>
+      <p>Cada punto de la concha se sitúa con dos ángulos. \\(\\theta\\) indica en qué punto de la espiral está: \\(\\theta = 0\\) es la apertura final, y los valores negativos retroceden hacia el ápice. \\(\\varphi\\) indica en qué posición del contorno de la apertura se encuentra. Tras una vuelta completa (\\(\\Delta\\theta = 2\\pi\\)), todas las longitudes se han multiplicado por \\(W\\), así que en el ángulo \\(\\theta\\) el factor de escala es \\(W^{\\theta/2\\pi}\\):</p>
       ${GENERAL_TEX}
       ${DEFS_TEX}
-      <ul>
-        <li><strong>\\(W\\) — tasa de expansión.</strong> Cuánto crece la apertura en cada vuelta. Valores bajos dan muchas vueltas apretadas; valores muy altos, una concha que es casi toda apertura.</li>
-        <li><strong>\\(D\\) — distancia al eje.</strong> Razón entre el borde interno y el externo de la apertura medidos desde el eje. \\(D = 0\\): las vueltas tocan el eje (sin ombligo); \\(D\\) grande: ombligo amplio.</li>
-        <li><strong>\\(T\\) — tasa de traslación.</strong> Cuánto se desplaza la curva generadora a lo largo del eje respecto a su crecimiento radial. \\(T = 0\\) da una concha planispiral (nautilus, ammonites); valores altos, espiras altas (Turritella).</li>
-        <li><strong>\\(S\\) — forma de la curva generadora.</strong> Razón entre el semieje axial y el radial de la elipse.</li>
-        <li>\\(\\varepsilon\\) fija el sentido de enrollamiento: −1 dextral (horario visto desde el ápice), +1 sinistral. \\(N\\) es solo el número de vueltas dibujadas.</li>
-      </ul>
-      <p>Con esta normalización el borde externo de la apertura final está a distancia 1 del eje y el interno a distancia \\(D\\), como en la definición de Raup. El ápice está en el origen (\\(\\theta \\to -\\infty\\)).</p>
+      <p>El paréntesis contiene la apertura: una elipse de semieje radial \\(a\\) y semieje axial \\(b = S\\,a\\), con el centro a una distancia \\(r_c\\) del eje. Los factores \\(\\cos\\theta\\) y \\(\\sin\\theta\\) la hacen girar alrededor del eje, el término \\(-T\\,r_c\\) la desplaza a lo largo de él y el factor de delante la hace crecer. \\(\\varepsilon\\) vale \\(-1\\) en las conchas dextrales y \\(+1\\) en las sinistrales.</p>
+      <p>Con esta normalización, el borde externo de la apertura final queda a distancia 1 del eje y el interno a distancia \\(D\\), tal como lo definió Raup. El ápice está en el origen, al que la espiral se acerca sin llegar nunca (\\(\\theta \\to -\\infty\\)).</p>
 
-      <h3>Morfoespacio teórico</h3>
-      <p>Cada combinación de \\(W, D, T, S\\) es un punto de un espacio de conchas posibles. En las conchas planispirales (\\(T = 0\\)) las vueltas sucesivas justo se tocan cuando \\(D = 1/W\\); por encima de esa curva se separan, una forma muy rara en la naturaleza. El gran hallazgo de Raup fue que las conchas reales ocupan solo pequeñas regiones de este espacio, lo que plantea por qué el resto está vacío: restricciones funcionales, de desarrollo o históricas. El panel <em>Morfoespacio</em> de la barra lateral muestra este plano.</p>
+      <h3>Cómo leer el dibujo</h3>
+      <p>En el modo de líneas, la propia malla muestra la geometría. Las líneas que siguen la espiral (\\(\\varphi\\) constante) recorren el camino de un mismo punto de la apertura mientras la concha crece, como los cordones espirales de muchos caracoles. Las que rodean el tubo (\\(\\theta\\) constante) son <strong>líneas de crecimiento</strong>: las posiciones sucesivas de la apertura, como las finas líneas que se ven en las conchas reales.</p>
+      <p>Los botones de vista dan las orientaciones estándar en malacología: <em>apertural</em> (de frente a la apertura, con el ápice arriba), <em>dorsal</em> o abapertural (desde el lado opuesto), <em>apical</em> (desde el ápice, mirando a lo largo del eje), <em>umbilical</em> (desde abajo) y <em>perfil</em> (de lado, con la apertura de canto).</p>
+
+      <h3>El morfoespacio teórico</h3>
+      <p>Cada combinación de \\(W, D, T\\) y \\(S\\) es un punto de un espacio de conchas posibles: el <strong>morfoespacio teórico</strong>. Raup lo representó como un cubo cuyos ejes son \\(W\\), \\(D\\) y \\(T\\). En las conchas planispirales hay un límite importante en el plano \\(W\\)–\\(D\\): las vueltas sucesivas justo se tocan cuando \\(D = 1/W\\). Por debajo de esa curva, cada vuelta se solapa con la anterior; por encima, las vueltas se separan y el tubo se enrolla suelto. Es una forma rara: aparece en algunos grupos fósiles, en unos pocos caracoles y en el cefalópodo actual <i>Spirula</i>.</p>
+      <p>Cuando Raup situó conchas reales en este espacio, vio que solo ocupan unas pocas regiones pequeñas. La mayoría de los gasterópodos tienen \\(W\\) bajo y \\(D\\) pequeño; los ammonoideos, \\(W\\) bajo y un intervalo de \\(D\\) más amplio, y los bivalvos y braquiópodos, \\(W\\) muy alto. La mayor parte del espacio está vacía. Algunas de las formas ausentes serían mecánicamente débiles o poco prácticas para vivir; otras no pueden construirse con el modo de crecer de un grupo concreto, y otras, sencillamente, nunca evolucionaron. El morfoespacio convierte esta pregunta en algo que se puede medir y comparar.</p>
+      <p>El panel <em>Morfoespacio</em> de la barra lateral muestra dónde está la concha actual, y también puede verse sobre la vista 3D desde el menú <em>Gráficos</em>. Haz clic o arrastra sobre él para moverte a otro punto.</p>
 
       <h3>Bivalvos</h3>
-      <p>Las mismas ecuaciones producen las valvas de almejas, berberechos y mejillones. Cada valva es una espiral logarítmica con una <strong>\\(W\\) muy alta</strong> (aproximadamente \\(10^2\\)–\\(10^4\\) o más), \\(D\\) bajo y \\(T\\) pequeño, de modo que solo completa una fracción de vuelta: el umbo es el ápice. La segunda valva es aproximadamente la imagen especular respecto al plano de la apertura (la comisura), y es lo que dibuja el botón <em>Valva especular</em>:</p>
+      <p>La misma ecuación produce las valvas de almejas y berberechos. Cada valva es una espiral logarítmica con una \\(W\\) muy alta (aproximadamente entre \\(10^2\\) y \\(10^4\\), o más), una \\(D\\) pequeña y una \\(T\\) pequeña, de modo que solo recorre parte de una vuelta. El umbo es el ápice. Con una \\(W\\) mayor la valva es más plana; con una \\(W\\) menor, el umbo es prominente y curvado.</p>
+      <p>En los bivalvos equivalvos, la segunda valva es la imagen especular de la primera respecto al plano en el que se juntan las dos (la comisura). Eso es lo que dibuja el botón <em>Valva especular</em>:</p>
       ${MIRROR_TEX}
-      <p>El modelo no incluye la charnela, el ligamento ni la ornamentación, y no representa conchas inequivalvas (ostras, vieiras) ni braquiópodos, cuyas dos valvas son distintas.</p>
+      <p>Esta construcción no sirve para las ostras ni las vieiras, cuyas dos valvas son distintas, ni para los braquiópodos: aunque se parecen a las almejas, sus valvas son dorsal y ventral, no izquierda y derecha, y no son imágenes especulares una de otra.</p>
+
+      <h3>Qué deja fuera el modelo</h3>
+      <p>El modelo de Raup es deliberadamente mínimo. Supone que la apertura conserva la misma forma y orientación durante toda la vida, así que ignora los cambios de proporción con la edad (alometría). Supone también que la apertura está en un plano que contiene el eje y que el crecimiento es perfectamente regular. No incluye la ornamentación (costillas, espinas, várices, quillas), el labio engrosado de los caracoles adultos, las estructuras internas, como los septos de ammonites y nautilos, ni la charnela de los bivalvos. Su valor no está en reproducir con detalle una especie, sino en mostrar cuánta diversidad de conchas se explica con unas pocas reglas de crecimiento.</p>
 
       <h3>Referencias</h3>
       ${REFS}`,
     'info.meinhardt': `
-      <h3>Pintar con química</h3>
-      <p>Un molusco solo añade pigmento donde la concha crece: en el borde de la apertura. Lo que ocurre ahí, célula a célula, queda congelado en la concha a medida que crece. Un patrón de concha es, por tanto, un <strong>registro en el tiempo de un proceso unidimensional</strong>: la dirección a lo largo del borde es el espacio \\(x\\) y la dirección de crecimiento es el tiempo. Esta fue la idea clave de Hans Meinhardt, y por eso el panel de la pestaña <em>Pigmento</em> muestra un diagrama espacio-tiempo.</p>
+      <h3>Un patrón que registra su propia historia</h3>
+      <p>Un molusco solo puede añadir pigmento donde añade concha: en el borde de la apertura, donde el manto segrega material nuevo. Una vez depositado, el pigmento ya no cambia; la concha simplemente sigue creciendo más allá. Por eso un patrón de concha es un <strong>registro en el tiempo de un proceso unidimensional</strong>. La dirección a lo largo del borde es el espacio (\\(x\\)), y la dirección de crecimiento es el tiempo. Recorrer una concha desde el ápice hasta la apertura es como ver, fotograma a fotograma, lo que ocurrió en el borde durante toda la vida del animal.</p>
+      <p>Esta fue la idea central del trabajo de Hans Meinhardt, y por eso la pestaña <em>Pigmento</em> muestra un <strong>registro espacio-tiempo</strong>: una imagen plana cuyo eje horizontal es el borde y cuyo eje vertical es el tiempo. Después, esa imagen se envuelve sobre la concha 3D.</p>
 
-      <h3>Activación local, inhibición de largo alcance</h3>
-      <p>Siguiendo a Turing (1952), Gierer y Meinhardt (1972) mostraron que los patrones surgen espontáneamente de dos sustancias que interactúan: un <strong>activador</strong> \\(a\\) que estimula su propia producción (autocatálisis) y un antagonista que difunde más rápido y lo mantiene a raya. Un pequeño exceso aleatorio de activador crece localmente, mientras que el antagonista, que se extiende deprisa, impide la activación en los alrededores. El resultado es un patrón regular que nadie ha «dibujado».</p>
+      <h3>Activación local e inhibición de largo alcance</h3>
+      <p>¿Cómo pueden unas células que solo se relacionan con sus vecinas formar un patrón regular? Alan Turing (1952) demostró que dos sustancias que reaccionan y difunden pueden romper por sí solas un estado uniforme. Gierer y Meinhardt (1972) identificaron los ingredientes esenciales: un <strong>activador</strong> que estimula su propia producción (autocatálisis) y un <strong>antagonista</strong> que actúa a mayor distancia.</p>
+      <p>Un pequeño exceso de activador en un punto, debido al azar, crece porque el activador se amplifica a sí mismo. El antagonista llega más lejos y frena la activación en los alrededores. El resultado es un pico de activación rodeado de una zona inhibida, y el borde se llena de picos separados por distancias bastante regulares. Ninguna célula «conoce» el patrón: surge de las interacciones. El antagonismo puede funcionar de dos maneras, y cada una da lugar a una familia distinta de patrones.</p>
 
       <h3>Modelo activador-inhibidor</h3>
       ${AI_TEX}
+      <p>El activador \\(a\\) estimula su propia producción (el término \\(a^2\\)) y también la de un inhibidor \\(h\\), que lo frena (\\(h\\) en el denominador). Cada sustancia se degrada a su propio ritmo (\\(r_a\\), \\(r_h\\)) y pasa a las células vecinas por difusión (\\(D_a\\), \\(D_h\\)). El resto de términos:</p>
       <ul>
-        <li>\\(s\\) es la <em>densidad de fuente</em>: la capacidad de cada célula para llevar a cabo la reacción. Varía ligeramente de una célula a otra (el parámetro <em>ruido</em>), y eso es lo que pone en marcha los patrones.</li>
-        <li>\\(r_a, r_h\\) son tasas de decaimiento y \\(D_a, D_h\\), de difusión; \\(b_a, b_h\\) son pequeñas producciones basales; \\(\\kappa\\) satura la autocatálisis y ensancha los picos.</li>
-        <li>Si el inhibidor es rápido (\\(r_h > r_a\\)) y llega lejos (\\(D_h \\gg D_a\\)), los picos son <strong>estables en el tiempo</strong> y dibujan bandas en la dirección de crecimiento.</li>
-        <li>Si el inhibidor vive más que el activador (\\(r_h < r_a\\)), cada brote de activación lo apaga su propio inhibidor y el sistema <strong>oscila</strong>, dibujando rayas paralelas al borde.</li>
+        <li>\\(s\\), la <strong>densidad de fuente</strong>: la capacidad de cada célula para llevar a cabo la reacción. Varía ligeramente de una célula a otra, y esas pequeñas diferencias son la semilla del patrón.</li>
+        <li>\\(b_a\\) y \\(b_h\\): pequeñas producciones basales. \\(b_a\\) mantiene un poco de activador en todas partes, para que la activación pueda volver a empezar después de apagarse.</li>
+        <li>\\(\\kappa\\): saturación. La producción de activador no puede crecer sin límite, así que los picos se vuelven más anchos y planos.</li>
+      </ul>
+      <p>El tipo de patrón depende sobre todo de lo rápido y lo lejos que actúa el inhibidor en comparación con el activador:</p>
+      <ul>
+        <li>Si el inhibidor llega mucho más lejos que el activador (\\(D_h \\gg D_a\\)) y reacciona deprisa (\\(r_h > r_a\\)), los picos son <strong>estables</strong>. Cada punto activo del borde sigue activo mucho tiempo y dibuja una <strong>banda en la dirección de crecimiento</strong>.</li>
+        <li>Si el inhibidor apenas difunde pero dura más que el activador (\\(r_h < r_a\\)), cada brote de activación acumula el inhibidor que después lo apaga, y la célula <strong>oscila</strong>. Las células vecinas se arrastran unas a otras hasta sincronizarse, se encienden y se apagan a la vez, y cada brote dibuja una <strong>raya paralela al borde</strong>, es decir, paralela a las líneas de crecimiento.</li>
       </ul>
 
       <h3>Modelo activador-sustrato</h3>
       ${AS_TEX}
-      <p>Aquí la autocatálisis consume un sustrato \\(b\\) que se produce a ritmo \\(b_b\\). Donde la activación es alta, el sustrato se <strong>agota</strong>, y la célula necesita tiempo para recuperarse antes de poder activarse otra vez: queda <strong>refractaria</strong>. La activación pasa entonces a las células vecinas como una <strong>onda viajera</strong>, que dibuja una línea oblicua en la concha. Cuando dos ondas se encuentran se <strong>aniquilan</strong>, porque cada una choca con la estela refractaria de la otra, y las líneas forman una V.</p>
+      <p>Aquí el antagonista no es un inhibidor, sino un <strong>sustrato</strong> \\(b\\) que el activador necesita y <strong>consume</strong>. El sustrato se produce en todas partes a un ritmo \\(b_b\\) y difunde (\\(D_b\\)). Donde la activación es alta, el sustrato se agota y la activación no puede mantenerse. Pasa entonces a las células vecinas, que aún tienen sustrato, y la célula que queda atrás se vuelve <strong>refractaria</strong>: necesita tiempo para reponer su sustrato antes de poder activarse de nuevo.</p>
+      <p>Así, la activación recorre el borde como una <strong>onda</strong>, y a medida que la concha crece, la onda en movimiento deja una <strong>línea oblicua</strong>. Cuando dos ondas que avanzan en sentidos opuestos se encuentran, cada una choca con la estela agotada de la otra y las dos <strong>desaparecen</strong>, cerrando una V. Donde el sustrato se ha recuperado puede surgir espontáneamente una onda nueva que se divide en dos ondas que se alejan, y eso abre una V invertida.</p>
 
       <h3>Control global: los triángulos de <i>Oliva porphyria</i></h3>
-      <p>Meinhardt y Klingler (1987) explicaron el patrón de tiendas de <i>Oliva</i> con una tercera sustancia compartida por todo el borde, como una hormona. Mide la actividad total: cuando las ondas se aniquilan y la actividad cae, la señal baja y facilita el disparo de ondas nuevas, que se dividen en nuevas líneas y cierran los triángulos. Esta app usa una versión simplificada de ese mecanismo:</p>
+      <p>Las ondas que se aniquilan y se ramifican dan zigzags, pero no los grandes triángulos de <i>Oliva porphyria</i>, en los que aparecen líneas nuevas en muchos puntos a la vez. Meinhardt y Klingler (1987) los explicaron con una sustancia adicional compartida por todo el animal, como una hormona. Esa sustancia mide la actividad total del borde: cuando muchas ondas se aniquilan y la actividad cae, la señal baja y facilita que surjan ondas nuevas en todas partes. Esta app usa una versión simplificada del mecanismo, que actúa sobre la producción basal de activador:</p>
       ${GLOBAL_TEX}
+      <p>\\(c\\) sigue con retraso al activador medio \\(\\langle a \\rangle\\), y \\(g\\) fija la intensidad del control. Con \\(g = 0\\) no hay señal global.</p>
 
-      <h3>Qué patrón sale de cada dinámica</h3>
+      <h3>Qué patrón sale de cada mecanismo</h3>
       <ul>
-        <li><strong>Bandas a lo largo de la espiral</strong> (<i>Cepaea nemoralis</i>): picos estables del activador.</li>
-        <li><strong>Rayas paralelas al borde</strong> (las llamas de <i>Nautilus</i>): oscilación; la irregularidad viene del acoplamiento débil entre células.</li>
-        <li><strong>Líneas oblicuas, zigzags y triángulos</strong> (<i>Oliva</i>, muchos <i>Conus</i>): ondas viajeras, sus choques y nuevos disparos.</li>
+        <li><strong>Bandas a lo largo de la espiral</strong>, como en el caracol <i>Cepaea nemoralis</i>: picos de activador estables (activador-inhibidor con un inhibidor de largo alcance).</li>
+        <li><strong>Rayas paralelas a las líneas de crecimiento</strong>, como las llamas del <i>Nautilus</i>: oscilaciones sincronizadas entre células vecinas (activador-inhibidor con un inhibidor de vida larga). Su contorno irregular y ramificado se debe a las diferencias entre células.</li>
+        <li><strong>Líneas oblicuas, zigzags y triángulos</strong>, como en <i>Oliva</i> y en muchos conos: ondas viajeras, sus choques y ramificaciones y, en el caso de los triángulos, el control global (activador-sustrato).</li>
       </ul>
+      <p>Un pequeño cambio en una sola constante puede convertir un tipo de patrón en otro. El mismo mecanismo, con ritmos algo distintos, explica conchas muy diferentes.</p>
 
-      <h3>El crecimiento del borde</h3>
-      <p>Una espiral logarítmica que gira a ritmo constante corresponde a un crecimiento con tasa relativa constante, así que cada vuelta recibe el mismo tiempo de simulación. Pero el borde se alarga a medida que la concha crece. Con <strong>inserción de células</strong>, se añaden células nuevas en posiciones al azar en proporción al tamaño de la concha: los elementos del patrón mantienen su tamaño absoluto y aparecen rayas nuevas intercaladas, como en muchas conchas reales. Sin ella, el número de células es fijo y el patrón simplemente escala con la concha, lo que se parece más a conchas como <i>Cepaea</i>, cuyas bandas existen desde el ápice y solo se ensanchan.</p>
+      <h3>Ver el antagonista en acción</h3>
+      <p>El pigmento solo refleja el activador, pero quien le da forma es el antagonista. El <em>perfil del borde</em> representa, en un instante del crecimiento, el activador y el inhibidor (o el sustrato) a lo largo del borde, junto con el umbral de pigmento. En un patrón de bandas, cada pico de activador descansa sobre un colchón ancho de inhibidor; en un patrón de ondas, el sustrato cae justo detrás de cada pico en movimiento. Elige el instante haciendo clic sobre el registro espacio-tiempo en los controles avanzados, o con el slider del perfil que puede mostrarse sobre la vista 3D (menú <em>Gráficos</em>).</p>
+
+      <h3>Un borde que crece</h3>
+      <p>Una espiral logarítmica que gira a ritmo constante implica que la concha crece con una tasa relativa constante, así que cada vuelta dura lo mismo. Pero el borde también se alarga: con \\(W = 2\\), el perímetro de la apertura se duplica en cada vuelta. Hay dos posibilidades:</p>
+      <ul>
+        <li>Si se <strong>insertan células nuevas</strong> en el borde a medida que crece, los elementos del patrón mantienen su tamaño real y aparecen rayas o bandas nuevas entre las antiguas, como en muchas conchas reales.</li>
+        <li>Si el número de células no cambia, las células simplemente se hacen más grandes y todo el patrón se ensancha con la concha, como las bandas de <i>Cepaea</i>, que ya existen cerca del ápice y solo se ensanchan.</li>
+      </ul>
+      <p>La opción <em>Borde que crece</em>, en los controles avanzados, elige entre las dos.</p>
 
       <h3>Del registro a la concha</h3>
-      <p>El registro espacio-tiempo se envuelve sobre la superficie 3D: la posición a lo largo del borde pasa a ser el ángulo \\(\\varphi\\) alrededor de la apertura, y el tiempo, el ángulo de enrollamiento \\(\\theta\\). Fowler, Meinhardt y Prusinkiewicz (1992) combinaron los dos modelos exactamente así, uniendo la geometría de Raup con la pigmentación de Meinhardt.</p>
+      <p>El registro espacio-tiempo se envuelve sobre la superficie de Raup: la posición a lo largo del borde pasa a ser el ángulo \\(\\varphi\\) alrededor de la apertura, y el tiempo, el ángulo de enrollamiento \\(\\theta\\). Fowler, Meinhardt y Prusinkiewicz (1992) unieron así los dos modelos. Se deposita pigmento allí donde el activador supera un umbral, por lo que los bordes del patrón son nítidos. Solo se pigmenta la capa externa de la concha, así que el interior de la apertura aparece sin pigmento, con un ligero brillo nacarado.</p>
 
-      <h3>Controles simples y avanzados</h3>
-      <p>Los controles simples no son multiplicadores ocultos: cada uno es una magnitud real del modelo. El <em>tamaño del patrón</em> fija el número de células a lo largo del borde (256 con ×1): como la difusión se mide en células, con menos células cada elemento es mayor en relación con la concha. El <em>tiempo de crecimiento</em> es \\(T\\), la <em>irregularidad</em> es la variación \\(\\sigma\\) de la densidad de fuente entre células, y la <em>cantidad de pigmento</em> desplaza el umbral de pigmentación. La vista <em>Avanzado</em> muestra estas mismas magnitudes junto con las constantes de las ecuaciones, con sliders logarítmicos porque abarcan varios órdenes de magnitud, así que desde ahí se controla todo. Al cambiar de modelo se cargan constantes que funcionan con él. Si una combinación de valores no forma patrón (el activador se extingue o el borde queda uniforme), la app lo indica en lugar de reescalar diferencias minúsculas hasta fabricar un patrón falso. La vista avanzada muestra además el <em>perfil del borde</em>: el activador y el inhibidor (o el sustrato) a lo largo del borde en el instante que elijas sobre el registro espacio-tiempo, junto con el umbral de pigmentación; es la forma más clara de ver en acción la activación local y la inhibición lateral.</p>
+      <h3>Qué significa cada control</h3>
+      <ul>
+        <li><strong>Tamaño del patrón</strong>: el número de células a lo largo del borde. La difusión actúa entre células vecinas, así que con menos células cada elemento ocupa una parte mayor de la concha.</li>
+        <li><strong>Tiempo de crecimiento</strong>: el tiempo que transcurre desde el ápice hasta la apertura. Con más tiempo, las oscilaciones y las ondas completan más ciclos y dejan más rayas y líneas.</li>
+        <li><strong>Irregularidad</strong>: cuánto varía la densidad de fuente entre células. Con valores bajos salen patrones regulares; con valores altos, irregulares y ramificados.</li>
+        <li><strong>Cantidad de pigmento</strong>: desplaza el umbral a partir del cual se deposita pigmento. Ensancha o estrecha las zonas oscuras sin cambiar la dinámica que hay debajo.</li>
+        <li><strong>Semilla</strong>: elige las diferencias al azar entre células. Cada semilla da un individuo distinto pero igual de válido, igual que no hay dos conchas idénticas de la misma especie.</li>
+      </ul>
+      <p>Los controles avanzados dan acceso a todas las constantes de las ecuaciones. Cerca de ciertos valores, el patrón cambia de golpe de un tipo a otro: son umbrales reales del modelo, no errores. Si una combinación no forma ningún patrón, porque el activador se extingue o el borde queda uniforme, la app lo indica en lugar de mostrar una concha vacía.</p>
 
-      <h3>Solo se pigmenta el exterior</h3>
-      <p>El pigmento se deposita en la capa externa de la concha, así que el interior de la apertura se dibuja sin pigmento, con un ligero brillo nacarado.</p>
-
-      <h3>Simplificaciones</h3>
-      <p>Las ecuaciones se integran con un esquema de Euler explícito, con un paso de tiempo lo bastante pequeño para ser estable, sobre un borde de 256 células con el tamaño de patrón por defecto. El pigmento se deposita donde el activador, reescalado entre sus percentiles 2 y 99,5 (sin contar el transitorio inicial del ápice), supera un umbral, como en las simulaciones de Meinhardt; así los bordes son nítidos. Los presets son reproducciones aproximadas de los tipos de patrón, no ajustes a ejemplares reales.</p>
+      <h3>Límites de los modelos</h3>
+      <p>Son modelos mínimos. Las moléculas reales no se han identificado en ningún molusco, y el borde se trata como un anillo cerrado de células equivalentes. Ermentrout, Campbell y Oster (1986) propusieron, en cambio, que el patrón lo controlan los nervios del manto, una idea que conduce a una dinámica muy parecida de excitación local e inhibición lateral. Los presets reproducen el tipo de patrón de cada especie, no un ajuste a ejemplares reales. Aun así, los modelos captan algo real: unas pocas reglas, con distintos ritmos, explican toda la gama, desde bandas y llamas hasta zigzags y triángulos, incluidos detalles que se observan en las conchas, como líneas que se ramifican o que se aniquilan al encontrarse.</p>
 
       <h3>Referencias</h3>
       ${MEIN_REFS}`,
     'info.app': `
-      <h3>Cómo funciona la app</h3>
-      <ul>
-        <li>La superficie se evalúa en una rejilla de puntos \\(\\theta \\times \\varphi\\) y cada celda se divide en dos triángulos. Se regenera con cada cambio de los sliders.</li>
-        <li>Las líneas de \\(\\varphi\\) constante son <em>líneas espirales</em>; las de \\(\\theta\\) constante son <em>líneas de crecimiento</em>, las posiciones sucesivas de la apertura.</li>
-        <li>La concha se centra y escala a un tamaño fijo, así que las coordenadas son relativas: importa la forma, no el tamaño absoluto.</li>
-        <li>En el modo líneas, las líneas ocultas se eliminan dibujando la superficie solo en el búfer de profundidad.</li>
-        <li>El indicador de ejes muestra el sistema \\(x, y, z\\) de la ecuación (\\(z\\) = eje de enrollamiento). Los botones de vista usan las orientaciones estándar en malacología: apertural, dorsal (abapertural), apical, umbilical y perfil.</li>
-        <li>La pigmentación se simula en un hilo aparte (un Web Worker) y se aplica a la malla como textura: la posición a lo largo de la apertura es la coordenada horizontal de la textura y \\(\\theta\\), la vertical.</li>
-        <li>Hecha con Three.js (WebGL) y MathJax. La concha actual se guarda en la URL, así que puedes compartir un enlace a ella.</li>
-      </ul>
+      <h3>Autor</h3>
+      <p><strong>Alberto González Casarrubios</strong>, Universidad Complutense de Madrid. Para dudas, sugerencias o errores, escribe a <a href="mailto:albert23@ucm.es">albert23@ucm.es</a>.</p>
 
-      <h3>Contacto</h3>
-      <p>Para cualquier duda o comentario, contacta con <strong>Alberto González Casarrubios</strong> (Universidad Complutense de Madrid): <a href="mailto:albert23@ucm.es">albert23@ucm.es</a>.</p>
+      <h3>Cómo citar</h3>
+      <p>González Casarrubios, A. (2026). <i>Conchas teóricas: forma y color</i>. <a href="https://albertogonzalezcasarrubios.github.io/aplicaciones-varias/shells-morphology/" target="_blank" rel="noopener">albertogonzalezcasarrubios.github.io/aplicaciones-varias/shells-morphology</a></p>
+
+      <h3>Código fuente</h3>
+      <p>El código fuente y su documentación técnica están en <a href="https://github.com/AlbertoGonzalezCasarrubios/aplicaciones-varias/tree/main/shells-morphology" target="_blank" rel="noopener">GitHub</a>.</p>
 
       <h3>Licencia</h3>
       <p>Esta obra está bajo una licencia <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">Creative Commons Atribución-NoComercial 4.0 Internacional (CC BY-NC 4.0)</a>. Puedes compartirla y adaptarla siempre que reconozcas la autoría, pero no con fines comerciales.</p>`,
