@@ -7,10 +7,10 @@ import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { STLExporter } from 'three/addons/exporters/STLExporter.js';
 import { buildShell } from './raup.js';
 import { PRESETS, DEFAULT_PRESET, PATTERN_PRESETS, DEFAULT_PATTERN } from './presets.js';
-import { simulatePattern } from './meinhardt.js';
+import { simulatePattern, CA_TIME_PER_STEP } from './meinhardt.js';
 import {
   setLang, getLang, t, tParam, tPreset, tPattern, applyStatic,
-  GENERAL_TEX, DEFS_TEX, MIRROR_TEX, AI_TEX, AS_TEX, GLOBAL_TEX,
+  GENERAL_TEX, DEFS_TEX, MIRROR_TEX, AI_TEX, AS_TEX, GLOBAL_TEX, CA_TEX,
 } from './i18n.js';
 
 // ---------------------------------------------------------------------------
@@ -406,13 +406,26 @@ const SOURCE_TEX = String.raw`\[ s_i = r_a\,(1 + \sigma\,\xi_i),\quad \xi_i \in 
 
 function generalTeX() {
   if (formulaView === 'meinhardt') {
+    if (pattern.model === 'CA') return CA_TEX;
     const isAS = pattern.model === 'AS';
     return (isAS ? AS_TEX : AI_TEX) + (isAS && pattern.globalCtl > 0 ? GLOBAL_TEX : '') + SOURCE_TEX;
   }
   return GENERAL_TEX + DEFS_TEX + (state.mirror ? MIRROR_TEX : '');
 }
 
+function automatonLiveTeX() {
+  const R = Math.round(pattern.rule) & 255;
+  const hoods = [7, 6, 5, 4, 3, 2, 1, 0];
+  const head = hoods.map((k) => k.toString(2).padStart(3, '0')).join(' & ');
+  const bits = hoods.map((k) => (R >> k) & 1).join(' & ');
+  const cells = Math.round(PATTERN_CELLS / pattern.size);
+  return String.raw`\[ R = ${R} = (${R.toString(2).padStart(8, '0')})_2 \]` +
+    String.raw`\[ \begin{array}{c|cccccccc} x_{i-1}\,x_i\,x_{i+1} & ${head} \\ \hline x_i^{t+1} & ${bits} \end{array} \]` +
+    String.raw`\[ N = ${cells},\quad \text{${t('eq.ca.gen')}} = ${Math.round(pattern.T / CA_TIME_PER_STEP)},\quad p_{\text{${t('eq.ca.err')}}} = ${sig(pattern.noise * 0.02)} \]`;
+}
+
 function meinhardtLiveTeX() {
+  if (pattern.model === 'CA') return automatonLiveTeX();
   const { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl, T } = pattern;
   // Términos opcionales: se omiten cuando su coeficiente es 0
   const term = (sign, c, tex) => (c > 0 ? ` ${sign} ${sig(c)}${tex ? String.raw`\,${tex}` : ''}` : '');
@@ -473,7 +486,7 @@ function setFormulaView(view) {
   formulaView = view;
   document.querySelectorAll('#eqView [data-eq]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.eq === view)));
   const note = $('eqNote');
-  note.dataset.i18n = view === 'meinhardt' ? 'eq.mein.note' : 'eq.chirality';
+  note.dataset.i18n = view !== 'meinhardt' ? 'eq.chirality' : pattern.model === 'CA' ? 'eq.ca.note' : 'eq.mein.note';
   note.textContent = t(note.dataset.i18n);
   if (!formulaPanel.hidden) {
     typeset(note);
@@ -609,7 +622,11 @@ function createParam(def, container, { compact = false, onChange, target = state
   range.addEventListener('input', () => {
     const r = parseFloat(range.value);
     if (def.zero && r <= parseFloat(range.min) + 1e-9) set(0);
-    else set(logScale ? 10 ** r : r);
+    else if (logScale) {
+      // Se redondea a lo que se muestra, para que el valor visible sea el real
+      const v = 10 ** r;
+      set(def.digits !== undefined ? +v.toFixed(def.digits) : +v.toPrecision(2));
+    } else set(r);
     onChange(def.key);
   });
   num.addEventListener('input', () => {
@@ -1070,24 +1087,25 @@ $('saveStl').addEventListener('click', () => {
 // Pigmentación (modelos de reacción-difusión de Meinhardt)
 // ---------------------------------------------------------------------------
 
-const PATTERN_ROWS = 768;   // filas del registro espacio-tiempo (ápice → apertura)
+const PATTERN_ROWS = 3072;  // filas del registro espacio-tiempo (ápice → apertura): la regla 30 necesita resolución
 const PATTERN_WIDTH = 512;  // columnas de la textura (vuelta completa a la apertura)
 const PATTERN_CELLS = 256;  // células del borde en la apertura
-const PATTERN_KEYS = ['model', 'Da', 'D2', 'ra', 'r2', 'kappa', 'ba', 'b2', 'noise', 'globalCtl', 'T', 'insertion', 'base', 'pigment', 'size', 'amount'];
-const PATTERN_DEFAULTS = { size: 1, amount: 0.5 };
+const PATTERN_KEYS = ['model', 'Da', 'D2', 'ra', 'r2', 'kappa', 'ba', 'b2', 'noise', 'globalCtl', 'rule', 'T', 'insertion', 'base', 'pigment', 'size', 'amount'];
+// Valores para los parámetros que un preset no define (p. ej. el autómata no usa las constantes químicas)
+const PATTERN_DEFAULTS = { ...PATTERN_PRESETS[DEFAULT_PATTERN], size: 1, amount: 0.5, rule: 30 };
 
 const pickPattern = (p) => Object.fromEntries(PATTERN_KEYS.map((k) => [k, p[k] ?? PATTERN_DEFAULTS[k]]));
 
 const pattern = { on: false, preset: DEFAULT_PATTERN, seed: 7, ...pickPattern(PATTERN_PRESETS[DEFAULT_PATTERN]) };
 
 // Estado del patrón en la URL: pg=1 y los parámetros con prefijo p
-const PATTERN_HASH = { pm: 'model', pDa: 'Da', pD2: 'D2', pra: 'ra', pr2: 'r2', pk: 'kappa', pba: 'ba', pb2: 'b2', pn: 'noise', pgc: 'globalCtl', pT: 'T', ps: 'seed', pz: 'size', pa: 'amount' };
+const PATTERN_HASH = { pm: 'model', pDa: 'Da', pD2: 'D2', pra: 'ra', pr2: 'r2', pk: 'kappa', pba: 'ba', pb2: 'b2', pn: 'noise', pgc: 'globalCtl', pT: 'T', ps: 'seed', pz: 'size', pa: 'amount', pR: 'rule' };
 if (fromHash.get('pg') === '1') {
   pattern.on = true;
   pattern.preset = PATTERN_PRESETS[fromHash.get('pp')] ? fromHash.get('pp') : 'custom';
   for (const [short, key] of Object.entries(PATTERN_HASH)) {
     if (!fromHash.has(short)) continue;
-    if (key === 'model') pattern.model = fromHash.get(short) === 'AS' ? 'AS' : 'AI';
+    if (key === 'model') pattern.model = ['AS', 'CA'].includes(fromHash.get(short)) ? fromHash.get(short) : 'AI';
     else if (Number.isFinite(parseFloat(fromHash.get(short)))) pattern[key] = parseFloat(fromHash.get(short));
   }
   if (fromHash.has('pi')) pattern.insertion = fromHash.get('pi') === '1';
@@ -1211,8 +1229,8 @@ const patternNeeded = () => pattern.on || !$('tab-pigment').hidden;
 
 function computePattern() {
   const id = ++patternJob;
-  const { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl, T, seed, insertion } = pattern;
-  const p = { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl: model === 'AS' ? globalCtl : 0, T, seed, insertion };
+  const { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl, rule, T, seed, insertion } = pattern;
+  const p = { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl: model === 'AS' ? globalCtl : 0, rule, T, seed, insertion };
   // El tamaño del patrón es el número de células del borde (menos células, elementos mayores)
   const nMax = Math.round(PATTERN_CELLS / pattern.size);
   const g = { W: state.W, turns: state.turns, rows: PATTERN_ROWS, width: PATTERN_WIDTH, nMax };
@@ -1241,7 +1259,7 @@ function schedulePattern() {
   clearTimeout(patternTimer);
   if (patternNeeded()) patternTimer = setTimeout(computePattern, 80);
   writeHash();
-  if (formulaView === 'meinhardt') scheduleFormula();
+  if (formulaView === 'meinhardt') setFormulaView('meinhardt'); // la nota depende del modelo
 }
 
 // Con inserción de células el patrón depende del tamaño de cada vuelta (W y N)
@@ -1254,7 +1272,7 @@ const sub = (x, y) => `${x}<sub>${y}</sub>`;
 const second = () => (pattern.model === 'AS' ? 'b' : 'h');
 // Controles simples: magnitudes intuitivas del modelo, de efecto gradual
 const PIG_SIMPLE = [
-  { key: 'size', id: 'pSize', i18n: 'pSize', log: true, min: 0.5, max: 2, digits: 2 },
+  { key: 'size', id: 'pSize', i18n: 'pSize', log: true, min: 0.5, max: 4, digits: 2 },
   { key: 'T', id: 'pT', i18n: 'pT', log: true, min: 500, max: 12000, format: (v) => v.toFixed(0) },
   { key: 'noise', id: 'pnoise', i18n: 'pNoise', min: 0, max: 0.5, step: 0.01, digits: 2 },
   { key: 'amount', id: 'pAmount', i18n: 'pAmount', min: 0.15, max: 0.85, step: 0.01, digits: 2 },
@@ -1270,7 +1288,10 @@ const PIG_ADVANCED = [
   { key: 'ba', id: 'pba', sym: sub('b', 'a'), log: true, zero: true, min: 0.0001, max: 0.1, format: sig },
   { key: 'b2', id: 'pb2', sym: () => sub('b', second()), i18n: () => `b2.${pattern.model}`, log: true, zero: true, min: 0.0005, max: 0.1, format: sig },
   { key: 'globalCtl', id: 'pglobal', sym: 'g', log: true, zero: true, min: 0.0005, max: 0.05, format: sig },
+  { key: 'rule', id: 'pRule', i18n: 'pRule', sym: 'R', min: 0, max: 255, step: 1, digits: 0 },
 ];
+// Constantes químicas: no se usan con el autómata celular
+const RD_IDS = ['pDa', 'pD2', 'pra', 'pr2', 'pkappa', 'pba', 'pb2', 'pglobal'];
 const PIG_PARAMS = [...PIG_SIMPLE, ...PIG_ADVANCED];
 
 const pigControls = {};
@@ -1311,7 +1332,10 @@ function markPatternCustom() {
 function syncPatternControls() {
   PIG_PARAMS.forEach((d) => pigControls[d.id].set(pattern[d.key]));
   Object.values(pigControls).forEach((c) => c.relabel());
+  const isCA = pattern.model === 'CA';
+  RD_IDS.forEach((id) => (pigControls[id].el.hidden = isCA));
   pigControls.pglobal.el.hidden = pattern.model !== 'AS'; // el control global solo existe con sustrato
+  pigControls.pRule.el.hidden = !isCA;
   $('patternModel').value = pattern.model;
   $('patternInsertion').checked = pattern.insertion;
   $('patternSeed').value = pattern.seed;

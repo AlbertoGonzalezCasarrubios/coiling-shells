@@ -191,11 +191,13 @@
           <summary><span data-i18n="pig.advanced">Advanced: model constants</span></summary>
           <div class="drawer-body">
             <p class="note" data-i18n="pig.advanced.hint"></p>
+            <div class="recipes" id="pigRecipes" data-i18n-html="pig.recipes"></div>
             <label class="field">
               <span data-i18n="pig.model">Model</span>
               <select id="patternModel" class="select">
                 <option value="AI" data-i18n="pig.model.AI">Activator–inhibitor</option>
                 <option value="AS" data-i18n="pig.model.AS">Activator–substrate</option>
+                <option value="CA" data-i18n="pig.model.CA">Cellular automaton (Wolfram)</option>
               </select>
             </label>
             <div id="pig-params"></div>
@@ -214,7 +216,6 @@
       </section>
 
       <footer class="refs">
-        <p data-i18n-html="refs.short"></p>
         <p class="license">© 2026 Alberto González Casarrubios · <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a></p>
       </footer>
     </aside>

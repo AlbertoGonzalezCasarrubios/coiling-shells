@@ -508,6 +508,10 @@ body.clean .main { height: 100vh; height: 100dvh; }
 .colors.two { grid-template-columns: 1fr 1fr; }
 .seed-row { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: end; }
 .seed-row .num { width: 96px; text-align: left; }
+.recipes { font-size: 11.5px; color: var(--muted); line-height: 1.45; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+.recipes strong { color: var(--text); font-weight: 600; }
+.recipes ul { margin: 4px 0 0; padding-left: 16px; }
+.recipes li + li { margin-top: 3px; }
 .link-btn { font: 500 12px var(--font); color: var(--accent); background: none; border: 0; cursor: pointer; padding: 2px 4px; }
 .link-btn.inline { padding: 0; font-size: 11.5px; }
 .link-btn:hover { text-decoration: underline; }

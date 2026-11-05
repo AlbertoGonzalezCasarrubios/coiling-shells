@@ -71,6 +71,23 @@ El pigmento se deposita en la capa externa de la concha, así que la app solo pi
 
 Además, el borde se alarga a medida que la concha crece. Con la **inserción de células**, se añaden células nuevas al borde y los elementos del patrón mantienen su tamaño, intercalándose rayas nuevas; sin ella, el patrón crece a la vez que la concha.
 
+### Autómatas celulares: la regla 30 y *Conus textile*
+
+Stephen Wolfram observó que los triángulos de *Conus textile* se parecen mucho al resultado de un **autómata celular elemental**, su **regla 30**: cada célula del borde está pigmentada o no, y su estado siguiente depende solo de ella y de sus dos vecinas. Un único número entre 0 y 255 codifica la regla. No es un mecanismo químico sino una abstracción discreta, pero muestra que reglas locales muy simples bastan para generar esta complejidad. La app lo incluye como tercer modelo, con un preset de *Conus textile*.
+
+La forma de un *Conus* (un cono de lados rectos con una apertura en rendija) no se puede construir con la apertura elíptica que usa esta app, así que el patrón se muestra sobre la concha que elijas. El preset de forma *Oliva (aproximada)* combina bien con estos patrones de triángulos.
+
+### Cómo cambiar de un tipo de patrón a otro
+
+Cada tipo de patrón vive en su propia región del espacio de parámetros, y entre una región y otra el cambio es brusco: son **bifurcaciones** del modelo. No falta ningún parámetro, pero hay que saber qué tocar. El panel avanzado incluye estas recetas:
+
+- **Bandas a lo largo de la espiral**: activador-inhibidor con un inhibidor de largo alcance (D<sub>h</sub> ≫ D<sub>a</sub>) y más rápido que el activador (r<sub>h</sub> > r<sub>a</sub>).
+- **Rayas paralelas al borde**: activador-inhibidor con D<sub>h</sub> ≈ 0 y un inhibidor de vida más larga (r<sub>h</sub> < r<sub>a</sub>).
+- **Líneas oblicuas y triángulos**: activador-sustrato con un sustrato que se recupera despacio; control global para los triángulos.
+- **Triángulos de todos los tamaños**: autómata celular, regla 30.
+
+Un preset fija también la semilla, la inserción de células, el tiempo, la irregularidad, el tamaño y los colores. Con exactamente los mismos valores se obtiene exactamente el mismo patrón.
+
 Unir la geometría de Raup con la pigmentación de Meinhardt no es una ocurrencia de esta app: es lo que hicieron Fowler, Meinhardt y Prusinkiewicz en 1992. El registro espacio-tiempo se envuelve sobre la concha: el borde da la vuelta a la apertura y el tiempo avanza con el enrollamiento.
 
 ## Cómo usar la app
@@ -82,7 +99,7 @@ Unir la geometría de Raup con la pigmentación de Meinhardt no es una ocurrenci
 5. **Usa las vistas estándar** de la malacología: 3/4, apertural (de frente a la apertura), dorsal, apical (desde el ápice), umbilical (desde la base) y perfil. Con el ratón puedes rotar (arrastrar), hacer zoom (rueda) y desplazar (clic derecho).
 6. **Pulsa *Animate growth*** para ver crecer la concha desde el ápice hasta la apertura.
 7. **Abre *Equation*** para ver la fórmula general y la misma fórmula con los valores actuales, y ***About*** para una explicación del modelo.
-8. **Píntala** en la pestaña **Pigment · Meinhardt**: elige un patrón (Nautilus, Cepaea u Oliva) y pulsa *Apply pattern to shell*. Los controles simples cambian el patrón de forma gradual: **tamaño del patrón**, **tiempo de crecimiento**, **irregularidad**, **cantidad de pigmento** y la **semilla** (otra variación del mismo patrón). Si quieres tocar las constantes de las ecuaciones, abre el panel **Advanced**. El patrón es opcional: sin activarlo, la concha mantiene su color sólido. Las ecuaciones de Meinhardt, con los valores actuales, están en *Equation*.
+8. **Píntala** en la pestaña **Pigment · Meinhardt**: elige un patrón (Nautilus, Cepaea, Oliva o Conus) y pulsa *Apply pattern to shell*. Los controles simples cambian el patrón de forma gradual: **tamaño del patrón**, **tiempo de crecimiento**, **irregularidad**, **cantidad de pigmento** y la **semilla** (otra variación del mismo patrón). Si quieres tocar las constantes de las ecuaciones, abre el panel **Advanced**. El patrón es opcional: sin activarlo, la concha mantiene su color sólido. Las ecuaciones de Meinhardt, con los valores actuales, están en *Equation*.
 9. **Para ver solo la concha**, usa *Fullscreen* y *Hide info*.
 10. **Guarda o comparte** tu concha: exporta una imagen PNG o un modelo STL para impresión 3D, o copia la dirección de la página, que guarda la forma actual.
 
@@ -105,6 +122,7 @@ Los valores son aproximaciones dentro del morfoespacio de Raup, no medidas de ej
 | | Trompo (*Trochus*) | 1.8 | 0 | 2.5 | 0.8 | |
 | | Planorbis | 2.1 | 0.3 | 0.15 | 1.0 | |
 | | Physa (sinistral) | 3.5 | 0.05 | 2.2 | 1.4 | |
+| | Oliva (aproximada) | 8 | 0 | 2.5 | 2.0 | |
 | Cefalópodos | Nautilus (*N. pompilius*) | 3.2 | 0.02 | 0 | 0.85 | |
 | | Ammonite evoluto (*Dactylioceras*) | 1.9 | 0.45 | 0 | 0.9 | |
 | Bivalvos | Almeja (*Venus*) | 1000 | 0 | 0.35 | 1.1 | ✓ |
@@ -118,6 +136,7 @@ Aproximaciones a los tipos de patrón de cada especie, no ajustes a ejemplares r
 | *Nautilus*: rayas en llama | Activador-inhibidor | Oscilación (inhibidor de vida larga) | Sí |
 | *Cepaea nemoralis*: bandas espirales | Activador-inhibidor | Picos estables (inhibición de largo alcance) | No |
 | *Oliva porphyria*: triángulos | Activador-sustrato | Ondas viajeras + control global | No |
+| *Conus textile*: regla 30 | Autómata celular | Regla elemental de Wolfram n.º 30 | No |
 
 ## Para desarrolladores
 
@@ -142,3 +161,4 @@ Para cualquier duda o comentario: **Alberto González Casarrubios** (Universidad
 - Meinhardt, H., & Klingler, M. (1987). A model for pattern formation on the shells of molluscs. *Journal of Theoretical Biology*, 126, 63–89.
 - Fowler, D. R., Meinhardt, H., & Prusinkiewicz, P. (1992). Modeling seashells. *Computer Graphics (SIGGRAPH '92)*, 26(2), 379–387.
 - Meinhardt, H. (2009). *The Algorithmic Beauty of Sea Shells* (4.ª ed.). Springer.
+- Wolfram, S. (2002). *A New Kind of Science*. Wolfram Media.
