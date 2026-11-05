@@ -54,8 +54,8 @@ const MEIN_REFS = `
 
 export const STRINGS = {
   en: {
-    'doc.title': 'Theoretical Shell Morphology',
-    'brand.subtitle': "Raup's shell-coiling model (1962, 1966)",
+    'doc.title': 'Theoretical Shells: Form and Colour',
+    'brand.subtitle': "Raup's coiling model · Meinhardt's pigmentation models",
     'lang.label': 'Language',
     'preset.title': 'Preset',
     'preset.custom': 'Custom',
@@ -112,6 +112,13 @@ export const STRINGS = {
     'pig.mode': 'Controls',
     'pig.mode.simple': 'Simple',
     'pig.mode.advanced': 'Advanced',
+    'pig.profile': 'Margin profile',
+    'pig.profile.a': 'Activator a',
+    'pig.profile.h': 'Inhibitor h',
+    'pig.profile.b': 'Substrate b',
+    'pig.profile.threshold': 'pigment threshold',
+    'pig.profile.time': 'time',
+    'pig.profile.hint': 'Concentrations along the aperture margin at one moment, each relative to its maximum. Click or drag on the space–time record to choose the moment. Pigment is laid down where the activator rises above the threshold.',
     'pig.state.extinct': 'No pattern: with these values the activator dies out and the shell stays unpigmented. Try a preset or one of the recipes below.',
     'pig.state.uniform': 'No pattern: with these values the margin stays uniform. Try a preset or one of the recipes below.',
     'pig.preset': 'Pattern',
@@ -133,7 +140,8 @@ export const STRINGS = {
     'eq.mein.note': 'x: position along the margin (in cells) · t: time · s: source density of each cell',
     'pig.seed': 'Seed',
     'pig.newSeed': 'New seed',
-    'pig.insertion': 'Cell insertion (the margin grows with the shell)',
+    'pig.insertion': 'Growing margin (cell insertion)',
+    'pig.insertion.desc': 'On: new cells are added to the margin as the shell grows, so pattern elements keep their real size and new stripes appear between the old ones. Off: the margin always has the same cells and the whole pattern simply grows with the shell.',
     'pig.save': 'Save pattern PNG',
     'pig.note': 'This tab paints the shell with the selected pattern. Choose “Solid colour” to go back to a plain shell.',
     'info.page.raup': 'Raup · shape',
@@ -213,7 +221,6 @@ export const STRINGS = {
       trochus: 'Top shell (Trochus)',
       planorbis: 'Ramshorn snail (Planorbis)',
       physa: 'Bladder snail (Physa, sinistral)',
-      oliva: 'Olive shell (Oliva, approximate)',
       nautilus: 'Chambered nautilus (Nautilus pompilius)',
       ammonite: 'Evolute ammonite (Dactylioceras)',
       almeja: 'Venus clam (Venus)',
@@ -288,7 +295,7 @@ export const STRINGS = {
       <p>The space–time record is wrapped onto the 3D surface: the position along the margin becomes the angle \\(\\varphi\\) around the aperture, and time becomes the coiling angle \\(\\theta\\). Fowler, Meinhardt and Prusinkiewicz (1992) combined both models in exactly this way, joining Raup's geometry with Meinhardt's pigmentation.</p>
 
       <h3>Simple and advanced controls</h3>
-      <p>The simple controls are not hidden multipliers: each one is a real quantity of the model. <em>Pattern size</em> sets the number of cells along the margin (256 at ×1): since diffusion is measured in cells, fewer cells make every element larger relative to the shell. <em>Growth time</em> is \\(T\\), <em>irregularity</em> is the cell-to-cell variation \\(\\sigma\\) of the source density, and <em>pigment amount</em> moves the pigmentation threshold. The <em>Advanced</em> view shows these same quantities together with the constants of the equations, on logarithmic sliders because they span several orders of magnitude, so everything can be controlled from there. Changing the model loads constants that work for it. If a combination of values forms no pattern (the activator dies out or the margin stays uniform), the app says so instead of rescaling tiny differences into a false pattern.</p>
+      <p>The simple controls are not hidden multipliers: each one is a real quantity of the model. <em>Pattern size</em> sets the number of cells along the margin (256 at ×1): since diffusion is measured in cells, fewer cells make every element larger relative to the shell. <em>Growth time</em> is \\(T\\), <em>irregularity</em> is the cell-to-cell variation \\(\\sigma\\) of the source density, and <em>pigment amount</em> moves the pigmentation threshold. The <em>Advanced</em> view shows these same quantities together with the constants of the equations, on logarithmic sliders because they span several orders of magnitude, so everything can be controlled from there. Changing the model loads constants that work for it. If a combination of values forms no pattern (the activator dies out or the margin stays uniform), the app says so instead of rescaling tiny differences into a false pattern. The advanced view also shows the <em>margin profile</em>: the activator and the inhibitor (or substrate) along the margin at the moment you pick on the space–time record, with the pigmentation threshold, which is the clearest way to see local activation and lateral inhibition at work.</p>
 
       <h3>Only the outside is pigmented</h3>
       <p>The pigment is laid down in the outer layer of the shell, so the inside of the aperture is drawn unpigmented, with a light nacre-like sheen.</p>
@@ -318,8 +325,8 @@ export const STRINGS = {
   },
 
   es: {
-    'doc.title': 'Morfología teórica de conchas',
-    'brand.subtitle': 'Modelo de enrollamiento de Raup (1962, 1966)',
+    'doc.title': 'Conchas teóricas: forma y color',
+    'brand.subtitle': 'Modelo de enrollamiento de Raup · modelos de pigmentación de Meinhardt',
     'lang.label': 'Idioma',
     'preset.title': 'Preset',
     'preset.custom': 'Personalizado',
@@ -376,6 +383,13 @@ export const STRINGS = {
     'pig.mode': 'Controles',
     'pig.mode.simple': 'Simple',
     'pig.mode.advanced': 'Avanzado',
+    'pig.profile': 'Perfil del borde',
+    'pig.profile.a': 'Activador a',
+    'pig.profile.h': 'Inhibidor h',
+    'pig.profile.b': 'Sustrato b',
+    'pig.profile.threshold': 'umbral de pigmento',
+    'pig.profile.time': 'tiempo',
+    'pig.profile.hint': 'Concentraciones a lo largo del borde de la apertura en un instante, cada una relativa a su máximo. Pincha o arrastra sobre el registro espacio-tiempo para elegir el instante. Se deposita pigmento donde el activador supera el umbral.',
     'pig.state.extinct': 'Sin patrón: con estos valores el activador se extingue y la concha queda sin pigmento. Prueba un preset o una de las recetas de abajo.',
     'pig.state.uniform': 'Sin patrón: con estos valores el borde queda uniforme. Prueba un preset o una de las recetas de abajo.',
     'pig.preset': 'Patrón',
@@ -397,7 +411,8 @@ export const STRINGS = {
     'eq.mein.note': 'x: posición a lo largo del borde (en células) · t: tiempo · s: densidad de fuente de cada célula',
     'pig.seed': 'Semilla',
     'pig.newSeed': 'Nueva semilla',
-    'pig.insertion': 'Inserción de células (el borde crece con la concha)',
+    'pig.insertion': 'Borde que crece (inserción de células)',
+    'pig.insertion.desc': 'Activado: al crecer la concha se añaden células al borde, así que los elementos del patrón mantienen su tamaño real y aparecen rayas nuevas entre las antiguas. Desactivado: el borde tiene siempre las mismas células y todo el patrón simplemente crece con la concha.',
     'pig.save': 'Guardar patrón PNG',
     'pig.note': 'Esta pestaña pinta la concha con el patrón elegido. Elige «Color sólido» para volver a una concha lisa.',
     'info.page.raup': 'Raup · forma',
@@ -477,7 +492,6 @@ export const STRINGS = {
       trochus: 'Trompo (Trochus)',
       planorbis: 'Planorbis (planispiral)',
       physa: 'Physa (sinistral)',
-      oliva: 'Oliva (aproximada)',
       nautilus: 'Nautilus (Nautilus pompilius)',
       ammonite: 'Ammonite evoluto (Dactylioceras)',
       almeja: 'Almeja (Venus)',
@@ -553,7 +567,7 @@ export const STRINGS = {
       <p>El registro espacio-tiempo se envuelve sobre la superficie 3D: la posición a lo largo del borde pasa a ser el ángulo \\(\\varphi\\) alrededor de la apertura, y el tiempo, el ángulo de enrollamiento \\(\\theta\\). Fowler, Meinhardt y Prusinkiewicz (1992) combinaron los dos modelos exactamente así, uniendo la geometría de Raup con la pigmentación de Meinhardt.</p>
 
       <h3>Controles simples y avanzados</h3>
-      <p>Los controles simples no son multiplicadores ocultos: cada uno es una magnitud real del modelo. El <em>tamaño del patrón</em> fija el número de células a lo largo del borde (256 con ×1): como la difusión se mide en células, con menos células cada elemento es mayor en relación con la concha. El <em>tiempo de crecimiento</em> es \\(T\\), la <em>irregularidad</em> es la variación \\(\\sigma\\) de la densidad de fuente entre células, y la <em>cantidad de pigmento</em> desplaza el umbral de pigmentación. La vista <em>Avanzado</em> muestra estas mismas magnitudes junto con las constantes de las ecuaciones, con sliders logarítmicos porque abarcan varios órdenes de magnitud, así que desde ahí se controla todo. Al cambiar de modelo se cargan constantes que funcionan con él. Si una combinación de valores no forma patrón (el activador se extingue o el borde queda uniforme), la app lo indica en lugar de reescalar diferencias minúsculas hasta fabricar un patrón falso.</p>
+      <p>Los controles simples no son multiplicadores ocultos: cada uno es una magnitud real del modelo. El <em>tamaño del patrón</em> fija el número de células a lo largo del borde (256 con ×1): como la difusión se mide en células, con menos células cada elemento es mayor en relación con la concha. El <em>tiempo de crecimiento</em> es \\(T\\), la <em>irregularidad</em> es la variación \\(\\sigma\\) de la densidad de fuente entre células, y la <em>cantidad de pigmento</em> desplaza el umbral de pigmentación. La vista <em>Avanzado</em> muestra estas mismas magnitudes junto con las constantes de las ecuaciones, con sliders logarítmicos porque abarcan varios órdenes de magnitud, así que desde ahí se controla todo. Al cambiar de modelo se cargan constantes que funcionan con él. Si una combinación de valores no forma patrón (el activador se extingue o el borde queda uniforme), la app lo indica en lugar de reescalar diferencias minúsculas hasta fabricar un patrón falso. La vista avanzada muestra además el <em>perfil del borde</em>: el activador y el inhibidor (o el sustrato) a lo largo del borde en el instante que elijas sobre el registro espacio-tiempo, junto con el umbral de pigmentación; es la forma más clara de ver en acción la activación local y la inhibición lateral.</p>
 
       <h3>Solo se pigmenta el exterior</h3>
       <p>El pigmento se deposita en la capa externa de la concha, así que el interior de la apertura se dibuja sin pigmento, con un ligero brillo nacarado.</p>

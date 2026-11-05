@@ -1,4 +1,4 @@
-# Theoretical Shell Morphology · Morfología teórica de conchas
+# Theoretical Shells: Form and Colour · Conchas teóricas: forma y color
 
 **▶ Live / En línea: https://albertogonzalezcasarrubios.github.io/aplicaciones-varias/shells-morphology/**
 
@@ -92,7 +92,7 @@ Unir la geometría de Raup con la pigmentación de Meinhardt no es una ocurrenci
 5. **Usa las vistas estándar** de la malacología: 3/4, apertural (de frente a la apertura), dorsal, apical (desde el ápice), umbilical (desde la base) y perfil. Con el ratón puedes rotar (arrastrar), hacer zoom (rueda) y desplazar (clic derecho).
 6. **Pulsa *Animate growth*** para ver crecer la concha desde el ápice hasta la apertura.
 7. **Abre *Equation*** para ver la fórmula general y la misma fórmula con los valores actuales, y ***About*** para una explicación del modelo.
-8. **Píntala** en la pestaña **Pigment · Meinhardt**: al entrar, la concha se colorea con el patrón elegido. La galería muestra cada patrón (Nautilus, Cepaea, Oliva) con su miniatura, y la opción **Solid colour** vuelve a la concha lisa. En la vista **Simple**, los controles cambian el patrón de forma gradual: **tamaño del patrón**, **tiempo de crecimiento**, **irregularidad**, **cantidad de pigmento** y la **semilla** (otra variación del mismo patrón). La vista **Advanced** muestra además el modelo y todas sus constantes, así que desde ahí se controla todo. Las ecuaciones de Meinhardt, con los valores actuales, están en *Equation*.
+8. **Píntala** en la pestaña **Pigment · Meinhardt**: al entrar, la concha se colorea con el patrón elegido. La galería muestra cada patrón (Nautilus, Cepaea, Oliva) con su miniatura, y la opción **Solid colour** vuelve a la concha lisa. En la vista **Simple**, los controles cambian el patrón de forma gradual: **tamaño del patrón**, **tiempo de crecimiento**, **irregularidad**, **cantidad de pigmento** y la **semilla** (otra variación del mismo patrón). La vista **Advanced** muestra además el modelo y todas sus constantes, así que desde ahí se controla todo, y el **perfil del borde**: el activador y el inhibidor (o el sustrato) a lo largo del borde en el instante que elijas pinchando en el registro espacio-tiempo, con el umbral de pigmentación. Las ecuaciones de Meinhardt, con los valores actuales, están en *Equation*.
 9. **Para ver solo la concha**, usa *Fullscreen* y *Hide info*.
 10. **Guarda o comparte** tu concha: exporta una imagen PNG o un modelo STL para impresión 3D, o copia la dirección de la página, que guarda la forma actual.
 
@@ -115,7 +115,6 @@ Los valores son aproximaciones dentro del morfoespacio de Raup, no medidas de ej
 | | Trompo (*Trochus*) | 1.8 | 0 | 2.5 | 0.8 | |
 | | Planorbis | 2.1 | 0.3 | 0.15 | 1.0 | |
 | | Physa (sinistral) | 3.5 | 0.05 | 2.2 | 1.4 | |
-| | Oliva (aproximada) | 8 | 0 | 2.5 | 2.0 | |
 | Cefalópodos | Nautilus (*N. pompilius*) | 3.2 | 0.02 | 0 | 0.85 | |
 | | Ammonite evoluto (*Dactylioceras*) | 1.9 | 0.45 | 0 | 0.9 | |
 | Bivalvos | Almeja (*Venus*) | 1000 | 0 | 0.35 | 1.1 | ✓ |

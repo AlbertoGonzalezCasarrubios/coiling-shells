@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Theoretical Shell Morphology</title>
+  <title>Theoretical Shells: Form and Colour</title>
   <meta name="description" content="Theoretical morphology of coiled shells: interactive 3D explorer of David M. Raup's shell-coiling model (W, D, T, S), with optional pigmentation patterns from Hans Meinhardt's reaction–diffusion models." />
   <meta name="author" content="Alberto González Casarrubios" />
   <meta name="license" content="CC BY-NC 4.0" />
@@ -39,8 +39,8 @@
       <header class="brand">
         <img class="brand-mark" src="favicon.svg?v=2" alt="" />
         <div class="brand-text">
-          <h1 data-i18n="doc.title">Theoretical Shell Morphology</h1>
-          <p data-i18n="brand.subtitle">Raup's shell-coiling model (1962, 1966)</p>
+          <h1 data-i18n="doc.title">Theoretical Shells: Form and Colour</h1>
+          <p data-i18n="brand.subtitle">Raup's coiling model · Meinhardt's pigmentation models</p>
         </div>
         <div class="lang" role="group" data-i18n-title="lang.label">
           <button type="button" data-lang="en" aria-pressed="true">EN</button>
@@ -161,6 +161,20 @@
             <p class="pattern-msg" id="patternMsg" hidden></p>
           </section>
 
+          <section class="panel adv-only">
+            <div class="panel-row">
+              <h2 class="panel-title" data-i18n="pig.profile">Margin profile</h2>
+              <span class="status" id="profileTime"></span>
+            </div>
+            <canvas id="profile" class="profile"></canvas>
+            <div class="profile-legend">
+              <span class="lg-a" data-i18n="pig.profile.a">Activator a</span>
+              <span class="lg-b" id="profileSecond">Inhibitor h</span>
+              <span class="lg-t" data-i18n="pig.profile.threshold">pigment threshold</span>
+            </div>
+            <p class="note" data-i18n="pig.profile.hint"></p>
+          </section>
+
           <section class="panel">
             <div class="segmented two" id="pigMode" role="radiogroup" data-i18n-title="pig.mode">
               <button type="button" data-pmode="simple" aria-pressed="true" data-i18n="pig.mode.simple">Simple</button>
@@ -191,7 +205,10 @@
                 <span data-i18n="pig.newSeed">New seed</span>
               </button>
             </div>
-            <label class="toggle adv-only"><input type="checkbox" id="patternInsertion" /><span data-i18n="pig.insertion">Cell insertion</span></label>
+            <div class="adv-only insertion">
+              <label class="toggle"><input type="checkbox" id="patternInsertion" /><span data-i18n="pig.insertion">Growing margin (cell insertion)</span></label>
+              <p class="note" data-i18n="pig.insertion.desc"></p>
+            </div>
           </section>
 
           <section class="panel">

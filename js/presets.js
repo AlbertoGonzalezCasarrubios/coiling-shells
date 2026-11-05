@@ -28,10 +28,6 @@ export const PRESETS = {
     group: 'Cefalópodos', name: 'Nautilus (Nautilus pompilius)',
     W: 3.2, D: 0.02, T: 0.0, S: 0.85, turns: 4, hand: 1, mirror: false,
   },
-  oliva: {
-    group: 'Gasterópodos', name: 'Oliva (aproximada)',
-    W: 8, D: 0.0, T: 2.5, S: 2.0, turns: 5, hand: 1, mirror: false,
-  },
   ammonite: {
     group: 'Cefalópodos', name: 'Ammonite evoluto (Dactylioceras)',
     W: 1.9, D: 0.45, T: 0.0, S: 0.9, turns: 7, hand: 1, mirror: false,

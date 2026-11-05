@@ -7,7 +7,7 @@ import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { STLExporter } from 'three/addons/exporters/STLExporter.js';
 import { buildShell } from './raup.js';
 import { PRESETS, DEFAULT_PRESET, PATTERN_PRESETS, DEFAULT_PATTERN, MODEL_REFERENCE } from './presets.js';
-import { simulatePattern } from './meinhardt.js';
+import { simulatePattern, PROFILE_WIDTH } from './meinhardt.js';
 import {
   setLang, getLang, t, tParam, tPreset, tPattern, applyStatic,
   GENERAL_TEX, DEFS_TEX, MIRROR_TEX, AI_TEX, AS_TEX, GLOBAL_TEX,
@@ -1134,6 +1134,9 @@ const patternImage = new ImageData(new Uint8ClampedArray(patternPixels.buffer), 
 const spacetime = $('spacetime');
 
 let patternValues = null;
+let patternSecond = null; // inhibidor o sustrato (rows × PROFILE_WIDTH), relativo a su máximo
+let profileRow = null;    // instante elegido para el perfil (null = la apertura)
+const profileCanvas = $('profile');
 
 function hexRgb(hex) {
   const n = parseInt(hex.slice(1), 16);
@@ -1181,8 +1184,95 @@ function drawSpacetime() {
   const ctx = spacetime.getContext('2d');
   ctx.imageSmoothingQuality = 'high';
   if (patternValues) ctx.drawImage(patternCanvas, 0, 0, spacetime.width, spacetime.height);
+  // En la vista avanzada se marca el instante del perfil
+  if (patternValues && $('tab-pigment').dataset.pmode === 'advanced') {
+    const row = profileRow ?? PATTERN_ROWS - 1;
+    const y = Math.min(spacetime.height - 1, ((row + 0.5) / PATTERN_ROWS) * spacetime.height);
+    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    ctx.lineWidth = 2 * dpr;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(spacetime.width, y);
+    ctx.stroke();
+  }
+  drawProfile();
 }
 new ResizeObserver(drawSpacetime).observe(spacetime);
+
+/**
+ * Perfil a lo largo del borde en un instante: activador y segunda sustancia
+ * (inhibidor o sustrato), cada una relativa a su máximo, y el umbral de pigmento.
+ */
+function drawProfile() {
+  const w = profileCanvas.clientWidth;
+  const h = profileCanvas.clientHeight;
+  if (!w || !h) return;
+  const dpr = Math.min(window.devicePixelRatio, 2);
+  profileCanvas.width = Math.round(w * dpr);
+  profileCanvas.height = Math.round(h * dpr);
+  const ctx = profileCanvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const row = profileRow ?? PATTERN_ROWS - 1;
+  $('profileTime').textContent = `${t('pig.profile.time')} ${Math.round((100 * row) / (PATTERN_ROWS - 1))} %`;
+  if (!patternValues || !patternSecond) return;
+
+  const css = getComputedStyle(document.documentElement);
+  const pad = 8;
+  const x = (k) => (k / (PROFILE_WIDTH - 1)) * w;
+  const y = (v) => pad + (1 - v) * (h - 2 * pad);
+  const aAt = (k) => patternValues[row * PATTERN_WIDTH + Math.floor((k / PROFILE_WIDTH) * PATTERN_WIDTH)];
+  const threshold = 1 - pattern.amount;
+
+  // Zona pigmentada: activador por encima del umbral
+  ctx.fillStyle = pattern.pigment;
+  ctx.globalAlpha = 0.22;
+  ctx.beginPath();
+  ctx.moveTo(0, y(threshold));
+  for (let k = 0; k < PROFILE_WIDTH; k++) ctx.lineTo(x(k), y(Math.max(threshold, aAt(k))));
+  ctx.lineTo(w, y(threshold));
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Umbral de pigmento
+  ctx.setLineDash([2, 3]);
+  ctx.strokeStyle = css.getPropertyValue('--muted').trim();
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(0, y(threshold));
+  ctx.lineTo(w, y(threshold));
+  ctx.stroke();
+
+  // Segunda sustancia (discontinua) y activador
+  const line = (get, color, width, dash) => {
+    ctx.setLineDash(dash);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    for (let k = 0; k < PROFILE_WIDTH; k++) ctx[k ? 'lineTo' : 'moveTo'](x(k), y(get(k)));
+    ctx.stroke();
+  };
+  line((k) => patternSecond[row * PROFILE_WIDTH + k], css.getPropertyValue('--accent').trim(), 1.6, [5, 3]);
+  line(aAt, pattern.pigment, 2, []);
+  ctx.setLineDash([]);
+}
+new ResizeObserver(drawProfile).observe(profileCanvas);
+
+// Elegir el instante del perfil sobre el registro espacio-tiempo (vista avanzada)
+function pickProfileRow(e) {
+  if ($('tab-pigment').dataset.pmode !== 'advanced' || !patternValues) return;
+  const r = spacetime.getBoundingClientRect();
+  const f = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+  profileRow = Math.round(f * (PATTERN_ROWS - 1));
+  drawSpacetime();
+}
+spacetime.addEventListener('pointerdown', (e) => {
+  spacetime.setPointerCapture(e.pointerId);
+  pickProfileRow(e);
+});
+spacetime.addEventListener('pointermove', (e) => {
+  if (spacetime.hasPointerCapture(e.pointerId)) pickProfileRow(e);
+});
 
 /** Si con los valores actuales no se forma patrón, se explica en lugar de mostrar un blanco mudo. */
 function updatePatternMessage() {
@@ -1259,14 +1349,15 @@ function computePattern() {
   } else if (workerFailed) {
     setTimeout(() => {
       const r = simulatePattern(p, g);
-      onPatternResult({ id, v: r.values, state: r.state });
+      onPatternResult({ id, v: r.values, second: r.second, state: r.state });
     });
   }
 }
 
-function onPatternResult({ id, v, state: simState }) {
+function onPatternResult({ id, v, second, state: simState }) {
   if (id !== patternJob) return; // llegó un cálculo antiguo
   patternValues = v;
+  patternSecond = second;
   patternState = simState;
   $('patternStatus').hidden = true;
   paintPattern();
@@ -1439,6 +1530,7 @@ function syncPatternControls() {
   $('pigBase').value = pattern.base;
   $('pigColor').value = pattern.pigment;
   $('pigBody').hidden = !pattern.on;
+  $('profileSecond').textContent = t(pattern.model === 'AS' ? 'pig.profile.b' : 'pig.profile.h');
   updateGallerySelection();
 }
 
@@ -1446,6 +1538,7 @@ function syncPatternControls() {
 function setPigMode(mode) {
   $('tab-pigment').dataset.pmode = mode;
   document.querySelectorAll('#pigMode [data-pmode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pmode === mode)));
+  drawSpacetime(); // la marca del instante y el perfil solo existen en la vista avanzada
 }
 document.querySelectorAll('#pigMode [data-pmode]').forEach((b) => b.addEventListener('click', () => setPigMode(b.dataset.pmode)));
 
@@ -1540,6 +1633,7 @@ function applyLanguage(lang) {
   if (infoDialog.open) openInfo();
   updateGalleryLabels();
   updatePatternMessage();
+  $('profileSecond').textContent = t(pattern.model === 'AS' ? 'pig.profile.b' : 'pig.profile.h');
   Object.values(pigControls).forEach((c) => c.relabel());
   drawSpacetime();
   if (!formulaPanel.hidden) setFormulaOpen(true);

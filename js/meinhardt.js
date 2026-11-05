@@ -26,6 +26,9 @@
 
 export const MODELS = ['AI', 'AS'];
 
+/** Columnas del perfil de la segunda sustancia (inhibidor o sustrato) que se devuelve. */
+export const PROFILE_WIDTH = 256;
+
 /** Generador pseudoaleatorio con semilla (mulberry32): el mismo patrón para la misma semilla. */
 export function rng32(seed) {
   let t = seed >>> 0;
@@ -54,9 +57,11 @@ export function rng32(seed) {
  * @param {number} g.rows       filas del resultado
  * @param {number} g.width      columnas del resultado (se remuestrea el borde)
  * @param {number} g.nMax       células en la apertura
- * @returns {{ values: Float32Array, state: 'pattern'|'uniform'|'extinct' }}
- *   values: activador normalizado 0–1 (rows × width); state indica si se formó
- *   un patrón, si el borde quedó uniforme o si el activador se extinguió
+ * @returns {{ values: Float32Array, second: Float32Array, state: 'pattern'|'uniform'|'extinct' }}
+ *   values: activador normalizado 0–1 (rows × width); second: inhibidor o
+ *   sustrato relativo a su máximo (rows × PROFILE_WIDTH), para el visor de
+ *   perfiles; state indica si se formó un patrón, si el borde quedó uniforme o
+ *   si el activador se extinguió
  */
 export function simulatePattern(p, g) {
   const { rows, width, nMax } = g;
@@ -103,6 +108,7 @@ export function simulatePattern(p, g) {
   const cRate = 0.02;
 
   const out = new Float32Array(rows * width);
+  const second = new Float32Array(rows * PROFILE_WIDTH); // inhibidor h o sustrato b
   let carry = 0;
 
   for (let row = 0; row < rows; row++) {
@@ -165,12 +171,29 @@ export function simulatePattern(p, g) {
       const i1 = i0 + 1 === n ? 0 : i0 + 1;
       out[base + k] = a[i0] * (1 - t) + a[i1] * t;
     }
+    const base2 = row * PROFILE_WIDTH;
+    for (let k = 0; k < PROFILE_WIDTH; k++) {
+      const x = (k / PROFILE_WIDTH) * n;
+      const i0 = Math.floor(x);
+      const t = x - i0;
+      const i1 = i0 + 1 === n ? 0 : i0 + 1;
+      second[base2 + k] = b[i0] * (1 - t) + b[i1] * t;
+    }
   }
 
   // El transitorio inicial (primer cuarto, vueltas diminutas del ápice) no cuenta
   // ni para el diagnóstico ni para la escala
   const state = normalize(out, Math.floor(rows / 4) * width);
-  return { values: out, state };
+  scaleToMax(second, Math.floor(rows / 4) * PROFILE_WIDTH);
+  return { values: out, second, state };
+}
+
+/** Escala a 0–1 dividiendo por el máximo (sin contar el transitorio inicial). */
+function scaleToMax(v, skip = 0) {
+  let max = 0;
+  for (let i = skip; i < v.length; i++) if (v[i] > max) max = v[i];
+  const k = max > 0 ? 1 / max : 0;
+  for (let i = 0; i < v.length; i++) v[i] = Math.min(1, v[i] * k);
 }
 
 /**
