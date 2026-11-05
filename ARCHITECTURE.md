@@ -16,8 +16,10 @@ Es una página estática: HTML, CSS y JavaScript con módulos ES, sin compilaci�
 index.html      Página, import map de Three.js y configuración de MathJax
 favicon.svg     Icono (ammonite generado con una espiral logarítmica)
 css/styles.css  Estilos: tema claro/oscuro automático, responsive
-js/raup.js      Matemática: malla paramétrica, líneas, valva especular, normalización
-js/presets.js   Valores de los presets
+js/raup.js      Matemática: malla paramétrica, UV, líneas, valva especular, normalización
+js/meinhardt.js Pigmentación: modelos de reacción-difusión de Meinhardt (función pura)
+js/pigment-worker.js  Web Worker que ejecuta meinhardt.js fuera del hilo principal
+js/presets.js   Valores de los presets de forma y de pigmentación
 js/i18n.js      Textos en inglés y español, incluido el panel About
 js/main.js      Escena, interfaz, vistas, gizmo, morfoespacio, fórmulas, exportación y URL
 LICENSE         CC BY-NC 4.0
@@ -33,6 +35,7 @@ LICENSE         CC BY-NC 4.0
 4. **Triángulos.** Cada celda de la rejilla son dos triángulos. φ es cerrado (la apertura es una curva cerrada), así que no hay costura.
 5. **Líneas.** Las líneas espirales son φ constante y las de crecimiento son θ constante (las posiciones sucesivas de la apertura). Los anillos se cuentan desde la apertura hacia el ápice para que la apertura final siempre tenga el suyo.
 6. **Colores por vértice** para las bandas de crecimiento del modo sólido.
+7. **Coordenadas de textura.** u = φ/2π (alrededor de la apertura) y v = posición en θ (0 en el ápice, 1 en la apertura). La columna φ = 2π repite la φ = 0 para que la textura no dé la vuelta en el último triángulo; `main.js` promedia después las normales de esa costura para que no se vea al iluminar.
 
 Devuelve `positions`, `colors`, `indices`, `lineIndices`, la posición del eje de enrollamiento, los valores derivados (r_c, a, b) y estadísticas.
 
@@ -50,6 +53,22 @@ Con esta correspondencia, el parámetro interno `hand` (+1 dextral, −1 sinistr
 
 En los bivalvos (W de 10² a 10⁴), casi toda la valva está en la última fracción de vuelta. Para que la malla y las líneas de crecimiento no queden escasas, `main.js` multiplica `segPerTurn` y `ringsPerTurn` por `max(1, log10 W)`.
 
+## Pigmentación (`js/meinhardt.js`)
+
+`simulatePattern(params, geometry)` es una función pura que devuelve una matriz `rows × width` de pigmento entre 0 y 1. La fila 0 es el ápice.
+
+- **Modelos.** Activador-inhibidor y activador-sustrato de Meinhardt, con saturación κ. El segundo admite un control global: una señal `c` que sigue la actividad media del borde y aumenta la producción basal cuando la actividad cae (`b_a + g / (1 + 40c)`), una versión simplificada del mecanismo de Meinhardt y Klingler (1987) para los triángulos.
+- **Borde periódico** de hasta 256 células, con laplaciano discreto (Δx = 1).
+- **Integración.** Euler explícito con paso `dt = min(0.5, 0.4/D_max, 0.4/r_max)`, estable para la difusión. Los valores se limitan para que parámetros extremos no desborden.
+- **Tiempo.** Cada fila recibe el mismo tiempo (`T / rows`): una espiral logarítmica recorrida a ritmo angular constante equivale a un crecimiento con tasa relativa constante.
+- **Inserción de células.** Opcional: el borde tiene `256 · W^(θ/2π)` células (mínimo 8). Cada célula nueva duplica a una vecina elegida al azar, con su propia densidad de fuente. Cada fila se remuestrea a la anchura de la textura.
+- **Ruido.** La densidad de fuente de cada célula es `r_a · (1 ± noise)`, con un generador pseudoaleatorio con semilla (mulberry32): la misma semilla da siempre el mismo patrón.
+- **Normalización.** Escala robusta entre los percentiles 2 y 99,5 para que un pico aislado no apague el resto.
+
+En `main.js`, el resultado se colorea entre el color de fondo y el del pigmento (con un *smoothstep* que define mejor los bordes) en una `DataTexture` de 512 × 768. La misma imagen se dibuja en el lienzo espacio-tiempo de la pestaña. La simulación se repite solo cuando cambian sus parámetros o, con inserción de células, W o N; cambiar los colores solo vuelve a pintar. El cálculo va en un *Web Worker* de tipo módulo; si el navegador no lo admite, se hace en el hilo principal.
+
+Con el patrón activo, el material sólido usa la textura en lugar del color y de las bandas por vértice; al desactivarlo vuelve el color sólido.
+
 ## Renderizado (`js/main.js`)
 
 - **Modos.** *Lines* dibuja solo las líneas; *Solid*, la superficie con `MeshStandardMaterial`, luz direccional con sombras suaves, luz hemisférica y un mapa de entorno (`RoomEnvironment`); *Both*, las dos cosas.
@@ -66,7 +85,8 @@ En los bivalvos (W de 10² a 10⁴), casi toda la valva está en la última frac
 - **Morfoespacio.** Es un `<canvas>` 2D con eje W logarítmico, la curva D = 1/W y regiones aproximadas. Solo se redibuja cuando su panel está abierto.
 - **Fórmulas.** MathJax se configura con `startup.typeset: false` y cada fórmula se compone cuando su panel se hace visible, mediante una cola de promesas para que no se solapen dos composiciones.
 - **Idiomas.** `js/i18n.js` contiene todos los textos. En el HTML, los atributos `data-i18n`, `data-i18n-html` y `data-i18n-title` indican qué traducir; el resto (parámetros, presets, HUD, morfoespacio) se traduce desde `main.js`. La página se abre siempre en inglés.
-- **Estado en la URL.** La forma actual se guarda en el *hash* (`#W=2.4&D=0.08&T=1.6&S=1&N=4.5&h=1&v=0&m=lines`) con `history.replaceState`, así que copiar la dirección comparte la concha.
+- **Estado en la URL.** La forma actual se guarda en el *hash* (`#W=2.4&D=0.08&T=1.6&S=1&N=4.5&h=1&v=0&m=lines`) con `history.replaceState`, así que copiar la dirección comparte la concha. Si el patrón está activo se añaden `pg=1` y sus parámetros (`pm`, `pDa`, `pD2`, …, `ps` para la semilla, `pi` para la inserción y `pcb`/`pcp` para los colores).
+- **Pestañas.** La barra lateral tiene dos pestañas (Forma y Pigmento) y el diálogo About tres páginas (Raup, Meinhardt y App). Cada página se compone con MathJax la primera vez que se muestra.
 - **Pantalla completa y ocultar info.** La pantalla completa usa la Fullscreen API sobre el contenedor del visor. El modo *Hide info* añade la clase `clean` al `<body>`, que oculta por CSS todo menos el lienzo y un botón para volver.
 
 ## Exportación

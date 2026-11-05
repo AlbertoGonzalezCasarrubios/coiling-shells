@@ -57,18 +57,24 @@ export function buildShell(p) {
   const a = (1 - D) / 2;
   const b = S * a;
 
+  // La columna j = segPhi repite la j = 0 (costura) para que la textura del
+  // patrón (u = φ/2π, v = posición en θ) no dé la vuelta en el último triángulo.
   const rows = nTheta + 1;
-  const count = rows * segPhi;
+  const cols = segPhi + 1;
+  const count = rows * cols;
   const positions = new Float32Array(count * 3 * copies);
   const colors = new Float32Array(count * 3 * copies);
+  const uvs = new Float32Array(count * 2 * copies);
 
-  const cosPhi = new Float32Array(segPhi);
-  const sinPhi = new Float32Array(segPhi);
+  const cosPhi = new Float32Array(cols);
+  const sinPhi = new Float32Array(cols);
   for (let j = 0; j < segPhi; j++) {
     const phi = (j / segPhi) * Math.PI * 2;
     cosPhi[j] = Math.cos(phi);
     sinPhi[j] = Math.sin(phi);
   }
+  cosPhi[segPhi] = cosPhi[0];
+  sinPhi[segPhi] = sinPhi[0];
 
   const logW = Math.log(W);
   let minX = Infinity, minY = Infinity, minZ = Infinity;
@@ -81,12 +87,12 @@ export function buildShell(p) {
     const st = Math.sin(theta) * hand;
     // Bandas de crecimiento (solo afectan al color en modo sólido)
     const growth = 0.5 + 0.5 * Math.cos(theta * 3.0);
-    for (let j = 0; j < segPhi; j++) {
+    for (let j = 0; j < cols; j++) {
       const R = g * (rc + a * cosPhi[j]);
       const x = R * ct;
       const z = R * st;
       const y = g * (-T * rc + b * sinPhi[j]);
-      const k = (i * segPhi + j) * 3;
+      const k = (i * cols + j) * 3;
       positions[k] = x;
       positions[k + 1] = y;
       positions[k + 2] = z;
@@ -99,6 +105,9 @@ export function buildShell(p) {
       colors[k] = shade;
       colors[k + 1] = shade * 0.97;
       colors[k + 2] = shade * 0.93;
+      const u = (i * cols + j) * 2;
+      uvs[u] = j / segPhi;
+      uvs[u + 1] = i / nTheta;
     }
   }
 
@@ -110,6 +119,7 @@ export function buildShell(p) {
       positions[n + k + 2] = -positions[k + 2];
     }
     colors.copyWithin(n, 0, n);
+    uvs.copyWithin(count * 2, 0, count * 2);
     const lo = minZ;
     minZ = Math.min(minZ, -maxZ);
     maxZ = Math.max(maxZ, -lo);
@@ -136,9 +146,8 @@ export function buildShell(p) {
     const flip = c === 1; // la reflexión invierte la orientación de las caras
     for (let i = 0; i < cutRow; i++) {
       for (let j = 0; j < segPhi; j++) {
-        const j1 = (j + 1) % segPhi;
-        const v00 = off + i * segPhi + j, v01 = off + i * segPhi + j1;
-        const v10 = off + (i + 1) * segPhi + j, v11 = off + (i + 1) * segPhi + j1;
+        const v00 = off + i * cols + j, v01 = v00 + 1;
+        const v10 = off + (i + 1) * cols + j, v11 = v10 + 1;
         if (flip) {
           indices[t++] = v00; indices[t++] = v01; indices[t++] = v10;
           indices[t++] = v01; indices[t++] = v11; indices[t++] = v10;
@@ -165,21 +174,24 @@ export function buildShell(p) {
   for (let c = 0; c < copies; c++) {
     const off = c * count;
     for (const j of usedPhi) {
-      for (let i = 0; i < cutRow; i++) lineIdx.push(off + i * segPhi + j, off + (i + 1) * segPhi + j);
+      for (let i = 0; i < cutRow; i++) lineIdx.push(off + i * cols + j, off + (i + 1) * cols + j);
     }
     for (const i of usedTheta) {
-      for (let j = 0; j < segPhi; j++) lineIdx.push(off + i * segPhi + j, off + i * segPhi + ((j + 1) % segPhi));
+      for (let j = 0; j < segPhi; j++) lineIdx.push(off + i * cols + j, off + i * cols + j + 1);
     }
   }
 
   return {
     positions,
     colors,
+    uvs,
     indices,
     lineIndices: new Uint32Array(lineIdx),
     // Eje de enrollamiento en coordenadas normalizadas
     axis: { x: -cx * scale, z: -cz * scale, yTop: (maxY - cy) * scale, yBottom: (minY - cy) * scale },
     derived: { rc, a, b },
+    // Para promediar las normales de la costura (columnas 0 y segPhi)
+    grid: { rows, cols, copies, count },
     stats: { vertices: count * copies, triangles: indices.length / 3 },
   };
 }

@@ -48,6 +48,12 @@
         </div>
       </header>
 
+      <nav class="tabs" role="tablist" data-i18n-title="tab.label">
+        <button type="button" role="tab" id="tabbtn-shape" data-tab="shape" aria-controls="tab-shape" aria-selected="true" data-i18n="tab.shape">Shape · Raup</button>
+        <button type="button" role="tab" id="tabbtn-pigment" data-tab="pigment" aria-controls="tab-pigment" aria-selected="false" tabindex="-1" data-i18n="tab.pigment">Pigment · Meinhardt</button>
+      </nav>
+
+      <div class="tab-panel" id="tab-shape" role="tabpanel" aria-labelledby="tabbtn-shape">
       <section class="panel">
         <label class="panel-title" for="preset" data-i18n="preset.title">Preset</label>
         <select id="preset" class="select"></select>
@@ -129,6 +135,64 @@
           </div>
         </div>
       </details>
+      </div>
+
+      <div class="tab-panel" id="tab-pigment" role="tabpanel" aria-labelledby="tabbtn-pigment" hidden>
+        <section class="panel">
+          <button type="button" class="btn toggle-btn btn-wide" id="patternOn" aria-pressed="false" data-i18n-title="pig.apply.hint">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 16c3-1 4-4 4-7s2-5 5-5 4 2 3 5-4 4-6 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="6" cy="14" r="1.2" fill="currentColor"/><circle cx="12" cy="8" r="1.2" fill="currentColor"/></svg>
+            <span data-i18n="pig.apply">Apply pattern to shell</span>
+          </button>
+          <p class="note"><span data-i18n="pig.note"></span> <button type="button" class="link-btn inline" id="pigTheory" data-i18n="pig.theory">Theory behind the model →</button></p>
+        </section>
+
+        <section class="panel">
+          <label class="panel-title" for="patternPreset" data-i18n="pig.preset">Pattern</label>
+          <select id="patternPreset" class="select"></select>
+        </section>
+
+        <section class="panel">
+          <div class="panel-row">
+            <h2 class="panel-title" data-i18n="pig.spacetime">Space–time record</h2>
+            <span class="status" id="patternStatus" hidden data-i18n="pig.computing">Computing…</span>
+          </div>
+          <canvas id="spacetime" class="spacetime"></canvas>
+          <div class="axis-caption">
+            <span data-i18n="pig.axis.x">← aperture margin (x) →</span>
+            <span data-i18n="pig.axis.t">apex → aperture (time)</span>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel-title" data-i18n="pig.colors">Pigment colours</h2>
+          <div class="colors two">
+            <label class="color-field"><input type="color" id="pigBase" value="#f1e7d6" /><span data-i18n="pig.base">Background</span></label>
+            <label class="color-field"><input type="color" id="pigColor" value="#9c4a1f" /><span data-i18n="pig.pigment">Pigment</span></label>
+          </div>
+        </section>
+
+        <section class="panel">
+          <label class="panel-title" for="patternModel" data-i18n="pig.model">Model</label>
+          <select id="patternModel" class="select">
+            <option value="AI" data-i18n="pig.model.AI">Activator–inhibitor</option>
+            <option value="AS" data-i18n="pig.model.AS">Activator–substrate</option>
+          </select>
+          <h2 class="panel-title" data-i18n="pig.params">Parameters</h2>
+          <div id="pig-params"></div>
+          <div class="seed-row">
+            <label class="field">
+              <span data-i18n="pig.seed">Seed</span>
+              <input type="number" id="patternSeed" class="num" min="1" max="99999" step="1" />
+            </label>
+            <button type="button" class="btn" id="newSeed">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="13" cy="13" r="1.2" fill="currentColor"/><circle cx="10" cy="10" r="1.2" fill="currentColor"/></svg>
+              <span data-i18n="pig.newSeed">New seed</span>
+            </button>
+          </div>
+          <label class="toggle"><input type="checkbox" id="patternInsertion" /><span data-i18n="pig.insertion">Cell insertion</span></label>
+          <button type="button" class="btn btn-wide" id="savePattern" data-i18n="pig.save">Save pattern PNG</button>
+        </section>
+      </div>
 
       <section class="panel">
         <h2 class="panel-title" data-i18n="export.title">Export</h2>
@@ -222,7 +286,16 @@
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </button>
     </div>
-    <div class="info-body" id="infoBody" data-i18n-html="info.body"></div>
+    <div class="info-tabs" role="tablist" data-i18n-title="info.pages">
+      <button type="button" role="tab" data-page="raup" aria-selected="true" data-i18n="info.page.raup">Raup · shape</button>
+      <button type="button" role="tab" data-page="meinhardt" aria-selected="false" tabindex="-1" data-i18n="info.page.meinhardt">Meinhardt · pigment</button>
+      <button type="button" role="tab" data-page="app" aria-selected="false" tabindex="-1" data-i18n="info.page.app">App &amp; credits</button>
+    </div>
+    <div class="info-body" id="infoBody">
+      <div class="info-page" data-page="raup" role="tabpanel" data-i18n-html="info.raup"></div>
+      <div class="info-page" data-page="meinhardt" role="tabpanel" data-i18n-html="info.meinhardt" hidden></div>
+      <div class="info-page" data-page="app" role="tabpanel" data-i18n-html="info.app" hidden></div>
+    </div>
   </dialog>
 
   <script type="module" src="js/main.js"></script>

@@ -6,8 +6,9 @@ import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { STLExporter } from 'three/addons/exporters/STLExporter.js';
 import { buildShell } from './raup.js';
-import { PRESETS, DEFAULT_PRESET } from './presets.js';
-import { setLang, getLang, t, tParam, tPreset, applyStatic, GENERAL_TEX, DEFS_TEX, MIRROR_TEX } from './i18n.js';
+import { PRESETS, DEFAULT_PRESET, PATTERN_PRESETS, DEFAULT_PATTERN } from './presets.js';
+import { simulatePattern } from './meinhardt.js';
+import { setLang, getLang, t, tParam, tPreset, tPattern, applyStatic, GENERAL_TEX, DEFS_TEX, MIRROR_TEX } from './i18n.js';
 
 // ---------------------------------------------------------------------------
 // Definición de controles (los textos están en i18n.js)
@@ -85,6 +86,7 @@ function writeHash() {
     for (const [short, key] of Object.entries(HASH_KEYS)) q.set(short, String(+Number(state[key]).toFixed(3)));
     q.set('v', state.mirror ? '1' : '0');
     q.set('m', state.mode);
+    patternHash(q);
     history.replaceState(null, '', `#${q}`);
   }, 250);
 }
@@ -268,8 +270,10 @@ function rebuild() {
   const meshGeo = new THREE.BufferGeometry();
   meshGeo.setAttribute('position', position);
   meshGeo.setAttribute('color', new THREE.BufferAttribute(shell.colors, 3));
+  meshGeo.setAttribute('uv', new THREE.BufferAttribute(shell.uvs, 2));
   meshGeo.setIndex(new THREE.BufferAttribute(shell.indices, 1));
   meshGeo.computeVertexNormals();
+  fixSeamNormals(meshGeo.attributes.normal.array, shell.grid);
   meshGeo.computeBoundingSphere();
 
   // LineSegmentsGeometry necesita pares de puntos explícitos
@@ -305,6 +309,22 @@ function rebuild() {
   writeHash();
   scheduleFormula();
   drawMorpho();
+  onGeometryForPattern();
+}
+
+/** La costura de la apertura tiene vértices duplicados: se promedian sus normales para que no se vea. */
+function fixSeamNormals(n, { rows, cols, copies, count }) {
+  for (let c = 0; c < copies; c++) {
+    for (let r = 0; r < rows; r++) {
+      const i0 = (c * count + r * cols) * 3;
+      const i1 = i0 + (cols - 1) * 3;
+      const x = n[i0] + n[i1], y = n[i0 + 1] + n[i1 + 1], z = n[i0 + 2] + n[i1 + 2];
+      const len = Math.hypot(x, y, z) || 1;
+      n[i0] = n[i1] = x / len;
+      n[i0 + 1] = n[i1 + 1] = y / len;
+      n[i0 + 2] = n[i1 + 2] = z / len;
+    }
+  }
 }
 
 function updateHud() {
@@ -398,11 +418,28 @@ function setFormulaOpen(open) {
   }
 }
 
-function openInfo() {
-  if (!infoBody.dataset.typeset) {
-    infoBody.dataset.typeset = '1';
-    typeset(infoBody);
-  }
+let infoPage = 'raup';
+
+function showInfoPage(page) {
+  infoPage = page;
+  document.querySelectorAll('.info-tabs [data-page]').forEach((b) => {
+    const on = b.dataset.page === page;
+    b.setAttribute('aria-selected', String(on));
+    b.tabIndex = on ? 0 : -1;
+  });
+  infoBody.querySelectorAll('.info-page').forEach((el) => {
+    el.hidden = el.dataset.page !== page;
+    // Cada página se compone con MathJax la primera vez que se muestra
+    if (!el.hidden && !el.dataset.typeset) {
+      el.dataset.typeset = '1';
+      typeset(el);
+    }
+  });
+  infoBody.scrollTop = 0;
+}
+
+function openInfo(page = infoPage) {
+  showInfoPage(page);
   if (!infoDialog.open) infoDialog.showModal();
 }
 
@@ -418,10 +455,11 @@ function setFill(range) {
   range.style.setProperty('--pct', `${pct}%`);
 }
 
-function createParam(def, container, { compact = false, onChange }) {
+function createParam(def, container, { compact = false, onChange, target = state }) {
   const el = document.createElement('div');
   el.className = 'param' + (compact ? ' compact' : '');
-  const id = `p-${def.key}`;
+  const ctlId = def.id ?? def.key;
+  const id = `p-${ctlId}`;
   const toggle = def.logToggle
     ? `<span class="scale-toggle" role="group">
          <button type="button" data-scale="lin">Lin</button><button type="button" data-scale="log">Log</button>
@@ -429,7 +467,7 @@ function createParam(def, container, { compact = false, onChange }) {
     : '';
   el.innerHTML = `
     <div class="param-head">
-      ${def.sym ? `<span class="param-sym">${def.sym}</span>` : ''}
+      ${def.sym ? '<span class="param-sym"></span>' : ''}
       <label class="param-name" for="${id}"><strong></strong><small></small></label>
       <input class="num" type="number" min="${def.min}" max="${def.max}" step="${def.logToggle ? 'any' : def.step}" />
     </div>
@@ -443,6 +481,7 @@ function createParam(def, container, { compact = false, onChange }) {
   const nameEl = el.querySelector('strong');
   const descEl = el.querySelector('small');
   const scaleGroup = el.querySelector('.scale-toggle');
+  const symEl = el.querySelector('.param-sym');
   const format = def.format || ((v) => f(v, def.digits));
   let logScale = false;
 
@@ -460,9 +499,14 @@ function createParam(def, container, { compact = false, onChange }) {
     );
   };
 
-  const set = (v, { fromNum = false } = {}) => {
+  const set = (v, { fromNum = false, fitScale = false } = {}) => {
     const clamped = Math.min(def.max, Math.max(def.min, v));
-    state[def.key] = clamped;
+    target[def.key] = clamped;
+    // Al cargar un preset, se vuelve a la escala lineal si el valor cabe en ella
+    if (fitScale && def.logToggle && logScale && clamped <= def.linMax) {
+      logScale = false;
+      applyScale();
+    }
     // Un valor fuera del rango lineal (p. ej. un bivalvo) pasa a escala logarítmica
     if (def.logToggle && !logScale && clamped > def.linMax) {
       logScale = true;
@@ -479,11 +523,11 @@ function createParam(def, container, { compact = false, onChange }) {
       if (wantLog === logScale) return;
       logScale = wantLog;
       applyScale();
-      if (!logScale && state[def.key] > def.linMax) {
+      if (!logScale && target[def.key] > def.linMax) {
         set(def.linMax);
         onChange(def.key);
       } else {
-        set(state[def.key]);
+        set(target[def.key]);
       }
     })
   );
@@ -499,10 +543,12 @@ function createParam(def, container, { compact = false, onChange }) {
     set(v, { fromNum: true });
     onChange(def.key);
   });
-  num.addEventListener('change', () => set(state[def.key]));
+  num.addEventListener('change', () => set(target[def.key]));
 
+  // El símbolo y el nombre pueden depender del modelo (p. ej. D_h o D_b)
   const relabel = () => {
-    const tr = tParam(def.key);
+    if (symEl) symEl.innerHTML = typeof def.sym === 'function' ? def.sym() : def.sym;
+    const tr = tParam(typeof def.i18n === 'function' ? def.i18n() : def.i18n ?? def.key);
     nameEl.textContent = tr.name || def.key;
     descEl.textContent = tr.desc || '';
     descEl.hidden = !tr.desc;
@@ -515,8 +561,8 @@ function createParam(def, container, { compact = false, onChange }) {
   relabel();
   applyScale();
 
-  controlsByKey[def.key] = { set, relabel };
-  set(state[def.key]);
+  controlsByKey[ctlId] = { set, relabel, el };
+  set(target[def.key]);
 }
 
 function markCustom() {
@@ -577,7 +623,7 @@ presetSel.addEventListener('change', () => {
   const p = PRESETS[presetSel.value];
   if (!p) return;
   const shape = pickShape(p);
-  for (const k of ['W', 'D', 'T', 'S', 'turns']) controlsByKey[k].set(shape[k]);
+  for (const k of ['W', 'D', 'T', 'S', 'turns']) controlsByKey[k].set(shape[k], { fitScale: true });
   state.hand = shape.hand;
   $('hand').value = String(shape.hand);
   setMirror(shape.mirror);
@@ -611,7 +657,7 @@ document.querySelectorAll('#mode button').forEach((btn) =>
 );
 
 $('lineColor').addEventListener('input', (e) => lineMat.color.set(e.target.value));
-$('shellColor').addEventListener('input', (e) => solidMat.color.set(e.target.value));
+$('shellColor').addEventListener('input', applyShellMaterial);
 $('bgColor').addEventListener('input', (e) => scene.background.set(e.target.value));
 $('hideHidden').addEventListener('change', applyMode);
 document.querySelectorAll('[data-palette]').forEach((b) =>
@@ -619,20 +665,18 @@ document.querySelectorAll('[data-palette]').forEach((b) =>
     const p = PALETTES[b.dataset.palette];
     setPaletteInputs(p);
     lineMat.color.set(p.line);
-    solidMat.color.set(p.shell);
+    applyShellMaterial();
     scene.background.set(p.bg);
   })
 );
-$('bands').addEventListener('change', (e) => {
-  solidMat.vertexColors = e.target.checked;
-  solidMat.needsUpdate = true;
-});
+$('bands').addEventListener('change', applyShellMaterial);
 $('showAxis').addEventListener('change', (e) => (axis.visible = e.target.checked));
 $('autoRotate').addEventListener('change', (e) => (controls.autoRotate = e.target.checked));
 
 $('toggleFormula').addEventListener('click', () => setFormulaOpen(formulaPanel.hidden));
 $('closeFormula').addEventListener('click', () => setFormulaOpen(false));
-$('openInfo').addEventListener('click', openInfo);
+$('openInfo').addEventListener('click', () => openInfo());
+document.querySelectorAll('.info-tabs [data-page]').forEach((b) => b.addEventListener('click', () => showInfoPage(b.dataset.page)));
 $('closeInfo').addEventListener('click', () => infoDialog.close());
 infoDialog.addEventListener('click', (e) => {
   if (e.target === infoDialog) infoDialog.close(); // clic en el fondo
@@ -947,6 +991,304 @@ $('saveStl').addEventListener('click', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Pigmentación (modelos de reacción-difusión de Meinhardt)
+// ---------------------------------------------------------------------------
+
+const PATTERN_ROWS = 768;   // filas del registro espacio-tiempo (ápice → apertura)
+const PATTERN_WIDTH = 512;  // columnas de la textura (vuelta completa a la apertura)
+const PATTERN_CELLS = 256;  // células del borde en la apertura
+const PATTERN_KEYS = ['model', 'Da', 'D2', 'ra', 'r2', 'kappa', 'ba', 'b2', 'noise', 'globalCtl', 'T', 'insertion', 'base', 'pigment'];
+
+const pickPattern = (p) => Object.fromEntries(PATTERN_KEYS.map((k) => [k, p[k]]));
+
+const pattern = { on: false, preset: DEFAULT_PATTERN, seed: 7, ...pickPattern(PATTERN_PRESETS[DEFAULT_PATTERN]) };
+
+// Estado del patrón en la URL: pg=1 y los parámetros con prefijo p
+const PATTERN_HASH = { pm: 'model', pDa: 'Da', pD2: 'D2', pra: 'ra', pr2: 'r2', pk: 'kappa', pba: 'ba', pb2: 'b2', pn: 'noise', pgc: 'globalCtl', pT: 'T', ps: 'seed' };
+if (fromHash.get('pg') === '1') {
+  pattern.on = true;
+  pattern.preset = PATTERN_PRESETS[fromHash.get('pp')] ? fromHash.get('pp') : 'custom';
+  for (const [short, key] of Object.entries(PATTERN_HASH)) {
+    if (!fromHash.has(short)) continue;
+    if (key === 'model') pattern.model = fromHash.get(short) === 'AS' ? 'AS' : 'AI';
+    else if (Number.isFinite(parseFloat(fromHash.get(short)))) pattern[key] = parseFloat(fromHash.get(short));
+  }
+  if (fromHash.has('pi')) pattern.insertion = fromHash.get('pi') === '1';
+  for (const [short, key] of [['pcb', 'base'], ['pcp', 'pigment']]) {
+    if (/^[0-9a-f]{6}$/i.test(fromHash.get(short) || '')) pattern[key] = `#${fromHash.get(short)}`;
+  }
+}
+
+function patternHash(q) {
+  q.set('pg', pattern.on ? '1' : '0');
+  if (!pattern.on) return;
+  q.set('pp', pattern.preset);
+  for (const [short, key] of Object.entries(PATTERN_HASH)) q.set(short, key === 'model' ? pattern.model : String(+Number(pattern[key]).toFixed(4)));
+  q.set('pi', pattern.insertion ? '1' : '0');
+  q.set('pcb', pattern.base.slice(1));
+  q.set('pcp', pattern.pigment.slice(1));
+}
+
+// Textura y lienzo con el registro espacio-tiempo (fila 0 = ápice, como v = 0 en la malla)
+const patternPixels = new Uint8Array(PATTERN_WIDTH * PATTERN_ROWS * 4);
+const patternTex = new THREE.DataTexture(patternPixels, PATTERN_WIDTH, PATTERN_ROWS, THREE.RGBAFormat);
+patternTex.colorSpace = THREE.SRGBColorSpace;
+patternTex.wrapS = THREE.RepeatWrapping;
+patternTex.wrapT = THREE.ClampToEdgeWrapping;
+patternTex.magFilter = THREE.LinearFilter;
+patternTex.minFilter = THREE.LinearMipmapLinearFilter;
+patternTex.generateMipmaps = true;
+patternTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+const patternCanvas = document.createElement('canvas');
+patternCanvas.width = PATTERN_WIDTH;
+patternCanvas.height = PATTERN_ROWS;
+const patternImage = new ImageData(new Uint8ClampedArray(patternPixels.buffer), PATTERN_WIDTH, PATTERN_ROWS);
+const spacetime = $('spacetime');
+
+let patternValues = null;
+
+function hexRgb(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+/** Colorea el pigmento simulado (0–1) entre el color de fondo y el del pigmento. */
+function paintPattern() {
+  if (!patternValues) return;
+  const base = hexRgb(pattern.base);
+  const pig = hexRgb(pattern.pigment);
+  for (let i = 0, k = 0; i < patternValues.length; i++, k += 4) {
+    const v = patternValues[i];
+    const t = v * v * (3 - 2 * v); // bordes del pigmento algo más nítidos
+    patternPixels[k] = base[0] + (pig[0] - base[0]) * t;
+    patternPixels[k + 1] = base[1] + (pig[1] - base[1]) * t;
+    patternPixels[k + 2] = base[2] + (pig[2] - base[2]) * t;
+    patternPixels[k + 3] = 255;
+  }
+  patternTex.needsUpdate = true;
+  patternCanvas.getContext('2d').putImageData(patternImage, 0, 0);
+  drawSpacetime();
+  applyShellMaterial();
+}
+
+function drawSpacetime() {
+  const w = spacetime.clientWidth;
+  const h = spacetime.clientHeight;
+  if (!w || !h) return;
+  const dpr = Math.min(window.devicePixelRatio, 2);
+  spacetime.width = Math.round(w * dpr);
+  spacetime.height = Math.round(h * dpr);
+  const ctx = spacetime.getContext('2d');
+  ctx.imageSmoothingQuality = 'high';
+  if (patternValues) ctx.drawImage(patternCanvas, 0, 0, spacetime.width, spacetime.height);
+}
+new ResizeObserver(drawSpacetime).observe(spacetime);
+
+/** Color sólido o patrón, según la opción elegida. */
+function applyShellMaterial() {
+  const withPattern = pattern.on && !!patternValues;
+  solidMat.map = withPattern ? patternTex : null;
+  solidMat.color.set(withPattern ? '#ffffff' : $('shellColor').value);
+  solidMat.vertexColors = !withPattern && $('bands').checked;
+  solidMat.needsUpdate = true;
+}
+
+// Cálculo en un Web Worker; si no está disponible, en el hilo principal
+let patternWorker = null;
+try {
+  patternWorker = new Worker(new URL('./pigment-worker.js', import.meta.url), { type: 'module' });
+  patternWorker.onmessage = (e) => onPatternResult(e.data);
+  patternWorker.onerror = () => {
+    patternWorker = null;
+    computePattern();
+  };
+} catch {
+  patternWorker = null;
+}
+
+let patternJob = 0;
+let patternTimer = 0;
+let patternGeomKey = '';
+
+const patternNeeded = () => pattern.on || !$('tab-pigment').hidden;
+
+function computePattern() {
+  const id = ++patternJob;
+  const { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl, T, seed, insertion } = pattern;
+  const p = { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl: model === 'AS' ? globalCtl : 0, T, seed, insertion };
+  const g = { W: state.W, turns: state.turns, rows: PATTERN_ROWS, width: PATTERN_WIDTH, nMax: PATTERN_CELLS };
+  patternGeomKey = `${state.W}|${state.turns}`;
+  $('patternStatus').hidden = false;
+  if (patternWorker) patternWorker.postMessage({ id, p, g });
+  else setTimeout(() => onPatternResult({ id, v: simulatePattern(p, g) }));
+}
+
+function onPatternResult({ id, v }) {
+  if (id !== patternJob) return; // llegó un cálculo antiguo
+  patternValues = v;
+  $('patternStatus').hidden = true;
+  paintPattern();
+}
+
+function schedulePattern() {
+  clearTimeout(patternTimer);
+  if (patternNeeded()) patternTimer = setTimeout(computePattern, 80);
+  writeHash();
+}
+
+// Con inserción de células el patrón depende del tamaño de cada vuelta (W y N)
+function onGeometryForPattern() {
+  if (pattern.insertion && patternNeeded() && patternGeomKey !== `${state.W}|${state.turns}`) schedulePattern();
+}
+
+// Controles
+const sub = (x, y) => `${x}<sub>${y}</sub>`;
+const second = () => (pattern.model === 'AS' ? 'b' : 'h');
+const PIG_PARAMS = [
+  { key: 'Da', id: 'pDa', sym: sub('D', 'a'), min: 0, max: 0.3, step: 0.001, digits: 3 },
+  { key: 'D2', id: 'pD2', sym: () => sub('D', second()), i18n: () => `D2.${pattern.model}`, min: 0, max: 15, step: 0.05, digits: 2 },
+  { key: 'ra', id: 'pra', sym: sub('r', 'a'), min: 0.001, max: 0.2, step: 0.001, digits: 3 },
+  { key: 'r2', id: 'pr2', sym: () => sub('r', second()), i18n: () => `r2.${pattern.model}`, min: 0, max: 0.2, step: 0.001, digits: 3 },
+  { key: 'kappa', id: 'pkappa', sym: 'κ', min: 0, max: 2, step: 0.01, digits: 2 },
+  { key: 'ba', id: 'pba', sym: sub('b', 'a'), min: 0, max: 0.1, step: 0.0005, digits: 4 },
+  { key: 'b2', id: 'pb2', sym: () => sub('b', second()), i18n: () => `b2.${pattern.model}`, min: 0, max: 0.1, step: 0.001, digits: 3 },
+  { key: 'noise', id: 'pnoise', sym: 'σ', min: 0, max: 0.5, step: 0.01, digits: 2 },
+  { key: 'globalCtl', id: 'pglobal', sym: 'g', min: 0, max: 0.05, step: 0.0005, digits: 4 },
+  { key: 'T', id: 'pT', i18n: 'pT', sym: 'τ', min: 500, max: 12000, step: 100, digits: 0 },
+];
+
+const pigControls = {};
+PIG_PARAMS.forEach((d) => {
+  createParam(d, $('pig-params'), {
+    compact: true,
+    target: pattern,
+    onChange: () => {
+      markPatternCustom();
+      schedulePattern();
+    },
+  });
+  pigControls[d.id] = controlsByKey[d.id];
+});
+
+const patternSel = $('patternPreset');
+function buildPatternOptions() {
+  const value = pattern.preset;
+  patternSel.innerHTML = '';
+  for (const key of Object.keys(PATTERN_PRESETS)) patternSel.add(new Option(tPattern(key), key));
+  patternSel.add(new Option(t('pig.custom'), 'custom'));
+  patternSel.value = value;
+}
+
+function markPatternCustom() {
+  pattern.preset = 'custom';
+  patternSel.value = 'custom';
+}
+
+/** Lleva el estado del patrón a todos los controles. */
+function syncPatternControls() {
+  PIG_PARAMS.forEach((d) => pigControls[d.id].set(pattern[d.key]));
+  Object.values(pigControls).forEach((c) => c.relabel());
+  pigControls.pglobal.el.hidden = pattern.model !== 'AS'; // el control global solo existe con sustrato
+  $('patternModel').value = pattern.model;
+  $('patternInsertion').checked = pattern.insertion;
+  $('patternSeed').value = pattern.seed;
+  $('pigBase').value = pattern.base;
+  $('pigColor').value = pattern.pigment;
+  $('patternOn').setAttribute('aria-pressed', String(pattern.on));
+}
+
+patternSel.addEventListener('change', () => {
+  const preset = PATTERN_PRESETS[patternSel.value];
+  if (!preset) return;
+  pattern.preset = patternSel.value;
+  Object.assign(pattern, pickPattern(preset));
+  syncPatternControls();
+  schedulePattern();
+});
+
+$('patternModel').addEventListener('change', (e) => {
+  pattern.model = e.target.value;
+  syncPatternControls();
+  markPatternCustom();
+  schedulePattern();
+});
+
+$('patternInsertion').addEventListener('change', (e) => {
+  pattern.insertion = e.target.checked;
+  markPatternCustom();
+  schedulePattern();
+});
+
+$('patternSeed').addEventListener('change', (e) => {
+  const v = Math.round(Math.min(99999, Math.max(1, parseFloat(e.target.value) || 1)));
+  pattern.seed = v;
+  e.target.value = v;
+  schedulePattern();
+});
+
+$('newSeed').addEventListener('click', () => {
+  pattern.seed = 1 + Math.floor(Math.random() * 99999);
+  $('patternSeed').value = pattern.seed;
+  schedulePattern();
+});
+
+for (const [id, key] of [['pigBase', 'base'], ['pigColor', 'pigment']]) {
+  $(id).addEventListener('input', (e) => {
+    pattern[key] = e.target.value;
+    paintPattern(); // cambiar el color no requiere volver a simular
+    writeHash();
+  });
+}
+
+$('patternOn').addEventListener('click', () => {
+  pattern.on = !pattern.on;
+  $('patternOn').setAttribute('aria-pressed', String(pattern.on));
+  // El patrón solo se ve sobre la superficie
+  if (pattern.on && state.mode === 'lines') {
+    state.mode = 'solid';
+    applyMode();
+  }
+  if (pattern.on && !patternValues) computePattern();
+  applyShellMaterial();
+  writeHash();
+});
+
+$('pigTheory').addEventListener('click', () => openInfo('meinhardt'));
+
+$('savePattern').addEventListener('click', () => {
+  if (patternValues) download(patternCanvas.toDataURL('image/png'), `meinhardt_${pattern.preset}_seed${pattern.seed}.png`);
+});
+
+// Pestañas Forma | Pigmento
+function showTab(name) {
+  document.querySelectorAll('.tabs [data-tab]').forEach((b) => {
+    const on = b.dataset.tab === name;
+    b.setAttribute('aria-selected', String(on));
+    b.tabIndex = on ? 0 : -1;
+  });
+  $('tab-shape').hidden = name !== 'shape';
+  $('tab-pigment').hidden = name !== 'pigment';
+  if (name === 'pigment') {
+    if (!patternValues) computePattern();
+    drawSpacetime();
+  }
+}
+document.querySelectorAll('.tabs [data-tab]').forEach((b) => {
+  b.addEventListener('click', () => showTab(b.dataset.tab));
+  b.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const next = b.dataset.tab === 'shape' ? 'pigment' : 'shape';
+    showTab(next);
+    document.querySelector(`.tabs [data-tab="${next}"]`).focus();
+  });
+});
+
+buildPatternOptions();
+syncPatternControls();
+if (pattern.on) computePattern();
+
+// ---------------------------------------------------------------------------
 // Idioma
 // ---------------------------------------------------------------------------
 
@@ -961,8 +1303,11 @@ function applyLanguage(lang) {
   drawMorpho();
   document.querySelectorAll('.lang button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === getLang())));
   // applyStatic reemplaza el HTML con TeX sin componer
-  delete infoBody.dataset.typeset;
+  infoBody.querySelectorAll('.info-page').forEach((el) => delete el.dataset.typeset);
   if (infoDialog.open) openInfo();
+  buildPatternOptions();
+  Object.values(pigControls).forEach((c) => c.relabel());
+  drawSpacetime();
   if (!formulaPanel.hidden) setFormulaOpen(true);
 }
 

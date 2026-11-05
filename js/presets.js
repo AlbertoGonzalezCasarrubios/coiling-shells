@@ -39,3 +39,28 @@ export const PRESETS = {
 };
 
 export const DEFAULT_PRESET = 'caracol';
+
+/**
+ * Patrones de pigmentación (modelos de Meinhardt) ajustados para parecerse a
+ * especies conocidas. Los parámetros están en unidades de célula del borde
+ * (256 células en la apertura) y del tiempo total simulado T.
+ */
+export const PATTERN_PRESETS = {
+  nautilus: {
+    // Oscilación: el inhibidor vive más que el activador → rayas en llama paralelas al borde
+    model: 'AI', Da: 0.01, D2: 0, ra: 0.08, r2: 0.02, kappa: 0.2, ba: 0.05, b2: 0,
+    noise: 0.3, globalCtl: 0, T: 3000, insertion: true, base: '#f1e7d6', pigment: '#9c4a1f',
+  },
+  cepaea: {
+    // Picos estables (inhibición lateral de largo alcance) → bandas espirales
+    model: 'AI', Da: 0.02, D2: 12, ra: 0.01, r2: 0.015, kappa: 0.4, ba: 0.005, b2: 0,
+    noise: 0.05, globalCtl: 0, T: 3000, insertion: false, base: '#ecc95a', pigment: '#3a2216',
+  },
+  oliva: {
+    // Ondas viajeras por agotamiento del sustrato + control global → zigzags y triángulos
+    model: 'AS', Da: 0.004, D2: 0, ra: 0.05, r2: 0, kappa: 0.5, ba: 0.0005, b2: 0.02,
+    noise: 0.3, globalCtl: 0.01, T: 8000, insertion: false, base: '#e6c6b0', pigment: '#4b2a3c',
+  },
+};
+
+export const DEFAULT_PATTERN = 'nautilus';
