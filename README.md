@@ -1,3 +1,7 @@
+> *"The basic form of many coiled gastropod shells can be defined by four parameters. A digital computer with automatic plotting equipment can be used to make graphical reconstructions of a shell from any given values of the four parameters."*
+>
+> — David M. Raup, *Science* (1962)
+
 # Theoretical Shells: Form and Colour
 
 [![Tests](https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/actions/workflows/tests.yml/badge.svg)](https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/actions/workflows/tests.yml)
@@ -7,51 +11,25 @@
 
 **English** · [Español](docs/README.es.md)
 
-An interactive 3D explorer of the **theoretical morphology of coiled shells**. The shape comes from David M. Raup's shell-coiling model (1962, 1966). The colour pattern comes, optionally, from Hans Meinhardt's reaction–diffusion models of shell pigmentation. It runs entirely in the browser, with no installation.
+An interactive 3D explorer of the **theoretical morphology of coiled shells**. The shape comes from David M. Raup's shell-coiling model (1962, 1966) and, optionally, the colour pattern from Hans Meinhardt's reaction–diffusion models of shell pigmentation. It runs entirely in the browser, with no installation, in English and Spanish.
 
 **▶ Open the app: https://albertogonzalezcasarrubios.github.io/coiling-shells/**
 
-![The app showing a banded snail shell coloured with Meinhardt's activator–inhibitor model, with the W–D morphospace and the activator and inhibitor profiles overlaid on the 3D view](docs/images/app.png)
+![The app showing a Turritella shell drawn with lines, with Raup's parameters in the sidebar](docs/images/turritella-lines.png)
 
-## Statement of need
+## What it is for
 
-Raup's model is the classic example of a **theoretical morphospace**: four numbers generate the coiled shells of snails, ammonoids, nautiloids, bivalves and brachiopods, and the space they span shows which forms exist in nature and which do not. Meinhardt's models show how the stripes, bands and triangles on those shells can arise from simple local interactions along the growing margin. Both are standard material in palaeontology, evolutionary biology and pattern formation courses, but they are usually taught with static figures, or with code that students must install and run.
+- **Exploring Raup's model:** change W, D, T and S and the shell rebuilds instantly, with the equation shown both in general form and with the current values.
+- **Exploring the morphospace:** place the shell in Raup's morphospace and see which regions real shells occupy and which stay empty.
+- **Growing a pigmentation pattern:** apply one of Meinhardt's models to the shell and watch the activator and the inhibitor (or substrate) that produce it.
+- **Taking the result off the screen:** export images, a plate of the standard malacological views, a PDF report with all the values and equations, 3D models, or a closed solid ready for a 3D printer.
+- **Teaching:** the *About* dialog explains both models in detail. The app is suited to palaeontology, evolutionary biology and pattern formation courses, and to anyone curious about why shells look the way they do.
 
-This app lets students, teachers and researchers:
+## How it works
 
-- **change the parameters and see the shell rebuild instantly**, with the equation shown both in general form and with the current values;
-- **place the shell in Raup's morphospace** and see why a region is occupied or empty;
-- **grow a pigmentation pattern on that shell** and watch the activator and the inhibitor (or substrate) that produce it;
-- **take the result out of the screen**: a plate of the standard malacological views, a PDF sheet with all the values and equations, or a closed, watertight solid ready for a 3D printer.
+### Shape: Raup's coiling model
 
-The interface and the explanations are available in English and Spanish.
-
-## Features
-
-**Shape (Raup).** Whorl expansion rate W, distance from the axis D, translation rate T, aperture shape S, number of whorls N, and dextral or sinistral coiling. A mirror valve is available for equivalve bivalves. The app includes presets for real forms (garden snail, *Turritella*, *Trochus*, *Planorbis*, *Physa*, *Nautilus*, an evolute ammonite and a clam). It has line, solid and combined render modes, the six standard views of malacology and a growth animation.
-
-**Morphospace.** An interactive W–D plane with the contact curve D = 1/W and the approximate regions occupied by gastropods, ammonoids and nautiloids, and bivalves and brachiopods. The plane is drawn as a section of Raup's W–D–T cube at the current T: regions of groups that do not exist at that T are faded, and clicking a group's name loads a typical shell of that group.
-
-**Colour (Meinhardt).** Activator–inhibitor and activator–substrate models, with optional global control and cell insertion along the growing margin. Presets reproduce the pattern types of *Nautilus*, *Cepaea nemoralis* and *Oliva porphyria*. Simple controls expose real quantities of the model (number of cells, growth time, cell-to-cell irregularity, pigment threshold); advanced controls expose every constant of the equations. The space–time record can be viewed in time (Meinhardt's diagram) or unrolled with the true proportions of the shell. A margin profile plots the activator and the inhibitor or substrate at any moment of growth.
-
-**Export.** Six export options:
-
-| Output | Content |
-|---|---|
-| PNG | The current view, at up to four times the screen resolution |
-| Plate | The six standard views in orthographic projection, labelled |
-| PDF | A4 sheet with the plate, the parameters, the morphospace, the pigmentation record and profile, and optionally the full equations with their values |
-| STL, 3MF | A closed solid with a real wall thickness, in millimetres, for 3D printing |
-| GLB | A coloured 3D model for viewers, Blender or augmented reality |
-| Pattern | The space–time record as an image |
-
-**Sharing.** The current shell and pattern are stored in the page address, so copying the link shares exactly what is on screen.
-
-![Plate of the six standard views of a garden snail shell, drawn with lines](docs/images/standard-views.png)
-
-## The models
-
-**Raup's coiling model.** A generating curve, here an ellipse that represents the aperture, is swept around the coiling axis z. After one full revolution every linear dimension has been multiplied by W:
+A generating curve, here an ellipse that represents the aperture, is swept around the coiling axis z. After one full revolution every linear dimension has been multiplied by W:
 
 ```
 P(θ, φ) = W^(θ/2π) · ( (r_c + a·cos φ)·cos θ,
@@ -61,24 +39,68 @@ P(θ, φ) = W^(θ/2π) · ( (r_c + a·cos φ)·cos θ,
 r_c = (1 + D)/2,   a = (1 − D)/2,   b = S·a,   θ ∈ [−2πN, 0],   φ ∈ [0, 2π)
 ```
 
-ε = −1 for dextral and +1 for sinistral shells. With this normalisation the final aperture has its outer edge at distance 1 from the axis and its inner edge at distance D, as in Raup's definition.
+| Parameter | Meaning | Effect |
+|---|---|---|
+| **W** | Whorl expansion rate | Low values give many tight whorls; very high values (10²–10⁴) give bivalves |
+| **D** | Distance of the aperture from the axis | D = 0 closes the umbilicus; larger values open it until the whorls separate |
+| **T** | Translation rate along the axis | T = 0 gives planispiral shells (nautilus, ammonites); high values give tall spires |
+| **S** | Shape of the aperture | Ratio between its axial and radial semi-axes |
 
-**Meinhardt's pigmentation models.** Pigment is laid down only at the growing margin, so a shell pattern is a time record of a one-dimensional reaction–diffusion process. For example, the activator–inhibitor model is:
+The number of whorls N and the coiling direction (dextral, ε = −1, or sinistral, ε = +1) complete the shell. A mirror valve turns a single valve into an equivalve bivalve. Presets cover real forms: garden snail, *Turritella*, *Trochus*, *Planorbis*, *Physa*, *Nautilus*, an evolute ammonite and a clam. The shell can be drawn with lines, as a solid or both, seen from the six standard views of malacology, and animated as it grows.
 
-```
-∂a/∂t = s·(a²/(h·(1 + κa²)) + b_a) − r_a·a + D_a·∂²a/∂x²
-∂h/∂t = s·a² − r_h·h + D_h·∂²h/∂x² + b_h
-```
+### Morphospace
 
-Here s is the source density of each cell. The activator–substrate model replaces the inhibitor with a substrate b that the activator consumes. The space–time record is wrapped onto Raup's surface, as in Fowler, Meinhardt and Prusinkiewicz (1992).
+The W–D panel shows Raup's morphospace with the contact curve D = 1/W, where successive whorls of a planispiral shell just touch, and the approximate regions occupied by gastropods, ammonoids and nautiloids, and bivalves and brachiopods.
 
-The *About* dialog in the app explains both models in detail, in English and Spanish.
+The plane is a **section of Raup's W–D–T cube at the current T**. The groups differ mainly in T, so the regions of groups that do not exist at that T are faded. Clicking a group's name loads a typical shell of that group. Clicking anywhere else moves the shell to that point, changing only W and D. The W axis can span 1–10, to see snails and cephalopods in detail, or 1–10⁴, to include the bivalves. The morphospace can also be shown on top of the 3D view.
 
-## Getting started
+### Pigmentation: Meinhardt's models
 
-**Online.** Open https://albertogonzalezcasarrubios.github.io/coiling-shells/ in a recent desktop or mobile browser with WebGL.
+A mollusc only adds pigment at the growing margin, so a shell pattern is a **time record of a one-dimensional process**: space runs along the margin and time along the direction of growth. The app simulates the margin with Meinhardt's reaction–diffusion models and wraps the resulting space–time record onto Raup's surface, as Fowler, Meinhardt and Prusinkiewicz (1992) did.
 
-**Locally.** The app is a static site with no build step. ES modules do not load from `file://`, so serve the folder:
+![A banded snail coloured with the activator–inhibitor model, with the space–time record in the sidebar and, over the 3D view, the morphospace and the activator and inhibitor profile along the margin](docs/images/pigmentation.png)
+
+- **Activator–inhibitor model.** A self-enhancing activator and a fast, far-reaching inhibitor give stable peaks, which draw bands along the spiral (*Cepaea nemoralis*). If the inhibitor outlives the activator, the margin oscillates and draws stripes parallel to the growth lines (the flames of *Nautilus*).
+
+  ```
+  ∂a/∂t = s·(a²/(h·(1 + κa²)) + b_a) − r_a·a + D_a·∂²a/∂x²
+  ∂h/∂t = s·a² − r_h·h + D_h·∂²h/∂x² + b_h
+  ```
+
+- **Activator–substrate model.** The activator consumes a substrate that recovers slowly, so activation travels as waves that draw oblique lines and annihilate when they meet. With global control, a signal shared by the whole margin, they form the triangles of *Oliva porphyria*.
+
+**Simple controls** set real quantities of the model: the number of cells along the margin, the growth time, the irregularity between cells and the pigment threshold. A seed chooses the random differences between cells. **Advanced controls** expose every constant of the equations, the choice of model and the insertion of new cells as the margin grows. The space–time record can be seen in time, which is Meinhardt's diagram, or unrolled with the true proportions of the shell. A **margin profile** plots the activator and the inhibitor or substrate at any moment of growth. If a set of values forms no pattern, the app says so instead of showing an empty shell.
+
+## Exporting
+
+The **Export…** button at the bottom of the sidebar opens a dialog with every export option. A single checkbox adds the coiling axis to the images, the plate and the PDF, even if it is hidden in the 3D view. Exports follow the render mode: in *Lines* mode they contain no colour.
+
+| Output | Format | Content |
+|---|---|---|
+| Current view | PNG | Exactly what the 3D view shows, at one, two or four times the screen resolution |
+| Plate of standard views | PNG | Apertural, dorsal, apical, umbilical, profile and 3/4 views, in orthographic projection, labelled, on a white or the current background |
+| Report | PDF (A4) | Plate, parameter values, position in the morphospace and a link that reopens the same shell. With a pattern, a page with the space–time record, the margin profile and the model constants. Optionally, a page with the full equations in general form and with the current values |
+| 3D printing | STL, 3MF | A closed, watertight solid with a real wall thickness, in millimetres, with the apex up and the base on the print bed. You choose the size and the wall thickness |
+| 3D model | GLB (glTF) | The surface with its colour and pattern, for 3D viewers, Blender or augmented reality |
+| Pattern | PNG | The space–time record of the pigmentation |
+
+The page address also stores the current shell and pattern, so copying the link shares exactly what is on screen.
+
+**Example report** (garden snail with the *Cepaea nemoralis* pattern, three pages):
+
+<p>
+  <img src="docs/images/report-page-1.png" width="32%" alt="Report page 1: plate of standard views, parameters and morphospace" />
+  <img src="docs/images/report-page-2.png" width="32%" alt="Report page 2: space–time record with labelled axes, pigmented views, margin profile and model constants" />
+  <img src="docs/images/report-page-3.png" width="32%" alt="Report page 3: equations of both models in general form and with the current values" />
+</p>
+
+**Plate of standard views** (garden snail, lines only):
+
+![Plate of the six standard views of a garden snail shell, drawn with lines](docs/images/standard-views.png)
+
+## Running locally
+
+The app is a static site with no build step. ES modules do not load from `file://`, so serve the folder:
 
 ```bash
 git clone https://github.com/AlbertoGonzalezCasarrubios/coiling-shells.git
@@ -89,44 +111,40 @@ python3 -m http.server 8000      # or: npm run serve
 
 Three.js, MathJax and jsPDF are loaded from a CDN, so an internet connection is needed.
 
-**Keyboard.** `F` fullscreen · `H` hide or show all panels · `Esc` leave fullscreen or show the panels again.
+**Keyboard:** `F` fullscreen · `H` hide or show all panels · `Esc` leave fullscreen or show the panels again.
 
-## Testing and validation
-
-The test suite uses the built-in Node.js test runner and has no dependencies:
+## Tests
 
 ```bash
-npm test          # requires Node.js ≥ 20
+npm test          # Node.js ≥ 20, no dependencies
 ```
 
 The tests check, among other things, that:
 
-- successive planispiral whorls **touch exactly at D = 1/W** for any aperture shape, measured on the generated mesh;
-- the pattern coordinate follows the **arc length** of the aperture, so cells are evenly spaced on elliptical apertures;
-- every pigmentation preset forms a pattern. The same seed always gives the same pattern, and parameter sets that form no pattern are reported as such instead of being rescaled into a false one;
-- bands of the activator–inhibitor model are stable in time, while the flame stripes oscillate;
+- planispiral whorls touch exactly at D = 1/W for any aperture shape;
+- pattern cells are evenly spaced along elliptical apertures;
+- every pigmentation preset forms a pattern, and the same seed always gives the same pattern;
 - each shape preset lies in the morphospace region of its group;
-- the printable solid is **closed and consistently oriented**, faces outwards, has exactly the requested size and rests on z = 0. This is checked for every preset and for extreme parameters, wall thicknesses and sizes;
+- the printable solid is closed, faces outwards and has exactly the requested size. This is checked for every preset and for extreme parameters;
 - STL and 3MF files are well formed;
-- English and Spanish strings are complete.
+- the English and Spanish texts are complete.
 
-The tests run on every push through GitHub Actions. [ARCHITECTURE.md](ARCHITECTURE.md) lists what each test file covers and explains the implementation.
+They run on every push through GitHub Actions. [ARCHITECTURE.md](ARCHITECTURE.md) describes how the program is organised and what each test covers.
 
 ## Limitations
 
-These are minimal models. Raup's model assumes a constant aperture shape and orientation (no allometry), and it has no ornament, internal structures or hinge. The morphospace regions are approximate outlines, not fits to measured data. Meinhardt's models treat the margin as a closed ring of equivalent cells, and the molecules involved have not been identified in any mollusc. The presets reproduce the type of form or pattern of each species, not particular specimens.
+These are minimal models:
 
-## Contributing
-
-Bug reports, suggestions and contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
+- **Raup's model** assumes that the aperture keeps the same shape and orientation throughout life (no allometry), and it has no ornament, internal structures or hinge.
+- **The morphospace regions** are approximate outlines, not fits to measured data.
+- **Meinhardt's models** treat the margin as a closed ring of equivalent cells, and the molecules involved have not been identified in any mollusc.
+- **The presets** reproduce the type of form or pattern of each species, not particular specimens.
 
 ## Citation
 
-If you use this software in teaching or research, please cite it:
-
 > González Casarrubios, A. (2026). *Theoretical Shells: Form and Colour* (version 1.0.0) [Computer software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells
 
-Citation metadata are in [CITATION.cff](CITATION.cff), which GitHub shows as *Cite this repository*.
+Citation metadata are in [CITATION.cff](CITATION.cff); GitHub shows them under *Cite this repository*.
 
 ## License
 
@@ -136,7 +154,7 @@ Citation metadata are in [CITATION.cff](CITATION.cff), which GitHub shows as *Ci
 
 ## Contact
 
-Alberto González Casarrubios, Universidad Complutense de Madrid · [albert23@ucm.es](mailto:albert23@ucm.es)
+Alberto González Casarrubios, Universidad Complutense de Madrid · [albert23@ucm.es](mailto:albert23@ucm.es). Bug reports and suggestions are welcome as [issues](https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/issues).
 
 ## References
 

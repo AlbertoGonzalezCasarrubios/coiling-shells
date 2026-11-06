@@ -27,10 +27,61 @@ js/presets.js         Shape and pigmentation presets
 js/i18n.js            English and Spanish strings, including the About pages
 js/main.js            Scene, interface, views, gizmo, morphospace, formulas, export and URL state
 tests/*.test.mjs      Automated tests (node:test)
-docs/README.es.md     Spanish, non-technical introduction to the app and the models
+docs/README.es.md     Spanish translation of the README
+docs/introduccion-divulgativa.md  Non-technical introduction in Spanish
+docs/images/          Images used by the documentation
 ```
 
 The modules marked *pure* do not depend on Three.js or the DOM, so they run unchanged in the browser, in the Web Worker and in Node (tests).
+
+## How the program works
+
+### Modules
+
+`main.js` is the only module that touches the DOM and Three.js. The scientific code lives in pure modules that it imports. The pattern simulation runs in a Web Worker so that dragging a slider never freezes the interface. The tests import the pure modules directly.
+
+```mermaid
+flowchart LR
+  html["index.html<br/>import map · MathJax config"] --> main["main.js<br/>scene · interface · export"]
+  main --> raup["raup.js<br/>shell geometry"]
+  main --> morpho["morphospace.js<br/>contact curve · regions"]
+  main --> exp["export3d.js<br/>printable solid · STL · 3MF"]
+  main --> presets["presets.js"]
+  main --> i18n["i18n.js<br/>EN / ES strings"]
+  main -. "postMessage" .-> worker["pigment-worker.js"]
+  worker --> mein["meinhardt.js<br/>reaction–diffusion"]
+  main -. "fallback without workers" .-> mein
+  exp --> raup
+  main --> three[("Three.js · CDN")]
+  main -. "on demand" .-> cdn[("MathJax SVG · jsPDF · GLTFExporter")]
+```
+
+### Data flow
+
+Every control writes to one of two state objects: `state` (shape and appearance) or `pattern` (pigmentation). The shape is rebuilt at most once per frame. The pattern is simulated only when one of its parameters changes, and simply repainted when only its colours or threshold change.
+
+```mermaid
+flowchart TB
+  subgraph controls["Controls"]
+    shapeCtl["Raup sliders · presets<br/>morphospace clicks"]
+    patCtl["Pattern gallery · simple<br/>and advanced controls"]
+  end
+  shapeCtl --> state[("state")]
+  patCtl --> pattern[("pattern")]
+  state -- "dirty flag, next frame" --> build["buildShell()"]
+  build --> mesh["positions · uvs · indices · lines"]
+  mesh --> scene["Three.js scene<br/>surface · inner nacre · lines · axis"]
+  pattern -- "parameters changed" --> sim["simulatePattern()<br/>in the Web Worker"]
+  sim --> values["activator record<br/>rows × width, 0–1"]
+  values --> colorize["colorize()<br/>pigment threshold"]
+  pattern -- "colours or amount changed" --> colorize
+  colorize --> tex["DataTexture"] --> scene
+  colorize --> st["space–time canvas<br/>in time · unrolled"]
+  sim --> profile["margin profile<br/>activator · inhibitor / substrate"]
+  state & pattern --> hash["URL hash<br/>shareable link"]
+  scene --> exports["Export dialog<br/>PNG · plate · PDF · GLB"]
+  state --> print["buildPrintMesh()<br/>STL · 3MF"]
+```
 
 ## Geometry (`js/raup.js`)
 
