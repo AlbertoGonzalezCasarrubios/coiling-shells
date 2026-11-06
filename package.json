@@ -1,0 +1,23 @@
+{
+  "name": "coiling-shells",
+  "version": "1.0.0",
+  "description": "Interactive 3D explorer of Raup's shell-coiling model and Meinhardt's reaction–diffusion pigmentation models.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "author": "Alberto González Casarrubios <albert23@ucm.es>",
+  "homepage": "https://albertogonzalezcasarrubios.github.io/coiling-shells/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AlbertoGonzalezCasarrubios/coiling-shells.git"
+  },
+  "bugs": "https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/issues",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "serve": "python3 -m http.server 8000"
+  },
+  "keywords": ["theoretical morphology", "Raup", "Meinhardt", "reaction-diffusion", "mollusc shells", "morphospace", "three.js"]
+}

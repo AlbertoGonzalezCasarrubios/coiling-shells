@@ -1,7 +1,8 @@
 /**
- * Valores aproximados de los parámetros de Raup para formas reales.
- * Son estimaciones dentro del morfoespacio de Raup (1966), no medidas de
- * ejemplares concretos. `mirror` añade la valva especular (bivalvos).
+ * Approximate values of Raup's parameters for real forms. They are estimates
+ * within Raup's (1966) morphospace, not measurements of particular specimens.
+ * `mirror` adds the mirror valve (bivalves). `name` and `group` are the
+ * original Spanish labels; the displayed names come from i18n.js.
  */
 export const PRESETS = {
   caracol: {
@@ -41,23 +42,23 @@ export const PRESETS = {
 export const DEFAULT_PRESET = 'caracol';
 
 /**
- * Patrones de pigmentación (modelos de Meinhardt) ajustados para parecerse a
- * especies conocidas. Los parámetros están en unidades de célula del borde
- * (256 células en la apertura) y del tiempo total simulado T.
+ * Pigmentation patterns (Meinhardt's models) tuned to resemble well-known
+ * species. Parameters are in units of margin cells (256 cells at the aperture)
+ * and of the total simulated time T.
  */
 export const PATTERN_PRESETS = {
   nautilus: {
-    // Oscilación: el inhibidor vive más que el activador → rayas en llama paralelas al borde
+    // Oscillation: the inhibitor outlives the activator → flame stripes parallel to the margin
     model: 'AI', Da: 0.01, D2: 0, ra: 0.08, r2: 0.02, kappa: 0.2, ba: 0.05, b2: 0,
     noise: 0.3, globalCtl: 0, T: 3000, insertion: true, amount: 0.62, base: '#f1e7d6', pigment: '#9c4a1f',
   },
   cepaea: {
-    // Picos estables (inhibición lateral de largo alcance) → bandas espirales
+    // Stable peaks (long-range lateral inhibition) → spiral bands
     model: 'AI', Da: 0.02, D2: 12, ra: 0.01, r2: 0.015, kappa: 0.4, ba: 0.005, b2: 0,
     noise: 0.05, globalCtl: 0, T: 3000, insertion: false, base: '#ecc95a', pigment: '#3a2216',
   },
   oliva: {
-    // Ondas viajeras por agotamiento del sustrato + control global → zigzags y triángulos
+    // Travelling waves from substrate depletion + global control → zigzags and triangles
     model: 'AS', Da: 0.004, D2: 0, ra: 0.05, r2: 0, kappa: 0.5, ba: 0.0005, b2: 0.02,
     noise: 0.3, globalCtl: 0.01, T: 8000, insertion: false, amount: 0.6, base: '#e6c6b0', pigment: '#4b2a3c',
   },
@@ -65,5 +66,5 @@ export const PATTERN_PRESETS = {
 
 export const DEFAULT_PATTERN = 'nautilus';
 
-/** Preset de referencia de cada modelo: sus constantes se cargan al cambiar de modelo. */
+/** Reference preset of each model: its constants are loaded when the model is changed. */
 export const MODEL_REFERENCE = { AI: 'nautilus', AS: 'oliva' };

@@ -1,35 +1,36 @@
 /**
- * Pigmentación de conchas con los modelos de reacción-difusión de H. Meinhardt
+ * Shell pigmentation with H. Meinhardt's reaction–diffusion models
  * (Meinhardt & Klingler 1987; Meinhardt, "The Algorithmic Beauty of Sea Shells").
  *
- * El pigmento se deposita solo en el borde de la apertura mientras la concha
- * crece: es un sistema 1D (x a lo largo del borde, periódico) cuya historia
- * queda grabada en la concha. Cada fila del resultado es el estado del borde en
- * un instante; la fila 0 es el ápice y la última, la apertura.
+ * Pigment is only laid down at the margin of the aperture while the shell
+ * grows: it is a 1D system (x along the margin, periodic) whose history is
+ * recorded in the shell. Each row of the result is the state of the margin at
+ * one moment; row 0 is the apex and the last row is the aperture.
  *
- * Activador-inhibidor (picos estables, oscilaciones, ondas):
+ * Activator–inhibitor (stable peaks, oscillations, waves):
  *   ∂a/∂t = s·(a²/(h·(1 + κa²)) + b_a) − r_a·a + D_a·∂²a/∂x²
  *   ∂h/∂t = s·a² − r_h·h + D_h·∂²h/∂x² + b_h
  *
- * Activador-sustrato (ondas viajeras: el sustrato agotado tarda en recuperarse):
+ * Activator–substrate (travelling waves: depleted substrate takes time to recover):
  *   ∂a/∂t = s·b·(a²/(1 + κa²) + b_a) − r_a·a + D_a·∂²a/∂x²
  *   ∂b/∂t = b_b − s·b·(a²/(1 + κa²) + b_a) − r_b·b + D_b·∂²b/∂x²
  *
- * s = r_a·(1 ± ruido) es la densidad de fuente de cada célula (heterogeneidad
- * celular). Con inserción de células, el borde gana células en proporción al
- * tamaño de la concha, así que los rasgos del patrón mantienen su tamaño absoluto
- * y aparecen rayas nuevas intercaladas a medida que la concha crece. Control global (solo activador-sustrato): una señal c, común a todo
- * el borde, sigue la actividad media; cuando las ondas se aniquilan y la
- * actividad cae, c baja y favorece el disparo de ondas nuevas, que es el
- * mecanismo de ramificación de los triángulos de Oliva porphyria.
+ * s = r_a·(1 ± noise) is the source density of each cell (cell-to-cell
+ * heterogeneity). With cell insertion the margin gains cells in proportion to
+ * the size of the shell, so pattern elements keep their absolute size and new
+ * stripes are intercalated as the shell grows. Global control (activator–
+ * substrate only): a signal c, shared by the whole margin, follows the mean
+ * activity; when waves annihilate and activity drops, c falls and favours the
+ * triggering of new waves, the branching mechanism of the triangles of
+ * Oliva porphyria.
  */
 
 export const MODELS = ['AI', 'AS'];
 
-/** Columnas del perfil de la segunda sustancia (inhibidor o sustrato) que se devuelve. */
+/** Number of columns of the returned profile of the second substance (inhibitor or substrate). */
 export const PROFILE_WIDTH = 256;
 
-/** Generador pseudoaleatorio con semilla (mulberry32): el mismo patrón para la misma semilla. */
+/** Seeded pseudo-random generator (mulberry32): the same seed always gives the same pattern. */
 export function rng32(seed) {
   let t = seed >>> 0;
   return () => {
@@ -41,27 +42,27 @@ export function rng32(seed) {
 }
 
 /**
- * @param {object} p  parámetros del modelo
- * @param {'AI'|'AS'} p.model
- * @param {number} p.Da, p.D2   difusión del activador y de la segunda sustancia
- * @param {number} p.ra, p.r2   tasas de decaimiento
- * @param {number} p.kappa      saturación de la autocatálisis
- * @param {number} p.ba, p.b2   producción basal del activador y de la segunda sustancia
- * @param {number} p.noise      fluctuación de la densidad de fuente (0–1)
- * @param {number} p.globalCtl  intensidad del control global (0 = sin control)
- * @param {number} p.T          tiempo total simulado desde el ápice hasta la apertura
- * @param {number} p.seed
- * @param {boolean} p.insertion inserción de células: el borde crece con la concha
- * @param {object} g  geometría del crecimiento
- * @param {number} g.W, g.turns parámetros de Raup (para el tamaño en cada fila)
- * @param {number} g.rows       filas del resultado
- * @param {number} g.width      columnas del resultado (se remuestrea el borde)
- * @param {number} g.nMax       células en la apertura
+ * @param {object} p  model parameters
+ * @param {'AI'|'AS'} p.model   activator–inhibitor or activator–substrate
+ * @param {number} p.Da, p.D2   diffusion of the activator and of the second substance
+ * @param {number} p.ra, p.r2   decay rates
+ * @param {number} p.kappa      saturation of the autocatalysis
+ * @param {number} p.ba, p.b2   basal production of the activator and of the second substance
+ * @param {number} p.noise      fluctuation of the source density (0–1)
+ * @param {number} p.globalCtl  strength of the global control (0 = no control)
+ * @param {number} p.T          total simulated time from the apex to the aperture
+ * @param {number} p.seed       seed of the random cell-to-cell differences
+ * @param {boolean} p.insertion cell insertion: the margin grows with the shell
+ * @param {object} g  growth geometry
+ * @param {number} g.W, g.turns Raup's parameters (for the size at each row)
+ * @param {number} g.rows       rows of the result
+ * @param {number} g.width      columns of the result (the margin is resampled)
+ * @param {number} g.nMax       cells at the aperture
  * @returns {{ values: Float32Array, second: Float32Array, state: 'pattern'|'uniform'|'extinct' }}
- *   values: activador normalizado 0–1 (rows × width); second: inhibidor o
- *   sustrato relativo a su máximo (rows × PROFILE_WIDTH), para el visor de
- *   perfiles; state indica si se formó un patrón, si el borde quedó uniforme o
- *   si el activador se extinguió
+ *   values: normalised activator 0–1 (rows × width); second: inhibitor or
+ *   substrate relative to its maximum (rows × PROFILE_WIDTH), for the profile
+ *   viewer; state tells whether a pattern formed, the margin stayed uniform or
+ *   the activator died out
  */
 export function simulatePattern(p, g) {
   const { rows, width, nMax } = g;
@@ -69,7 +70,7 @@ export function simulatePattern(p, g) {
   const rand = rng32(p.seed);
   const isAS = p.model === 'AS';
 
-  // Tamaño relativo de la concha en cada fila (1 en la apertura)
+  // Relative size of the shell at each row (1 at the aperture)
   const lnW = Math.log(Math.max(g.W, 1.0001));
   const size = new Float64Array(rows);
   for (let i = 0; i < rows; i++) {
@@ -77,17 +78,17 @@ export function simulatePattern(p, g) {
     size[i] = Math.exp((theta / (2 * Math.PI)) * lnW);
   }
 
-  // Una espiral logarítmica recorrida a ritmo angular constante equivale a un
-  // crecimiento con tasa relativa constante (exponencial): el tiempo es el mismo
-  // en cada fila. Lo que cambia con el tamaño es la longitud del borde, que
-  // gana células (inserción) en proporción al tamaño de la concha.
+  // A logarithmic spiral traversed at a constant angular rate is growth at a
+  // constant relative (exponential) rate: every row gets the same time. What
+  // changes with size is the length of the margin, which gains cells
+  // (insertion) in proportion to the size of the shell.
 
-  // Paso de Euler estable: difusión (dt·D ≤ 0.4 con Δx = 1) y reacción
+  // Stable explicit Euler step: diffusion (dt·D ≤ 0.4 with Δx = 1) and reaction
   const Dmax = Math.max(p.Da, p.D2, 1e-6);
   const rmax = Math.max(p.ra, p.r2, 1e-6);
   const dt = Math.min(0.5, 0.4 / Dmax, 0.4 / rmax);
 
-  // Estado del borde (capacidad nMax; se usan las n primeras células)
+  // State of the margin (capacity nMax; the first n cells are used)
   let n = p.insertion ? Math.max(nMin, Math.round(nMax * size[0])) : nMax;
   const a = new Float64Array(nMax);
   const b = new Float64Array(nMax);
@@ -104,15 +105,15 @@ export function simulatePattern(p, g) {
     b[i] = b0;
   }
 
-  let c = 0; // señal global (actividad media)
+  let c = 0; // global signal (mean activity)
   const cRate = 0.02;
 
   const out = new Float32Array(rows * width);
-  const second = new Float32Array(rows * PROFILE_WIDTH); // inhibidor h o sustrato b
+  const second = new Float32Array(rows * PROFILE_WIDTH); // inhibitor h or substrate b
   let carry = 0;
 
   for (let row = 0; row < rows; row++) {
-    // Inserción de células: se duplica una célula al azar, con su propia fuente
+    // Cell insertion: a random cell is duplicated, with its own source density
     if (p.insertion) {
       const target = Math.min(nMax, Math.max(nMin, Math.round(nMax * size[row])));
       while (n < target) {
@@ -134,7 +135,7 @@ export function simulatePattern(p, g) {
       for (let i = 0; i < n; i++) mean += a[i];
       mean /= n;
       c += dt * cRate * (mean - c);
-      // Cuando la actividad global cae, aumenta la activación basal
+      // When the global activity drops, the basal activation increases
       const baEff = p.ba + (isAS && p.globalCtl > 0 ? p.globalCtl / (1 + 40 * c) : 0);
 
       for (let i = 0; i < n; i++) {
@@ -155,14 +156,14 @@ export function simulatePattern(p, g) {
           nb[i] = bi + dt * (s[i] * a2 - p.r2 * bi + p.D2 * lapB + p.b2);
         }
       }
-      // Límites para que parámetros extremos no desborden (NaN > 0 es falso → 0)
+      // Clamping so that extreme parameters cannot overflow (NaN > 0 is false → 0)
       for (let i = 0; i < n; i++) {
         a[i] = na[i] > 0 ? (na[i] < 1e4 ? na[i] : 1e4) : 0;
         b[i] = nb[i] > 1e-9 ? (nb[i] < 1e6 ? nb[i] : 1e6) : 1e-9;
       }
     }
 
-    // Remuestreo periódico del borde (n células) a la anchura de la textura
+    // Periodic resampling of the margin (n cells) to the texture width
     const base = row * width;
     for (let k = 0; k < width; k++) {
       const x = (k / width) * n;
@@ -181,14 +182,14 @@ export function simulatePattern(p, g) {
     }
   }
 
-  // El transitorio inicial (primer cuarto, vueltas diminutas del ápice) no cuenta
-  // ni para el diagnóstico ni para la escala
+  // The initial transient (first quarter, the tiny whorls of the apex) counts
+  // neither for the diagnosis nor for the scaling
   const state = normalize(out, Math.floor(rows / 4) * width);
   scaleToMax(second, Math.floor(rows / 4) * PROFILE_WIDTH);
   return { values: out, second, state };
 }
 
-/** Escala a 0–1 dividiendo por el máximo (sin contar el transitorio inicial). */
+/** Scales to 0–1 by dividing by the maximum (ignoring the initial transient). */
 function scaleToMax(v, skip = 0) {
   let max = 0;
   for (let i = skip; i < v.length; i++) if (v[i] > max) max = v[i];
@@ -197,9 +198,10 @@ function scaleToMax(v, skip = 0) {
 }
 
 /**
- * Escala robusta a 0–1 usando percentiles, para que un pico aislado no apague el
- * resto. Si el activador se extinguió o el borde quedó prácticamente uniforme, no
- * se reescala: amplificar diferencias minúsculas fabricaría un patrón falso.
+ * Robust scaling to 0–1 using percentiles, so that an isolated peak does not
+ * dim the rest. If the activator died out or the margin stayed practically
+ * uniform, nothing is rescaled: amplifying tiny differences would fabricate a
+ * false pattern.
  */
 function normalize(v, skip = 0) {
   const sample = [];

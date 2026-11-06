@@ -1,165 +1,153 @@
-# Theoretical Shells: Form and Colour · Conchas teóricas: forma y color
+# Theoretical Shells: Form and Colour
 
-**▶ Live / En línea: https://albertogonzalezcasarrubios.github.io/aplicaciones-varias/shells-morphology/**
+[![Tests](https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/actions/workflows/tests.yml/badge.svg)](https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/code-MIT-blue.svg)](LICENSE)
+[![Content: CC BY 4.0](https://img.shields.io/badge/content-CC%20BY%204.0-lightgrey.svg)](LICENSE-CONTENT.md)
+[![Live app](https://img.shields.io/badge/app-live-2a9d8f.svg)](https://albertogonzalezcasarrubios.github.io/coiling-shells/)
 
-> *"The basic form of many coiled gastropod shells can be defined by four parameters. A digital computer with automatic plotting equipment can be used to make graphical reconstructions of a shell from any given values of the four parameters."*
->
-> — David M. Raup, *Science* (1962)
+**English** · [Español](docs/README.es.md)
 
-> *«La forma básica de muchas conchas enrolladas de gasterópodos puede definirse mediante cuatro parámetros. Un ordenador digital con un trazador automático puede usarse para reconstruir gráficamente una concha a partir de cualquier valor de esos cuatro parámetros.»*
+An interactive 3D explorer of the **theoretical morphology of coiled shells**. The shape comes from David M. Raup's shell-coiling model (1962, 1966). The colour pattern comes, optionally, from Hans Meinhardt's reaction–diffusion models of shell pigmentation. It runs entirely in the browser, with no installation.
 
-En 1962 los ordenadores ocupaban habitaciones enteras y los dibujos salían, línea a línea, de trazadores con plumilla. Aun así, David M. Raup vio en ellos una forma nueva de hacer paleontología: en lugar de limitarse a describir las conchas que existen, generar todas las que *podrían* existir y preguntarse por qué la naturaleza solo ha producido algunas. Esta app es una versión interactiva de aquella idea: mueve sus cuatro parámetros y la concha se reconstruye al instante. Y, si quieres, píntala con los patrones de pigmentación de **Hans Meinhardt**, que explican cómo surgen las rayas, bandas y triángulos de las conchas reales.
+**▶ Open the app: https://albertogonzalezcasarrubios.github.io/coiling-shells/**
 
-*Interactive 3D explorer of the **theoretical morphology of coiled shells**: the shape comes from David M. Raup's shell-coiling model (1962, 1966) and, optionally, the colour pattern from Hans Meinhardt's reaction–diffusion models. The interface opens in English and can be switched entirely to Spanish with the EN / ES button.*
+![The app showing a banded snail shell coloured with Meinhardt's activator–inhibitor model, with the W–D morphospace and the activator and inhibitor profiles overlaid on the 3D view](docs/images/app.png)
 
-## La idea: crecer sin cambiar de forma
+## Statement of need
 
-Caracoles, ammonites, nautilos, almejas o braquiópodos crecen añadiendo material en el borde de la apertura, sin rehacer lo que ya tienen y sin cambiar su forma global. A este crecimiento autosemejante se le llama **gnomónico**, y su consecuencia geométrica es que la concha sigue una **espiral logarítmica**: cada vuelta es una copia ampliada de la anterior.
+Raup's model is the classic example of a **theoretical morphospace**: four numbers generate the coiled shells of snails, ammonoids, nautiloids, bivalves and brachiopods, and the space they span shows which forms exist in nature and which do not. Meinhardt's models show how the stripes, bands and triangles on those shells can arise from simple local interactions along the growing margin. Both are standard material in palaeontology, evolutionary biology and pattern formation courses, but they are usually taught with static figures, or with code that students must install and run.
 
-Raup describió la concha como una curva (la apertura, aquí una elipse) que gira alrededor de un eje mientras crece y, en su caso, se desplaza a lo largo de él. Bastan cuatro números para fijar la forma.
+This app lets students, teachers and researchers:
 
-## Los cuatro parámetros
+- **change the parameters and see the shell rebuild instantly**, with the equation shown both in general form and with the current values;
+- **place the shell in Raup's morphospace** and see why a region is occupied or empty;
+- **grow a pigmentation pattern on that shell** and watch the activator and the inhibitor (or substrate) that produce it;
+- **take the result out of the screen**: a plate of the standard malacological views, a PDF sheet with all the values and equations, or a closed, watertight solid ready for a 3D printer.
 
-| Parámetro | Qué controla | Qué verás al moverlo |
-|---|---|---|
-| **W** · expansión de la espiral | Cuánto crece la apertura en cada vuelta | Valores bajos (≈1,2–2): muchas vueltas apretadas. Valores altos: la última vuelta lo domina todo. Valores enormes (10²–10⁴): bivalvos |
-| **D** · distancia al eje | Lo lejos que pasa la apertura del eje de enrollamiento | D = 0: las vueltas tocan el eje, sin ombligo. D grande: un ombligo amplio y vueltas sueltas |
-| **T** · traslación | Cuánto baja la apertura a lo largo del eje mientras crece | T = 0: concha plana (planispiral), como un nautilo o un ammonite. T alto: una espira alta, como Turritella |
-| **S** · forma de la apertura | La proporción de la elipse que forma la apertura | S < 1: apertura ancha y baja. S > 1: apertura alta y estrecha |
+The interface and the explanations are available in English and Spanish.
 
-Además, puedes elegir el **número de vueltas** dibujadas (N) y el **sentido** del enrollamiento: **dextral** (la mayoría de los caracoles, que giran en sentido horario vistos desde el ápice) o **sinistral**.
+## Features
 
-### La ecuación
+**Shape (Raup).** Whorl expansion rate W, distance from the axis D, translation rate T, aperture shape S, number of whorls N, and dextral or sinistral coiling. A mirror valve is available for equivalve bivalves. The app includes presets for real forms (garden snail, *Turritella*, *Trochus*, *Planorbis*, *Physa*, *Nautilus*, an evolute ammonite and a clam). It has line, solid and combined render modes, the six standard views of malacology and a growth animation.
 
-En un sistema de ejes con z como eje de enrollamiento, cada punto de la concha es:
+**Morphospace.** An interactive W–D plane with the contact curve D = 1/W and the approximate regions occupied by gastropods, ammonoids and nautiloids, and bivalves and brachiopods. The plane is drawn as a section of Raup's W–D–T cube at the current T: regions of groups that do not exist at that T are faded, and clicking a group's name loads a typical shell of that group.
+
+**Colour (Meinhardt).** Activator–inhibitor and activator–substrate models, with optional global control and cell insertion along the growing margin. Presets reproduce the pattern types of *Nautilus*, *Cepaea nemoralis* and *Oliva porphyria*. Simple controls expose real quantities of the model (number of cells, growth time, cell-to-cell irregularity, pigment threshold); advanced controls expose every constant of the equations. The space–time record can be viewed in time (Meinhardt's diagram) or unrolled with the true proportions of the shell. A margin profile plots the activator and the inhibitor or substrate at any moment of growth.
+
+**Export.** Six export options:
+
+| Output | Content |
+|---|---|
+| PNG | The current view, at up to four times the screen resolution |
+| Plate | The six standard views in orthographic projection, labelled |
+| PDF | A4 sheet with the plate, the parameters, the morphospace, the pigmentation record and profile, and optionally the full equations with their values |
+| STL, 3MF | A closed solid with a real wall thickness, in millimetres, for 3D printing |
+| GLB | A coloured 3D model for viewers, Blender or augmented reality |
+| Pattern | The space–time record as an image |
+
+**Sharing.** The current shell and pattern are stored in the page address, so copying the link shares exactly what is on screen.
+
+![Plate of the six standard views of a garden snail shell, drawn with lines](docs/images/standard-views.png)
+
+## The models
+
+**Raup's coiling model.** A generating curve, here an ellipse that represents the aperture, is swept around the coiling axis z. After one full revolution every linear dimension has been multiplied by W:
 
 ```
 P(θ, φ) = W^(θ/2π) · ( (r_c + a·cos φ)·cos θ,
-                     ε·(r_c + a·cos φ)·sin θ,
-                       −T·r_c + b·sin φ )
+                      ε·(r_c + a·cos φ)·sin θ,
+                        −T·r_c + b·sin φ )
 
-r_c = (1 + D) / 2      a = (1 − D) / 2      b = S · a
+r_c = (1 + D)/2,   a = (1 − D)/2,   b = S·a,   θ ∈ [−2πN, 0],   φ ∈ [0, 2π)
 ```
 
-- **θ** es el ángulo de giro alrededor del eje: tras una vuelta completa (2π) todo se ha multiplicado por W. Va de −2πN (el ápice) a 0 (la apertura final).
-- **φ** recorre el contorno de la apertura.
-- **r_c**, **a** y **b** son el centro y los semiejes de la elipse: así, en la apertura final el borde interno queda a distancia D del eje y el externo a distancia 1, que es justo como Raup definió D.
-- **ε** vale −1 en conchas dextrales y +1 en sinistrales.
+ε = −1 for dextral and +1 for sinistral shells. With this normalisation the final aperture has its outer edge at distance 1 from the axis and its inner edge at distance D, as in Raup's definition.
 
-## El morfoespacio
+**Meinhardt's pigmentation models.** Pigment is laid down only at the growing margin, so a shell pattern is a time record of a one-dimensional reaction–diffusion process. For example, the activator–inhibitor model is:
 
-Cada combinación de W, D, T y S es un punto en un espacio de conchas posibles: el **morfoespacio teórico**. El gran hallazgo de Raup fue que las conchas reales solo ocupan unas pocas regiones de ese espacio. Por ejemplo, en las conchas planas (T = 0) las vueltas solo se tocan si D ≤ 1/W; por encima de esa curva quedan separadas, una forma rarísima en la naturaleza. ¿Por qué está vacío el resto del espacio? Por restricciones funcionales, de desarrollo o simplemente históricas: es una de las preguntas que abrió la **morfología teórica**.
+```
+∂a/∂t = s·(a²/(h·(1 + κa²)) + b_a) − r_a·a + D_a·∂²a/∂x²
+∂h/∂t = s·a² − r_h·h + D_h·∂²h/∂x² + b_h
+```
 
-En la app, el panel **Morphospace W – D** dibuja este plano con la curva D = 1/W y las regiones aproximadas de ammonoideos, gasterópodos y bivalvos. Puedes pinchar en él para saltar a cualquier punto.
+Here s is the source density of each cell. The activator–substrate model replaces the inhibitor with a substrate b that the activator consumes. The space–time record is wrapped onto Raup's surface, as in Fowler, Meinhardt and Prusinkiewicz (1992).
 
-## También bivalvos
+The *About* dialog in the app explains both models in detail, in English and Spanish.
 
-Las mismas ecuaciones generan las valvas de almejas, berberechos o mejillones (Raup, 1966). Cada valva es una espiral logarítmica con una **W enorme** (≈10²–10⁴), D bajo y T pequeño, que no llega a completar ni una vuelta: el umbo (el «pico» de la valva) es el ápice de la espiral. La segunda valva es, aproximadamente, la imagen especular de la primera respecto al plano por el que cierran las dos (la comisura). El botón **Mirror valve / Valva especular** la dibuja.
+## Getting started
 
-El modelo es una simplificación: no incluye la charnela ni la ornamentación, y no sirve para conchas con dos valvas distintas, como ostras, vieiras o braquiópodos.
+**Online.** Open https://albertogonzalezcasarrubios.github.io/coiling-shells/ in a recent desktop or mobile browser with WebGL.
 
-## El color: los patrones de Meinhardt
+**Locally.** The app is a static site with no build step. ES modules do not load from `file://`, so serve the folder:
 
-Un molusco solo añade pigmento donde la concha crece, en el borde de la apertura, y lo que pasa ahí queda grabado a medida que crece. Por eso, como mostró **Hans Meinhardt**, el dibujo de una concha es el **registro en el tiempo de un proceso que ocurre en una línea**: a lo largo del borde está el espacio, y en la dirección de crecimiento, el tiempo.
+```bash
+git clone https://github.com/AlbertoGonzalezCasarrubios/coiling-shells.git
+cd coiling-shells
+python3 -m http.server 8000      # or: npm run serve
+# open http://localhost:8000
+```
 
-Ese proceso es una **reacción-difusión**, la idea que Alan Turing propuso en 1952 y que Gierer y Meinhardt desarrollaron en 1972: una sustancia **activadora** que se estimula a sí misma y un **antagonista** que difunde más deprisa y la frena. De la competición entre ambos surgen patrones regulares sin que nadie los dibuje. La app ofrece los dos modelos de Meinhardt:
+Three.js, MathJax and jsPDF are loaded from a CDN, so an internet connection is needed.
 
-- **Activador-inhibidor.** Si el inhibidor actúa rápido y llega lejos, los picos de activador son estables y dibujan **bandas a lo largo de la espiral** (como en *Cepaea nemoralis*). Si el inhibidor dura más que el activador, el sistema **oscila** y dibuja **rayas paralelas al borde** (como las llamas del *Nautilus*).
-- **Activador-sustrato.** La activación consume un sustrato que tarda en recuperarse, así que cada célula queda un tiempo **refractaria**. La activación avanza entonces como **ondas** que dibujan líneas oblicuas; cuando dos ondas chocan se aniquilan y forman una V. Con un **control global**, una señal común a todo el borde que dispara ondas nuevas cuando la actividad cae, aparecen los **triángulos** de *Oliva porphyria* (Meinhardt y Klingler, 1987).
+**Keyboard.** `F` fullscreen · `H` hide or show all panels · `Esc` leave fullscreen or show the panels again.
 
-El pigmento se deposita en la capa externa de la concha, así que la app solo pinta el exterior: el interior de la apertura se ve claro, con un ligero brillo nacarado. Como en las simulaciones de Meinhardt, se deposita pigmento donde el activador supera un umbral, lo que da bordes nítidos; la *cantidad de pigmento* sube o baja ese umbral.
+## Testing and validation
 
-Además, el borde se alarga a medida que la concha crece. Con la **inserción de células**, se añaden células nuevas al borde y los elementos del patrón mantienen su tamaño, intercalándose rayas nuevas; sin ella, el patrón crece a la vez que la concha.
+The test suite uses the built-in Node.js test runner and has no dependencies:
 
-### Cómo cambiar de un tipo de patrón a otro
+```bash
+npm test          # requires Node.js ≥ 20
+```
 
-Cada tipo de patrón vive en su propia región del espacio de parámetros, y entre una región y otra el cambio es brusco: son **bifurcaciones** del modelo. No falta ningún parámetro, pero hay que saber qué tocar. El panel avanzado incluye estas recetas:
+The tests check, among other things, that:
 
-- **Bandas a lo largo de la espiral**: activador-inhibidor con un inhibidor de largo alcance (D<sub>h</sub> ≫ D<sub>a</sub>) y más rápido que el activador (r<sub>h</sub> > r<sub>a</sub>).
-- **Rayas paralelas al borde**: activador-inhibidor con D<sub>h</sub> ≈ 0 y un inhibidor de vida más larga (r<sub>h</sub> < r<sub>a</sub>).
-- **Líneas oblicuas y triángulos**: activador-sustrato con un sustrato que se recupera despacio; control global para los triángulos.
+- successive planispiral whorls **touch exactly at D = 1/W** for any aperture shape, measured on the generated mesh;
+- the pattern coordinate follows the **arc length** of the aperture, so cells are evenly spaced on elliptical apertures;
+- every pigmentation preset forms a pattern. The same seed always gives the same pattern, and parameter sets that form no pattern are reported as such instead of being rescaled into a false one;
+- bands of the activator–inhibitor model are stable in time, while the flame stripes oscillate;
+- each shape preset lies in the morphospace region of its group;
+- the printable solid is **closed and consistently oriented**, faces outwards, has exactly the requested size and rests on z = 0. This is checked for every preset and for extreme parameters, wall thicknesses and sizes;
+- STL and 3MF files are well formed;
+- English and Spanish strings are complete.
 
-Al cambiar de modelo se cargan constantes que funcionan con él: las de un modelo no sirven para el otro (por ejemplo, sin producción de sustrato no hay patrón). Si una combinación de valores no forma patrón, la app lo indica en lugar de mostrar una concha en blanco. Un preset fija también la semilla, la inserción de células, el tiempo, la irregularidad, el tamaño, la cantidad de pigmento y los colores; con exactamente los mismos valores se obtiene exactamente el mismo patrón.
+The tests run on every push through GitHub Actions. [ARCHITECTURE.md](ARCHITECTURE.md) lists what each test file covers and explains the implementation.
 
-Unir la geometría de Raup con la pigmentación de Meinhardt no es una ocurrencia de esta app: es lo que hicieron Fowler, Meinhardt y Prusinkiewicz en 1992. El registro espacio-tiempo se envuelve sobre la concha: el borde da la vuelta a la apertura y el tiempo avanza con el enrollamiento.
+## Limitations
 
-## Cómo usar la app
+These are minimal models. Raup's model assumes a constant aperture shape and orientation (no allometry), and it has no ornament, internal structures or hinge. The morphospace regions are approximate outlines, not fits to measured data. Meinhardt's models treat the margin as a closed ring of equivalent cells, and the molecules involved have not been identified in any mollusc. The presets reproduce the type of form or pattern of each species, not particular specimens.
 
-1. **Elige un preset** (caracol, Turritella, nautilo, ammonite, almeja…) para partir de una forma real.
-2. **Mueve W, D, T y S** y observa cómo cambia la concha. W tiene dos escalas: **Lin** (1–10, para afinar caracoles y ammonites) y **Log** (1–10⁴, para bivalvos); pasa sola a Log cuando W supera 10.
-3. **Explora el morfoespacio** en el panel desplegable: pincha o arrastra para elegir W y D. Es un corte del cubo W–D–T de Raup con el T actual: T, S y N no cambian, y las regiones de los grupos que no existen con ese T aparecen atenuadas. Pincha en el nombre de un grupo para cargar una concha típica, y cambia el eje W entre 1–10 (caracoles y cefalópodos en detalle) y 1–10⁴ (con los bivalvos).
-4. **Cambia el modo de dibujo**: *Lines* (malla de líneas, por defecto), *Solid* (superficie con luces y sombras) o *Both*.
-5. **Usa las vistas estándar** de la malacología: 3/4, apertural (de frente a la apertura), dorsal, apical (desde el ápice), umbilical (desde la base) y perfil. Con el ratón puedes rotar (arrastrar), hacer zoom (rueda) y desplazar (clic derecho).
-6. **Pulsa *Animate growth*** para ver crecer la concha desde el ápice hasta la apertura.
-7. **Abre *Equation*** para ver la fórmula general y la misma fórmula con los valores actuales, y ***About*** para la explicación detallada de los dos modelos.
-8. **Píntala** en la pestaña **Pigment · Meinhardt**: al entrar, las líneas desaparecen y la concha se ve sólida, en un color liso. Tú eliges el patrón en la galería, que muestra cada uno (Nautilus, Cepaea, Oliva) con su miniatura; la opción **Solid colour** vuelve a la concha lisa. En la vista **Simple**, los controles cambian el patrón de forma gradual: **tamaño del patrón**, **tiempo de crecimiento**, **irregularidad**, **cantidad de pigmento** y la **semilla** (otra variación del mismo patrón). La vista **Advanced** muestra además el modelo y todas sus constantes, así que desde ahí se controla todo, y el **perfil del borde**: el activador y el inhibidor (o el sustrato) a lo largo del borde en el instante que elijas pinchando en el registro espacio-tiempo, con el umbral de pigmentación. El registro espacio-tiempo se puede ver **en el tiempo** (el diagrama de Meinhardt, con la misma altura para cada vuelta) o como **concha desenrollada** (con las proporciones reales: un abanico que se abre desde el ápice). Las ecuaciones de Meinhardt, con los valores actuales, están en *Equation*.
-9. **Muestra gráficos sobre la vista 3D** desde el menú **Graphs** (desactivados por defecto): la posición de la concha en el morfoespacio W – D, en la que también puedes pinchar, y el perfil del activador y el inhibidor (o el sustrato) a lo largo del borde, con un slider para elegir el instante del crecimiento.
-10. **Para ver solo la concha**, usa *Fullscreen* y *Hide info*.
-11. **Exporta** tu concha desde **Export…**:
-    - una **imagen PNG** de la vista actual, a la resolución de la pantalla, doble o cuádruple;
-    - una **lámina de vistas estándar**: las seis orientaciones de la malacología (apertural, dorsal, apical, umbilical, perfil y 3/4), sin perspectiva y rotuladas;
-    - una **ficha en PDF** (A4) con la lámina, los parámetros, la posición en el morfoespacio y un enlace que reabre la concha; si tiene patrón, otra página con el registro espacio-tiempo (con sus ejes), el perfil del activador y el inhibidor a lo largo del borde y las constantes; y, de forma opcional, las ecuaciones completas del modelo, en forma general y con los valores actuales;
-    - un modelo para **impresión 3D** en **STL** o **3MF**: un sólido cerrado con pared de grosor real, en milímetros, listo para el programa de laminado; eliges el tamaño y el grosor de la pared;
-    - un **modelo 3D con color** (GLB) para visores 3D, Blender o realidad aumentada;
+## Contributing
 
-    El eje de enrollamiento se puede incluir en la imagen, la lámina y el PDF aunque esté oculto en la vista. Si la concha está en modo **Lines**, lo exportado no lleva color: el PDF omite la pigmentación y el GLB contiene solo las líneas.
-    - el **registro espacio-tiempo** del patrón en PNG.
+Bug reports, suggestions and contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
 
-    También puedes copiar la dirección de la página, que guarda la concha actual.
+## Citation
 
-En el panel **Appearance** puedes cambiar colores, grosor y densidad de las líneas, mostrar el eje de enrollamiento y su grosor, o volver a las paletas **Light** y **Dark** si pierdes los colores.
+If you use this software in teaching or research, please cite it:
 
-| Tecla | Acción |
-|---|---|
-| F | Pantalla completa |
-| H | Ocultar / mostrar toda la información |
-| Esc | Salir de pantalla completa o volver a mostrar la información |
+> González Casarrubios, A. (2026). *Theoretical Shells: Form and Colour* (version 1.0.0) [Computer software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells
 
-## Presets
+Citation metadata are in [CITATION.cff](CITATION.cff), which GitHub shows as *Cite this repository*.
 
-Los valores son aproximaciones dentro del morfoespacio de Raup, no medidas de ejemplares concretos.
+## License
 
-| Grupo | Preset | W | D | T | S | Valva especular |
-|---|---|---|---|---|---|---|
-| Gasterópodos | Caracol de jardín (*Cornu aspersum*) | 2.4 | 0.08 | 1.6 | 1.0 | |
-| | Turritella | 1.3 | 0.1 | 6.5 | 1.0 | |
-| | Trompo (*Trochus*) | 1.8 | 0 | 2.5 | 0.8 | |
-| | Planorbis | 2.1 | 0.3 | 0.15 | 1.0 | |
-| | Physa (sinistral) | 3.5 | 0.05 | 2.2 | 1.4 | |
-| Cefalópodos | Nautilus (*N. pompilius*) | 3.2 | 0.02 | 0 | 0.85 | |
-| | Ammonite evoluto (*Dactylioceras*) | 1.9 | 0.45 | 0 | 0.9 | |
-| Bivalvos | Almeja (*Venus*) | 1000 | 0 | 0.35 | 1.1 | ✓ |
+- **Source code:** [MIT License](LICENSE).
+- **Texts, explanations and images:** [Creative Commons Attribution 4.0 International (CC BY 4.0)](LICENSE-CONTENT.md).
+- **Third-party libraries:** Three.js (MIT), MathJax (Apache-2.0) and jsPDF (MIT) are loaded from a CDN under their own licences.
 
-### Patrones de pigmentación
+## Contact
 
-Aproximaciones a los tipos de patrón de cada especie, no ajustes a ejemplares reales.
+Alberto González Casarrubios, Universidad Complutense de Madrid · [albert23@ucm.es](mailto:albert23@ucm.es)
 
-| Patrón | Modelo | Mecanismo | Inserción de células |
-|---|---|---|---|
-| *Nautilus*: rayas en llama | Activador-inhibidor | Oscilación (inhibidor de vida larga) | Sí |
-| *Cepaea nemoralis*: bandas espirales | Activador-inhibidor | Picos estables (inhibición de largo alcance) | No |
-| *Oliva porphyria*: triángulos | Activador-sustrato | Ondas viajeras + control global | No |
+## References
 
-## Para desarrolladores
-
-Los detalles técnicos (estructura del código, cómo se construye la malla, convenciones de ejes, renderizado y publicación) están en [ARCHITECTURE.md](ARCHITECTURE.md).
-
-## Contacto
-
-Para cualquier duda o comentario: **Alberto González Casarrubios** (Universidad Complutense de Madrid) · [albert23@ucm.es](mailto:albert23@ucm.es)
-
-## Licencia
-
-© 2026 Alberto González Casarrubios. Esta obra está bajo una licencia [Creative Commons Atribución-NoComercial 4.0 Internacional (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/): se puede compartir y adaptar reconociendo la autoría, pero no con fines comerciales. El texto completo está en [LICENSE](LICENSE).
-
-## Referencias
-
-- Raup, D. M. (1961). The geometry of coiling in gastropods. *PNAS*, 47, 602–609.
-- Raup, D. M. (1962). Computer as aid in describing form in gastropod shells. *Science*, 138, 150–152.
-- Raup, D. M., & Michelson, A. (1965). Theoretical morphology of the coiled shell. *Science*, 147, 1294–1295.
-- Raup, D. M. (1966). Geometric analysis of shell coiling: general problems. *Journal of Paleontology*, 40, 1178–1190.
-- Turing, A. M. (1952). The chemical basis of morphogenesis. *Philosophical Transactions of the Royal Society B*, 237, 37–72.
-- Gierer, A., & Meinhardt, H. (1972). A theory of biological pattern formation. *Kybernetik*, 12, 30–39.
-- Meinhardt, H., & Klingler, M. (1987). A model for pattern formation on the shells of molluscs. *Journal of Theoretical Biology*, 126, 63–89.
+- Ermentrout, B., Campbell, J., & Oster, G. (1986). A model for shell patterns based on neural activity. *The Veliger*, 28, 369–388.
 - Fowler, D. R., Meinhardt, H., & Prusinkiewicz, P. (1992). Modeling seashells. *Computer Graphics (SIGGRAPH '92)*, 26(2), 379–387.
-- Meinhardt, H. (2009). *The Algorithmic Beauty of Sea Shells* (4.ª ed.). Springer.
+- Gierer, A., & Meinhardt, H. (1972). A theory of biological pattern formation. *Kybernetik*, 12, 30–39.
+- Meinhardt, H. (2009). *The Algorithmic Beauty of Sea Shells* (4th ed.). Springer.
+- Meinhardt, H., & Klingler, M. (1987). A model for pattern formation on the shells of molluscs. *Journal of Theoretical Biology*, 126, 63–89.
+- Raup, D. M. (1961). The geometry of coiling in gastropods. *Proceedings of the National Academy of Sciences*, 47, 602–609.
+- Raup, D. M. (1962). Computer as aid in describing form in gastropod shells. *Science*, 138, 150–152.
+- Raup, D. M. (1966). Geometric analysis of shell coiling: general problems. *Journal of Paleontology*, 40, 1178–1190.
+- Raup, D. M. (1967). Geometric analysis of shell coiling: coiling in ammonoids. *Journal of Paleontology*, 41, 43–65.
+- Raup, D. M., & Michelson, A. (1965). Theoretical morphology of the coiled shell. *Science*, 147, 1294–1295.
+- Turing, A. M. (1952). The chemical basis of morphogenesis. *Philosophical Transactions of the Royal Society B*, 237, 37–72.

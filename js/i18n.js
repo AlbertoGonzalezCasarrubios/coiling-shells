@@ -1,6 +1,6 @@
 /**
- * Textos de la interfaz en inglés (por defecto) y español.
- * En el HTML: data-i18n (texto), data-i18n-html (HTML), data-i18n-title (title + aria-label).
+ * Interface strings in English (default) and Spanish.
+ * In the HTML: data-i18n (text), data-i18n-html (HTML), data-i18n-title (title + aria-label).
  */
 
 const GENERAL_TEX = String.raw`\[
@@ -138,7 +138,7 @@ export const STRINGS = {
     'ex.pdf.pattern': 'Pigmentation',
     'ex.pdf.constants': 'Model constants',
     'ex.pdf.cells': 'Cells along the margin',
-    'ex.pdf.cite': 'González Casarrubios, A. (2026). Theoretical Shells: Form and Colour. albertogonzalezcasarrubios.github.io/aplicaciones-varias/shells-morphology',
+    'ex.pdf.cite': 'González Casarrubios, A. (2026). Theoretical Shells: Form and Colour. albertogonzalezcasarrubios.github.io/coiling-shells',
     'ex.image': 'Image of the current view',
     'ex.image.desc': 'Exactly what you see in the 3D view, without panels or axes.',
     'ex.res': 'Resolution',
@@ -422,13 +422,13 @@ export const STRINGS = {
       <p><strong>Alberto González Casarrubios</strong>, Universidad Complutense de Madrid. For questions, suggestions or errors, write to <a href="mailto:albert23@ucm.es">albert23@ucm.es</a>.</p>
 
       <h3>How to cite</h3>
-      <p>González Casarrubios, A. (2026). <i>Theoretical Shells: Form and Colour</i>. <a href="https://albertogonzalezcasarrubios.github.io/aplicaciones-varias/shells-morphology/" target="_blank" rel="noopener">albertogonzalezcasarrubios.github.io/aplicaciones-varias/shells-morphology</a></p>
+      <p>González Casarrubios, A. (2026). <i>Theoretical Shells: Form and Colour</i>. <a href="https://albertogonzalezcasarrubios.github.io/coiling-shells/" target="_blank" rel="noopener">albertogonzalezcasarrubios.github.io/coiling-shells</a></p>
 
       <h3>Source code</h3>
-      <p>The source code and its technical documentation are on <a href="https://github.com/AlbertoGonzalezCasarrubios/aplicaciones-varias/tree/main/shells-morphology" target="_blank" rel="noopener">GitHub</a>.</p>
+      <p>The source code and its technical documentation are on <a href="https://github.com/AlbertoGonzalezCasarrubios/coiling-shells" target="_blank" rel="noopener">GitHub</a>.</p>
 
       <h3>License</h3>
-      <p>This work is licensed under <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)</a>. You may share and adapt it as long as you give appropriate credit, but not for commercial purposes.</p>`,
+      <p>The source code is released under the <a href="https://opensource.org/license/mit" target="_blank" rel="noopener">MIT License</a>. The texts, explanations and images are licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">Creative Commons Attribution 4.0 International (CC BY 4.0)</a>. You may use, share and adapt both freely, including for commercial purposes, as long as you give appropriate credit.</p>`,
   },
 
   es: {
@@ -515,7 +515,7 @@ export const STRINGS = {
     'ex.pdf.pattern': 'Pigmentación',
     'ex.pdf.constants': 'Constantes del modelo',
     'ex.pdf.cells': 'Células del borde',
-    'ex.pdf.cite': 'González Casarrubios, A. (2026). Conchas teóricas: forma y color. albertogonzalezcasarrubios.github.io/aplicaciones-varias/shells-morphology',
+    'ex.pdf.cite': 'González Casarrubios, A. (2026). Conchas teóricas: forma y color. albertogonzalezcasarrubios.github.io/coiling-shells',
     'ex.image': 'Imagen de la vista actual',
     'ex.image.desc': 'Exactamente lo que ves en la vista 3D, sin paneles ni ejes.',
     'ex.res': 'Resolución',
@@ -800,13 +800,13 @@ export const STRINGS = {
       <p><strong>Alberto González Casarrubios</strong>, Universidad Complutense de Madrid. Para dudas, sugerencias o errores, escribe a <a href="mailto:albert23@ucm.es">albert23@ucm.es</a>.</p>
 
       <h3>Cómo citar</h3>
-      <p>González Casarrubios, A. (2026). <i>Conchas teóricas: forma y color</i>. <a href="https://albertogonzalezcasarrubios.github.io/aplicaciones-varias/shells-morphology/" target="_blank" rel="noopener">albertogonzalezcasarrubios.github.io/aplicaciones-varias/shells-morphology</a></p>
+      <p>González Casarrubios, A. (2026). <i>Conchas teóricas: forma y color</i>. <a href="https://albertogonzalezcasarrubios.github.io/coiling-shells/" target="_blank" rel="noopener">albertogonzalezcasarrubios.github.io/coiling-shells</a></p>
 
       <h3>Código fuente</h3>
-      <p>El código fuente y su documentación técnica están en <a href="https://github.com/AlbertoGonzalezCasarrubios/aplicaciones-varias/tree/main/shells-morphology" target="_blank" rel="noopener">GitHub</a>.</p>
+      <p>El código fuente y su documentación técnica están en <a href="https://github.com/AlbertoGonzalezCasarrubios/coiling-shells" target="_blank" rel="noopener">GitHub</a>.</p>
 
       <h3>Licencia</h3>
-      <p>Esta obra está bajo una licencia <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">Creative Commons Atribución-NoComercial 4.0 Internacional (CC BY-NC 4.0)</a>. Puedes compartirla y adaptarla siempre que reconozcas la autoría, pero no con fines comerciales.</p>`,
+      <p>El código fuente se publica con la <a href="https://opensource.org/license/mit" target="_blank" rel="noopener">licencia MIT</a>. Los textos, explicaciones e imágenes están bajo una licencia <a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">Creative Commons Atribución 4.0 Internacional (CC BY 4.0)</a>. Puedes usar, compartir y adaptar ambos libremente, también con fines comerciales, siempre que reconozcas la autoría.</p>`,
   },
 };
 
@@ -823,7 +823,7 @@ export function getLang() {
   return current;
 }
 
-/** Texto para la clave dada; las funciones se llaman con los argumentos extra. */
+/** String for the given key; function values are called with the extra arguments. */
 export function t(key, ...args) {
   const v = STRINGS[current][key] ?? STRINGS.en[key] ?? key;
   return typeof v === 'function' ? v(...args) : v;
@@ -841,13 +841,13 @@ export function tPreset(key) {
   return STRINGS[current].presets[key] || key;
 }
 
-/** Aplica las traducciones a los elementos estáticos con atributos data-i18n*. */
+/** Applies the translations to static elements with data-i18n* attributes. */
 export function applyStatic(root = document) {
   root.querySelectorAll('[data-i18n]').forEach((el) => (el.textContent = t(el.dataset.i18n)));
   root.querySelectorAll('[data-i18n-html]').forEach((el) => (el.innerHTML = t(el.dataset.i18nHtml)));
   root.querySelectorAll('[data-i18n-title]').forEach((el) => {
     el.title = t(el.dataset.i18nTitle);
-    // los grupos y botones sin texto visible necesitan nombre accesible
+    // groups and buttons without visible text need an accessible name
     if (!el.textContent.trim() || el.getAttribute('role')) el.setAttribute('aria-label', el.title);
   });
   document.documentElement.lang = current;

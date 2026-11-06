@@ -1,4 +1,4 @@
-// Calcula el patrón de pigmentación fuera del hilo principal para que la interfaz no se bloquee
+// Computes the pigmentation pattern off the main thread so the interface does not freeze
 import { simulatePattern } from './meinhardt.js';
 
 self.onmessage = (e) => {

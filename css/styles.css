@@ -104,7 +104,7 @@ svg { flex: none; }
   outline-offset: 1px;
 }
 
-/* Parámetro: símbolo + nombre + input numérico, slider debajo */
+/* Parameter: symbol + name + numeric input, slider below */
 .param { padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); }
 .param + .param { margin-top: 8px; }
 .param-head { display: flex; align-items: center; gap: 10px; }
@@ -205,7 +205,7 @@ input[type='range']::-moz-range-thumb {
 .toggle-btn[aria-pressed='true'] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 #grow[aria-pressed='true'] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
 
-/* Cajones desplegables (ajustes secundarios) */
+/* Collapsible drawers (secondary settings) */
 .drawer { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
 .drawer summary {
   list-style: none;
@@ -414,7 +414,7 @@ input[type='range']::-moz-range-thumb {
 .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); }
 .loading[hidden] { display: none; }
 
-/* ---------- Solo la concha: ocultar info / pantalla completa ---------- */
+/* ---------- Shell only: hide info / fullscreen ---------- */
 .restore {
   position: absolute;
   top: 12px;
@@ -466,7 +466,7 @@ body.clean .main { height: 100vh; height: 100dvh; }
 .quote .translation { margin: 12px 0 0; font-size: 14px; color: var(--muted); }
 .quote cite { display: block; font: 12.5px var(--font); color: var(--muted); font-style: normal; }
 
-/* ---------- Pestañas de la barra lateral ---------- */
+/* ---------- Sidebar tabs ---------- */
 .tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -490,7 +490,7 @@ body.clean .main { height: 100vh; height: 100dvh; }
 .tabs button:focus-visible, .info-tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .tab-panel { display: flex; flex-direction: column; gap: 18px; }
 
-/* ---------- Pigmentación ---------- */
+/* ---------- Pigmentation ---------- */
 .panel-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .status { font: 11px var(--mono); color: var(--accent); }
 .spacetime {
@@ -507,7 +507,7 @@ body.clean .main { height: 100vh; height: 100dvh; }
 .colors.two { grid-template-columns: 1fr 1fr; }
 .seed-row { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: end; }
 .seed-row .num { width: 96px; text-align: left; }
-/* Galería de patrones */
+/* Pattern gallery */
 .pattern-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .pattern-card {
   display: flex;
@@ -558,7 +558,7 @@ div.adv-only.insertion { gap: 4px; }
 #pig-params .param-sym { font-size: 16px; width: 26px; }
 #pig-params .param-sym sub { font-size: 0.7em; }
 
-/* ---------- Páginas del diálogo About ---------- */
+/* ---------- About dialog pages ---------- */
 .info-tabs {
   display: flex;
   gap: 4px;
@@ -580,7 +580,7 @@ div.adv-only.insertion { gap: 4px; }
 .info-tabs button:hover { color: var(--text); }
 .info-tabs button[aria-selected='true'] { color: var(--accent); border-bottom-color: var(--accent); }
 .info-head { border-bottom: 0; }
-/* En la columna flexible del diálogo, cabecera y pestañas no deben encogerse */
+/* In the dialog's flex column, the header and tabs must not shrink */
 .info-head, .info-tabs { flex: none; }
 
 /* ---------- Responsive ---------- */
@@ -598,7 +598,7 @@ div.adv-only.insertion { gap: 4px; }
   .toolbar { right: 12px; }
 }
 
-/* ---------- Gráficos superpuestos en el visor 3D ---------- */
+/* ---------- Charts overlaid on the 3D view ---------- */
 .chip-menu { position: relative; }
 .chip-menu > summary { list-style: none; }
 .chip-menu > summary::-webkit-details-marker { display: none; }
@@ -630,7 +630,7 @@ div.adv-only.insertion { gap: 4px; }
 .overlay .profile-legend { margin-top: 4px; }
 .overlay input[type='range'] { margin-top: 6px; }
 #ovProfileBody[hidden] { display: none; }
-/* La barra de herramientas deja sitio a los gráficos */
+/* The toolbar leaves room for the charts */
 .viewport:has(.overlay:not([hidden])) .toolbar { right: 324px; }
 @media (max-width: 820px) {
   .viewport:has(.overlay:not([hidden])) .toolbar { right: 12px; }
@@ -639,7 +639,7 @@ div.adv-only.insertion { gap: 4px; }
   .overlay .profile { height: 70px; }
 }
 
-/* ---------- Ventana de exportación ---------- */
+/* ---------- Export dialog ---------- */
 .info.export { width: min(920px, calc(100vw - 32px)); }
 .export-body { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding-top: 14px; }
 .ex-card {
@@ -664,12 +664,12 @@ div.adv-only.insertion { gap: 4px; }
   .export-body { grid-template-columns: 1fr; }
 }
 
-/* Escala del eje W del morfoespacio */
+/* Range of the morphospace W axis */
 .segmented.wscale { grid-template-columns: 1fr 1fr; align-self: flex-start; padding: 2px; backdrop-filter: none; background: var(--surface-2); }
 .segmented.wscale button { font: 500 11px var(--mono); padding: 3px 8px; }
 .overlay .segmented.wscale button { padding: 2px 6px; font-size: 10px; }
 
-/* Ajuste que depende de una casilla (p. ej. el grosor del eje) */
+/* Setting that depends on a checkbox (e.g. the axis width) */
 .sub-params { padding: 2px 0 4px 24px; }
 .ex-options { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; padding: 0 2px; }
 .st-view { margin-bottom: 8px; }

@@ -1,26 +1,26 @@
 /**
- * Malla imprimible: convierte la superficie de Raup (sin grosor) en un sólido
- * cerrado con pared de grosor real, en milímetros, y lo escribe en STL o 3MF.
+ * Printable mesh: turns Raup's surface (which has no thickness) into a closed
+ * solid with a real wall thickness, in millimetres, and writes it as STL or 3MF.
  *
- * - La pared se construye hacia dentro: cada vértice de la superficie exterior
- *   se desplaza a lo largo de la normal. El grosor se limita en cada anillo a
- *   una fracción del radio del tubo, así que cerca del ápice el tubo es macizo.
- * - El tubo se cierra con un anillo en la apertura y otro en el ápice.
- * - Coordenadas de impresión: z = eje de enrollamiento hacia arriba (ápice
- *   arriba, como en la ecuación), base en z = 0 y centrada en x, y.
+ * - The wall is built inwards: each vertex of the outer surface is offset along
+ *   the normal. The thickness of each ring is capped at a fraction of the tube
+ *   radius, so the tube is solid near the apex.
+ * - The tube is closed with a ring at the aperture and another at the apex.
+ * - Print coordinates: z = coiling axis pointing up (apex up, as in the
+ *   equation), base at z = 0, centred in x and y.
  *
- * Módulo puro (sin Three.js): se puede probar en Node.
+ * Pure module (no Three.js): it can be tested in Node.
  */
 import { buildShell } from './raup.js';
 
-// Resolución de impresión: fina pero acotada (unos 350 000 triángulos como máximo)
+// Print resolution: fine but bounded (about 350,000 triangles at most)
 const PRINT_QUALITY = { segPerTurn: 160, segPhi: 96, maxRows: 900 };
-// Tramo junto a cada extremo en el que se recorta la pared interior (ver más abajo)
+// Stretch of tube next to each end where the inner wall is clipped (see below)
 const END_WINDOW = Math.PI / 3;
 
 /**
  * @param {object} shape  W, D, T, S, turns, hand, mirror
- * @param {object} opt    size (mm, dimensión mayor), wall (mm)
+ * @param {object} opt    size (mm, largest dimension), wall (mm)
  * @returns {{ positions: Float32Array, indices: Uint32Array, dims: number[] }}
  */
 export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
@@ -35,10 +35,10 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
     size,
   });
   const { rows, cols, copies, count } = shell.grid;
-  const U = cols - 1; // sin la columna repetida de la costura
+  const U = cols - 1; // without the repeated seam column
   const P = shell.positions;
 
-  // Three.js (X, Y = z, Z = −y)  →  impresión (x, y, z) con z hacia arriba
+  // Three.js (X, Y = z, Z = −y)  →  print (x, y, z) with z up
   const src = (c, i, j) => {
     const k = (c * count + i * cols + j) * 3;
     return [P[k], -P[k + 2], P[k + 1]];
@@ -57,7 +57,7 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
       for (let j = 0; j < U; j++) ring.push(src(c, i, j));
       O.push(ring);
     }
-    // Normales hacia fuera y grosor por anillo
+    // Outward normals and thickness per ring
     for (let i = 0; i < rows; i++) {
       const ring = O[i];
       const ctr = [0, 0, 0];
@@ -66,7 +66,7 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
       for (const p of ring) minR = Math.min(minR, Math.hypot(p[0] - ctr[0], p[1] - ctr[1], p[2] - ctr[2]));
       const t = Math.min(wall, 0.45 * minR);
       const prev = O[Math.max(0, i - 1)], next = O[Math.min(rows - 1, i + 1)];
-      // Normal del plano del anillo (método de Newell), solo en los extremos
+      // Normal of the ring plane (Newell's method), only at the ends
       let planeN = null;
       if (i === 0 || i === rows - 1) {
         const nn = [0, 0, 0];
@@ -87,9 +87,9 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
         const away = sub(p, ctr);
         if (dot(n, away) < 0) n = [-n[0], -n[1], -n[2]];
         if (!Number.isFinite(n[0]) || (n[0] === 0 && n[1] === 0 && n[2] === 0)) n = norm(away);
-        // En los anillos de los extremos la pared se desplaza dentro del plano del
-        // anillo: así el labio de la apertura y el cierre del ápice quedan planos y la
-        // pared interior no asoma más allá del borde (el tubo se ensancha al crecer)
+        // At the end rings the wall is offset within the plane of the ring, so the
+        // lip of the aperture and the cap at the apex are flat and the inner wall
+        // does not stick out past the edge (the tube widens as it grows)
         if (planeN) {
           const along = dot(n, planeN);
           const inPlane = norm([n[0] - along * planeN[0], n[1] - along * planeN[1], n[2] - along * planeN[2]]);
@@ -101,11 +101,11 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
       }
     }
 
-    // Como el tubo se ensancha, cerca de los extremos la pared interior cruzaría los
-    // planos del ápice y de la apertura: se recorta contra ellos para que no asome.
-    // Solo en el tramo de tubo más próximo a cada extremo (WINDOW radianes): esos
-    // planos contienen el eje de enrollamiento y cortan las demás vueltas, que no se
-    // deben tocar.
+    // Because the tube widens, near the ends the inner wall would cross the planes
+    // of the apex and of the aperture: it is clipped against them so it does not
+    // stick out. Only in the stretch of tube closest to each end (END_WINDOW
+    // radians): those planes contain the coiling axis and cut through the other
+    // whorls, which must not be touched.
     const centroid = (ring) => [0, 1, 2].map((a) => ring.reduce((s, p) => s + p[a], 0) / U);
     const newell = (ring) => {
       const nn = [0, 0, 0];
@@ -123,7 +123,7 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
         const c0 = centroid(O[end]);
         let pn = newell(O[end]);
         if (!pn[0] && !pn[1] && !pn[2]) continue;
-        // La normal apunta hacia fuera del sólido (lejos del anillo vecino)
+        // The normal points out of the solid (away from the neighbouring ring)
         if (dot(pn, sub(centroid(O[inside]), c0)) > 0) pn = pn.map((v) => -v);
         for (let i = from; i <= to; i++) {
           for (let j = 0; j < U; j++) {
@@ -139,9 +139,9 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
       }
     }
 
-    // Caras con orientación coherente por construcción: cada arista interior la
-    // recorren dos triángulos en sentidos opuestos, también en las uniones de la
-    // pared exterior, la interior y los anillos de la apertura y del ápice.
+    // Faces with a consistent orientation by construction: every edge is shared
+    // by two triangles traversing it in opposite directions, also where the outer
+    // wall, the inner wall and the rings at the aperture and the apex meet.
     const start = tris.length;
     for (let i = 0; i < rows - 1; i++) {
       for (let j = 0; j < U; j++) {
@@ -153,14 +153,14 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
     }
     const last = rows - 1;
     for (let j = 0; j < U; j++) {
-      // apertura
+      // aperture
       tris.push(outer(c, last, j + 1), outer(c, last, j), inner(c, last, j));
       tris.push(outer(c, last, j + 1), inner(c, last, j), inner(c, last, j + 1));
-      // ápice
+      // apex
       tris.push(outer(c, 0, j), outer(c, 0, j + 1), inner(c, 0, j + 1));
       tris.push(outer(c, 0, j), inner(c, 0, j + 1), inner(c, 0, j));
     }
-    // Si las caras miran hacia dentro (depende del sentido y de la reflexión), se invierten todas
+    // If the faces point inwards (it depends on the handedness and the reflection), flip them all
     const part = { positions: pos, indices: tris.slice(start) };
     if (signedVolume(part) < 0) {
       for (let k = start; k < tris.length; k += 3) {
@@ -171,7 +171,7 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
     }
   }
 
-  // Base en z = 0 y centrada en x, y
+  // Base at z = 0, centred in x and y
   let min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
   for (let k = 0; k < pos.length; k += 3) {
     for (let a = 0; a < 3; a++) {
@@ -179,9 +179,9 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
       if (pos[k + a] > max[a]) max[a] = pos[k + a];
     }
   }
-  // Con paredes muy gruesas sobre superficies muy curvadas, la pared interior puede
-  // sobresalir algo de la exterior: se reescala para que la dimensión mayor sea
-  // exactamente la pedida
+  // With very thick walls on strongly curved surfaces the inner wall can stick out
+  // slightly from the outer one: the mesh is rescaled so that its largest
+  // dimension is exactly the requested size
   const fit = size / Math.max(max[0] - min[0], max[1] - min[1], max[2] - min[2]);
   const off = [(min[0] + max[0]) / 2, (min[1] + max[1]) / 2, min[2]];
   for (let k = 0; k < pos.length; k += 3) for (let a = 0; a < 3; a++) pos[k + a] = (pos[k + a] - off[a]) * fit;
@@ -189,7 +189,11 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
   return { positions: pos, indices: new Uint32Array(tris), dims: [0, 1, 2].map((a) => (max[a] - min[a]) * fit) };
 }
 
-/** Comprueba que la malla es cerrada y está bien orientada (cada arista, una vez en cada sentido). */
+/**
+ * Checks that the mesh is closed and consistently oriented: every directed edge
+ * appears exactly once and its reverse appears exactly once.
+ * @returns {number} number of offending edges (0 for a valid mesh)
+ */
 export function checkClosed({ indices }) {
   const edges = new Map();
   for (let t = 0; t < indices.length; t += 3) {
@@ -207,7 +211,7 @@ export function checkClosed({ indices }) {
   return bad;
 }
 
-/** Volumen con signo (mm³): positivo si las caras miran hacia fuera. */
+/** Signed volume (mm³): positive if the faces point outwards. */
 export function signedVolume({ positions: p, indices: ix }) {
   let v = 0;
   for (let t = 0; t < ix.length; t += 3) {
@@ -219,7 +223,7 @@ export function signedVolume({ positions: p, indices: ix }) {
   return v / 6;
 }
 
-/** STL binario. */
+/** Binary STL. */
 export function toSTL({ positions: p, indices: ix }, name = 'shell') {
   const n = ix.length / 3;
   const buf = new ArrayBuffer(84 + n * 50);
@@ -244,7 +248,10 @@ export function toSTL({ positions: p, indices: ix }, name = 'shell') {
   return new Uint8Array(buf);
 }
 
-/** 3MF (paquete ZIP con el modelo en milímetros). Asíncrono: el modelo se comprime si el navegador puede. */
+/**
+ * 3MF (a ZIP package with the model in millimetres). Asynchronous: the model
+ * is compressed when the runtime supports CompressionStream.
+ */
 export async function to3MF({ positions: p, indices: ix }, name = 'Shell') {
   const v = [];
   for (let k = 0; k < p.length; k += 3) v.push(`<vertex x="${r(p[k])}" y="${r(p[k + 1])}" z="${r(p[k + 2])}"/>`);
@@ -275,7 +282,7 @@ export async function to3MF({ positions: p, indices: ix }, name = 'Shell') {
 const r = (x) => +x.toFixed(4);
 
 // ---------------------------------------------------------------------------
-// ZIP mínimo (deflate con CompressionStream si existe; si no, sin compresión)
+// Minimal ZIP writer (deflate via CompressionStream when available, otherwise stored)
 // ---------------------------------------------------------------------------
 
 const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {

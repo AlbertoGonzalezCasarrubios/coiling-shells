@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Theoretical Shells: Form and Colour"
+abstract: >-
+  Interactive 3D explorer of the theoretical morphology of coiled shells, based
+  on David M. Raup's shell-coiling model and Hans Meinhardt's reaction–diffusion
+  models of shell pigmentation, with export to images, PDF and 3D printing.
+type: software
+authors:
+  - family-names: "González Casarrubios"
+    given-names: "Alberto"
+    email: "albert23@ucm.es"
+    affiliation: "Universidad Complutense de Madrid"
+version: "1.0.0"
+date-released: "2026-11-06"
+license: MIT
+repository-code: "https://github.com/AlbertoGonzalezCasarrubios/coiling-shells"
+url: "https://albertogonzalezcasarrubios.github.io/coiling-shells/"
+keywords:
+  - theoretical morphology
+  - morphospace
+  - shell coiling
+  - Raup
+  - Meinhardt
+  - reaction-diffusion
+  - pattern formation
+  - molluscs
+  - palaeontology

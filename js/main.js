@@ -8,6 +8,7 @@ import { Line2 } from 'three/addons/lines/Line2.js';
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 import { buildShell } from './raup.js';
 import { buildPrintMesh, toSTL, to3MF } from './export3d.js';
+import { MORPHO_REGIONS } from './morphospace.js';
 import { PRESETS, DEFAULT_PRESET, PATTERN_PRESETS, DEFAULT_PATTERN, MODEL_REFERENCE } from './presets.js';
 import { simulatePattern, PROFILE_WIDTH } from './meinhardt.js';
 import {
@@ -16,13 +17,13 @@ import {
 } from './i18n.js';
 
 // ---------------------------------------------------------------------------
-// Definición de controles (los textos están en i18n.js)
+// Control definitions (the texts live in i18n.js)
 // ---------------------------------------------------------------------------
 
 const formatW = (v) => v.toFixed(v < 100 ? 2 : v < 1000 ? 1 : 0);
 
 const RAUP_PARAMS = [
-  // Escala lineal 1–10 (gasterópodos, cefalópodos) o logarítmica 1–10⁴ (bivalvos)
+  // Linear scale 1–10 (gastropods, cephalopods) or logarithmic 1–10⁴ (bivalves)
   { key: 'W', sym: 'W', min: 1, max: 10000, linMax: 10, step: 0.01, logToggle: true, format: formatW },
   { key: 'D', sym: 'D', min: 0, max: 0.9, step: 0.005, digits: 3 },
   { key: 'T', sym: 'T', min: 0, max: 10, step: 0.05, digits: 2 },
@@ -67,7 +68,7 @@ function pickShape(p) {
 }
 
 // ---------------------------------------------------------------------------
-// Estado compartible en la URL: #W=2.4&D=0.08&T=1.6&S=1&N=4.5&h=1&v=0&m=lines
+// Shareable state in the URL: #W=2.4&D=0.08&T=1.6&S=1&N=4.5&h=1&v=0&m=lines
 // ---------------------------------------------------------------------------
 
 const HASH_KEYS = { W: 'W', D: 'D', T: 'T', S: 'S', N: 'turns', h: 'hand' };
@@ -81,7 +82,7 @@ for (const [short, key] of Object.entries(HASH_KEYS)) {
 if (fromHash.has('v')) state.mirror = fromHash.get('v') === '1';
 if (MODES.includes(fromHash.get('m'))) state.mode = fromHash.get('m');
 
-// La página abre siempre en inglés; el español se elige con el botón EN / ES
+// The page always opens in English; Spanish is chosen with the EN / ES button
 setLang('en');
 
 let hashTimer = 0;
@@ -101,15 +102,15 @@ function writeHashNow() {
 }
 
 // ---------------------------------------------------------------------------
-// Escena
+// Scene
 // ---------------------------------------------------------------------------
 
 const $ = (id) => document.getElementById(id);
 const viewport = $('viewport');
 
 const PALETTES = {
-  light: { line: '#2b3a4a', shell: '#e8d3b0', bg: '#f4f0e6' }, // tinta sobre papel
-  dark: { line: '#d8c08c', shell: '#e4cfae', bg: '#111821' },  // oro viejo sobre azul noche
+  light: { line: '#2b3a4a', shell: '#e8d3b0', bg: '#f4f0e6' }, // ink on paper
+  dark: { line: '#d8c08c', shell: '#e4cfae', bg: '#111821' },  // old gold on night blue
 };
 
 function setPaletteInputs({ line, shell, bg }) {
@@ -162,7 +163,7 @@ ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// Materiales
+// Materials
 const solidMat = new THREE.MeshStandardMaterial({
   color: $('shellColor').value,
   roughness: 0.42,
@@ -170,13 +171,13 @@ const solidMat = new THREE.MeshStandardMaterial({
   envMapIntensity: 0.6,
   side: THREE.DoubleSide,
   vertexColors: true,
-  // empuja la superficie hacia atrás para que las líneas queden por encima
+  // push the surface back so the lines stay on top
   polygonOffset: true,
   polygonOffsetFactor: 1,
   polygonOffsetUnits: 1,
 });
 
-// Ocultador invisible: escribe profundidad pero no color → eliminación de líneas ocultas
+// Invisible occluder: writes depth but no colour → hidden-line removal
 const occluderMat = new THREE.MeshBasicMaterial({
   colorWrite: false,
   side: THREE.DoubleSide,
@@ -185,7 +186,7 @@ const occluderMat = new THREE.MeshBasicMaterial({
   polygonOffsetUnits: 1,
 });
 
-// Líneas con grosor en píxeles (las líneas WebGL nativas siempre miden 1 px)
+// Lines with a width in pixels (native WebGL lines are always 1 px wide)
 const lineMat = new LineMaterial({
   color: $('lineColor').value,
   linewidth: state.lineWidth,
@@ -193,12 +194,12 @@ const lineMat = new LineMaterial({
   opacity: state.lineOpacity,
 });
 
-// Eje discontinuo con grosor en píxeles (por defecto 1 px, como una línea WebGL normal)
+// Dashed axis with a width in pixels (1 px by default, like a plain WebGL line)
 const axisMat = new LineMaterial({ color: 0x2a9d8f, linewidth: state.axisWidth, dashed: true, dashSize: 0.12, gapSize: 0.08 });
 
-solidMat.side = THREE.FrontSide; // exterior (las caras frontales miran hacia fuera)
+solidMat.side = THREE.FrontSide; // exterior (front faces point outwards)
 
-// Interior de la concha: sin pigmento y con un ligero brillo nacarado
+// Inside of the shell: unpigmented, with a light pearly sheen
 const innerMat = new THREE.MeshPhysicalMaterial({
   color: '#f3eee6',
   roughness: 0.28,
@@ -227,7 +228,7 @@ axis.visible = false;
 scene.add(solid, inner, occluder, lines, axis);
 
 // ---------------------------------------------------------------------------
-// Indicador de ejes x, y, z (sistema de la ecuación: z = eje de enrollamiento)
+// x, y, z axes gizmo (frame of the equation: z = coiling axis)
 // ---------------------------------------------------------------------------
 
 const gizmo = {
@@ -276,15 +277,15 @@ for (const { label, dir, color } of [
 gizmo.scene.add(new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 12), new THREE.MeshBasicMaterial({ color: 0x8a8f98, toneMapped: false })));
 
 // ---------------------------------------------------------------------------
-// Construcción de la malla
+// Mesh construction
 // ---------------------------------------------------------------------------
 
 let lastBuild = null;
 
 function rebuild() {
   const q = QUALITY[state.quality];
-  // Con W alto casi toda la concha está en la última fracción de vuelta (bivalvos):
-  // se densifica θ para que la malla y las líneas de crecimiento no queden escasas.
+  // With a high W almost the whole shell lies in the last fraction of a whorl
+  // (bivalves): θ is refined so the mesh and the growth lines are not sparse.
   const boost = Math.max(1, Math.log10(state.W));
   const shell = buildShell({
     ...state,
@@ -305,7 +306,7 @@ function rebuild() {
   fixSeamNormals(meshGeo.attributes.normal.array, shell.grid);
   meshGeo.computeBoundingSphere();
 
-  // LineSegmentsGeometry necesita pares de puntos explícitos
+  // LineSegmentsGeometry needs explicit pairs of points
   const li = shell.lineIndices;
   const P = shell.positions;
   const segs = new Float32Array(li.length * 3);
@@ -336,10 +337,10 @@ function rebuild() {
   scheduleFormula();
   drawMorpho();
   onGeometryForPattern();
-  if (stView === 'shell') drawSpacetime(); // sus proporciones dependen de la forma
+  if (stView === 'shell') drawSpacetime(); // its proportions depend on the shape
 }
 
-/** La costura de la apertura tiene vértices duplicados: se promedian sus normales para que no se vea. */
+/** The aperture seam has duplicated vertices: their normals are averaged so the seam is invisible. */
 function fixSeamNormals(n, { rows, cols, copies, count }) {
   for (let c = 0; c < copies; c++) {
     for (let r = 0; r < rows; r++) {
@@ -365,7 +366,7 @@ function applyMode() {
 }
 
 // ---------------------------------------------------------------------------
-// Fórmulas (MathJax). Se componen solo cuando su panel está visible.
+// Formulas (MathJax). They are typeset only when their panel is visible.
 // ---------------------------------------------------------------------------
 
 const formulaPanel = $('formula');
@@ -384,7 +385,7 @@ const mathJaxReady = new Promise((resolve) => {
 });
 let mathQueue = mathJaxReady;
 
-/** Encola la composición de `el`; `html` (función) se evalúa justo antes, con el estado más reciente. */
+/** Queues typesetting of `el`; `html` (a function) is evaluated just before, with the latest state. */
 function typeset(el, html) {
   mathQueue = mathQueue
     .then(() => {
@@ -397,7 +398,7 @@ function typeset(el, html) {
 }
 
 const f = (v, d) => Number(v).toFixed(d);
-/** Dos cifras significativas: para constantes que abarcan varios órdenes de magnitud. */
+/** Two significant figures: for constants spanning several orders of magnitude. */
 const sig = (v) => (v === 0 ? '0' : v >= 100 ? v.toFixed(0) : String(+Number(v).toPrecision(2)));
 
 let formulaView = 'raup';
@@ -414,7 +415,7 @@ function generalTeX(view = formulaView) {
 
 function meinhardtLiveTeX() {
   const { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl, T } = pattern;
-  // Términos opcionales: se omiten cuando su coeficiente es 0
+  // Optional terms: omitted when their coefficient is 0
   const term = (sign, c, tex) => (c > 0 ? ` ${sign} ${sig(c)}${tex ? String.raw`\,${tex}` : ''}` : '');
   const lap = (v) => String.raw`\frac{\partial^2 ${v}}{\partial x^2}`;
   const sat = kappa > 0 ? String.raw`(1+${sig(kappa)}\,a^2)` : '';
@@ -486,7 +487,7 @@ function setFormulaOpen(open) {
   formulaPanel.hidden = !open;
   $('toggleFormula').setAttribute('aria-pressed', String(open));
   if (open) {
-    // Desde la pestaña de pigmento se abren directamente las ecuaciones de Meinhardt
+    // From the pigment tab, Meinhardt's equations open directly
     setFormulaView($('tab-pigment').hidden ? formulaView : 'meinhardt');
   }
 }
@@ -502,7 +503,7 @@ function showInfoPage(page) {
   });
   infoBody.querySelectorAll('.info-page').forEach((el) => {
     el.hidden = el.dataset.page !== page;
-    // Cada página se compone con MathJax la primera vez que se muestra
+    // Each page is typeset with MathJax the first time it is shown
     if (!el.hidden && !el.dataset.typeset) {
       el.dataset.typeset = '1';
       typeset(el);
@@ -517,18 +518,18 @@ function openInfo(page = infoPage) {
 }
 
 // ---------------------------------------------------------------------------
-// Controles de la barra lateral
+// Sidebar controls
 // ---------------------------------------------------------------------------
 
 const controlsByKey = {};
 let dirty = true;
 
-/** Captura el puntero si sigue activo (un toque cancelado no se puede capturar). */
+/** Captures the pointer if it is still active (a cancelled touch cannot be captured). */
 function capturePointer(el, e) {
   try {
     el.setPointerCapture(e.pointerId);
   } catch {
-    /* sin captura: el arrastre funciona igual mientras el puntero esté encima */
+    /* no capture: dragging still works while the pointer stays over the element */
   }
 }
 
@@ -582,15 +583,15 @@ function createParam(def, container, { compact = false, onChange, target = state
   };
 
   const set = (v, { fromNum = false, fitScale = false } = {}) => {
-    // def.zero: por debajo del mínimo el valor es exactamente 0 (p. ej. sin difusión)
+    // def.zero: below the minimum the value is exactly 0 (e.g. no diffusion)
     const clamped = def.zero && v < def.min ? 0 : Math.min(def.max, Math.max(def.min, v));
     target[def.key] = clamped;
-    // Al cargar un preset, se vuelve a la escala lineal si el valor cabe en ella
+    // When a preset is loaded, go back to the linear scale if the value fits in it
     if (fitScale && def.logToggle && logScale && clamped <= def.linMax) {
       logScale = false;
       applyScale();
     }
-    // Un valor fuera del rango lineal (p. ej. un bivalvo) pasa a escala logarítmica
+    // A value outside the linear range (e.g. a bivalve) switches to the logarithmic scale
     if (def.logToggle && !logScale && clamped > def.linMax) {
       logScale = true;
       applyScale();
@@ -619,7 +620,7 @@ function createParam(def, container, { compact = false, onChange, target = state
     const r = parseFloat(range.value);
     if (def.zero && r <= parseFloat(range.min) + 1e-9) set(0);
     else if (logScale) {
-      // Se redondea a lo que se muestra, para que el valor visible sea el real
+      // Rounded to what is displayed, so the visible value is the actual one
       const v = 10 ** r;
       set(def.digits !== undefined ? +v.toFixed(def.digits) : +v.toPrecision(2));
     } else set(r);
@@ -633,7 +634,7 @@ function createParam(def, container, { compact = false, onChange, target = state
   });
   num.addEventListener('change', () => set(target[def.key]));
 
-  // El símbolo y el nombre pueden depender del modelo (p. ej. D_h o D_b)
+  // The symbol and name may depend on the model (e.g. D_h or D_b)
   const relabel = () => {
     if (symEl) symEl.innerHTML = typeof def.sym === 'function' ? def.sym() : def.sym;
     const tr = tParam(typeof def.i18n === 'function' ? def.i18n() : def.i18n ?? def.key);
@@ -675,7 +676,7 @@ VIS_PARAMS.forEach((d) =>
   })
 );
 
-// Presets agrupados
+// Grouped presets
 const presetSel = $('preset');
 function buildPresetOptions() {
   const value = presetSel.value;
@@ -760,7 +761,7 @@ document.querySelectorAll('[data-palette]').forEach((b) =>
 $('bands').addEventListener('change', applyShellMaterial);
 $('showAxis').addEventListener('change', (e) => {
   axis.visible = e.target.checked;
-  $('axis-params').hidden = !e.target.checked; // el grosor solo aparece con el eje visible
+  $('axis-params').hidden = !e.target.checked; // the width control only appears when the axis is visible
 });
 createParam({ key: 'axisWidth', min: 0.5, max: 6, step: 0.5, digits: 1 }, $('axis-params'), {
   compact: true,
@@ -775,11 +776,11 @@ $('openInfo').addEventListener('click', () => openInfo());
 document.querySelectorAll('.info-tabs [data-page]').forEach((b) => b.addEventListener('click', () => showInfoPage(b.dataset.page)));
 $('closeInfo').addEventListener('click', () => infoDialog.close());
 infoDialog.addEventListener('click', (e) => {
-  if (e.target === infoDialog) infoDialog.close(); // clic en el fondo
+  if (e.target === infoDialog) infoDialog.close(); // click on the backdrop
 });
 
 // ---------------------------------------------------------------------------
-// Pantalla completa y modo "solo la concha"
+// Fullscreen and "shell only" mode
 // ---------------------------------------------------------------------------
 
 const fsSupported = !!(viewport.requestFullscreen || viewport.webkitRequestFullscreen);
@@ -803,7 +804,7 @@ function setClean(on) {
   if (on) $('showInfo').focus({ preventScroll: true });
 }
 
-$('toggleFullscreen').hidden = !fsSupported; // p. ej. Safari en iPhone
+$('toggleFullscreen').hidden = !fsSupported; // e.g. Safari on iPhone
 $('toggleFullscreen').addEventListener('click', toggleFullscreen);
 document.addEventListener('fullscreenchange', updateFullscreenButton);
 document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
@@ -827,7 +828,7 @@ $('toggleAxes').addEventListener('click', (e) => {
 });
 
 // ---------------------------------------------------------------------------
-// Animación de crecimiento: la apertura avanza desde el ápice
+// Growth animation: the aperture advances from the apex
 // ---------------------------------------------------------------------------
 
 let growAnim = null;
@@ -854,8 +855,8 @@ $('grow').addEventListener('click', () => {
 
 function stepGrow(now) {
   const u = Math.min(1, (now - growAnim.t0) / growAnim.dur);
-  // Mezcla de avance lineal en θ y lineal en tamaño, para que tanto las
-  // espiras del ápice como la última vuelta (o una valva) se vean crecer.
+  // Blend of linear progress in θ and linear progress in size, so that both the
+  // whorls near the apex and the last whorl (or a valve) are seen growing.
   const lnW = Math.log(Math.max(state.W, 1.0001));
   const s0 = Math.exp(-state.turns * lnW);
   const bySize = 1 + Math.log(s0 + (1 - s0) * u) / (state.turns * lnW);
@@ -865,12 +866,12 @@ function stepGrow(now) {
 }
 
 // ---------------------------------------------------------------------------
-// Vistas estándar con transición suave
+// Standard views with a smooth transition
 // ---------------------------------------------------------------------------
 
 const VIEWS = {
   iso: () => CAMERA_HOME.clone(),
-  apertural: () => new THREE.Vector3(0, 0, state.hand), // la apertura mira hacia +Z en dextrales
+  apertural: () => new THREE.Vector3(0, 0, state.hand), // the aperture faces +Z in dextral shells
   dorsal: () => new THREE.Vector3(0, 0, -state.hand),
   apical: () => new THREE.Vector3(0, 1, 0.001),
   umbilical: () => new THREE.Vector3(0, -1, 0.001),
@@ -881,7 +882,7 @@ let tween = null;
 const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
 
 function flyTo(name) {
-  // Consume la inercia pendiente de OrbitControls para que no gire al acabar la transición
+  // Consume the pending OrbitControls inertia so the camera does not spin after the transition
   controls.enableDamping = false;
   controls.update();
   controls.enableDamping = true;
@@ -890,7 +891,7 @@ function flyTo(name) {
   const dist = name === 'iso' ? CAMERA_HOME.length() : THREE.MathUtils.clamp(offset.length(), 7, 16);
   const from = new THREE.Spherical().setFromVector3(offset);
   const to = new THREE.Spherical().setFromVector3(VIEWS[name]().normalize().multiplyScalar(dist));
-  // Acimut por el camino más corto
+  // Azimuth along the shortest path
   let dTheta = to.theta - from.theta;
   dTheta = Math.atan2(Math.sin(dTheta), Math.cos(dTheta));
   tween = { t0: performance.now(), dur: 700, from, dTheta, to, fromTarget: controls.target.clone() };
@@ -901,8 +902,8 @@ function stepTween(now) {
   const u = Math.min(1, (now - tween.t0) / tween.dur);
   const e = easeInOut(u);
   const { from, to } = tween;
-  // Interpolar acimut y elevación por separado mantiene la orientación continua
-  // también al llegar a las vistas apical y umbilical (sobre el eje vertical).
+  // Interpolating azimuth and elevation separately keeps the orientation
+  // continuous, also when reaching the apical and umbilical views (on the vertical axis).
   const sph = new THREE.Spherical(
     THREE.MathUtils.lerp(from.radius, to.radius, e),
     THREE.MathUtils.lerp(from.phi, to.phi, e),
@@ -922,53 +923,20 @@ controls.addEventListener('start', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Morfoespacio W – D (corte T = 0 de Raup)
+// W – D morphospace (a section of Raup's cube)
 // ---------------------------------------------------------------------------
 
 const morpho = $('morpho');
 const morphoOv = $('morphoOv');
 const morphoDrawer = $('morphoDrawer');
 const MORPHO = { l: 34, r: 10, t: 10, b: 26, logMax: 4 };
-// Escala del eje W: 1–10⁴ (todos los grupos) o 1–10 (caracoles y cefalópodos, con más detalle)
+// W axis range: 1–10⁴ (all groups) or 1–10 (snails and cephalopods in more detail)
 const MORPHO_TICKS = {
   4: [[0, '1'], [1, '10'], [2, '10²'], [3, '10³'], [4, '10⁴']],
   1: [[0, '1'], [Math.log10(2), '2'], [Math.log10(3), '3'], [Math.log10(5), '5'], [1, '10']],
 };
-// En el visor la altura se adapta al ancho del panel (más estrecho en móvil)
+// On the 3D view the height adapts to the panel width (narrower on mobile)
 const morphoHeight = (canvas) => (canvas === morpho ? 210 : Math.round(THREE.MathUtils.clamp(canvas.clientWidth * 0.68, 130, 200)));
-/**
- * Regiones ocupadas por cada grupo, en coordenadas (log10 W, D). Son aproximadas
- * (según Raup, 1966, 1967) y parten de D = 0, donde vive gran parte de las conchas
- * reales. El plano es un corte del cubo W–D–T de Raup: los grupos se separan sobre
- * todo por T, así que cada región indica el T con el que existe (`tOk`).
- * Al pinchar en su nombre se carga una concha típica del grupo (`preset`).
- */
-const halfEllipse = (cx, rx, ry) =>
-  Array.from({ length: 41 }, (_, i) => {
-    const a = (Math.PI * i) / 40;
-    return [cx + rx * Math.cos(a), ry * Math.sin(a)];
-  });
-const MORPHO_REGIONS = [
-  {
-    key: 'bivalves', preset: 'almeja', color: '#8a5cb8', tOk: (T) => T <= 1,
-    poly: halfEllipse(2.8, 1.6, 0.3), label: [2.75, 0.13, 'center'],
-  },
-  {
-    key: 'gastropods', preset: 'caracol', color: '#3f7fbf', tOk: () => true,
-    poly: halfEllipse(0.3, 0.29, 0.42), label: [0.64, 0.4, 'left'], labelNear: [0.98, 0.5, 'right'],
-  },
-  {
-    // Ammonoideos y nautiloideos: vueltas en contacto o solapadas (bajo D = 1/W)
-    key: 'ammonoids', preset: 'ammonite', color: '#c77d2e', tOk: (T) => T <= 0.25,
-    poly: (() => {
-      const pts = [];
-      for (let lw = 0.146; lw <= 0.6021; lw += 0.01) pts.push([lw, Math.min(1, 10 ** -lw + 0.02)]);
-      for (let lw = 0.6021; lw >= 0.146; lw -= 0.01) pts.push([lw, Math.max(0, 10 ** -lw - 0.3)]);
-      return pts;
-    })(),
-    label: [0.36, 0.66, 'left'], labelNear: [0.98, 0.3, 'right'],
-  },
-];
 
 function morphoScales(canvas, size) {
   const w = size ? size.width : canvas.clientWidth;
@@ -985,7 +953,7 @@ function morphoScales(canvas, size) {
   };
 }
 
-/** Dibuja el morfoespacio en la barra lateral y en el visor 3D, si están visibles. */
+/** Draws the morphospace in the sidebar and on the 3D view, where visible. */
 function drawMorpho() {
   if (morphoDrawer.open) drawMorphoOn(morpho);
   if (!$('ovMorpho').hidden) drawMorphoOn(morphoOv);
@@ -993,7 +961,7 @@ function drawMorpho() {
 
 /**
  * @param {HTMLCanvasElement} canvas
- * @param {object} [off] para dibujar fuera de pantalla (PDF): { width, height, scale, colors }
+ * @param {object} [off] for off-screen drawing (PDF): { width, height, scale, colors }
  */
 function drawMorphoOn(canvas, off) {
   const dpr = off ? off.scale : Math.min(window.devicePixelRatio, 2);
@@ -1015,7 +983,7 @@ function drawMorphoOn(canvas, off) {
   const X1 = MORPHO.logMax;
   ctx.fillRect(x(0), y(1), x(X1) - x(0), y(0) - y(1));
 
-  // Región por encima de D = 1/W: vueltas sin contacto (para T = 0)
+  // Region above D = 1/W: whorls do not touch (for T = 0)
   ctx.beginPath();
   ctx.moveTo(x(0), y(1));
   for (let lw = 0; lw <= X1 + 1e-4; lw += X1 / 200) ctx.lineTo(x(lw), y(10 ** -lw));
@@ -1026,8 +994,8 @@ function drawMorphoOn(canvas, off) {
   ctx.fill();
   ctx.globalAlpha = 1;
 
-  // Regiones ocupadas (aproximadas), recortadas al marco. Las de grupos que no
-  // existen con el T actual se dibujan atenuadas y con borde discontinuo.
+  // Occupied regions (approximate), clipped to the frame. Regions of groups that
+  // do not exist at the current T are faded and drawn with a dashed outline.
   ctx.save();
   ctx.beginPath();
   ctx.rect(x(0), y(1), x(X1) - x(0), y(0) - y(1));
@@ -1048,7 +1016,7 @@ function drawMorphoOn(canvas, off) {
   }
   ctx.restore();
   ctx.setLineDash([]);
-  // Nombres de los grupos: se pueden pinchar para cargar una concha típica
+  // Group names: they can be clicked to load a typical shell
   ctx.font = '600 10.5px Inter, system-ui, sans-serif';
   ctx.textBaseline = 'middle';
   canvas.labelBoxes = [];
@@ -1062,12 +1030,12 @@ function drawMorphoOn(canvas, off) {
     ctx.textAlign = 'left';
     ctx.fillStyle = r.tOk(state.T) ? v('--text') : v('--muted');
     ctx.fillText(text, x0, y(d));
-    ctx.fillRect(x0, y(d) + 7, tw, 1); // subrayado: es un enlace
+    ctx.fillRect(x0, y(d) + 7, tw, 1); // underline: it is a link
     canvas.labelBoxes.push({ x0: x0 - 3, x1: x0 + tw + 3, y0: y(d) - 9, y1: y(d) + 10, preset: r.preset });
   }
   ctx.textBaseline = 'alphabetic';
 
-  // Curva D = 1/W
+  // Curve D = 1/W
   ctx.beginPath();
   for (let lw = 0; lw <= X1 + 1e-4; lw += X1 / 200) ctx[lw ? 'lineTo' : 'moveTo'](x(lw), y(10 ** -lw));
   ctx.setLineDash([4, 3]);
@@ -1081,12 +1049,12 @@ function drawMorphoOn(canvas, off) {
   ctx.font = '10.5px Inter, system-ui, sans-serif';
   ctx.textAlign = 'right';
   ctx.fillText(t('morpho.open'), x(X1 * 0.9875), y(0.9));
-  // El plano es un corte del cubo de Raup al T actual
+  // The plane is a section of Raup's cube at the current T
   ctx.fillStyle = accent;
   ctx.font = '600 10.5px Inter, system-ui, sans-serif';
   ctx.fillText(t('morpho.section', f(state.T, 2)), x(X1 * 0.9875), y(0.78));
 
-  // Ejes
+  // Axes
   ctx.strokeStyle = v('--border');
   ctx.lineWidth = 1;
   ctx.strokeRect(x(0) + 0.5, y(1) + 0.5, x(X1) - x(0), y(0) - y(1));
@@ -1102,7 +1070,7 @@ function drawMorphoOn(canvas, off) {
   ctx.textAlign = 'left';
   ctx.fillText('D', 4, y(1) + 10);
 
-  // Concha actual
+  // Current shell
   ctx.beginPath();
   ctx.arc(x(Math.min(X1, Math.log10(Math.max(1, state.W)))), y(state.D), 5.5, 0, Math.PI * 2);
   ctx.fillStyle = accent;
@@ -1112,7 +1080,7 @@ function drawMorphoOn(canvas, off) {
   ctx.stroke();
 }
 
-/** Nombre de grupo bajo el puntero, si lo hay. */
+/** Group name under the pointer, if any. */
 function morphoLabelAt(canvas, e) {
   const rect = canvas.getBoundingClientRect();
   const px = e.clientX - rect.left, py = e.clientY - rect.top;
@@ -1129,7 +1097,7 @@ function pickMorpho(e) {
 }
 for (const canvas of [morpho, morphoOv]) {
   canvas.addEventListener('pointerdown', (e) => {
-    // Pinchar en el nombre de un grupo carga una concha típica (W, D, T, S y N a la vez)
+    // Clicking a group name loads a typical shell (W, D, T, S and N at once)
     const label = morphoLabelAt(canvas, e);
     if (label) {
       presetSel.value = label.preset;
@@ -1146,7 +1114,7 @@ for (const canvas of [morpho, morphoOv]) {
 }
 morphoDrawer.addEventListener('toggle', drawMorpho);
 
-// Escala del eje W (compartida por el panel lateral y el gráfico superpuesto)
+// W axis range (shared by the sidebar panel and the overlaid chart)
 function setMorphoScale(logMax) {
   MORPHO.logMax = logMax;
   document.querySelectorAll('[data-wscale]').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.wscale) === logMax)));
@@ -1155,7 +1123,7 @@ function setMorphoScale(logMax) {
 document.querySelectorAll('[data-wscale]').forEach((b) => b.addEventListener('click', () => setMorphoScale(Number(b.dataset.wscale))));
 
 // ---------------------------------------------------------------------------
-// Exportación: ventana con imagen, lámina de vistas, PDF, impresión 3D y GLB
+// Export: dialog with image, plate of views, PDF, 3D printing and GLB
 // ---------------------------------------------------------------------------
 
 const exportDlg = $('exportDlg');
@@ -1178,17 +1146,17 @@ function fileStem() {
   return `shell_${preset}W${formatW(state.W)}_D${f(state.D, 3)}_T${f(state.T, 2)}_S${f(state.S, 2)}${state.mirror ? '_mirror' : ''}`;
 }
 
-/** Nombre legible de la concha actual (el del preset o «personalizada»). */
+/** Readable name of the current shell (the preset's name or "custom"). */
 function shellName() {
   return PRESETS[presetSel.value] ? tPreset(presetSel.value) : t('ex.customShell');
 }
 
-/** Ejecuta `fn` con el botón en estado «Preparando…» y avisa si falla. */
+/** Runs `fn` with the button in a "Preparing…" state and reports failures. */
 async function busy(btn, fn) {
   const label = btn.textContent;
   btn.disabled = true;
   btn.textContent = t('ex.working');
-  await new Promise((r) => setTimeout(r, 30)); // deja pintar el estado
+  await new Promise((r) => setTimeout(r, 30)); // let the busy state paint
   try {
     await fn();
   } catch (err) {
@@ -1200,16 +1168,16 @@ async function busy(btn, fn) {
   }
 }
 
-// --- Imagen de la vista actual, a la resolución elegida ---------------------
+// --- Image of the current view, at the chosen resolution -------------------
 
 /**
- * Lo que se exporta respeta lo que el usuario ve: en modo «solo líneas» no se
- * incluye nada de color (ni patrón ni página de pigmentación), aunque haya un
- * patrón elegido en la pestaña de pigmento.
+ * Exports follow what the user sees: in "lines only" mode no colour is included
+ * (no pattern and no pigmentation page), even if a pattern is selected in the
+ * pigment tab.
  */
 const colourShown = () => state.mode !== 'lines' && pattern.on && !!patternValues;
 
-/** Ejecuta `fn` con el eje de enrollamiento visible o no, según la casilla de la exportación. */
+/** Runs `fn` with the coiling axis shown or hidden according to the export checkbox. */
 function withExportAxis(fn) {
   const prev = axis.visible;
   axis.visible = $('exAxis').checked;
@@ -1239,22 +1207,22 @@ function renderCurrentViewRaw(scaleFactor) {
   return url;
 }
 
-// --- Lámina de vistas estándar (proyección ortográfica) ---------------------
+// --- Plate of standard views (orthographic projection) ---------------------
 
 const PLATE_VIEWS = ['apertural', 'dorsal', 'apical', 'umbilical', 'profile', 'iso'];
 
-/** Cámara ortográfica encuadrada sobre la concha para una vista estándar. */
+/** Orthographic camera framed on the shell for one standard view. */
 function plateCamera(name) {
   const dir = VIEWS[name]().normalize();
   const up = name === 'apical' || name === 'umbilical'
-    ? new THREE.Vector3(0, 0, -state.hand) // la apertura queda abajo
-    : new THREE.Vector3(0, 1, 0);           // el ápice queda arriba
+    ? new THREE.Vector3(0, 0, -state.hand) // the aperture ends up at the bottom
+    : new THREE.Vector3(0, 1, 0);           // the apex ends up at the top
   const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
   cam.up.copy(up);
   cam.position.copy(dir).multiplyScalar(30);
   cam.lookAt(0, 0, 0);
   cam.updateMatrixWorld();
-  // Encuadre ajustado: se proyectan los vértices sobre el plano de la cámara
+  // Tight framing: vertices are projected onto the camera plane
   const P = solid.geometry.attributes.position.array;
   const inv = cam.matrixWorldInverse.elements;
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
@@ -1277,7 +1245,7 @@ const luminance = (hex) => {
 };
 
 /**
- * Dibuja las seis vistas en una cuadrícula de 3 × 2.
+ * Draws the six views in a 3 × 2 grid.
  * @returns {HTMLCanvasElement}
  */
 function renderPlate(opts) {
@@ -1308,13 +1276,13 @@ function renderPlateRaw({ tile = 640, background = '#ffffff', labels = true } = 
   renderer.setViewport(0, 0, tile, tile);
   scene.background = new THREE.Color(background);
   ground.visible = false;
-  lineMat.resolution.set(720, 720); // grosor de línea parecido al de la pantalla
+  lineMat.resolution.set(720, 720); // line width similar to the screen
   axisMat.resolution.set(720, 720);
 
   const ink = luminance(background) > 0.5 ? '#1c2430' : '#e6e8eb';
   PLATE_VIEWS.forEach((name, k) => {
     const { cam, dir, up } = plateCamera(name);
-    // Luz principal desde arriba a la izquierda del observador, en cada vista
+    // Key light from the viewer's upper left, in every view
     const right = new THREE.Vector3().crossVectors(up, dir).normalize();
     sun.position.copy(dir).multiplyScalar(0.7).addScaledVector(up, 0.6).addScaledVector(right, -0.5).normalize().multiplyScalar(10);
     renderer.clear();
@@ -1349,7 +1317,7 @@ function updatePlatePreview() {
   img.src = c.toDataURL('image/png');
 }
 
-// --- Impresión 3D ------------------------------------------------------------
+// --- 3D printing --------------------------------------------------------------
 
 let printCache = { key: '', mesh: null };
 
@@ -1376,12 +1344,12 @@ function updatePrintDims() {
   }, 120);
 }
 
-// --- GLB con color -----------------------------------------------------------
+// --- GLB with colour ----------------------------------------------------------
 
 async function exportGLB() {
   const { GLTFExporter } = await import('three/addons/exporters/GLTFExporter.js');
   const group = new THREE.Group();
-  // Líneas (modos «Líneas» y «Ambos»): segmentos simples con el color de las líneas
+  // Lines ("Lines" and "Both" modes): plain segments with the line colour
   if (state.mode !== 'solid' && lastBuild.lineIndices.length) {
     const lg = new THREE.BufferGeometry();
     lg.setAttribute('position', new THREE.BufferAttribute(lastBuild.positions.slice(), 3));
@@ -1390,7 +1358,7 @@ async function exportGLB() {
     segs.name = `${shellName()} (lines)`;
     group.add(segs);
   }
-  // En modo «solo líneas» no se exporta la superficie: nada de color ni de patrón
+  // In "lines only" mode the surface is not exported: no colour and no pattern
   if (state.mode === 'lines') {
     const data = await new GLTFExporter().parseAsync(group, { binary: true });
     downloadBlob(data, 'model/gltf-binary', `${fileStem()}_lines.glb`);
@@ -1399,7 +1367,7 @@ async function exportGLB() {
   const mat = solidMat.clone();
   mat.side = THREE.DoubleSide;
   mat.polygonOffset = false;
-  // En glTF el color por vértice multiplica siempre la textura: solo se exporta si se usa
+  // In glTF the vertex colour always multiplies the texture: export it only when used
   const geo = solid.geometry.clone();
   if (!mat.vertexColors) geo.deleteAttribute('color');
   const mesh = new THREE.Mesh(geo, mat);
@@ -1431,7 +1399,7 @@ const LIGHT_COLORS = {
   '--text': '#1c2430', '--muted': '#6b7280', '--accent': '#115e59',
 };
 
-/** Las fuentes estándar del PDF solo cubren Latin-1: se sustituyen flechas, rayas y letras griegas. */
+/** Standard PDF fonts only cover Latin-1: arrows, dashes and Greek letters are replaced. */
 function pdfSafe(text) {
   return String(text)
     .replace(/[–—−]/g, '-').replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/…/g, '...')
@@ -1459,7 +1427,7 @@ async function exportPDF() {
   const footer = () => {
     doc.setFont('helvetica', 'normal').setFontSize(7.5).setTextColor(...muted);
     doc.text(t('ex.pdf.cite'), M, 284, { maxWidth: W - 30 });
-    doc.text('CC BY-NC 4.0', 210 - M, 284, { align: 'right' });
+    doc.text('MIT · CC BY 4.0', 210 - M, 284, { align: 'right' });
   };
   const heading = (text, y, x = M) => {
     doc.setFont('helvetica', 'bold').setFontSize(9).setTextColor(...accent);
@@ -1477,7 +1445,7 @@ async function exportPDF() {
     return y;
   };
 
-  // Página 1: forma
+  // Page 1: shape
   header();
   doc.setFont('helvetica', 'bold').setFontSize(17).setTextColor(...dark);
   doc.text(shellName(), M, 24);
@@ -1511,11 +1479,11 @@ async function exportPDF() {
   const mc = document.createElement('canvas');
   const mh = Math.round(mw * 0.68 * 4);
   drawMorphoOn(mc, { width: Math.round(mw * 4), height: mh, scale: 2, colors: LIGHT_COLORS });
-  // drawMorphoOn usa píxeles CSS: se dibuja a 4 px por mm y escala 2
+  // drawMorphoOn works in CSS pixels: drawn at 4 px per mm with scale 2
   doc.addImage(mc.toDataURL('image/png'), 'PNG', mx, y + 3, mw, mw * 0.68);
   y = Math.max(yL, y + 3 + mw * 0.68) + 8;
 
-  // Enlace que reabre esta concha
+  // Link that reopens this shell
   writeHashNow();
   doc.setFont('helvetica', 'normal').setFontSize(8.5).setTextColor(...muted);
   doc.text(t('ex.pdf.link'), M, y);
@@ -1525,7 +1493,7 @@ async function exportPDF() {
   doc.textWithLink(lines[0] + (lines.length > 1 ? '...' : ''), M, y + 4.5, { url });
   footer();
 
-  // Página 2: pigmentación (si hay patrón)
+  // Page 2: pigmentation (if a pattern is shown)
   if (colourShown()) {
     doc.addPage();
     header();
@@ -1535,9 +1503,9 @@ async function exportPDF() {
     const pname = PATTERN_PRESETS[pattern.preset] ? tPattern(pattern.preset) : t('pig.custom');
     doc.text(`${pname}   ·   ${t(`pig.model.${pattern.model}`)}`, M, 30.5);
 
-    // Registro espacio-tiempo con sus ejes
+    // Space–time record with its axes
     heading(t('pig.spacetime'), 39);
-    const ax = M + 7;               // deja sitio al eje vertical
+    const ax = M + 7;               // leave room for the vertical axis
     const stW = 64, stH = 118, stY = 51;
     const st = document.createElement('canvas');
     st.width = 512;
@@ -1555,32 +1523,32 @@ async function exportPDF() {
         x2 - L * Math.cos(a) + s * Math.sin(a), y2 - L * Math.sin(a) - s * Math.cos(a),
         x2 - L * Math.cos(a) - s * Math.sin(a), y2 - L * Math.sin(a) + s * Math.cos(a), 'F');
     };
-    // Eje horizontal: posición a lo largo del borde (el borde rodea la apertura)
+    // Horizontal axis: position along the margin (the margin goes around the aperture)
     doc.setFont('helvetica', 'normal').setFontSize(7.5).setTextColor(...dark);
     doc.text(t('ex.pdf.axis.x'), ax + stW / 2, 44.5, { align: 'center', maxWidth: stW + 6 });
     arrow(ax + stW / 2, 47.5, ax + stW, 47.5);
     arrow(ax + stW / 2, 47.5, ax, 47.5);
-    // Eje vertical: tiempo, del ápice a la apertura
+    // Vertical axis: time, from the apex to the aperture
     arrow(M + 4.5, stY, M + 4.5, stY + stH);
     const tLabel = t('ex.pdf.axis.t');
-    // Girado 90° en sentido horario: las letras quedan a la derecha del punto de anclaje
+    // Rotated 90° clockwise: the glyphs lie to the right of the anchor point
     doc.text(tLabel, M - 0.8, stY + stH / 2 - doc.getTextWidth(pdfSafe(tLabel)) / 2, { angle: -90 });
     doc.setFontSize(7).setTextColor(...muted);
     doc.text(t('ex.pdf.apex'), ax + stW + 1.5, stY + 2.5);
     doc.text(t('ex.pdf.aperture'), ax + stW + 1.5, stY + stH);
-    // Instante del perfil, marcado sobre el registro
+    // Moment of the profile, marked on the record
     const row = profileRow ?? PATTERN_ROWS - 1;
     const ry = stY + (stH * (row + 0.5)) / PATTERN_ROWS;
     doc.setDrawColor(...accent).setLineWidth(0.5).line(ax - 1, ry, ax + stW + 1, ry);
     doc.setFontSize(7.5).setTextColor(...muted);
     doc.text(t('ex.pdf.st.caption'), M, stY + stH + 5, { maxWidth: stW + 7 });
 
-    // Concha pigmentada en vista apertural y 3/4
+    // Pigmented shell in apertural and 3/4 views
     const sx = M + 7 + stW + 17, sw = W - (sx - M);
     const two = renderPlateSubset(['apertural', 'iso'], 520);
     doc.addImage(two.toDataURL('image/jpeg', 0.92), 'JPEG', sx, 39, sw, sw / 2);
 
-    // Perfil del borde: activador e inhibidor (o sustrato) en ese instante
+    // Margin profile: activator and inhibitor (or substrate) at that moment
     let yy = 39 + sw / 2 + 7;
     heading(t('pig.profile'), yy, sx);
     doc.setFont('helvetica', 'normal').setFontSize(8).setTextColor(...muted);
@@ -1591,7 +1559,7 @@ async function exportPDF() {
     drawProfileOn(pc, row, getComputedStyle(document.documentElement), { width: Math.round(sw * 4), height: ph * 4, scale: 2, colors: LIGHT_COLORS });
     doc.setFillColor(241, 238, 230).rect(sx, py, sw, ph, 'F');
     doc.addImage(pc.toDataURL('image/png'), 'PNG', sx, py, sw, ph);
-    // Leyenda
+    // Legend
     let lx = sx, ly = py + ph + 4.5;
     const legend = (label, color, dash, width) => {
       doc.setDrawColor(...color).setLineWidth(width).setLineDashPattern(dash, 0).line(lx, ly - 1, lx + 6, ly - 1);
@@ -1625,7 +1593,7 @@ async function exportPDF() {
     footer();
   }
 
-  // Página de ecuaciones (opcional): forma general y con los valores actuales
+  // Equations page (optional): general form and with the current values
   if ($('exEq').checked) {
     doc.addPage();
     header();
@@ -1684,13 +1652,13 @@ async function exportPDF() {
   doc.save(`${fileStem()}.pdf`);
 }
 
-/** Separa un bloque TeX con varias fórmulas \[ … \] en sus piezas. */
+/** Splits a TeX block with several \[ … \] displays into its pieces. */
 function displayPieces(tex) {
   return [...tex.matchAll(/\\\[([\s\S]*?)\\\]/g)].map((m) => m[1].trim());
 }
 
-// MathJax con salida SVG en un iframe aparte (la página usa la salida CHTML, que no
-// se puede convertir en imagen); se carga solo al exportar las ecuaciones
+// MathJax with SVG output in a separate iframe (the page uses CHTML output, which
+// cannot be turned into an image); loaded only when exporting the equations
 let svgMathPromise = null;
 function loadSvgMath() {
   svgMathPromise ??= new Promise((resolve, reject) => {
@@ -1714,7 +1682,7 @@ function loadSvgMath() {
   return svgMathPromise;
 }
 
-/** Compone una fórmula en SVG y la pasa a PNG. Devuelve también su tamaño en ex. */
+/** Typesets a formula as SVG and rasterises it to PNG. Also returns its size in ex. */
 async function texToImage(MJ, tex, exPx) {
   const node = await MJ.tex2svgPromise(tex, { display: true });
   const svg = node.querySelector('svg');
@@ -1735,7 +1703,7 @@ async function texToImage(MJ, tex, exPx) {
   return { url: c.toDataURL('image/png'), wEx, hEx };
 }
 
-/** Algunas vistas de la lámina, en una fila (para la página del patrón). */
+/** Some views of the plate, in one row (for the pattern page). */
 function renderPlateSubset(names, tile) {
   const saved = PLATE_VIEWS.slice();
   PLATE_VIEWS.splice(0, PLATE_VIEWS.length, ...names);
@@ -1751,10 +1719,10 @@ function renderPlateSubset(names, tile) {
   }
 }
 
-// --- Ventana ------------------------------------------------------------------
+// --- Dialog -------------------------------------------------------------------
 
 function openExport() {
-  // Por defecto, el eje se exporta si está visible en la vista 3D
+  // By default the axis is exported if it is visible in the 3D view
   $('exAxis').checked = $('showAxis').checked;
   $('exLinesNote').hidden = state.mode !== 'lines';
   $('exPatternCard').classList.toggle('disabled', !(pattern.on && patternValues));
@@ -1795,16 +1763,16 @@ $('exPattern').addEventListener('click', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Pigmentación (modelos de reacción-difusión de Meinhardt)
+// Pigmentation (Meinhardt's reaction–diffusion models)
 // ---------------------------------------------------------------------------
 
-const PATTERN_ROWS = 2048;   // filas del registro espacio-tiempo (ápice → apertura)
-const PATTERN_WIDTH = 1024;  // columnas de la textura (vuelta completa a la apertura)
-const PATTERN_CELLS = 256;   // células del borde en la apertura (tamaño ×1)
-// Semiancho del umbral de pigmentación: el pigmento se deposita donde el activador
-// supera un umbral, como en las simulaciones de Meinhardt, con bordes nítidos
+const PATTERN_ROWS = 2048;   // rows of the space–time record (apex → aperture)
+const PATTERN_WIDTH = 1024;  // texture columns (once around the aperture)
+const PATTERN_CELLS = 256;   // margin cells at the aperture (size ×1)
+// Half-width of the pigmentation threshold: pigment is laid down where the
+// activator exceeds a threshold, as in Meinhardt's simulations, with sharp edges
 const PIGMENT_EDGE = 0.12;
-const THUMB = { rows: 144, width: 256 }; // las líneas de una célula no deben perderse al reducir
+const THUMB = { rows: 144, width: 256 }; // one-cell lines must not be lost when downscaling
 
 const PATTERN_KEYS = ['model', 'Da', 'D2', 'ra', 'r2', 'kappa', 'ba', 'b2', 'noise', 'globalCtl', 'T', 'insertion', 'base', 'pigment', 'size', 'amount'];
 const PATTERN_DEFAULTS = { size: 1, amount: 0.5 };
@@ -1814,7 +1782,7 @@ const pickPattern = (p) => Object.fromEntries(PATTERN_KEYS.map((k) => [k, p[k] ?
 const pattern = { on: false, preset: DEFAULT_PATTERN, seed: 7, ...pickPattern(PATTERN_PRESETS[DEFAULT_PATTERN]) };
 let patternState = 'pattern'; // 'pattern' | 'uniform' | 'extinct'
 
-// Estado del patrón en la URL: pg=1 y los parámetros con prefijo p
+// Pattern state in the URL: pg=1 and the parameters prefixed with p
 const PATTERN_HASH = { pm: 'model', pDa: 'Da', pD2: 'D2', pra: 'ra', pr2: 'r2', pk: 'kappa', pba: 'ba', pb2: 'b2', pn: 'noise', pgc: 'globalCtl', pT: 'T', ps: 'seed', pz: 'size', pa: 'amount' };
 if (fromHash.get('pg') === '1') {
   pattern.on = true;
@@ -1840,7 +1808,7 @@ function patternHash(q) {
   q.set('pcp', pattern.pigment.slice(1));
 }
 
-// Textura y lienzo con el registro espacio-tiempo (fila 0 = ápice, como v = 0 en la malla)
+// Texture and canvas with the space–time record (row 0 = apex, like v = 0 on the mesh)
 const patternPixels = new Uint8Array(PATTERN_WIDTH * PATTERN_ROWS * 4);
 const patternTex = new THREE.DataTexture(patternPixels, PATTERN_WIDTH, PATTERN_ROWS, THREE.RGBAFormat);
 patternTex.colorSpace = THREE.SRGBColorSpace;
@@ -1858,8 +1826,8 @@ const patternImage = new ImageData(new Uint8ClampedArray(patternPixels.buffer), 
 const spacetime = $('spacetime');
 
 let patternValues = null;
-let patternSecond = null; // inhibidor o sustrato (rows × PROFILE_WIDTH), relativo a su máximo
-let profileRow = null;    // instante elegido para el perfil (null = la apertura)
+let patternSecond = null; // inhibitor or substrate (rows × PROFILE_WIDTH), relative to its maximum
+let profileRow = null;    // moment chosen for the profile (null = the aperture)
 const profileCanvas = $('profile');
 
 function hexRgb(hex) {
@@ -1868,9 +1836,9 @@ function hexRgb(hex) {
 }
 
 /**
- * Convierte el activador (0–1) en color: pigmento donde supera el umbral, con una
- * transición corta (smoothstep) para que los bordes sean nítidos sin dientes.
- * La cantidad de pigmento desplaza el umbral.
+ * Turns the activator (0–1) into colour: pigment where it exceeds the threshold,
+ * with a short smoothstep transition so edges are sharp but not jagged. The
+ * pigment amount shifts the threshold.
  */
 function colorize(values, base, pigment, amount, out) {
   const b = hexRgb(base);
@@ -1900,34 +1868,34 @@ function paintPattern() {
 }
 
 // ---------------------------------------------------------------------------
-// Dos formas de dibujar el registro:
-// - «En el tiempo» (diagrama de Meinhardt): cada fila es el mismo intervalo de
-//   tiempo y cada vuelta ocupa la misma altura; el borde se normaliza a lo ancho.
-// - «Concha desenrollada»: cada fila mide lo que el borde en ese instante y tiene
-//   la altura del crecimiento que registra. En una espiral logarítmica el tamaño
-//   g = W^(θ/2π) crece a la vez que la distancia recorrida desde el ápice (∝ g),
-//   así que la superficie desenrollada es un abanico de lados rectos que se abre
-//   desde el ápice, con la proporción alto/ancho de la concha.
+// Two ways of drawing the record:
+// - "In time" (Meinhardt's diagram): every row is the same time interval and
+//   every whorl gets the same height; the margin is normalised to the width.
+// - "Unrolled shell": every row is as long as the margin at that moment and as
+//   tall as the growth it records. On a logarithmic spiral the size
+//   g = W^(θ/2π) grows together with the distance travelled from the apex (∝ g),
+//   so the unrolled surface is a straight-sided fan opening from the apex, with
+//   the height/width ratio of the shell.
 // ---------------------------------------------------------------------------
 
 let stView = 'time';
-let stRect = { ox: 0, oy: 0, dw: 1, dh: 1 }; // zona dibujada, en píxeles CSS
+let stRect = { ox: 0, oy: 0, dw: 1, dh: 1 }; // drawn area, in CSS pixels
 let patternVersion = 0;
 let unrolledCache = { key: '', canvas: null };
 
-/** Proporción de la concha desenrollada y tamaño relativo del ápice (g0). */
+/** Proportions of the unrolled shell and relative size of the apex (g0). */
 function unrolledGeometry() {
   const W = Math.max(state.W, 1.0001), N = state.turns;
   const k = Math.log(W) / (2 * Math.PI);
   const rc = (1 + state.D) / 2, a = (1 - state.D) / 2, b = state.S * a;
-  // Perímetro de la apertura (aproximación de Ramanujan) y avance de su centro por radián
+  // Aperture perimeter (Ramanujan's approximation) and advance of its centre per radian
   const P = Math.PI * (3 * (a + b) - Math.sqrt((3 * a + b) * (a + 3 * b)));
   const v = rc * Math.sqrt(1 + k * k * (1 + state.T * state.T));
   const g0 = Math.exp(-2 * Math.PI * N * k);
   return { k, N, g0, aspect: (v * (1 - g0)) / (k * P) };
 }
 
-/** Fila del registro → posición vertical (0 = ápice, 1 = apertura) en la vista actual. */
+/** Record row → vertical position (0 = apex, 1 = aperture) in the current view. */
 function rowToFrac(row) {
   if (stView === 'time') return (row + 0.5) / PATTERN_ROWS;
   const { k, N, g0 } = unrolledGeometry();
@@ -1943,7 +1911,7 @@ function fracToRow(f) {
   return Math.min(PATTERN_ROWS - 1, Math.max(0, row));
 }
 
-/** Imagen de la concha desenrollada (se promedian las columnas que cubre cada píxel). */
+/** Image of the unrolled shell (the columns covered by each pixel are averaged). */
 function unrolledImage(wpx, hpx) {
   const key = `${patternVersion}|${state.W}|${state.turns}|${wpx}|${hpx}`;
   if (unrolledCache.key === key) return unrolledCache.canvas;
@@ -1969,7 +1937,7 @@ function unrolledImage(wpx, hpx) {
       }
       const n = c1 - c0, di = (y * wpx + x) * 4;
       out[di] = r / n; out[di + 1] = gg / n; out[di + 2] = bb / n;
-      out[di + 3] = 255 * Math.min(1, (u1 - u0) * rw); // borde del abanico suavizado
+      out[di + 3] = 255 * Math.min(1, (u1 - u0) * rw); // anti-aliased fan edge
     }
   }
   const c = document.createElement('canvas');
@@ -1981,7 +1949,7 @@ function unrolledImage(wpx, hpx) {
 }
 
 function drawSpacetime() {
-  // Altura del lienzo: fija en la vista temporal; con la proporción real en la desenrollada
+  // Canvas height: fixed in the time view; true proportions in the unrolled view
   let aspect = 0;
   if (stView === 'shell') {
     aspect = unrolledGeometry().aspect;
@@ -1992,7 +1960,7 @@ function drawSpacetime() {
   }
   const w = spacetime.clientWidth;
   const h = spacetime.clientHeight;
-  // El perfil se dibuja aunque la pestaña esté oculta: también se ve sobre el visor 3D
+  // The profile is drawn even with the tab hidden: it is also shown on the 3D view
   if (!w || !h) return drawProfile();
   const dpr = Math.min(window.devicePixelRatio, 2);
   spacetime.width = Math.round(w * dpr);
@@ -2010,7 +1978,7 @@ function drawSpacetime() {
     if (stView === 'shell') ctx.drawImage(unrolledImage(Math.round(dw * dpr), Math.round(dh * dpr)), ox * dpr, oy * dpr);
     else ctx.drawImage(patternCanvas, 0, 0, spacetime.width, spacetime.height);
   }
-  // En la vista avanzada se marca el instante del perfil
+  // In the advanced view the moment of the profile is marked
   if (patternValues && $('tab-pigment').dataset.pmode === 'advanced') {
     const row = profileRow ?? PATTERN_ROWS - 1;
     const { ox, oy, dw, dh } = stRect;
@@ -2039,21 +2007,21 @@ document.querySelectorAll('#stView [data-stview]').forEach((b) => b.addEventList
 new ResizeObserver(drawSpacetime).observe(spacetime);
 
 /**
- * Perfil a lo largo del borde en un instante: activador y segunda sustancia
- * (inhibidor o sustrato), cada una relativa a su máximo, y el umbral de pigmento.
+ * Profile along the margin at one moment: the activator and the second substance
+ * (inhibitor or substrate), each relative to its maximum, and the pigment threshold.
  */
 function drawProfile() {
   const row = profileRow ?? PATTERN_ROWS - 1;
   const label = `${t('pig.profile.time')} ${Math.round((100 * row) / (PATTERN_ROWS - 1))} %`;
   const css = getComputedStyle(document.documentElement);
   const accent = css.getPropertyValue('--accent').trim();
-  // El activador va en el color del texto (se lee con cualquier pigmento y tema); la zona pigmentada, en el del pigmento
+  // The activator uses the text colour (readable with any pigment and theme); the pigmented area uses the pigment colour
   document.querySelectorAll('.lg-a').forEach((el) => el.style.setProperty('--lg', css.getPropertyValue('--text').trim()));
   document.querySelectorAll('.lg-b').forEach((el) => el.style.setProperty('--lg', accent));
   $('profileTime').textContent = label;
   drawProfileOn(profileCanvas, row, css);
 
-  // Versión superpuesta en el visor 3D: solo tiene sentido con un patrón aplicado
+  // Overlay version on the 3D view: only meaningful with a pattern applied
   if ($('ovProfile').hidden) return;
   const has = pattern.on && !!patternValues;
   $('ovProfileBody').hidden = !has;
@@ -2064,7 +2032,7 @@ function drawProfile() {
   if (has) drawProfileOn($('profileOv'), row, css);
 }
 
-/** @param {object} [off] para dibujar fuera de pantalla (PDF): { width, height, scale, colors } */
+/** @param {object} [off] for off-screen drawing (PDF): { width, height, scale, colors } */
 function drawProfileOn(canvas, row, css, off) {
   const w = off ? off.width : canvas.clientWidth;
   const h = off ? off.height : canvas.clientHeight;
@@ -2083,7 +2051,7 @@ function drawProfileOn(canvas, row, css, off) {
   const aAt = (k) => patternValues[row * PATTERN_WIDTH + Math.floor((k / PROFILE_WIDTH) * PATTERN_WIDTH)];
   const threshold = 1 - pattern.amount;
 
-  // Zona pigmentada: activador por encima del umbral
+  // Pigmented area: activator above the threshold
   ctx.fillStyle = pattern.pigment;
   ctx.globalAlpha = 0.4;
   ctx.beginPath();
@@ -2094,7 +2062,7 @@ function drawProfileOn(canvas, row, css, off) {
   ctx.fill();
   ctx.globalAlpha = 1;
 
-  // Umbral de pigmento
+  // Pigment threshold
   ctx.setLineDash([2, 3]);
   ctx.strokeStyle = col('--muted');
   ctx.lineWidth = 1.2;
@@ -2103,7 +2071,7 @@ function drawProfileOn(canvas, row, css, off) {
   ctx.lineTo(w, y(threshold));
   ctx.stroke();
 
-  // Segunda sustancia (discontinua) y activador
+  // Second substance (dashed) and activator
   const line = (get, color, width, dash) => {
     ctx.setLineDash(dash);
     ctx.strokeStyle = color;
@@ -2118,13 +2086,13 @@ function drawProfileOn(canvas, row, css, off) {
 }
 new ResizeObserver(drawProfile).observe(profileCanvas);
 
-// El instante también se elige con el slider del perfil superpuesto
+// The moment can also be chosen with the slider of the overlaid profile
 $('ovProfileRow').addEventListener('input', (e) => {
   profileRow = Math.round((e.target.value / 1000) * (PATTERN_ROWS - 1));
   drawSpacetime();
 });
 
-// Elegir el instante del perfil sobre el registro espacio-tiempo (vista avanzada)
+// Choose the moment of the profile on the space–time record (advanced view)
 function pickProfileRow(e) {
   if ($('tab-pigment').dataset.pmode !== 'advanced' || !patternValues) return;
   const r = spacetime.getBoundingClientRect();
@@ -2140,29 +2108,29 @@ spacetime.addEventListener('pointermove', (e) => {
   if (spacetime.hasPointerCapture(e.pointerId)) pickProfileRow(e);
 });
 
-/** Si con los valores actuales no se forma patrón, se explica en lugar de mostrar un blanco mudo. */
+/** If the current values form no pattern, explain it instead of showing a blank shell. */
 function updatePatternMessage() {
   const msg = $('patternMsg');
   msg.hidden = patternState === 'pattern';
   if (!msg.hidden) msg.textContent = t(`pig.state.${patternState}`);
 }
 
-/** Color sólido o patrón, según la opción elegida. */
+/** Solid colour or pattern, depending on the chosen option. */
 function applyShellMaterial() {
   const withPattern = pattern.on && !!patternValues;
   solidMat.map = withPattern ? patternTex : null;
   solidMat.color.set(withPattern ? '#ffffff' : $('shellColor').value);
   solidMat.vertexColors = !withPattern && $('bands').checked;
   solidMat.needsUpdate = true;
-  // El interior, más claro que el color de fondo del exterior
+  // The inside, lighter than the background colour of the outside
   innerMat.color.set(withPattern ? pattern.base : $('shellColor').value).lerp(new THREE.Color('#ffffff'), 0.55);
   const swatch = document.querySelector('.pattern-card[data-pattern="none"] .swatch');
   if (swatch) swatch.style.background = $('shellColor').value;
 }
 
-// Cálculo en un Web Worker; si no está disponible, en el hilo principal.
-// Si llega un cálculo nuevo mientras otro sigue en marcha, se descarta el worker
-// ocupado en lugar de esperar: al arrastrar un slider solo importa el último valor.
+// Computed in a Web Worker, or on the main thread if workers are unavailable.
+// If a new computation arrives while another is running, the busy worker is
+// discarded instead of waiting: when dragging a slider only the last value matters.
 let patternWorker = null;
 let workerBusy = false;
 let workerFailed = false;
@@ -2192,7 +2160,7 @@ let patternJob = 0;
 let patternTimer = 0;
 let patternGeomKey = '';
 
-/** Parámetros de simulación a partir del estado (el control global solo existe con sustrato). */
+/** Simulation parameters from the state (global control only exists with a substrate). */
 function simParams(p) {
   const { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl, T, seed, insertion } = p;
   return { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl: model === 'AS' ? globalCtl : 0, T, seed, insertion };
@@ -2201,7 +2169,7 @@ function simParams(p) {
 function computePattern() {
   const id = ++patternJob;
   const p = simParams(pattern);
-  // El tamaño del patrón es el número de células del borde (menos células, elementos mayores)
+  // The pattern size is the number of margin cells (fewer cells, larger elements)
   const g = { W: state.W, turns: state.turns, rows: PATTERN_ROWS, width: PATTERN_WIDTH, nMax: Math.round(PATTERN_CELLS / pattern.size) };
   patternGeomKey = `${state.W}|${state.turns}`;
   $('patternStatus').hidden = false;
@@ -2221,7 +2189,7 @@ function computePattern() {
 }
 
 function onPatternResult({ id, v, second, state: simState }) {
-  if (id !== patternJob) return; // llegó un cálculo antiguo
+  if (id !== patternJob) return; // a stale computation arrived
   patternValues = v;
   patternSecond = second;
   patternState = simState;
@@ -2236,13 +2204,13 @@ function schedulePattern() {
   if (formulaView === 'meinhardt') scheduleFormula();
 }
 
-// Con inserción de células el patrón depende del tamaño de cada vuelta (W y N)
+// With cell insertion the pattern depends on the size of each whorl (W and N)
 function onGeometryForPattern() {
   if (pattern.insertion && pattern.on && patternGeomKey !== `${state.W}|${state.turns}`) schedulePattern();
 }
 
-// Controles. Las magnitudes intuitivas (tamaño, tiempo, irregularidad, cantidad)
-// están en las dos vistas; las constantes del modelo, solo en la avanzada.
+// Controls. The intuitive quantities (size, time, irregularity, amount) are in
+// both views; the model constants only in the advanced view.
 const sub = (x, y) => `${x}<sub>${y}</sub>`;
 const second = () => (pattern.model === 'AS' ? 'b' : 'h');
 const PIG_SIMPLE = [
@@ -2252,7 +2220,7 @@ const PIG_SIMPLE = [
   { key: 'amount', id: 'pAmount', i18n: 'pAmount', min: 0.15, max: 0.85, step: 0.01, digits: 2 },
 ];
 
-// Constantes del modelo: escala logarítmica, con la posición izquierda = 0 cuando tiene sentido
+// Model constants: logarithmic scale, with the leftmost position = 0 where it makes sense
 const PIG_ADVANCED = [
   { key: 'Da', id: 'pDa', sym: sub('D', 'a'), log: true, zero: true, min: 0.0005, max: 0.5, format: sig },
   { key: 'D2', id: 'pD2', sym: () => sub('D', second()), i18n: () => `D2.${pattern.model}`, log: true, zero: true, min: 0.001, max: 30, format: sig },
@@ -2273,7 +2241,7 @@ for (const [defs, container] of [[PIG_SIMPLE, 'pig-simple'], [PIG_ADVANCED, 'pig
       target: pattern,
       onChange: (key) => {
         if (key === 'amount') {
-          paintPattern(); // solo cambia el coloreado, no la simulación
+          paintPattern(); // only the colouring changes, not the simulation
           writeHash();
           return;
         }
@@ -2285,7 +2253,7 @@ for (const [defs, container] of [[PIG_SIMPLE, 'pig-simple'], [PIG_ADVANCED, 'pig
   });
 }
 
-// Galería: color sólido y un preset por tipo de patrón, con su miniatura real
+// Gallery: solid colour and one preset per pattern type, with its real thumbnail
 const gallery = $('patternGallery');
 const GALLERY = ['none', ...Object.keys(PATTERN_PRESETS)];
 
@@ -2322,7 +2290,7 @@ function updateGallerySelection() {
   gallery.querySelectorAll('.pattern-card').forEach((card) => card.setAttribute('aria-checked', String(card.dataset.pattern === selected)));
 }
 
-// Miniaturas: se calculan una vez, en un worker propio para no interferir con el principal
+// Thumbnails: computed once, in their own worker so they do not interfere with the main one
 let thumbsDone = false;
 function computeThumbs() {
   if (thumbsDone) return;
@@ -2356,7 +2324,7 @@ function markPatternCustom() {
   updateGallerySelection();
 }
 
-/** El color se ve sobre la superficie: se quitan las líneas y se pasa a sólido. */
+/** Colour is seen on the surface: lines are removed and the mode switches to solid. */
 function ensureSurfaceMode() {
   if (state.mode !== 'solid') {
     state.mode = 'solid';
@@ -2387,11 +2355,11 @@ function selectPattern(key) {
   computePattern();
 }
 
-/** Lleva el estado del patrón a todos los controles. */
+/** Pushes the pattern state to all controls. */
 function syncPatternControls() {
   PIG_PARAMS.forEach((d) => pigControls[d.id].set(pattern[d.key]));
   Object.values(pigControls).forEach((c) => c.relabel());
-  pigControls.pglobal.el.hidden = pattern.model !== 'AS'; // el control global solo existe con sustrato
+  pigControls.pglobal.el.hidden = pattern.model !== 'AS'; // global control only exists with a substrate
   $('patternModel').value = pattern.model;
   $('patternInsertion').checked = pattern.insertion;
   $('patternSeed').value = pattern.seed;
@@ -2408,16 +2376,16 @@ function setSecondLabel() {
   $('ovProfileSecond').textContent = label;
 }
 
-// Vista simple o avanzada: la avanzada muestra también las constantes del modelo
+// Simple or advanced view: the advanced one also shows the model constants
 function setPigMode(mode) {
   $('tab-pigment').dataset.pmode = mode;
   document.querySelectorAll('#pigMode [data-pmode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pmode === mode)));
-  drawSpacetime(); // la marca del instante y el perfil solo existen en la vista avanzada
+  drawSpacetime(); // the moment marker and the profile only exist in the advanced view
 }
 document.querySelectorAll('#pigMode [data-pmode]').forEach((b) => b.addEventListener('click', () => setPigMode(b.dataset.pmode)));
 
-// Al cambiar de modelo se cargan las constantes de su preset de referencia: las del
-// otro modelo no tienen sentido aquí (p. ej. sin producción de sustrato no hay patrón)
+// Changing the model loads the constants of its reference preset: those of the
+// other model make no sense here (e.g. without substrate production there is no pattern)
 $('patternModel').addEventListener('change', (e) => {
   const { base, pigment, size, amount } = pattern;
   Object.assign(pattern, pickPattern(PATTERN_PRESETS[MODEL_REFERENCE[e.target.value]]), { base, pigment, size, amount });
@@ -2448,7 +2416,7 @@ $('newSeed').addEventListener('click', () => {
 for (const [id, key] of [['pigBase', 'base'], ['pigColor', 'pigment']]) {
   $(id).addEventListener('input', (e) => {
     pattern[key] = e.target.value;
-    paintPattern(); // cambiar el color no requiere volver a simular
+    paintPattern(); // changing the colour does not require simulating again
     writeHash();
   });
 }
@@ -2459,8 +2427,8 @@ $('savePattern').addEventListener('click', () => {
   if (patternValues) download(patternCanvas.toDataURL('image/png'), `meinhardt_${pattern.preset}_seed${pattern.seed}.png`);
 });
 
-// Pestañas Forma | Pigmento. Al entrar en Pigmento la concha pasa a sólido, en
-// color liso: el patrón lo elige el usuario en la galería.
+// Shape | Pigment tabs. Entering Pigment switches the shell to solid, in a plain
+// colour: the user picks the pattern in the gallery.
 function showTab(name) {
   document.querySelectorAll('.tabs [data-tab]').forEach((b) => {
     const on = b.dataset.tab === name;
@@ -2490,7 +2458,7 @@ syncPatternControls();
 if (pattern.on) computePattern();
 
 // ---------------------------------------------------------------------------
-// Gráficos superpuestos en el visor 3D (desactivados por defecto)
+// Charts overlaid on the 3D view (off by default)
 // ---------------------------------------------------------------------------
 
 const graphsMenu = $('graphsMenu');
@@ -2517,7 +2485,7 @@ new ResizeObserver(() => {
 }).observe($('overlays'));
 
 // ---------------------------------------------------------------------------
-// Idioma
+// Language
 // ---------------------------------------------------------------------------
 
 function applyLanguage(lang) {
@@ -2529,7 +2497,7 @@ function applyLanguage(lang) {
   updateFullscreenButton();
   drawMorpho();
   document.querySelectorAll('.lang button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === getLang())));
-  // applyStatic reemplaza el HTML con TeX sin componer
+  // applyStatic replaces the HTML with untypeset TeX
   infoBody.querySelectorAll('.info-page').forEach((el) => delete el.dataset.typeset);
   if (infoDialog.open) openInfo();
   updateGalleryLabels();
@@ -2543,7 +2511,7 @@ function applyLanguage(lang) {
 document.querySelectorAll('.lang button').forEach((b) => b.addEventListener('click', () => applyLanguage(b.dataset.lang)));
 
 // ---------------------------------------------------------------------------
-// Bucle de render
+// Render loop
 // ---------------------------------------------------------------------------
 
 function resize() {
@@ -2551,7 +2519,7 @@ function resize() {
   if (!w || !h) return;
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
-  // En pantallas verticales se conserva el encuadre horizontal
+  // On portrait screens the horizontal framing is preserved
   const fov = THREE.MathUtils.degToRad(35);
   camera.fov = camera.aspect >= 1 ? 35 : THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(fov / 2) / camera.aspect));
   camera.updateProjectionMatrix();
@@ -2571,7 +2539,7 @@ function renderFrame() {
   if (gizmo.visible && !isClean()) {
     const s = gizmo.size;
     const x = w - s - 8;
-    const y = w < 760 ? 56 : 8; // por encima de la barra de vistas en pantallas estrechas
+    const y = w < 760 ? 56 : 8; // above the views bar on narrow screens
     gizmo.camera.position.copy(camera.position).sub(controls.target).setLength(4);
     gizmo.camera.quaternion.copy(camera.quaternion);
     renderer.setScissorTest(true);
