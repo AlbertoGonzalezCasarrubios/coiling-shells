@@ -17,7 +17,13 @@ Un explorador 3D interactivo de la **morfología teórica de las conchas enrolla
 
 **▶ Abrir la app: https://albertogonzalezcasarrubios.github.io/coiling-shells/**
 
-![La app tal como se abre: una concha de caracol de jardín dibujada con líneas, con los parámetros de Raup en la barra lateral](images/app.png)
+En la primera visita, una guía breve muestra las partes de una concha enrollada sobre un modelo 3D interactivo y explica cómo funciona la app; el botón *Guía* la vuelve a abrir, y añadir `?guide` a la dirección la muestra siempre. La app se abre en inglés; el español se elige en la guía o con el botón EN / ES, y la elección se recuerda.
+
+![La guía de bienvenida: un caracol de jardín generado con el modelo, con sus partes señaladas, y cuatro pasos breves sobre cómo usar la simulación](images/guide-es.png)
+
+Al cerrar la guía, la app muestra un caracol de jardín dibujado con líneas, listo para explorar:
+
+![La app tras la guía: una concha de caracol de jardín dibujada con líneas, con los parámetros de Raup en la barra lateral](images/app.png)
 
 ## Para qué sirve
 

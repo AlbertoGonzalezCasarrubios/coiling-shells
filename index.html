@@ -296,6 +296,10 @@
               <label class="toggle"><input type="checkbox" id="ovProfileToggle" /><span data-i18n="graphs.profile">Activator and inhibitor on the margin</span></label>
             </div>
           </details>
+          <button type="button" class="chip" id="openWelcome" data-i18n-title="tb.guide.hint">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 4.5h5a2 2 0 0 1 2 2v9a1.5 1.5 0 0 0-1.5-1.5h-5.5zM16.5 4.5h-5a2 2 0 0 0-2 2v9a1.5 1.5 0 0 1 1.5-1.5h5.5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            <span data-i18n="tb.guide">Guide</span>
+          </button>
           <button type="button" class="chip" id="openInfo">
             <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="6.2" r="1.1" fill="currentColor"/></svg>
             <span data-i18n="tb.info">About</span>
@@ -456,6 +460,44 @@
         <p class="note warn" id="exPatternNone" data-i18n="ex.pattern.none" hidden></p>
         <button type="button" class="btn primary" id="exPattern" data-i18n="ex.png">Download PNG</button>
       </section>
+    </div>
+  </dialog>
+
+  <dialog class="info welcome" id="welcome" aria-labelledby="welcomeTitle">
+    <div class="info-head">
+      <h2 id="welcomeTitle" data-i18n="wel.title">How to use this simulation</h2>
+      <div class="lang welcome-lang" role="group" data-i18n-title="lang.label">
+        <button type="button" data-lang="en" aria-pressed="true">English</button>
+        <button type="button" data-lang="es" aria-pressed="false">Español</button>
+      </div>
+      <button type="button" class="icon-btn" id="closeWelcome" data-i18n-title="info.close">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="info-body welcome-body">
+      <p class="welcome-intro" data-i18n="wel.intro"></p>
+      <div class="welcome-grid">
+        <figure class="welcome-figure">
+          <div class="welcome-view" id="welcomeView" role="img" data-i18n-title="wel.view">
+            <canvas id="welcomeCanvas"></canvas>
+            <svg id="welcomeLines" aria-hidden="true"></svg>
+            <div id="welcomeLabels" aria-hidden="true"></div>
+          </div>
+          <figcaption class="note" data-i18n="wel.caption"></figcaption>
+          <ul class="sr-only" id="welcomeParts"></ul>
+        </figure>
+        <ol class="welcome-steps">
+          <li><strong data-i18n="wel.s1.t">Shape</strong> <span data-i18n="wel.s1"></span></li>
+          <li><strong data-i18n="wel.s2.t">View</strong> <span data-i18n="wel.s2"></span></li>
+          <li><strong data-i18n="wel.s3.t">Colour</strong> <span data-i18n="wel.s3"></span></li>
+          <li><strong data-i18n="wel.s4.t">Learn and export</strong> <span data-i18n="wel.s4"></span></li>
+        </ol>
+      </div>
+      <div class="welcome-actions">
+        <p class="welcome-author" data-i18n="wel.author">Alberto González Casarrubios · Universidad Complutense de Madrid</p>
+        <button type="button" class="btn" id="welcomeTheory" data-i18n="wel.theory">Read the theory</button>
+        <button type="button" class="btn primary" id="welcomeStart" data-i18n="wel.start">Start exploring</button>
+      </div>
     </div>
   </dialog>
 
