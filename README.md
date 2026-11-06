@@ -87,17 +87,27 @@ Unir la geometría de Raup con la pigmentación de Meinhardt no es una ocurrenci
 
 1. **Elige un preset** (caracol, Turritella, nautilo, ammonite, almeja…) para partir de una forma real.
 2. **Mueve W, D, T y S** y observa cómo cambia la concha. W tiene dos escalas: **Lin** (1–10, para afinar caracoles y ammonites) y **Log** (1–10⁴, para bivalvos); pasa sola a Log cuando W supera 10.
-3. **Explora el morfoespacio** en el panel desplegable: pincha o arrastra para elegir W y D.
+3. **Explora el morfoespacio** en el panel desplegable: pincha o arrastra para elegir W y D. Es un corte del cubo W–D–T de Raup con el T actual: T, S y N no cambian, y las regiones de los grupos que no existen con ese T aparecen atenuadas. Pincha en el nombre de un grupo para cargar una concha típica, y cambia el eje W entre 1–10 (caracoles y cefalópodos en detalle) y 1–10⁴ (con los bivalvos).
 4. **Cambia el modo de dibujo**: *Lines* (malla de líneas, por defecto), *Solid* (superficie con luces y sombras) o *Both*.
 5. **Usa las vistas estándar** de la malacología: 3/4, apertural (de frente a la apertura), dorsal, apical (desde el ápice), umbilical (desde la base) y perfil. Con el ratón puedes rotar (arrastrar), hacer zoom (rueda) y desplazar (clic derecho).
 6. **Pulsa *Animate growth*** para ver crecer la concha desde el ápice hasta la apertura.
 7. **Abre *Equation*** para ver la fórmula general y la misma fórmula con los valores actuales, y ***About*** para la explicación detallada de los dos modelos.
-8. **Píntala** en la pestaña **Pigment · Meinhardt**: al entrar, las líneas desaparecen y la concha se ve sólida, en un color liso. Tú eliges el patrón en la galería, que muestra cada uno (Nautilus, Cepaea, Oliva) con su miniatura; la opción **Solid colour** vuelve a la concha lisa. En la vista **Simple**, los controles cambian el patrón de forma gradual: **tamaño del patrón**, **tiempo de crecimiento**, **irregularidad**, **cantidad de pigmento** y la **semilla** (otra variación del mismo patrón). La vista **Advanced** muestra además el modelo y todas sus constantes, así que desde ahí se controla todo, y el **perfil del borde**: el activador y el inhibidor (o el sustrato) a lo largo del borde en el instante que elijas pinchando en el registro espacio-tiempo, con el umbral de pigmentación. Las ecuaciones de Meinhardt, con los valores actuales, están en *Equation*.
+8. **Píntala** en la pestaña **Pigment · Meinhardt**: al entrar, las líneas desaparecen y la concha se ve sólida, en un color liso. Tú eliges el patrón en la galería, que muestra cada uno (Nautilus, Cepaea, Oliva) con su miniatura; la opción **Solid colour** vuelve a la concha lisa. En la vista **Simple**, los controles cambian el patrón de forma gradual: **tamaño del patrón**, **tiempo de crecimiento**, **irregularidad**, **cantidad de pigmento** y la **semilla** (otra variación del mismo patrón). La vista **Advanced** muestra además el modelo y todas sus constantes, así que desde ahí se controla todo, y el **perfil del borde**: el activador y el inhibidor (o el sustrato) a lo largo del borde en el instante que elijas pinchando en el registro espacio-tiempo, con el umbral de pigmentación. El registro espacio-tiempo se puede ver **en el tiempo** (el diagrama de Meinhardt, con la misma altura para cada vuelta) o como **concha desenrollada** (con las proporciones reales: un abanico que se abre desde el ápice). Las ecuaciones de Meinhardt, con los valores actuales, están en *Equation*.
 9. **Muestra gráficos sobre la vista 3D** desde el menú **Graphs** (desactivados por defecto): la posición de la concha en el morfoespacio W – D, en la que también puedes pinchar, y el perfil del activador y el inhibidor (o el sustrato) a lo largo del borde, con un slider para elegir el instante del crecimiento.
 10. **Para ver solo la concha**, usa *Fullscreen* y *Hide info*.
-11. **Guarda o comparte** tu concha: exporta una imagen PNG o un modelo STL para impresión 3D, o copia la dirección de la página, que guarda la forma actual.
+11. **Exporta** tu concha desde **Export…**:
+    - una **imagen PNG** de la vista actual, a la resolución de la pantalla, doble o cuádruple;
+    - una **lámina de vistas estándar**: las seis orientaciones de la malacología (apertural, dorsal, apical, umbilical, perfil y 3/4), sin perspectiva y rotuladas;
+    - una **ficha en PDF** (A4) con la lámina, los parámetros, la posición en el morfoespacio y un enlace que reabre la concha; si tiene patrón, otra página con el registro espacio-tiempo (con sus ejes), el perfil del activador y el inhibidor a lo largo del borde y las constantes; y, de forma opcional, las ecuaciones completas del modelo, en forma general y con los valores actuales;
+    - un modelo para **impresión 3D** en **STL** o **3MF**: un sólido cerrado con pared de grosor real, en milímetros, listo para el programa de laminado; eliges el tamaño y el grosor de la pared;
+    - un **modelo 3D con color** (GLB) para visores 3D, Blender o realidad aumentada;
 
-En el panel **Appearance** puedes cambiar colores, grosor y densidad de las líneas, o volver a las paletas **Light** y **Dark** si pierdes los colores.
+    El eje de enrollamiento se puede incluir en la imagen, la lámina y el PDF aunque esté oculto en la vista. Si la concha está en modo **Lines**, lo exportado no lleva color: el PDF omite la pigmentación y el GLB contiene solo las líneas.
+    - el **registro espacio-tiempo** del patrón en PNG.
+
+    También puedes copiar la dirección de la página, que guarda la concha actual.
+
+En el panel **Appearance** puedes cambiar colores, grosor y densidad de las líneas, mostrar el eje de enrollamiento y su grosor, o volver a las paletas **Light** y **Dark** si pierdes los colores.
 
 | Tecla | Acción |
 |---|---|

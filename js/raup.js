@@ -76,6 +76,23 @@ export function buildShell(p) {
   cosPhi[segPhi] = cosPhi[0];
   sinPhi[segPhi] = sinPhi[0];
 
+  // Coordenada u del patrón: longitud de arco a lo largo del borde (no el ángulo φ).
+  // En una apertura elíptica (S ≠ 1) un mismo Δφ cubre más o menos borde; así las
+  // células del modelo de Meinhardt quedan igual de espaciadas sobre el borde real.
+  const arcU = new Float64Array(cols);
+  {
+    const sub = 8;
+    let L = 0;
+    for (let j = 0; j < segPhi; j++) {
+      for (let q = 0; q < sub; q++) {
+        const phi = ((j + (q + 0.5) / sub) / segPhi) * Math.PI * 2;
+        L += Math.hypot(a * Math.sin(phi), S * a * Math.cos(phi));
+      }
+      arcU[j + 1] = L;
+    }
+    for (let j = 0; j <= segPhi; j++) arcU[j] = L > 0 ? arcU[j] / L : j / segPhi;
+  }
+
   const logW = Math.log(W);
   let minX = Infinity, minY = Infinity, minZ = Infinity;
   let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
@@ -106,7 +123,7 @@ export function buildShell(p) {
       colors[k + 1] = shade * 0.97;
       colors[k + 2] = shade * 0.93;
       const u = (i * cols + j) * 2;
-      uvs[u] = j / segPhi;
+      uvs[u] = arcU[j];
       uvs[u + 1] = i / nTheta;
     }
   }

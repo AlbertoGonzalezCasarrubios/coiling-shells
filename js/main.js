@@ -4,8 +4,10 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
-import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+import { Line2 } from 'three/addons/lines/Line2.js';
+import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 import { buildShell } from './raup.js';
+import { buildPrintMesh, toSTL, to3MF } from './export3d.js';
 import { PRESETS, DEFAULT_PRESET, PATTERN_PRESETS, DEFAULT_PATTERN, MODEL_REFERENCE } from './presets.js';
 import { simulatePattern, PROFILE_WIDTH } from './meinhardt.js';
 import {
@@ -57,6 +59,7 @@ const state = {
   ringsPerTurn: 24,
   lineWidth: 1.2,
   lineOpacity: 0.9,
+  axisWidth: 1,
 };
 
 function pickShape(p) {
@@ -84,14 +87,17 @@ setLang('en');
 let hashTimer = 0;
 function writeHash() {
   clearTimeout(hashTimer);
-  hashTimer = setTimeout(() => {
-    const q = new URLSearchParams();
-    for (const [short, key] of Object.entries(HASH_KEYS)) q.set(short, String(+Number(state[key]).toFixed(3)));
-    q.set('v', state.mirror ? '1' : '0');
-    q.set('m', state.mode);
-    patternHash(q);
-    history.replaceState(null, '', `#${q}`);
-  }, 250);
+  hashTimer = setTimeout(writeHashNow, 250);
+}
+
+function writeHashNow() {
+  clearTimeout(hashTimer);
+  const q = new URLSearchParams();
+  for (const [short, key] of Object.entries(HASH_KEYS)) q.set(short, String(+Number(state[key]).toFixed(3)));
+  q.set('v', state.mirror ? '1' : '0');
+  q.set('m', state.mode);
+  patternHash(q);
+  history.replaceState(null, '', `#${q}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -187,7 +193,8 @@ const lineMat = new LineMaterial({
   opacity: state.lineOpacity,
 });
 
-const axisMat = new THREE.LineDashedMaterial({ color: 0x2a9d8f, dashSize: 0.12, gapSize: 0.08 });
+// Eje discontinuo con grosor en píxeles (por defecto 1 px, como una línea WebGL normal)
+const axisMat = new LineMaterial({ color: 0x2a9d8f, linewidth: state.axisWidth, dashed: true, dashSize: 0.12, gapSize: 0.08 });
 
 solidMat.side = THREE.FrontSide; // exterior (las caras frontales miran hacia fuera)
 
@@ -215,7 +222,7 @@ const occluder = new THREE.Mesh(solid.geometry, occluderMat);
 occluder.renderOrder = 0;
 const lines = new LineSegments2(new LineSegmentsGeometry(), lineMat);
 lines.renderOrder = 1;
-const axis = new THREE.Line(new THREE.BufferGeometry(), axisMat);
+const axis = new Line2(new LineGeometry(), axisMat);
 axis.visible = false;
 scene.add(solid, inner, occluder, lines, axis);
 
@@ -320,10 +327,7 @@ function rebuild() {
 
   const { x, z, yTop, yBottom } = shell.axis;
   axis.geometry.dispose();
-  axis.geometry = new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(x, yBottom - 0.4, z),
-    new THREE.Vector3(x, yTop + 0.4, z),
-  ]);
+  axis.geometry = new LineGeometry().setPositions([x, yBottom - 0.4, z, x, yTop + 0.4, z]);
   axis.computeLineDistances();
 
   ground.position.y = yBottom - 0.002;
@@ -332,6 +336,7 @@ function rebuild() {
   scheduleFormula();
   drawMorpho();
   onGeometryForPattern();
+  if (stView === 'shell') drawSpacetime(); // sus proporciones dependen de la forma
 }
 
 /** La costura de la apertura tiene vértices duplicados: se promedian sus normales para que no se vea. */
@@ -399,8 +404,8 @@ let formulaView = 'raup';
 
 const SOURCE_TEX = String.raw`\[ s_i = r_a\,(1 + \sigma\,\xi_i),\quad \xi_i \in [-1,\,1],\quad x = 1,\dots,N \]`;
 
-function generalTeX() {
-  if (formulaView === 'meinhardt') {
+function generalTeX(view = formulaView) {
+  if (view === 'meinhardt') {
     const isAS = pattern.model === 'AS';
     return (isAS ? AS_TEX : AI_TEX) + (isAS && pattern.globalCtl > 0 ? GLOBAL_TEX : '') + SOURCE_TEX;
   }
@@ -433,8 +438,8 @@ function meinhardtLiveTeX() {
     String.raw`\[ s_i = ${sig(ra)}\,(1 \pm ${sig(noise)}),\quad N = ${cells},\quad T = ${Math.round(T)} \]`;
 }
 
-function liveTeX() {
-  if (formulaView === 'meinhardt') return meinhardtLiveTeX();
+function liveTeX(view = formulaView) {
+  if (view === 'meinhardt') return meinhardtLiveTeX();
   const { W, D, T, S, hand, turns } = state;
   const { rc, a, b } = lastBuild.derived;
   const R = `(${f(rc, 3)} + ${f(a, 3)}\\cos\\varphi)`;
@@ -517,6 +522,15 @@ function openInfo(page = infoPage) {
 
 const controlsByKey = {};
 let dirty = true;
+
+/** Captura el puntero si sigue activo (un toque cancelado no se puede capturar). */
+function capturePointer(el, e) {
+  try {
+    el.setPointerCapture(e.pointerId);
+  } catch {
+    /* sin captura: el arrastre funciona igual mientras el puntero esté encima */
+  }
+}
 
 function setFill(range) {
   const pct = ((range.value - range.min) / (range.max - range.min)) * 100;
@@ -744,7 +758,14 @@ document.querySelectorAll('[data-palette]').forEach((b) =>
   })
 );
 $('bands').addEventListener('change', applyShellMaterial);
-$('showAxis').addEventListener('change', (e) => (axis.visible = e.target.checked));
+$('showAxis').addEventListener('change', (e) => {
+  axis.visible = e.target.checked;
+  $('axis-params').hidden = !e.target.checked; // el grosor solo aparece con el eje visible
+});
+createParam({ key: 'axisWidth', min: 0.5, max: 6, step: 0.5, digits: 1 }, $('axis-params'), {
+  compact: true,
+  onChange: () => (axisMat.linewidth = state.axisWidth),
+});
 $('autoRotate').addEventListener('change', (e) => (controls.autoRotate = e.target.checked));
 
 $('toggleFormula').addEventListener('click', () => setFormulaOpen(formulaPanel.hidden));
@@ -908,17 +929,50 @@ const morpho = $('morpho');
 const morphoOv = $('morphoOv');
 const morphoDrawer = $('morphoDrawer');
 const MORPHO = { l: 34, r: 10, t: 10, b: 26, logMax: 4 };
+// Escala del eje W: 1–10⁴ (todos los grupos) o 1–10 (caracoles y cefalópodos, con más detalle)
+const MORPHO_TICKS = {
+  4: [[0, '1'], [1, '10'], [2, '10²'], [3, '10³'], [4, '10⁴']],
+  1: [[0, '1'], [Math.log10(2), '2'], [Math.log10(3), '3'], [Math.log10(5), '5'], [1, '10']],
+};
 // En el visor la altura se adapta al ancho del panel (más estrecho en móvil)
 const morphoHeight = (canvas) => (canvas === morpho ? 210 : Math.round(THREE.MathUtils.clamp(canvas.clientWidth * 0.68, 130, 200)));
+/**
+ * Regiones ocupadas por cada grupo, en coordenadas (log10 W, D). Son aproximadas
+ * (según Raup, 1966, 1967) y parten de D = 0, donde vive gran parte de las conchas
+ * reales. El plano es un corte del cubo W–D–T de Raup: los grupos se separan sobre
+ * todo por T, así que cada región indica el T con el que existe (`tOk`).
+ * Al pinchar en su nombre se carga una concha típica del grupo (`preset`).
+ */
+const halfEllipse = (cx, rx, ry) =>
+  Array.from({ length: 41 }, (_, i) => {
+    const a = (Math.PI * i) / 40;
+    return [cx + rx * Math.cos(a), ry * Math.sin(a)];
+  });
 const MORPHO_REGIONS = [
-  { cx: 2.6, cy: 0.17, rx: 1.35, ry: 0.17, color: '#8a5cb8' },  // bivalvos y braquiópodos
-  { cx: 0.45, cy: 0.14, rx: 0.42, ry: 0.14, color: '#3f7fbf' }, // gasterópodos
-  { cx: 0.33, cy: 0.36, rx: 0.22, ry: 0.27, color: '#c77d2e' }, // ammonoideos
+  {
+    key: 'bivalves', preset: 'almeja', color: '#8a5cb8', tOk: (T) => T <= 1,
+    poly: halfEllipse(2.8, 1.6, 0.3), label: [2.75, 0.13, 'center'],
+  },
+  {
+    key: 'gastropods', preset: 'caracol', color: '#3f7fbf', tOk: () => true,
+    poly: halfEllipse(0.3, 0.29, 0.42), label: [0.64, 0.4, 'left'], labelNear: [0.98, 0.5, 'right'],
+  },
+  {
+    // Ammonoideos y nautiloideos: vueltas en contacto o solapadas (bajo D = 1/W)
+    key: 'ammonoids', preset: 'ammonite', color: '#c77d2e', tOk: (T) => T <= 0.25,
+    poly: (() => {
+      const pts = [];
+      for (let lw = 0.146; lw <= 0.6021; lw += 0.01) pts.push([lw, Math.min(1, 10 ** -lw + 0.02)]);
+      for (let lw = 0.6021; lw >= 0.146; lw -= 0.01) pts.push([lw, Math.max(0, 10 ** -lw - 0.3)]);
+      return pts;
+    })(),
+    label: [0.36, 0.66, 'left'], labelNear: [0.98, 0.3, 'right'],
+  },
 ];
 
-function morphoScales(canvas) {
-  const w = canvas.clientWidth;
-  const h = morphoHeight(canvas);
+function morphoScales(canvas, size) {
+  const w = size ? size.width : canvas.clientWidth;
+  const h = size ? size.height : morphoHeight(canvas);
   const { l, r, t: top, b, logMax } = MORPHO;
   return {
     w,
@@ -937,11 +991,15 @@ function drawMorpho() {
   if (!$('ovMorpho').hidden) drawMorphoOn(morphoOv);
 }
 
-function drawMorphoOn(canvas) {
-  const dpr = Math.min(window.devicePixelRatio, 2);
-  const h = morphoHeight(canvas);
-  canvas.style.height = `${h}px`;
-  const { w, x, y } = morphoScales(canvas);
+/**
+ * @param {HTMLCanvasElement} canvas
+ * @param {object} [off] para dibujar fuera de pantalla (PDF): { width, height, scale, colors }
+ */
+function drawMorphoOn(canvas, off) {
+  const dpr = off ? off.scale : Math.min(window.devicePixelRatio, 2);
+  const h = off ? off.height : morphoHeight(canvas);
+  if (!off) canvas.style.height = `${h}px`;
+  const { w, x, y } = morphoScales(canvas, off);
   if (!w) return;
   canvas.width = w * dpr;
   canvas.height = h * dpr;
@@ -949,48 +1007,69 @@ function drawMorphoOn(canvas) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   const css = getComputedStyle(document.documentElement);
-  const v = (name) => css.getPropertyValue(name).trim();
+  const v = (name) => off?.colors?.[name] ?? css.getPropertyValue(name).trim();
   const muted = v('--muted');
   const accent = v('--accent');
 
   ctx.fillStyle = v('--surface-2');
-  ctx.fillRect(x(0), y(1), x(4) - x(0), y(0) - y(1));
+  const X1 = MORPHO.logMax;
+  ctx.fillRect(x(0), y(1), x(X1) - x(0), y(0) - y(1));
 
   // Región por encima de D = 1/W: vueltas sin contacto (para T = 0)
   ctx.beginPath();
   ctx.moveTo(x(0), y(1));
-  for (let lw = 0; lw <= 4.0001; lw += 0.02) ctx.lineTo(x(lw), y(10 ** -lw));
-  ctx.lineTo(x(4), y(1));
+  for (let lw = 0; lw <= X1 + 1e-4; lw += X1 / 200) ctx.lineTo(x(lw), y(10 ** -lw));
+  ctx.lineTo(x(X1), y(1));
   ctx.closePath();
   ctx.fillStyle = muted;
   ctx.globalAlpha = 0.08;
   ctx.fill();
   ctx.globalAlpha = 1;
 
-  // Regiones ocupadas (aproximadas)
+  // Regiones ocupadas (aproximadas), recortadas al marco. Las de grupos que no
+  // existen con el T actual se dibujan atenuadas y con borde discontinuo.
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x(0), y(1), x(X1) - x(0), y(0) - y(1));
+  ctx.clip();
   for (const r of MORPHO_REGIONS) {
+    const ok = r.tOk(state.T);
     ctx.beginPath();
-    ctx.ellipse(x(r.cx), y(r.cy), x(r.cx + r.rx) - x(r.cx), y(r.cy) - y(r.cy + r.ry), 0, 0, Math.PI * 2);
+    r.poly.forEach(([lw, d], i) => ctx[i ? 'lineTo' : 'moveTo'](x(lw), y(d)));
+    ctx.closePath();
     ctx.fillStyle = r.color;
-    ctx.globalAlpha = 0.18;
+    ctx.globalAlpha = ok ? 0.2 : 0.05;
     ctx.fill();
-    ctx.globalAlpha = 0.7;
+    ctx.globalAlpha = ok ? 0.75 : 0.35;
+    ctx.setLineDash(ok ? [] : [3, 3]);
     ctx.strokeStyle = r.color;
     ctx.lineWidth = 1;
     ctx.stroke();
-    ctx.globalAlpha = 1;
   }
-  ctx.font = '500 10.5px Inter, system-ui, sans-serif';
-  ctx.fillStyle = v('--text');
-  ctx.textAlign = 'center';
-  ctx.fillText(t('morpho.bivalves'), x(2.6), y(0.17) + 4);
-  ctx.textAlign = 'left';
-  ctx.fillText(t('morpho.gastropods'), x(0.9), y(0.06) + 4);
-  ctx.fillText(t('morpho.ammonoids'), x(0.58), y(0.48) + 4);
+  ctx.restore();
+  ctx.setLineDash([]);
+  // Nombres de los grupos: se pueden pinchar para cargar una concha típica
+  ctx.font = '600 10.5px Inter, system-ui, sans-serif';
+  ctx.textBaseline = 'middle';
+  canvas.labelBoxes = [];
+  for (const r of MORPHO_REGIONS) {
+    const pos = MORPHO.logMax === 4 ? r.label : r.labelNear;
+    if (!pos) continue;
+    const [lw, d, align] = pos;
+    const text = t(`morpho.${r.key}`);
+    const tw = ctx.measureText(text).width;
+    const x0 = align === 'center' ? x(lw) - tw / 2 : align === 'right' ? x(lw) - tw : x(lw);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = r.tOk(state.T) ? v('--text') : v('--muted');
+    ctx.fillText(text, x0, y(d));
+    ctx.fillRect(x0, y(d) + 7, tw, 1); // subrayado: es un enlace
+    canvas.labelBoxes.push({ x0: x0 - 3, x1: x0 + tw + 3, y0: y(d) - 9, y1: y(d) + 10, preset: r.preset });
+  }
+  ctx.textBaseline = 'alphabetic';
 
   // Curva D = 1/W
   ctx.beginPath();
-  for (let lw = 0; lw <= 4.0001; lw += 0.02) ctx[lw ? 'lineTo' : 'moveTo'](x(lw), y(10 ** -lw));
+  for (let lw = 0; lw <= X1 + 1e-4; lw += X1 / 200) ctx[lw ? 'lineTo' : 'moveTo'](x(lw), y(10 ** -lw));
   ctx.setLineDash([4, 3]);
   ctx.strokeStyle = muted;
   ctx.lineWidth = 1.2;
@@ -1001,27 +1080,31 @@ function drawMorphoOn(canvas) {
   ctx.fillText(t('morpho.touch'), x(0.16), y(0.78));
   ctx.font = '10.5px Inter, system-ui, sans-serif';
   ctx.textAlign = 'right';
-  ctx.fillText(t('morpho.open'), x(3.95), y(0.9));
+  ctx.fillText(t('morpho.open'), x(X1 * 0.9875), y(0.9));
+  // El plano es un corte del cubo de Raup al T actual
+  ctx.fillStyle = accent;
+  ctx.font = '600 10.5px Inter, system-ui, sans-serif';
+  ctx.fillText(t('morpho.section', f(state.T, 2)), x(X1 * 0.9875), y(0.78));
 
   // Ejes
   ctx.strokeStyle = v('--border');
   ctx.lineWidth = 1;
-  ctx.strokeRect(x(0) + 0.5, y(1) + 0.5, x(4) - x(0), y(0) - y(1));
+  ctx.strokeRect(x(0) + 0.5, y(1) + 0.5, x(X1) - x(0), y(0) - y(1));
   ctx.fillStyle = muted;
   ctx.font = '10px "JetBrains Mono", monospace';
   ctx.textAlign = 'center';
-  ['1', '10', '10²', '10³', '10⁴'].forEach((lab, i) => ctx.fillText(lab, x(i), y(0) + 14));
+  MORPHO_TICKS[X1].forEach(([lw, lab]) => ctx.fillText(lab, x(lw), y(0) + 14));
   ctx.textAlign = 'right';
   [0, 0.5, 1].forEach((d) => ctx.fillText(String(d), x(0) - 5, y(d) + 3));
   ctx.font = 'italic 13px "Times New Roman", serif';
   ctx.fillStyle = accent;
-  ctx.fillText('W', x(4), y(0) + 24);
+  ctx.fillText('W', x(X1), y(0) + 24);
   ctx.textAlign = 'left';
   ctx.fillText('D', 4, y(1) + 10);
 
   // Concha actual
   ctx.beginPath();
-  ctx.arc(x(Math.log10(Math.max(1, state.W))), y(state.D), 5.5, 0, Math.PI * 2);
+  ctx.arc(x(Math.min(X1, Math.log10(Math.max(1, state.W)))), y(state.D), 5.5, 0, Math.PI * 2);
   ctx.fillStyle = accent;
   ctx.fill();
   ctx.lineWidth = 2;
@@ -1029,28 +1112,53 @@ function drawMorphoOn(canvas) {
   ctx.stroke();
 }
 
+/** Nombre de grupo bajo el puntero, si lo hay. */
+function morphoLabelAt(canvas, e) {
+  const rect = canvas.getBoundingClientRect();
+  const px = e.clientX - rect.left, py = e.clientY - rect.top;
+  return (canvas.labelBoxes || []).find((b) => px >= b.x0 && px <= b.x1 && py >= b.y0 && py <= b.y1);
+}
+
 function pickMorpho(e) {
   const canvas = e.currentTarget;
   const rect = canvas.getBoundingClientRect();
   const { lw, d } = morphoScales(canvas).inv(e.clientX - rect.left, e.clientY - rect.top);
-  controlsByKey.W.set(10 ** THREE.MathUtils.clamp(lw, 0, 4));
+  controlsByKey.W.set(10 ** THREE.MathUtils.clamp(lw, 0, MORPHO.logMax));
   controlsByKey.D.set(d);
   onShapeChange();
 }
 for (const canvas of [morpho, morphoOv]) {
   canvas.addEventListener('pointerdown', (e) => {
-    canvas.setPointerCapture(e.pointerId);
+    // Pinchar en el nombre de un grupo carga una concha típica (W, D, T, S y N a la vez)
+    const label = morphoLabelAt(canvas, e);
+    if (label) {
+      presetSel.value = label.preset;
+      presetSel.dispatchEvent(new Event('change'));
+      return;
+    }
+    capturePointer(canvas, e);
     pickMorpho(e);
   });
   canvas.addEventListener('pointermove', (e) => {
     if (canvas.hasPointerCapture(e.pointerId)) pickMorpho(e);
+    else canvas.style.cursor = morphoLabelAt(canvas, e) ? 'pointer' : 'crosshair';
   });
 }
 morphoDrawer.addEventListener('toggle', drawMorpho);
 
+// Escala del eje W (compartida por el panel lateral y el gráfico superpuesto)
+function setMorphoScale(logMax) {
+  MORPHO.logMax = logMax;
+  document.querySelectorAll('[data-wscale]').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.wscale) === logMax)));
+  drawMorpho();
+}
+document.querySelectorAll('[data-wscale]').forEach((b) => b.addEventListener('click', () => setMorphoScale(Number(b.dataset.wscale))));
+
 // ---------------------------------------------------------------------------
-// Exportación
+// Exportación: ventana con imagen, lámina de vistas, PDF, impresión 3D y GLB
 // ---------------------------------------------------------------------------
+
+const exportDlg = $('exportDlg');
 
 function download(href, name) {
   const a = document.createElement('a');
@@ -1059,23 +1167,631 @@ function download(href, name) {
   a.click();
 }
 
-function fileStem() {
-  return `raup_W${formatW(state.W)}_D${f(state.D, 3)}_T${f(state.T, 2)}_S${f(state.S, 2)}${state.mirror ? '_mirror' : ''}`;
+function downloadBlob(data, type, name) {
+  const url = URL.createObjectURL(data instanceof Blob ? data : new Blob([data], { type }));
+  download(url, name);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
-$('savePng').addEventListener('click', () => {
-  renderFrame();
-  download(renderer.domElement.toDataURL('image/png'), `${fileStem()}.png`);
-});
+function fileStem() {
+  const preset = PRESETS[presetSel.value] ? `${presetSel.value}_` : '';
+  return `shell_${preset}W${formatW(state.W)}_D${f(state.D, 3)}_T${f(state.T, 2)}_S${f(state.S, 2)}${state.mirror ? '_mirror' : ''}`;
+}
 
-$('saveStl').addEventListener('click', () => {
-  const mesh = new THREE.Mesh(solid.geometry);
-  mesh.scale.setScalar(80 / SHELL_SIZE); // tamaño máximo 80 mm
-  mesh.updateMatrixWorld();
-  const data = new STLExporter().parse(mesh, { binary: true });
-  const url = URL.createObjectURL(new Blob([data], { type: 'model/stl' }));
-  download(url, `${fileStem()}.stl`);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+/** Nombre legible de la concha actual (el del preset o «personalizada»). */
+function shellName() {
+  return PRESETS[presetSel.value] ? tPreset(presetSel.value) : t('ex.customShell');
+}
+
+/** Ejecuta `fn` con el botón en estado «Preparando…» y avisa si falla. */
+async function busy(btn, fn) {
+  const label = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = t('ex.working');
+  await new Promise((r) => setTimeout(r, 30)); // deja pintar el estado
+  try {
+    await fn();
+  } catch (err) {
+    console.error(err);
+    alert(t('ex.error'));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = label;
+  }
+}
+
+// --- Imagen de la vista actual, a la resolución elegida ---------------------
+
+/**
+ * Lo que se exporta respeta lo que el usuario ve: en modo «solo líneas» no se
+ * incluye nada de color (ni patrón ni página de pigmentación), aunque haya un
+ * patrón elegido en la pestaña de pigmento.
+ */
+const colourShown = () => state.mode !== 'lines' && pattern.on && !!patternValues;
+
+/** Ejecuta `fn` con el eje de enrollamiento visible o no, según la casilla de la exportación. */
+function withExportAxis(fn) {
+  const prev = axis.visible;
+  axis.visible = $('exAxis').checked;
+  try {
+    return fn();
+  } finally {
+    axis.visible = prev;
+  }
+}
+
+function renderCurrentView(scaleFactor) {
+  return withExportAxis(() => renderCurrentViewRaw(scaleFactor));
+}
+
+function renderCurrentViewRaw(scaleFactor) {
+  const { clientWidth: w, clientHeight: h } = viewport;
+  const prevPR = renderer.getPixelRatio();
+  const pr = Math.min(prevPR * scaleFactor, 8192 / Math.max(w, h));
+  renderer.setPixelRatio(pr);
+  renderer.setSize(w, h, false);
+  renderer.setViewport(0, 0, w, h);
+  renderer.clear();
+  renderer.render(scene, camera);
+  const url = renderer.domElement.toDataURL('image/png');
+  renderer.setPixelRatio(prevPR);
+  resize();
+  return url;
+}
+
+// --- Lámina de vistas estándar (proyección ortográfica) ---------------------
+
+const PLATE_VIEWS = ['apertural', 'dorsal', 'apical', 'umbilical', 'profile', 'iso'];
+
+/** Cámara ortográfica encuadrada sobre la concha para una vista estándar. */
+function plateCamera(name) {
+  const dir = VIEWS[name]().normalize();
+  const up = name === 'apical' || name === 'umbilical'
+    ? new THREE.Vector3(0, 0, -state.hand) // la apertura queda abajo
+    : new THREE.Vector3(0, 1, 0);           // el ápice queda arriba
+  const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
+  cam.up.copy(up);
+  cam.position.copy(dir).multiplyScalar(30);
+  cam.lookAt(0, 0, 0);
+  cam.updateMatrixWorld();
+  // Encuadre ajustado: se proyectan los vértices sobre el plano de la cámara
+  const P = solid.geometry.attributes.position.array;
+  const inv = cam.matrixWorldInverse.elements;
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (let k = 0; k < P.length; k += 3) {
+    const x = inv[0] * P[k] + inv[4] * P[k + 1] + inv[8] * P[k + 2] + inv[12];
+    const y = inv[1] * P[k] + inv[5] * P[k + 1] + inv[9] * P[k + 2] + inv[13];
+    if (x < x0) x0 = x; if (x > x1) x1 = x;
+    if (y < y0) y0 = y; if (y > y1) y1 = y;
+  }
+  const half = (Math.max(x1 - x0, y1 - y0) / 2) * 1.08;
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  Object.assign(cam, { left: cx - half, right: cx + half, top: cy + half, bottom: cy - half });
+  cam.updateProjectionMatrix();
+  return { cam, dir, up };
+}
+
+const luminance = (hex) => {
+  const [r, g, b] = hexRgb(hex).map((c) => c / 255);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+
+/**
+ * Dibuja las seis vistas en una cuadrícula de 3 × 2.
+ * @returns {HTMLCanvasElement}
+ */
+function renderPlate(opts) {
+  return withExportAxis(() => renderPlateRaw(opts));
+}
+
+function renderPlateRaw({ tile = 640, background = '#ffffff', labels = true } = {}) {
+  const cols = 3, rowsN = 2;
+  const labelH = labels ? Math.round(tile * 0.1) : 0;
+  const out = document.createElement('canvas');
+  out.width = cols * tile;
+  out.height = rowsN * (tile + labelH);
+  const ctx = out.getContext('2d');
+  ctx.fillStyle = background;
+  ctx.fillRect(0, 0, out.width, out.height);
+
+  const prev = {
+    pr: renderer.getPixelRatio(),
+    bg: scene.background.clone(),
+    ground: ground.visible,
+    sun: sun.position.clone(),
+    res: lineMat.resolution.clone(),
+    axisRes: axisMat.resolution.clone(),
+  };
+  renderer.setPixelRatio(1);
+  renderer.setSize(tile, tile, false);
+  renderer.setScissorTest(false);
+  renderer.setViewport(0, 0, tile, tile);
+  scene.background = new THREE.Color(background);
+  ground.visible = false;
+  lineMat.resolution.set(720, 720); // grosor de línea parecido al de la pantalla
+  axisMat.resolution.set(720, 720);
+
+  const ink = luminance(background) > 0.5 ? '#1c2430' : '#e6e8eb';
+  PLATE_VIEWS.forEach((name, k) => {
+    const { cam, dir, up } = plateCamera(name);
+    // Luz principal desde arriba a la izquierda del observador, en cada vista
+    const right = new THREE.Vector3().crossVectors(up, dir).normalize();
+    sun.position.copy(dir).multiplyScalar(0.7).addScaledVector(up, 0.6).addScaledVector(right, -0.5).normalize().multiplyScalar(10);
+    renderer.clear();
+    renderer.render(scene, cam);
+    const x = (k % cols) * tile;
+    const y = Math.floor(k / cols) * (tile + labelH);
+    ctx.drawImage(renderer.domElement, x, y);
+    if (labels) {
+      ctx.fillStyle = ink;
+      ctx.font = `500 ${Math.round(labelH * 0.5)}px Inter, system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(t(`view.${name}`), x + tile / 2, y + tile + labelH * 0.45);
+    }
+  });
+
+  scene.background = prev.bg;
+  ground.visible = prev.ground;
+  sun.position.copy(prev.sun);
+  lineMat.resolution.copy(prev.res);
+  axisMat.resolution.copy(prev.axisRes);
+  renderer.setPixelRatio(prev.pr);
+  resize();
+  return out;
+}
+
+const plateBackground = () => ($('exBg').value === 'current' ? $('bgColor').value : '#ffffff');
+
+function updatePlatePreview() {
+  const c = renderPlate({ tile: 220, background: plateBackground(), labels: $('exLabels').checked });
+  const img = $('exPlatePreview');
+  img.src = c.toDataURL('image/png');
+}
+
+// --- Impresión 3D ------------------------------------------------------------
+
+let printCache = { key: '', mesh: null };
+
+function printOptions() {
+  const size = THREE.MathUtils.clamp(parseFloat($('exSize').value) || 80, 20, 300);
+  const wall = THREE.MathUtils.clamp(parseFloat($('exWall').value) || 1.2, 0.4, 6);
+  return { size, wall };
+}
+
+function printMesh() {
+  const { size, wall } = printOptions();
+  const shape = pickShape(state);
+  const key = JSON.stringify({ shape, size, wall });
+  if (printCache.key !== key) printCache = { key, mesh: buildPrintMesh(shape, { size, wall }) };
+  return printCache.mesh;
+}
+
+let dimsTimer = 0;
+function updatePrintDims() {
+  clearTimeout(dimsTimer);
+  dimsTimer = setTimeout(() => {
+    const [x, y, z] = printMesh().dims.map((d) => d.toFixed(0));
+    $('exDims').textContent = t('ex.dims', x, y, z);
+  }, 120);
+}
+
+// --- GLB con color -----------------------------------------------------------
+
+async function exportGLB() {
+  const { GLTFExporter } = await import('three/addons/exporters/GLTFExporter.js');
+  const group = new THREE.Group();
+  // Líneas (modos «Líneas» y «Ambos»): segmentos simples con el color de las líneas
+  if (state.mode !== 'solid' && lastBuild.lineIndices.length) {
+    const lg = new THREE.BufferGeometry();
+    lg.setAttribute('position', new THREE.BufferAttribute(lastBuild.positions.slice(), 3));
+    lg.setIndex(new THREE.BufferAttribute(lastBuild.lineIndices.slice(), 1));
+    const segs = new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: lineMat.color.clone() }));
+    segs.name = `${shellName()} (lines)`;
+    group.add(segs);
+  }
+  // En modo «solo líneas» no se exporta la superficie: nada de color ni de patrón
+  if (state.mode === 'lines') {
+    const data = await new GLTFExporter().parseAsync(group, { binary: true });
+    downloadBlob(data, 'model/gltf-binary', `${fileStem()}_lines.glb`);
+    return;
+  }
+  const mat = solidMat.clone();
+  mat.side = THREE.DoubleSide;
+  mat.polygonOffset = false;
+  // En glTF el color por vértice multiplica siempre la textura: solo se exporta si se usa
+  const geo = solid.geometry.clone();
+  if (!mat.vertexColors) geo.deleteAttribute('color');
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.name = shellName();
+  group.add(mesh);
+  const data = await new GLTFExporter().parseAsync(group, { binary: true });
+  downloadBlob(data, 'model/gltf-binary', `${fileStem()}.glb`);
+}
+
+// --- PDF ---------------------------------------------------------------------
+
+let jsPDFPromise = null;
+function loadJsPDF() {
+  jsPDFPromise ??= new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
+    s.onload = () => resolve(window.jspdf.jsPDF);
+    s.onerror = () => {
+      jsPDFPromise = null;
+      reject(new Error('jsPDF'));
+    };
+    document.head.append(s);
+  });
+  return jsPDFPromise;
+}
+
+const LIGHT_COLORS = {
+  '--surface': '#ffffff', '--surface-2': '#f1eee6', '--border': '#e3ddd0',
+  '--text': '#1c2430', '--muted': '#6b7280', '--accent': '#115e59',
+};
+
+/** Las fuentes estándar del PDF solo cubren Latin-1: se sustituyen flechas, rayas y letras griegas. */
+function pdfSafe(text) {
+  return String(text)
+    .replace(/[–—−]/g, '-').replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/…/g, '...')
+    .replace(/←/g, '<-').replace(/→/g, '->').replace(/σ/g, 'sigma').replace(/κ/g, 'kappa')
+    .replace(/θ/g, 'theta').replace(/φ/g, 'phi').replace(/≈/g, '~')
+    .replace(/[^\x00-\xff]/g, '');
+}
+
+async function exportPDF() {
+  const jsPDF = await loadJsPDF();
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  doc.setProperties({ title: pdfSafe(`${shellName()} - ${t('doc.title')}`), author: 'Alberto González Casarrubios', creator: pdfSafe(t('doc.title')) });
+  const rawText = doc.text.bind(doc);
+  doc.text = (s, ...rest) => rawText(Array.isArray(s) ? s.map(pdfSafe) : pdfSafe(s), ...rest);
+  const M = 15, W = 210 - 2 * M;
+  const lang = getLang();
+  const dark = [28, 36, 48], muted = [107, 114, 128], accent = [17, 94, 89];
+
+  const header = () => {
+    doc.setFont('helvetica', 'normal').setFontSize(8.5).setTextColor(...muted);
+    doc.text(t('doc.title'), M, 11);
+    doc.text(new Date().toLocaleDateString(lang), 210 - M, 11, { align: 'right' });
+    doc.setDrawColor(227, 221, 208).line(M, 13, 210 - M, 13);
+  };
+  const footer = () => {
+    doc.setFont('helvetica', 'normal').setFontSize(7.5).setTextColor(...muted);
+    doc.text(t('ex.pdf.cite'), M, 284, { maxWidth: W - 30 });
+    doc.text('CC BY-NC 4.0', 210 - M, 284, { align: 'right' });
+  };
+  const heading = (text, y, x = M) => {
+    doc.setFont('helvetica', 'bold').setFontSize(9).setTextColor(...accent);
+    doc.text(text.toUpperCase(), x, y);
+  };
+  const rowsTable = (rows, x, y, wName, wVal) => {
+    doc.setFontSize(9.5);
+    for (const [name, value] of rows) {
+      doc.setFont('helvetica', 'normal').setTextColor(...dark);
+      doc.text(name, x, y, { maxWidth: wName });
+      doc.setFont('courier', 'bold');
+      doc.text(String(value), x + wName + wVal, y, { align: 'right' });
+      y += 5.6;
+    }
+    return y;
+  };
+
+  // Página 1: forma
+  header();
+  doc.setFont('helvetica', 'bold').setFontSize(17).setTextColor(...dark);
+  doc.text(shellName(), M, 24);
+  doc.setFont('helvetica', 'normal').setFontSize(10).setTextColor(...muted);
+  doc.text(`W = ${formatW(state.W)}   D = ${f(state.D, 3)}   T = ${f(state.T, 2)}   S = ${f(state.S, 2)}   N = ${f(state.turns, 2)}   ·   ${t(state.hand > 0 ? 'geo.dextral' : 'geo.sinistral')}`, M, 30.5);
+
+  heading(t('ex.pdf.views'), 39);
+  const plate = renderPlate({ tile: 560, background: '#ffffff', labels: true });
+  const plateH = (W * plate.height) / plate.width;
+  doc.addImage(plate.toDataURL('image/jpeg', 0.92), 'JPEG', M, 42, W, plateH);
+  let y = 42 + plateH + 9;
+
+  heading(t('ex.pdf.params'), y);
+  const colW = 84;
+  const { rc, a, b } = lastBuild.derived;
+  let yL = rowsTable([
+    [`W · ${tParam('W').name}`, formatW(state.W)],
+    [`D · ${tParam('D').name}`, f(state.D, 3)],
+    [`T · ${tParam('T').name}`, f(state.T, 2)],
+    [`S · ${tParam('S').name}`, f(state.S, 2)],
+    [`N · ${tParam('turns').name}`, f(state.turns, 2)],
+    [t('geo.hand'), t(state.hand > 0 ? 'geo.dextral' : 'geo.sinistral')],
+    [t('geo.mirror'), t(state.mirror ? 'ex.yes' : 'ex.no')],
+  ], M, y + 6.5, colW - 24, 24);
+  doc.setFont('helvetica', 'normal').setFontSize(8.5).setTextColor(...muted);
+  doc.text(`${t('ex.pdf.derived')}: rc = ${f(rc, 3)}   a = ${f(a, 3)}   b = ${f(b, 3)}`, M, yL + 1.5);
+  yL += 4;
+
+  const mx = M + colW + 10, mw = W - colW - 10;
+  heading(t('morpho.title'), y, mx);
+  const mc = document.createElement('canvas');
+  const mh = Math.round(mw * 0.68 * 4);
+  drawMorphoOn(mc, { width: Math.round(mw * 4), height: mh, scale: 2, colors: LIGHT_COLORS });
+  // drawMorphoOn usa píxeles CSS: se dibuja a 4 px por mm y escala 2
+  doc.addImage(mc.toDataURL('image/png'), 'PNG', mx, y + 3, mw, mw * 0.68);
+  y = Math.max(yL, y + 3 + mw * 0.68) + 8;
+
+  // Enlace que reabre esta concha
+  writeHashNow();
+  doc.setFont('helvetica', 'normal').setFontSize(8.5).setTextColor(...muted);
+  doc.text(t('ex.pdf.link'), M, y);
+  doc.setTextColor(...accent);
+  const url = location.href;
+  const lines = doc.splitTextToSize(url, W);
+  doc.textWithLink(lines[0] + (lines.length > 1 ? '...' : ''), M, y + 4.5, { url });
+  footer();
+
+  // Página 2: pigmentación (si hay patrón)
+  if (colourShown()) {
+    doc.addPage();
+    header();
+    doc.setFont('helvetica', 'bold').setFontSize(17).setTextColor(...dark);
+    doc.text(t('ex.pdf.pattern'), M, 24);
+    doc.setFont('helvetica', 'normal').setFontSize(10).setTextColor(...muted);
+    const pname = PATTERN_PRESETS[pattern.preset] ? tPattern(pattern.preset) : t('pig.custom');
+    doc.text(`${pname}   ·   ${t(`pig.model.${pattern.model}`)}`, M, 30.5);
+
+    // Registro espacio-tiempo con sus ejes
+    heading(t('pig.spacetime'), 39);
+    const ax = M + 7;               // deja sitio al eje vertical
+    const stW = 64, stH = 118, stY = 51;
+    const st = document.createElement('canvas');
+    st.width = 512;
+    st.height = Math.round((512 * stH) / stW);
+    st.getContext('2d').drawImage(patternCanvas, 0, 0, st.width, st.height);
+    doc.addImage(st.toDataURL('image/jpeg', 0.92), 'JPEG', ax, stY, stW, stH);
+    doc.setDrawColor(227, 221, 208).setLineWidth(0.2).rect(ax, stY, stW, stH);
+
+    const arrow = (x1, y1, x2, y2) => {
+      doc.setDrawColor(...dark).setFillColor(...dark).setLineWidth(0.3);
+      doc.line(x1, y1, x2, y2);
+      const a = Math.atan2(y2 - y1, x2 - x1), L = 1.8, s = 0.8;
+      doc.triangle(
+        x2, y2,
+        x2 - L * Math.cos(a) + s * Math.sin(a), y2 - L * Math.sin(a) - s * Math.cos(a),
+        x2 - L * Math.cos(a) - s * Math.sin(a), y2 - L * Math.sin(a) + s * Math.cos(a), 'F');
+    };
+    // Eje horizontal: posición a lo largo del borde (el borde rodea la apertura)
+    doc.setFont('helvetica', 'normal').setFontSize(7.5).setTextColor(...dark);
+    doc.text(t('ex.pdf.axis.x'), ax + stW / 2, 44.5, { align: 'center', maxWidth: stW + 6 });
+    arrow(ax + stW / 2, 47.5, ax + stW, 47.5);
+    arrow(ax + stW / 2, 47.5, ax, 47.5);
+    // Eje vertical: tiempo, del ápice a la apertura
+    arrow(M + 4.5, stY, M + 4.5, stY + stH);
+    const tLabel = t('ex.pdf.axis.t');
+    // Girado 90° en sentido horario: las letras quedan a la derecha del punto de anclaje
+    doc.text(tLabel, M - 0.8, stY + stH / 2 - doc.getTextWidth(pdfSafe(tLabel)) / 2, { angle: -90 });
+    doc.setFontSize(7).setTextColor(...muted);
+    doc.text(t('ex.pdf.apex'), ax + stW + 1.5, stY + 2.5);
+    doc.text(t('ex.pdf.aperture'), ax + stW + 1.5, stY + stH);
+    // Instante del perfil, marcado sobre el registro
+    const row = profileRow ?? PATTERN_ROWS - 1;
+    const ry = stY + (stH * (row + 0.5)) / PATTERN_ROWS;
+    doc.setDrawColor(...accent).setLineWidth(0.5).line(ax - 1, ry, ax + stW + 1, ry);
+    doc.setFontSize(7.5).setTextColor(...muted);
+    doc.text(t('ex.pdf.st.caption'), M, stY + stH + 5, { maxWidth: stW + 7 });
+
+    // Concha pigmentada en vista apertural y 3/4
+    const sx = M + 7 + stW + 17, sw = W - (sx - M);
+    const two = renderPlateSubset(['apertural', 'iso'], 520);
+    doc.addImage(two.toDataURL('image/jpeg', 0.92), 'JPEG', sx, 39, sw, sw / 2);
+
+    // Perfil del borde: activador e inhibidor (o sustrato) en ese instante
+    let yy = 39 + sw / 2 + 7;
+    heading(t('pig.profile'), yy, sx);
+    doc.setFont('helvetica', 'normal').setFontSize(8).setTextColor(...muted);
+    const atLines = doc.splitTextToSize(pdfSafe(t('ex.pdf.profile.at', Math.round((100 * row) / (PATTERN_ROWS - 1)))), sw);
+    doc.text(atLines, sx, yy + 4.5);
+    const ph = 36, py = yy + 4.5 + atLines.length * 3.4;
+    const pc = document.createElement('canvas');
+    drawProfileOn(pc, row, getComputedStyle(document.documentElement), { width: Math.round(sw * 4), height: ph * 4, scale: 2, colors: LIGHT_COLORS });
+    doc.setFillColor(241, 238, 230).rect(sx, py, sw, ph, 'F');
+    doc.addImage(pc.toDataURL('image/png'), 'PNG', sx, py, sw, ph);
+    // Leyenda
+    let lx = sx, ly = py + ph + 4.5;
+    const legend = (label, color, dash, width) => {
+      doc.setDrawColor(...color).setLineWidth(width).setLineDashPattern(dash, 0).line(lx, ly - 1, lx + 6, ly - 1);
+      doc.setLineDashPattern([], 0);
+      doc.setFont('helvetica', 'normal').setFontSize(7.5).setTextColor(...dark);
+      doc.text(label, lx + 7.5, ly);
+      lx += 7.5 + doc.getTextWidth(pdfSafe(label)) + 5;
+    };
+    legend(t('pig.profile.a'), dark, [], 0.5);
+    legend(t(pattern.model === 'AS' ? 'pig.profile.b' : 'pig.profile.h'), accent, [1.2, 0.8], 0.4);
+    legend(t('pig.profile.threshold'), muted, [0.4, 0.6], 0.3);
+    doc.setFontSize(7).setTextColor(...muted);
+    doc.text(t('ex.pdf.profile.note'), sx, ly + 4, { maxWidth: sw });
+
+    yy = ly + 13;
+    heading(t('ex.pdf.constants'), yy, sx);
+    const sym = { Da: 'Da', D2: pattern.model === 'AS' ? 'Db' : 'Dh', ra: 'ra', r2: pattern.model === 'AS' ? 'rb' : 'rh', kappa: 'kappa', ba: 'ba', b2: pattern.model === 'AS' ? 'bb' : 'bh', globalCtl: 'g' };
+    const name = (k) => tParam(k === 'D2' || k === 'r2' || k === 'b2' ? `${k}.${pattern.model}` : k).name;
+    const rows = Object.keys(sym)
+      .filter((k) => k !== 'globalCtl' || pattern.model === 'AS')
+      .map((k) => [`${sym[k]} · ${name(k)}`, sig(pattern[k])]);
+    rows.push(
+      [`N · ${t('ex.pdf.cells')}`, Math.round(PATTERN_CELLS / pattern.size)],
+      [`T · ${tParam('pT').name}`, Math.round(pattern.T)],
+      [`σ · ${tParam('pNoise').name}`, f(pattern.noise, 2)],
+      [tParam('pAmount').name, f(pattern.amount, 2)],
+      [t('pig.insertion'), t(pattern.insertion ? 'ex.yes' : 'ex.no')],
+      [t('pig.seed'), pattern.seed],
+    );
+    rowsTable(rows, sx, yy + 6.5, sw - 22, 22);
+    footer();
+  }
+
+  // Página de ecuaciones (opcional): forma general y con los valores actuales
+  if ($('exEq').checked) {
+    doc.addPage();
+    header();
+    doc.setFont('helvetica', 'bold').setFontSize(17).setTextColor(...dark);
+    doc.text(t('ex.pdf.eq'), M, 24);
+    let y = 34;
+    let MJ = null;
+    try {
+      MJ = await loadSvgMath();
+    } catch (err) {
+      console.warn(err);
+    }
+    if (!MJ) {
+      doc.setFont('helvetica', 'normal').setFontSize(10).setTextColor(...muted);
+      doc.text(t('ex.pdf.eq.fail'), M, y, { maxWidth: W });
+    } else {
+      const blocks = [[t('ex.pdf.eq.raup'), 'raup', t('ex.pdf.eq.noteRaup')]];
+      if (colourShown()) blocks.push([t('ex.pdf.eq.mein'), 'meinhardt', t('eq.mein.note')]);
+      const EX_MM = 1.7;
+      const newPageIfNeeded = (h) => {
+        if (y + h <= 278) return;
+        footer();
+        doc.addPage();
+        header();
+        y = 22;
+      };
+      for (const [title, view, note] of blocks) {
+        newPageIfNeeded(20);
+        heading(title, y);
+        y += 6;
+        for (const [sub, tex] of [[t('eq.general'), generalTeX(view)], [t('eq.live'), liveTeX(view)]]) {
+          newPageIfNeeded(14);
+          doc.setFont('helvetica', 'bold').setFontSize(9).setTextColor(...dark);
+          doc.text(sub, M, y);
+          y += 3;
+          for (const piece of displayPieces(tex)) {
+            const img = await texToImage(MJ, piece, EX_MM * 12);
+            let w = img.wEx * EX_MM, h = img.hEx * EX_MM;
+            if (w > W - 6) { h *= (W - 6) / w; w = W - 6; }
+            newPageIfNeeded(h + 2);
+            doc.addImage(img.url, 'PNG', M + 4, y, w, h);
+            y += h + 2.5;
+          }
+          y += 3;
+        }
+        doc.setFont('helvetica', 'normal').setFontSize(8).setTextColor(...muted);
+        const lines = doc.splitTextToSize(pdfSafe(note), W);
+        newPageIfNeeded(lines.length * 3.6);
+        doc.text(lines, M, y);
+        y += lines.length * 3.6 + 9;
+      }
+    }
+    footer();
+  }
+
+  doc.save(`${fileStem()}.pdf`);
+}
+
+/** Separa un bloque TeX con varias fórmulas \[ … \] en sus piezas. */
+function displayPieces(tex) {
+  return [...tex.matchAll(/\\\[([\s\S]*?)\\\]/g)].map((m) => m[1].trim());
+}
+
+// MathJax con salida SVG en un iframe aparte (la página usa la salida CHTML, que no
+// se puede convertir en imagen); se carga solo al exportar las ecuaciones
+let svgMathPromise = null;
+function loadSvgMath() {
+  svgMathPromise ??= new Promise((resolve, reject) => {
+    const frame = document.createElement('iframe');
+    frame.setAttribute('aria-hidden', 'true');
+    frame.style.cssText = 'position:fixed;left:-9999px;width:10px;height:10px;border:0;visibility:hidden';
+    frame.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><script>window.MathJax={svg:{fontCache:'none'},startup:{typeset:false}};<\/script><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"><\/script></head><body></body></html>`;
+    const t0 = performance.now();
+    const wait = () => {
+      const MJ = frame.contentWindow?.MathJax;
+      if (MJ?.startup?.promise && MJ.tex2svgPromise) MJ.startup.promise.then(() => resolve(MJ), reject);
+      else if (performance.now() - t0 > 20000) reject(new Error('MathJax SVG'));
+      else setTimeout(wait, 100);
+    };
+    frame.onload = wait;
+    document.body.append(frame);
+  }).catch((err) => {
+    svgMathPromise = null;
+    throw err;
+  });
+  return svgMathPromise;
+}
+
+/** Compone una fórmula en SVG y la pasa a PNG. Devuelve también su tamaño en ex. */
+async function texToImage(MJ, tex, exPx) {
+  const node = await MJ.tex2svgPromise(tex, { display: true });
+  const svg = node.querySelector('svg');
+  const wEx = parseFloat(svg.getAttribute('width'));
+  const hEx = parseFloat(svg.getAttribute('height'));
+  svg.setAttribute('width', `${wEx * exPx}px`);
+  svg.setAttribute('height', `${hEx * exPx}px`);
+  svg.setAttribute('style', 'color:#1c2430');
+  if (!svg.getAttribute('xmlns')) svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  const xml = new XMLSerializer().serializeToString(svg);
+  const img = new Image();
+  img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(xml)}`;
+  await img.decode();
+  const c = document.createElement('canvas');
+  c.width = Math.ceil(wEx * exPx);
+  c.height = Math.ceil(hEx * exPx);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return { url: c.toDataURL('image/png'), wEx, hEx };
+}
+
+/** Algunas vistas de la lámina, en una fila (para la página del patrón). */
+function renderPlateSubset(names, tile) {
+  const saved = PLATE_VIEWS.slice();
+  PLATE_VIEWS.splice(0, PLATE_VIEWS.length, ...names);
+  try {
+    const full = renderPlate({ tile, background: '#ffffff', labels: true });
+    const out = document.createElement('canvas');
+    out.width = names.length * tile;
+    out.height = full.height / 2;
+    out.getContext('2d').drawImage(full, 0, 0);
+    return out;
+  } finally {
+    PLATE_VIEWS.splice(0, PLATE_VIEWS.length, ...saved);
+  }
+}
+
+// --- Ventana ------------------------------------------------------------------
+
+function openExport() {
+  // Por defecto, el eje se exporta si está visible en la vista 3D
+  $('exAxis').checked = $('showAxis').checked;
+  $('exLinesNote').hidden = state.mode !== 'lines';
+  $('exPatternCard').classList.toggle('disabled', !(pattern.on && patternValues));
+  $('exPattern').disabled = !(pattern.on && patternValues);
+  $('exPatternNone').hidden = pattern.on && !!patternValues;
+  if (!exportDlg.open) exportDlg.showModal();
+  updatePrintDims();
+  requestAnimationFrame(updatePlatePreview);
+}
+
+$('openExport').addEventListener('click', openExport);
+$('closeExport').addEventListener('click', () => exportDlg.close());
+exportDlg.addEventListener('click', (e) => {
+  if (e.target === exportDlg) exportDlg.close();
+});
+$('exBg').addEventListener('change', updatePlatePreview);
+$('exAxis').addEventListener('change', updatePlatePreview);
+$('exLabels').addEventListener('change', updatePlatePreview);
+for (const id of ['exSize', 'exWall']) $(id).addEventListener('input', updatePrintDims);
+
+$('exPng').addEventListener('click', (e) => busy(e.currentTarget, () => {
+  download(renderCurrentView(parseFloat($('exRes').value)), `${fileStem()}.png`);
+}));
+$('exPlate').addEventListener('click', (e) => busy(e.currentTarget, () => {
+  const c = renderPlate({ tile: 900, background: plateBackground(), labels: $('exLabels').checked });
+  download(c.toDataURL('image/png'), `${fileStem()}_views.png`);
+}));
+$('exPdf').addEventListener('click', (e) => busy(e.currentTarget, exportPDF));
+$('exStl').addEventListener('click', (e) => busy(e.currentTarget, () => {
+  downloadBlob(toSTL(printMesh(), shellName()), 'model/stl', `${fileStem()}_${printOptions().size}mm.stl`);
+}));
+$('ex3mf').addEventListener('click', (e) => busy(e.currentTarget, async () => {
+  downloadBlob(await to3MF(printMesh(), shellName()), 'model/3mf', `${fileStem()}_${printOptions().size}mm.3mf`);
+}));
+$('exGlb').addEventListener('click', (e) => busy(e.currentTarget, exportGLB));
+$('exPattern').addEventListener('click', () => {
+  if (patternValues) download(patternCanvas.toDataURL('image/png'), `meinhardt_${pattern.preset}_seed${pattern.seed}.png`);
 });
 
 // ---------------------------------------------------------------------------
@@ -1175,6 +1891,7 @@ function colorize(values, base, pigment, amount, out) {
 function paintPattern() {
   if (!patternValues) return;
   colorize(patternValues, pattern.base, pattern.pigment, pattern.amount, patternPixels);
+  patternVersion++;
   patternTex.needsUpdate = true;
   patternCanvas.getContext('2d').putImageData(patternImage, 0, 0);
   drawSpacetime();
@@ -1182,7 +1899,97 @@ function paintPattern() {
   updatePatternMessage();
 }
 
+// ---------------------------------------------------------------------------
+// Dos formas de dibujar el registro:
+// - «En el tiempo» (diagrama de Meinhardt): cada fila es el mismo intervalo de
+//   tiempo y cada vuelta ocupa la misma altura; el borde se normaliza a lo ancho.
+// - «Concha desenrollada»: cada fila mide lo que el borde en ese instante y tiene
+//   la altura del crecimiento que registra. En una espiral logarítmica el tamaño
+//   g = W^(θ/2π) crece a la vez que la distancia recorrida desde el ápice (∝ g),
+//   así que la superficie desenrollada es un abanico de lados rectos que se abre
+//   desde el ápice, con la proporción alto/ancho de la concha.
+// ---------------------------------------------------------------------------
+
+let stView = 'time';
+let stRect = { ox: 0, oy: 0, dw: 1, dh: 1 }; // zona dibujada, en píxeles CSS
+let patternVersion = 0;
+let unrolledCache = { key: '', canvas: null };
+
+/** Proporción de la concha desenrollada y tamaño relativo del ápice (g0). */
+function unrolledGeometry() {
+  const W = Math.max(state.W, 1.0001), N = state.turns;
+  const k = Math.log(W) / (2 * Math.PI);
+  const rc = (1 + state.D) / 2, a = (1 - state.D) / 2, b = state.S * a;
+  // Perímetro de la apertura (aproximación de Ramanujan) y avance de su centro por radián
+  const P = Math.PI * (3 * (a + b) - Math.sqrt((3 * a + b) * (a + 3 * b)));
+  const v = rc * Math.sqrt(1 + k * k * (1 + state.T * state.T));
+  const g0 = Math.exp(-2 * Math.PI * N * k);
+  return { k, N, g0, aspect: (v * (1 - g0)) / (k * P) };
+}
+
+/** Fila del registro → posición vertical (0 = ápice, 1 = apertura) en la vista actual. */
+function rowToFrac(row) {
+  if (stView === 'time') return (row + 0.5) / PATTERN_ROWS;
+  const { k, N, g0 } = unrolledGeometry();
+  const g = Math.exp(-2 * Math.PI * N * k * (1 - row / (PATTERN_ROWS - 1)));
+  return (g - g0) / (1 - g0);
+}
+
+function fracToRow(f) {
+  if (stView === 'time') return Math.round(f * (PATTERN_ROWS - 1));
+  const { k, N, g0 } = unrolledGeometry();
+  const g = g0 + f * (1 - g0);
+  const row = Math.round((PATTERN_ROWS - 1) * (1 + Math.log(g) / (2 * Math.PI * N * k)));
+  return Math.min(PATTERN_ROWS - 1, Math.max(0, row));
+}
+
+/** Imagen de la concha desenrollada (se promedian las columnas que cubre cada píxel). */
+function unrolledImage(wpx, hpx) {
+  const key = `${patternVersion}|${state.W}|${state.turns}|${wpx}|${hpx}`;
+  if (unrolledCache.key === key) return unrolledCache.canvas;
+  const { k, N, g0 } = unrolledGeometry();
+  const img = new ImageData(wpx, hpx);
+  const out = img.data;
+  const src = patternPixels;
+  for (let y = 0; y < hpx; y++) {
+    const g = g0 + ((1 - g0) * (y + 0.5)) / hpx;
+    const row = Math.min(PATTERN_ROWS - 1, Math.max(0, Math.round((PATTERN_ROWS - 1) * (1 + Math.log(g) / (2 * Math.PI * N * k)))));
+    const rw = wpx * g;
+    const x0 = (wpx - rw) / 2;
+    const xs = Math.max(0, Math.floor(x0)), xe = Math.min(wpx, Math.ceil(x0 + rw));
+    for (let x = xs; x < xe; x++) {
+      const u0 = Math.max(0, (x - x0) / rw), u1 = Math.min(1, (x + 1 - x0) / rw);
+      if (u1 <= u0) continue;
+      const c0 = Math.floor(u0 * PATTERN_WIDTH);
+      const c1 = Math.max(c0 + 1, Math.min(PATTERN_WIDTH, Math.ceil(u1 * PATTERN_WIDTH)));
+      let r = 0, gg = 0, bb = 0;
+      for (let c = c0; c < c1; c++) {
+        const si = (row * PATTERN_WIDTH + c) * 4;
+        r += src[si]; gg += src[si + 1]; bb += src[si + 2];
+      }
+      const n = c1 - c0, di = (y * wpx + x) * 4;
+      out[di] = r / n; out[di + 1] = gg / n; out[di + 2] = bb / n;
+      out[di + 3] = 255 * Math.min(1, (u1 - u0) * rw); // borde del abanico suavizado
+    }
+  }
+  const c = document.createElement('canvas');
+  c.width = wpx;
+  c.height = hpx;
+  c.getContext('2d').putImageData(img, 0, 0);
+  unrolledCache = { key, canvas: c };
+  return c;
+}
+
 function drawSpacetime() {
+  // Altura del lienzo: fija en la vista temporal; con la proporción real en la desenrollada
+  let aspect = 0;
+  if (stView === 'shell') {
+    aspect = unrolledGeometry().aspect;
+    const cw = spacetime.clientWidth;
+    if (cw) spacetime.style.height = `${Math.round(Math.min(440, Math.max(170, cw * aspect)))}px`;
+  } else {
+    spacetime.style.height = '';
+  }
   const w = spacetime.clientWidth;
   const h = spacetime.clientHeight;
   // El perfil se dibuja aunque la pestaña esté oculta: también se ve sobre el visor 3D
@@ -1192,20 +1999,43 @@ function drawSpacetime() {
   spacetime.height = Math.round(h * dpr);
   const ctx = spacetime.getContext('2d');
   ctx.imageSmoothingQuality = 'high';
-  if (patternValues) ctx.drawImage(patternCanvas, 0, 0, spacetime.width, spacetime.height);
+  if (stView === 'shell') {
+    const dw = Math.min(w - 8, (h - 8) / aspect), dh = dw * aspect;
+    stRect = { ox: (w - dw) / 2, oy: (h - dh) / 2, dw, dh };
+  } else {
+    stRect = { ox: 0, oy: 0, dw: w, dh: h };
+  }
+  if (patternValues) {
+    const { ox, oy, dw, dh } = stRect;
+    if (stView === 'shell') ctx.drawImage(unrolledImage(Math.round(dw * dpr), Math.round(dh * dpr)), ox * dpr, oy * dpr);
+    else ctx.drawImage(patternCanvas, 0, 0, spacetime.width, spacetime.height);
+  }
   // En la vista avanzada se marca el instante del perfil
   if (patternValues && $('tab-pigment').dataset.pmode === 'advanced') {
     const row = profileRow ?? PATTERN_ROWS - 1;
-    const y = Math.min(spacetime.height - 1, ((row + 0.5) / PATTERN_ROWS) * spacetime.height);
+    const { ox, oy, dw, dh } = stRect;
+    const y = Math.min(spacetime.height - 1, (oy + rowToFrac(row) * dh) * dpr);
     ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
     ctx.lineWidth = 2 * dpr;
     ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(spacetime.width, y);
+    ctx.moveTo(ox * dpr, y);
+    ctx.lineTo((ox + dw) * dpr, y);
     ctx.stroke();
   }
   drawProfile();
 }
+
+function setStView(view) {
+  stView = view;
+  document.querySelectorAll('#stView [data-stview]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.stview === view)));
+  for (const [id, base] of [['stCapX', 'pig.axis.x'], ['stCapT', 'pig.axis.t'], ['stNote', 'pig.st.note']]) {
+    const el = $(id);
+    el.dataset.i18n = id === 'stNote' ? `${base}.${view}` : view === 'shell' ? `${base}.shell` : base;
+    el.textContent = t(el.dataset.i18n);
+  }
+  drawSpacetime();
+}
+document.querySelectorAll('#stView [data-stview]').forEach((b) => b.addEventListener('click', () => setStView(b.dataset.stview)));
 new ResizeObserver(drawSpacetime).observe(spacetime);
 
 /**
@@ -1234,11 +2064,13 @@ function drawProfile() {
   if (has) drawProfileOn($('profileOv'), row, css);
 }
 
-function drawProfileOn(canvas, row, css) {
-  const w = canvas.clientWidth;
-  const h = canvas.clientHeight;
+/** @param {object} [off] para dibujar fuera de pantalla (PDF): { width, height, scale, colors } */
+function drawProfileOn(canvas, row, css, off) {
+  const w = off ? off.width : canvas.clientWidth;
+  const h = off ? off.height : canvas.clientHeight;
   if (!w || !h) return;
-  const dpr = Math.min(window.devicePixelRatio, 2);
+  const dpr = off ? off.scale : Math.min(window.devicePixelRatio, 2);
+  const col = (name) => off?.colors?.[name] ?? css.getPropertyValue(name).trim();
   canvas.width = Math.round(w * dpr);
   canvas.height = Math.round(h * dpr);
   const ctx = canvas.getContext('2d');
@@ -1264,7 +2096,7 @@ function drawProfileOn(canvas, row, css) {
 
   // Umbral de pigmento
   ctx.setLineDash([2, 3]);
-  ctx.strokeStyle = css.getPropertyValue('--muted').trim();
+  ctx.strokeStyle = col('--muted');
   ctx.lineWidth = 1.2;
   ctx.beginPath();
   ctx.moveTo(0, y(threshold));
@@ -1280,8 +2112,8 @@ function drawProfileOn(canvas, row, css) {
     for (let k = 0; k < PROFILE_WIDTH; k++) ctx[k ? 'lineTo' : 'moveTo'](x(k), y(get(k)));
     ctx.stroke();
   };
-  line((k) => patternSecond[row * PROFILE_WIDTH + k], css.getPropertyValue('--accent').trim(), 1.6, [5, 3]);
-  line(aAt, css.getPropertyValue('--text').trim(), 1.8, []);
+  line((k) => patternSecond[row * PROFILE_WIDTH + k], col('--accent'), 1.6, [5, 3]);
+  line(aAt, col('--text'), 1.8, []);
   ctx.setLineDash([]);
 }
 new ResizeObserver(drawProfile).observe(profileCanvas);
@@ -1296,12 +2128,12 @@ $('ovProfileRow').addEventListener('input', (e) => {
 function pickProfileRow(e) {
   if ($('tab-pigment').dataset.pmode !== 'advanced' || !patternValues) return;
   const r = spacetime.getBoundingClientRect();
-  const f = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
-  profileRow = Math.round(f * (PATTERN_ROWS - 1));
+  const f = Math.min(1, Math.max(0, (e.clientY - r.top - stRect.oy) / stRect.dh));
+  profileRow = fracToRow(f);
   drawSpacetime();
 }
 spacetime.addEventListener('pointerdown', (e) => {
-  spacetime.setPointerCapture(e.pointerId);
+  capturePointer(spacetime, e);
   pickProfileRow(e);
 });
 spacetime.addEventListener('pointermove', (e) => {
@@ -1724,6 +2556,7 @@ function resize() {
   camera.fov = camera.aspect >= 1 ? 35 : THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(fov / 2) / camera.aspect));
   camera.updateProjectionMatrix();
   lineMat.resolution.set(w, h);
+  axisMat.resolution.set(w, h);
 }
 new ResizeObserver(resize).observe(viewport);
 resize();

@@ -21,6 +21,7 @@ js/meinhardt.js Pigmentación: modelos de reacción-difusión de Meinhardt (func
 js/pigment-worker.js  Web Worker que ejecuta meinhardt.js fuera del hilo principal
 js/presets.js   Valores de los presets de forma y de pigmentación
 js/i18n.js      Textos en inglés y español, incluido el panel About
+js/export3d.js  Impresión 3D: sólido cerrado con pared de grosor real, STL binario y 3MF (ZIP propio)
 js/main.js      Escena, interfaz, vistas, gizmo, morfoespacio, fórmulas, exportación y URL
 LICENSE         CC BY-NC 4.0
 ```
@@ -69,6 +70,8 @@ En `main.js`, el resultado se colorea con un **umbral de pigmentación**, como e
 
 Con el patrón activo, el material sólido usa la textura en lugar del color y de las bandas por vértice; al desactivarlo vuelve el color sólido.
 
+- **Coordenada u a lo largo del borde.** `raup.js` asigna u por longitud de arco de la elipse, no por el ángulo φ, así que las células quedan igual de espaciadas sobre el borde real también con S ≠ 1. La coordenada v es uniforme en θ, igual que las filas del registro: una espiral logarítmica a ritmo angular constante es un crecimiento a tasa relativa constante.
+- **Dos vistas del registro.** *En el tiempo* dibuja `patternCanvas` tal cual: cada vuelta con la misma altura y cada fila normalizada a lo ancho. *Concha desenrollada* (`unrolledImage`) dibuja cada fila con anchura ∝ g = W^(θ/2π) y en la altura ∝ g − g0, porque la distancia recorrida desde el ápice también es ∝ g. El resultado es un abanico de lados rectos con proporción alto/ancho v·(1 − g0)/(k·P), siendo k = ln W/2π, v el avance del centro de la apertura por radián y P su perímetro. Es aproximado: la cara externa de la vuelta crece más deprisa que la interna. `rowToFrac` y `fracToRow` convierten entre fila y altura para el marcador del perfil.
 - **Perfil del borde.** `simulatePattern` devuelve también la segunda sustancia (`second`, `rows × PROFILE_WIDTH`, relativa a su máximo). En la vista avanzada, pinchar o arrastrar sobre el registro espacio-tiempo elige un instante; un lienzo dibuja ahí el activador, la segunda sustancia y el umbral de pigmento, y sombrea la zona pigmentada.
 - **Flujo de la pestaña.** Entrar en la pestaña de pigmento pasa a modo sólido (sin líneas), pero la concha sigue en color liso: el patrón lo elige el usuario. Una galería muestra la opción de color sólido y cada preset con una miniatura real, calculada una sola vez en un *worker* aparte.
 - **Vista simple y avanzada.** Son excluyentes: la avanzada muestra las mismas magnitudes que la simple más el modelo, sus constantes y la inserción de células, así que desde ahí se controla todo. Al cambiar de modelo se cargan las constantes de su preset de referencia (`MODEL_REFERENCE` en `presets.js`), manteniendo colores, tamaño y cantidad.
@@ -90,7 +93,11 @@ Con el patrón activo, el material sólido usa la textura en lugar del color y d
 ## Interfaz
 
 - **Parámetros.** `createParam` genera cada control (slider y casilla numérica sincronizados). W tiene escala lineal (1–10) o logarítmica (1–10⁴), y pasa sola a la logarítmica cuando su valor supera 10.
-- **Morfoespacio.** Es un `<canvas>` 2D con eje W logarítmico, la curva D = 1/W y regiones aproximadas. `drawMorphoOn(canvas)` lo dibuja tanto en la barra lateral como en el visor, y solo donde está visible.
+- **Morfoespacio.** Es un `<canvas>` 2D con eje W logarítmico (1–10 o 1–10⁴, `MORPHO.logMax`), la curva D = 1/W y regiones aproximadas. `drawMorphoOn(canvas)` lo dibuja en la barra lateral y en el visor, solo donde está visible.
+  - **Curva de contacto.** Para T = 0, el borde interno de una vuelta queda a distancia g·D del eje y el externo de la vuelta anterior a g/W, así que se tocan exactamente cuando D = 1/W, para cualquier S. Comprobado numéricamente con `buildShell`.
+  - **Regiones.** Son polígonos en (log W, D) que parten de D = 0. Gasterópodos y bivalvos son semielipses; ammonoideos y nautiloideos, una banda por debajo de D = 1/W (vueltas en contacto o solapadas). Son aproximadas: no reproducen contornos numéricos publicados.
+  - **Corte del cubo.** Como el plano es un corte con el T actual, cada región tiene `tOk(T)`. Las que no cumplen se dibujan atenuadas.
+  - **Interacción.** Los nombres son enlaces (`labelBoxes`) que cargan el preset típico del grupo; pinchar en el resto solo cambia W y D.
 - **Gráficos superpuestos.** El menú *Graphs* de la barra del visor (un `<details>`) activa dos paneles sobre la vista 3D, desactivados por defecto: el morfoespacio (interactivo) y el perfil del borde, con un slider que elige el instante (`profileRow`, compartido con la vista avanzada). `drawProfileOn(canvas, row)` dibuja el perfil en cualquiera de los dos lienzos. El modo *Hide info* también los oculta.
 - **Fórmulas.** MathJax se configura con `startup.typeset: false` y cada fórmula se compone cuando su panel se hace visible, mediante una cola de promesas para que no se solapen dos composiciones.
 - **Idiomas.** `js/i18n.js` contiene todos los textos. En el HTML, los atributos `data-i18n`, `data-i18n-html` y `data-i18n-title` indican qué traducir; el resto (parámetros, presets, morfoespacio, gráficos) se traduce desde `main.js`. La página se abre siempre en inglés.
@@ -100,8 +107,24 @@ Con el patrón activo, el material sólido usa la textura en lugar del color y d
 
 ## Exportación
 
-- **PNG.** Se renderiza un fotograma y se lee el lienzo con `toDataURL`.
-- **STL.** `STLExporter` en binario, escalado para que la concha mida 80 mm. La apertura queda abierta, así que la malla no es estanca; algunos programas de impresión 3D pueden pedir repararla.
+Todo se hace desde una ventana (`#exportDlg`) en el navegador, sin servidor.
+
+- **PNG de la vista actual.** Se renderiza un fotograma con el `pixelRatio` multiplicado (×1, ×2 o ×4, hasta 8192 px) y se lee el lienzo con `toDataURL` en la misma tarea, así que no hace falta `preserveDrawingBuffer`.
+- **Lámina de vistas estándar** (`renderPlate`). Seis vistas (apertural, dorsal, apical, umbilical, perfil y 3/4) con `OrthographicCamera`. Cada encuadre se ajusta proyectando los vértices sobre el plano de la cámara. En las vistas apical y umbilical el vector `up` deja la apertura abajo. Durante el render se oculta el suelo, se mueve la luz principal a arriba a la izquierda del observador y luego se restaura todo.
+- **PDF** (`exportPDF`). jsPDF 2.5.1 (UMD) se carga desde jsDelivr solo al pedirlo. Página 1: lámina, parámetros, valores derivados, morfoespacio (dibujado fuera de pantalla con `drawMorphoOn(canvas, { width, height, scale, colors })` y la paleta clara) y un enlace con el *hash* actual. Página 2, si hay patrón: registro espacio-tiempo con ejes y el instante marcado, dos vistas pigmentadas, el perfil del borde (`drawProfileOn` fuera de pantalla) y las constantes. Página de ecuaciones, opcional (`#exEq`): `generalTeX(view)` y `liveTeX(view)` se componen con MathJax en SVG dentro de un iframe aparte (la página usa CHTML, que no se puede rasterizar) y se pasan a PNG a unos 300 ppp. Las fuentes estándar del PDF solo cubren Latin-1, así que `pdfSafe` sustituye flechas, rayas y letras griegas.
+- **Impresión 3D** (`js/export3d.js`). `buildPrintMesh` reconstruye la concha a resolución de impresión (160 segmentos por vuelta como máximo y 900 filas en total, 96 alrededor de la apertura) y la convierte en un sólido cerrado:
+  - pared interior desplazada hacia dentro a lo largo de la normal, con el grosor limitado al 45 % del radio menor de cada anillo (cerca del ápice el tubo queda macizo);
+  - anillos que cierran la apertura y el ápice;
+  - en los anillos de los extremos, la pared se desplaza dentro del plano del anillo (normal de Newell), así que el labio de la apertura y el cierre del ápice son planos;
+  - como el tubo se ensancha, la pared interior se recorta contra los planos de los extremos en los 60° de tubo más próximos a cada uno (solo ahí: esos planos contienen el eje y cortan las demás vueltas);
+  - orientación coherente por construcción y sentido global elegido por el signo del volumen;
+  - al final se reescala para que la dimensión mayor sea exactamente la pedida. Con paredes muy gruesas sobre valvas muy curvadas, la pared interior sobresale hasta un 0,6 %.
+
+  Coordenadas en mm, con z = eje de enrollamiento (ápice arriba) y base en z = 0. `checkClosed` comprueba que cada arista la recorren dos triángulos en sentidos opuestos. Probado con los 8 presets y con casos extremos (W 1,01 y 10⁴, D 0,9, T 10, S 0,5 y 2, N 0,25 y 20, valva especular), paredes de 0,4, 1,2 y 6 mm y tamaños de 30, 80 y 250 mm: 162 casos cerrados, con volumen positivo, la dimensión pedida y la base en z = 0. El 3MF es un ZIP escrito a mano, comprimido con `CompressionStream('deflate-raw')` si existe. Las vueltas de Raup se solapan entre sí: los programas de laminado unen los volúmenes superpuestos.
+- **GLB** (`GLTFExporter`, importado al pedirlo). Exporta la superficie con su material (color, bandas o textura del patrón) como doble cara. El color por vértice solo se incluye si se usa, porque en glTF multiplica siempre la textura. En los modos *Lines* y *Both* añade las líneas como `LineSegments`.
+- **Modo de solo líneas.** `colourShown()` es falso en modo *Lines*. Entonces el PDF omite la página de pigmentación y las ecuaciones de Meinhardt, y el GLB lleva solo las líneas.
+- **Eje en la exportación.** `withExportAxis` muestra u oculta el eje según `#exAxis` mientras se renderiza la imagen, la lámina o el PDF. El eje es un `Line2` con `LineMaterial` discontinuo; su grosor en píxeles es `state.axisWidth`, que vale 1 por defecto.
+- **Registro espacio-tiempo.** El lienzo del patrón en PNG.
 
 ## Ejecución local
 

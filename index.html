@@ -92,6 +92,10 @@
       <details class="drawer" id="morphoDrawer">
         <summary><span data-i18n="morpho.title">Morphospace W – D</span></summary>
         <div class="drawer-body">
+          <div class="segmented wscale" role="group" data-i18n-title="morpho.scale">
+            <button type="button" data-wscale="1" aria-pressed="false">W 1–10</button>
+            <button type="button" data-wscale="4" aria-pressed="true">W 1–10⁴</button>
+          </div>
           <canvas id="morpho" class="morpho" height="210"></canvas>
           <p class="note" data-i18n="morpho.hint">Click or drag to choose W and D.</p>
         </div>
@@ -131,6 +135,7 @@
             <label class="toggle"><input type="checkbox" id="hideHidden" checked /><span data-i18n="look.hideHidden">Hide back lines</span></label>
             <label class="toggle"><input type="checkbox" id="bands" checked /><span data-i18n="look.bands">Growth bands (solid)</span></label>
             <label class="toggle"><input type="checkbox" id="showAxis" /><span data-i18n="look.axis">Show coiling axis</span></label>
+            <div id="axis-params" class="sub-params" hidden></div>
             <label class="toggle"><input type="checkbox" id="autoRotate" /><span data-i18n="look.autoRotate">Auto-rotate</span></label>
           </div>
         </div>
@@ -153,11 +158,16 @@
               <h2 class="panel-title" data-i18n="pig.spacetime">Space–time record</h2>
               <span class="status" id="patternStatus" hidden data-i18n="pig.computing">Computing…</span>
             </div>
+            <div class="segmented two st-view" id="stView" role="radiogroup" data-i18n-title="pig.st.view">
+              <button type="button" data-stview="time" aria-pressed="true" data-i18n="pig.st.time">In time</button>
+              <button type="button" data-stview="shell" aria-pressed="false" data-i18n="pig.st.shell">Unrolled shell</button>
+            </div>
             <canvas id="spacetime" class="spacetime"></canvas>
             <div class="axis-caption">
-              <span data-i18n="pig.axis.x">← aperture margin (x) →</span>
-              <span data-i18n="pig.axis.t">apex → aperture (time)</span>
+              <span id="stCapX" data-i18n="pig.axis.x">← aperture margin (x) →</span>
+              <span id="stCapT" data-i18n="pig.axis.t">apex → aperture (time)</span>
             </div>
+            <p class="note" id="stNote" data-i18n="pig.st.note.time"></p>
             <p class="pattern-msg" id="patternMsg" hidden></p>
           </section>
 
@@ -225,10 +235,11 @@
 
       <section class="panel">
         <h2 class="panel-title" data-i18n="export.title">Export</h2>
-        <div class="actions">
-          <button type="button" class="btn" id="savePng" data-i18n="export.png">Save PNG</button>
-          <button type="button" class="btn" id="saveStl" data-i18n="export.stl" data-i18n-title="export.stl.hint">STL (80 mm)</button>
-        </div>
+        <button type="button" class="btn btn-wide" id="openExport">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v9M6 8l4 4 4-4M4 14v2.5h12V14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span data-i18n="ex.open">Export…</span>
+        </button>
+        <p class="note" data-i18n="ex.open.hint"></p>
       </section>
 
       <footer class="refs">
@@ -306,7 +317,13 @@
 
         <div class="overlays" id="overlays">
           <section class="overlay" id="ovMorpho" hidden>
-            <h3 data-i18n="morpho.title">Morphospace W – D</h3>
+            <div class="panel-row">
+              <h3 data-i18n="morpho.title">Morphospace W – D</h3>
+              <div class="segmented wscale" role="group" data-i18n-title="morpho.scale">
+            <button type="button" data-wscale="1" aria-pressed="false">W 1–10</button>
+            <button type="button" data-wscale="4" aria-pressed="true">W 1–10⁴</button>
+          </div>
+            </div>
             <canvas id="morphoOv" class="morpho"></canvas>
           </section>
           <section class="overlay" id="ovProfile" hidden>
@@ -358,6 +375,87 @@
       <div class="info-page" data-page="raup" role="tabpanel" data-i18n-html="info.raup"></div>
       <div class="info-page" data-page="meinhardt" role="tabpanel" data-i18n-html="info.meinhardt" hidden></div>
       <div class="info-page" data-page="app" role="tabpanel" data-i18n-html="info.app" hidden></div>
+    </div>
+  </dialog>
+
+  <dialog class="info export" id="exportDlg" aria-labelledby="exportTitle">
+    <div class="info-head">
+      <h2 id="exportTitle" data-i18n="ex.title">Export</h2>
+      <button type="button" class="icon-btn" id="closeExport" data-i18n-title="info.close">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="info-body export-body">
+      <div class="ex-options wide">
+        <label class="toggle"><input type="checkbox" id="exAxis" /><span data-i18n="ex.axis">Show the coiling axis</span></label>
+        <p class="note" data-i18n="ex.axis.hint"></p>
+        <p class="note warn" id="exLinesNote" data-i18n="ex.linesOnly" hidden></p>
+      </div>
+      <section class="ex-card wide">
+        <div class="ex-head">
+          <h3 data-i18n="ex.plate">Standard views plate</h3>
+        </div>
+        <img id="exPlatePreview" class="ex-preview" alt="" />
+        <p class="note" data-i18n="ex.plate.desc"></p>
+        <div class="ex-row">
+          <label class="field"><span data-i18n="ex.bg">Background</span>
+            <select id="exBg" class="select">
+              <option value="white" data-i18n="ex.bg.white">White</option>
+              <option value="current" data-i18n="ex.bg.current">Current colour</option>
+            </select>
+          </label>
+          <label class="toggle"><input type="checkbox" id="exLabels" checked /><span data-i18n="ex.labels">Name each view</span></label>
+          <button type="button" class="btn primary" id="exPlate" data-i18n="ex.png">Download PNG</button>
+        </div>
+      </section>
+
+      <section class="ex-card">
+        <h3 data-i18n="ex.pdf">PDF sheet</h3>
+        <p class="note" data-i18n="ex.pdf.desc"></p>
+        <label class="toggle"><input type="checkbox" id="exEq" checked /><span data-i18n="ex.eq">Include the model equations</span></label>
+        <button type="button" class="btn primary" id="exPdf" data-i18n="ex.pdf.btn">Download PDF</button>
+      </section>
+
+      <section class="ex-card">
+        <h3 data-i18n="ex.image">Image of the current view</h3>
+        <p class="note" data-i18n="ex.image.desc"></p>
+        <label class="field"><span data-i18n="ex.res">Resolution</span>
+          <select id="exRes" class="select">
+            <option value="1" data-i18n="ex.res.1">Screen</option>
+            <option value="2" selected data-i18n="ex.res.2">Double</option>
+            <option value="4" data-i18n="ex.res.4">Quadruple (print)</option>
+          </select>
+        </label>
+        <button type="button" class="btn primary" id="exPng" data-i18n="ex.png">Download PNG</button>
+      </section>
+
+      <section class="ex-card wide">
+        <h3 data-i18n="ex.print">3D printing</h3>
+        <p class="note" data-i18n="ex.print.desc"></p>
+        <div class="ex-row">
+          <label class="field"><span data-i18n="ex.size">Size (mm)</span><input type="number" id="exSize" class="num" min="20" max="300" step="5" value="80" /></label>
+          <label class="field"><span data-i18n="ex.wall">Wall (mm)</span><input type="number" id="exWall" class="num" min="0.4" max="6" step="0.1" value="1.2" /></label>
+          <span class="status" id="exDims"></span>
+        </div>
+        <div class="ex-row">
+          <button type="button" class="btn primary" id="exStl" data-i18n="ex.stl">Download STL</button>
+          <button type="button" class="btn primary" id="ex3mf" data-i18n="ex.3mf">Download 3MF</button>
+        </div>
+        <div class="recipes" data-i18n-html="ex.print.tips"></div>
+      </section>
+
+      <section class="ex-card">
+        <h3 data-i18n="ex.glb">3D model with colour</h3>
+        <p class="note" data-i18n="ex.glb.desc"></p>
+        <button type="button" class="btn primary" id="exGlb" data-i18n="ex.glb.btn">Download GLB</button>
+      </section>
+
+      <section class="ex-card" id="exPatternCard">
+        <h3 data-i18n="pig.spacetime">Space–time record</h3>
+        <p class="note" data-i18n="ex.pattern.desc"></p>
+        <p class="note warn" id="exPatternNone" data-i18n="ex.pattern.none" hidden></p>
+        <button type="button" class="btn primary" id="exPattern" data-i18n="ex.png">Download PNG</button>
+      </section>
     </div>
   </dialog>
 

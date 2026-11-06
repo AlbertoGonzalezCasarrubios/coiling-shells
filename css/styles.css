@@ -638,3 +638,38 @@ div.adv-only.insertion { gap: 4px; }
   .overlay { padding: 6px 8px 8px; }
   .overlay .profile { height: 70px; }
 }
+
+/* ---------- Ventana de exportación ---------- */
+.info.export { width: min(920px, calc(100vw - 32px)); }
+.export-body { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding-top: 14px; }
+.ex-card {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2);
+}
+.ex-card.wide { grid-column: 1 / -1; }
+.ex-card h3 { margin: 0; }
+.ex-card .note { font-size: 12.5px; line-height: 1.5; }
+.ex-card .btn.primary { align-self: flex-start; }
+.ex-card.disabled .btn.primary { opacity: 0.5; cursor: not-allowed; }
+.ex-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 16px; }
+.ex-row .field { min-width: 120px; }
+.ex-row .num { width: 90px; }
+.ex-row .status { align-self: center; }
+.ex-preview { width: 100%; aspect-ratio: 3 / 2.17; object-fit: contain; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.btn.primary:hover { color: var(--surface); filter: brightness(1.08); }
+.btn:disabled { opacity: 0.6; cursor: progress; }
+.note.warn { color: var(--text); background: var(--accent-soft); border-radius: 6px; padding: 6px 8px; }
+@media (max-width: 700px) {
+  .export-body { grid-template-columns: 1fr; }
+}
+
+/* Escala del eje W del morfoespacio */
+.segmented.wscale { grid-template-columns: 1fr 1fr; align-self: flex-start; padding: 2px; backdrop-filter: none; background: var(--surface-2); }
+.segmented.wscale button { font: 500 11px var(--mono); padding: 3px 8px; }
+.overlay .segmented.wscale button { padding: 2px 6px; font-size: 10px; }
+
+/* Ajuste que depende de una casilla (p. ej. el grosor del eje) */
+.sub-params { padding: 2px 0 4px 24px; }
+.ex-options { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; padding: 0 2px; }
+.st-view { margin-bottom: 8px; }
