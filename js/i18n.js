@@ -207,7 +207,7 @@ export const STRINGS = {
     'pig.model': 'Model',
     'pig.model.AI': 'Activator–inhibitor',
     'pig.model.AS': 'Activator–substrate',
-    'pig.recipes': '<strong>How to change the type of pattern</strong><ul><li><b>Bands along the spiral</b>: activator–inhibitor with a far-reaching inhibitor (D<sub>h</sub> ≫ D<sub>a</sub>) that is faster than the activator (r<sub>h</sub> &gt; r<sub>a</sub>).</li><li><b>Stripes parallel to the margin</b>: activator–inhibitor with D<sub>h</sub> ≈ 0 (far left) and a longer-lived inhibitor (r<sub>h</sub> &lt; r<sub>a</sub>).</li><li><b>Oblique lines and triangles</b>: activator–substrate with a slowly recovering substrate (small b<sub>b</sub>); global control g &gt; 0 for triangles.</li></ul>',
+    'pig.recipes': '<strong>How to change the type of pattern</strong><ul><li><b>Bands along the spiral</b>: activator–inhibitor with a far-reaching inhibitor (D<sub>h</sub> ≫ D<sub>a</sub>) that is faster than the activator (r<sub>h</sub> &gt; r<sub>a</sub>).</li><li><b>Stripes parallel to the margin</b>: activator–inhibitor with D<sub>h</sub> ≈ 0 (far left) and a longer-lived inhibitor (r<sub>h</sub> &lt; r<sub>a</sub>).</li><li><b>Oblique lines and V shapes</b>: activator–substrate without saturation (κ = 0) and a slowly recovering substrate (small b<sub>b</sub> and r<sub>b</sub>); a global control g &gt; 0 starts new waves when activity drops.</li></ul>',
     'pig.params': 'Pattern controls',
     'pig.advanced': 'Advanced: model constants',
     'pig.advanced.hint': 'Every constant of the equations. The constants span several orders of magnitude, so their sliders are logarithmic; the leftmost position is 0, which switches that term off. Near some values the pattern jumps from one type to another: these are real thresholds of the model. Changing the model loads constants that work for it.',
@@ -284,7 +284,6 @@ export const STRINGS = {
     patterns: {
       nautilus: 'Nautilus — flame stripes',
       cepaea: 'Cepaea nemoralis — spiral bands',
-      oliva: 'Oliva porphyria — tent pattern',
     },
     presets: {
       'Gasterópodos': 'Gastropods',
@@ -379,6 +378,7 @@ export const STRINGS = {
       <p>Annihilating and branching waves produce zigzags, but not the large triangles of <i>Oliva porphyria</i>, where new lines start at many places at the same time. Meinhardt and Klingler (1987) explained them with an additional substance shared by the whole animal, like a hormone. It measures the total activity of the margin: when many waves annihilate and activity drops, the signal falls, and this makes it easier for new waves to start everywhere. This app uses a simplified version of the mechanism, which acts on the basal activator production:</p>
       ${GLOBAL_TEX}
       <p>\\(c\\) follows the mean activator \\(\\langle a \\rangle\\) with a delay, and \\(g\\) sets the strength of the control. With \\(g = 0\\) there is no global signal.</p>
+      <p>This simplified version keeps waves going by starting new ones when activity drops, and draws oblique lines and V shapes. It does not reproduce the dense network of overlapping triangles of a real <i>Oliva porphyria</i>, which needs the full model of Meinhardt and Klingler; for that reason the app offers no <i>Oliva</i> preset. When you switch to the activator–substrate model in the advanced controls, it loads constants that draw travelling waves.</p>
 
       <h3>Which pattern comes from which mechanism</h3>
       <ul>
@@ -584,7 +584,7 @@ export const STRINGS = {
     'pig.model': 'Modelo',
     'pig.model.AI': 'Activador-inhibidor',
     'pig.model.AS': 'Activador-sustrato',
-    'pig.recipes': '<strong>Cómo cambiar de tipo de patrón</strong><ul><li><b>Bandas a lo largo de la espiral</b>: activador-inhibidor con un inhibidor de largo alcance (D<sub>h</sub> ≫ D<sub>a</sub>) más rápido que el activador (r<sub>h</sub> &gt; r<sub>a</sub>).</li><li><b>Rayas paralelas al borde</b>: activador-inhibidor con D<sub>h</sub> ≈ 0 (a la izquierda del todo) y un inhibidor de vida más larga (r<sub>h</sub> &lt; r<sub>a</sub>).</li><li><b>Líneas oblicuas y triángulos</b>: activador-sustrato con un sustrato que se recupera despacio (b<sub>b</sub> pequeño); control global g &gt; 0 para los triángulos.</li></ul>',
+    'pig.recipes': '<strong>Cómo cambiar de tipo de patrón</strong><ul><li><b>Bandas a lo largo de la espiral</b>: activador-inhibidor con un inhibidor de largo alcance (D<sub>h</sub> ≫ D<sub>a</sub>) más rápido que el activador (r<sub>h</sub> &gt; r<sub>a</sub>).</li><li><b>Rayas paralelas al borde</b>: activador-inhibidor con D<sub>h</sub> ≈ 0 (a la izquierda del todo) y un inhibidor de vida más larga (r<sub>h</sub> &lt; r<sub>a</sub>).</li><li><b>Líneas oblicuas y uves</b>: activador-sustrato sin saturación (κ = 0) y con un sustrato que se recupera despacio (b<sub>b</sub> y r<sub>b</sub> pequeños); un control global g &gt; 0 inicia ondas nuevas cuando la actividad baja.</li></ul>',
     'pig.params': 'Controles del patrón',
     'pig.advanced': 'Avanzado: constantes del modelo',
     'pig.advanced.hint': 'Todas las constantes de las ecuaciones. Abarcan varios órdenes de magnitud, así que sus sliders son logarítmicos; la posición de la izquierda del todo es 0 y anula ese término. Cerca de algunos valores el patrón salta de un tipo a otro: son umbrales reales del modelo. Al cambiar de modelo se cargan constantes que funcionan con él.',
@@ -661,7 +661,6 @@ export const STRINGS = {
     patterns: {
       nautilus: 'Nautilus — rayas en llama',
       cepaea: 'Cepaea nemoralis — bandas espirales',
-      oliva: 'Oliva porphyria — triángulos',
     },
     presets: {
       'Gasterópodos': 'Gasterópodos',
@@ -757,6 +756,7 @@ export const STRINGS = {
       <p>Las ondas que se aniquilan y se ramifican dan zigzags, pero no los grandes triángulos de <i>Oliva porphyria</i>, en los que aparecen líneas nuevas en muchos puntos a la vez. Meinhardt y Klingler (1987) los explicaron con una sustancia adicional compartida por todo el animal, como una hormona. Esa sustancia mide la actividad total del borde: cuando muchas ondas se aniquilan y la actividad cae, la señal baja y facilita que surjan ondas nuevas en todas partes. Esta app usa una versión simplificada del mecanismo, que actúa sobre la producción basal de activador:</p>
       ${GLOBAL_TEX}
       <p>\\(c\\) sigue con retraso al activador medio \\(\\langle a \\rangle\\), y \\(g\\) fija la intensidad del control. Con \\(g = 0\\) no hay señal global.</p>
+      <p>Esta versión simplificada mantiene las ondas iniciando otras nuevas cuando la actividad baja, y dibuja líneas oblicuas y uves. No reproduce la red densa de triángulos superpuestos de una <i>Oliva porphyria</i> real, que necesita el modelo completo de Meinhardt y Klingler; por eso la app no ofrece un preset de <i>Oliva</i>. Al cambiar al modelo activador-sustrato en los controles avanzados se cargan constantes que dibujan ondas viajeras.</p>
 
       <h3>Qué patrón sale de cada mecanismo</h3>
       <ul>

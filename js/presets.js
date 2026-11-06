@@ -48,23 +48,34 @@ export const DEFAULT_PRESET = 'caracol';
  */
 export const PATTERN_PRESETS = {
   nautilus: {
-    // Oscillation: the inhibitor outlives the activator → flame stripes parallel to the margin
-    model: 'AI', Da: 0.01, D2: 0, ra: 0.08, r2: 0.02, kappa: 0.2, ba: 0.05, b2: 0,
-    noise: 0.3, globalCtl: 0, T: 3000, insertion: true, amount: 0.62, base: '#f1e7d6', pigment: '#9c4a1f',
+    // Oscillation: the inhibitor outlives the activator, so the whole margin flashes
+    // periodically and draws stripes parallel to the growth lines. Fast rates give
+    // about ten stripes per whorl; strong saturation (κ) widens each stripe and weak
+    // coupling between cells (D_a) makes them wavy, like the flames of Nautilus.
+    model: 'AI', Da: 0.04, D2: 0, ra: 0.24, r2: 0.06, kappa: 2, ba: 0.05, b2: 0,
+    noise: 0.4, globalCtl: 0, T: 3000, insertion: true, amount: 0.8, base: '#f1e7d6', pigment: '#9c4a1f',
   },
   cepaea: {
     // Stable peaks (long-range lateral inhibition) → spiral bands
     model: 'AI', Da: 0.02, D2: 12, ra: 0.01, r2: 0.015, kappa: 0.4, ba: 0.005, b2: 0,
     noise: 0.05, globalCtl: 0, T: 3000, insertion: false, base: '#ecc95a', pigment: '#3a2216',
   },
-  oliva: {
-    // Travelling waves from substrate depletion + global control → zigzags and triangles
-    model: 'AS', Da: 0.004, D2: 0, ra: 0.05, r2: 0, kappa: 0.5, ba: 0.0005, b2: 0.02,
-    noise: 0.3, globalCtl: 0.01, T: 8000, insertion: false, amount: 0.6, base: '#e6c6b0', pigment: '#4b2a3c',
-  },
 };
 
 export const DEFAULT_PATTERN = 'nautilus';
 
-/** Reference preset of each model: its constants are loaded when the model is changed. */
-export const MODEL_REFERENCE = { AI: 'nautilus', AS: 'oliva' };
+/**
+ * Constants loaded when the model is changed in the advanced controls. The
+ * activator–substrate set is an excitable medium (no substrate saturation,
+ * slow recovery) in which the global signal starts new waves: it draws
+ * travelling waves, oblique lines and V shapes. It is not offered as a species
+ * preset: this simplified model does not reproduce the full pattern of a
+ * particular shell such as Oliva porphyria.
+ */
+export const MODEL_DEFAULTS = {
+  AI: PATTERN_PRESETS.nautilus,
+  AS: {
+    model: 'AS', Da: 0.01, D2: 0, ra: 0.05, r2: 0.002, kappa: 0, ba: 0, b2: 0.02,
+    noise: 0.4, globalCtl: 0.02, T: 8000, insertion: false, amount: 0.6, base: '#efe3cf', pigment: '#5a2d1e',
+  },
+};

@@ -17,7 +17,7 @@ Un explorador 3D interactivo de la **morfología teórica de las conchas enrolla
 
 **▶ Abrir la app: https://albertogonzalezcasarrubios.github.io/coiling-shells/**
 
-![La app mostrando una concha de Turritella dibujada con líneas, con los parámetros de Raup en la barra lateral](images/turritella-lines.png)
+![La app tal como se abre: una concha de caracol de jardín dibujada con líneas, con los parámetros de Raup en la barra lateral](images/app.png)
 
 ## Para qué sirve
 
@@ -60,7 +60,7 @@ El plano es un **corte del cubo W–D–T de Raup con el T actual**. Los grupos 
 
 Un molusco solo añade pigmento en el borde que crece, así que un patrón de concha es un **registro en el tiempo de un proceso unidimensional**: el espacio va a lo largo del borde y el tiempo, en la dirección de crecimiento. La app simula el borde con los modelos de reacción-difusión de Meinhardt y envuelve el registro espacio-tiempo resultante sobre la superficie de Raup, como hicieron Fowler, Meinhardt y Prusinkiewicz (1992).
 
-![Un caracol con bandas coloreado con el modelo activador-inhibidor, con el registro espacio-tiempo en la barra lateral y, sobre la vista 3D, el morfoespacio y el perfil del activador y el inhibidor a lo largo del borde](images/pigmentation.png)
+![Una concha de Nautilus con las rayas en llama del modelo activador-inhibidor, con el registro espacio-tiempo en la barra lateral y, sobre la vista 3D, el morfoespacio y el perfil del activador y el inhibidor a lo largo del borde](images/pigmentation.png)
 
 - **Modelo activador-inhibidor.** Un activador que se refuerza a sí mismo y un inhibidor rápido y de largo alcance dan picos estables, que dibujan bandas a lo largo de la espiral (*Cepaea nemoralis*). Si el inhibidor dura más que el activador, el borde oscila y dibuja rayas paralelas a las líneas de crecimiento (las llamas del *Nautilus*).
 
@@ -69,7 +69,9 @@ Un molusco solo añade pigmento en el borde que crece, así que un patrón de co
   ∂h/∂t = s·a² − r_h·h + D_h·∂²h/∂x² + b_h
   ```
 
-- **Modelo activador-sustrato.** El activador consume un sustrato que se recupera despacio, así que la activación avanza como ondas que dibujan líneas oblicuas y se aniquilan al encontrarse. Con control global, una señal compartida por todo el borde, forman los triángulos de *Oliva porphyria*.
+- **Modelo activador-sustrato.** El activador consume un sustrato que se recupera despacio, así que la activación avanza como ondas que dibujan líneas oblicuas y se aniquilan al encontrarse. Meinhardt y Klingler (1987) explicaron los triángulos de *Oliva porphyria* añadiendo una señal compartida por todo el borde que inicia ondas nuevas cuando la actividad baja. La app incluye una versión simplificada de ese control global, que da líneas oblicuas y uves pero no el patrón completo de *Oliva*; por eso está disponible en los controles avanzados y no como preset de una especie.
+
+Dos presets reproducen tipos de patrón reales: las rayas en llama del *Nautilus* y las bandas espirales de *Cepaea nemoralis*.
 
 Los **controles simples** fijan magnitudes reales del modelo: el número de células a lo largo del borde, el tiempo de crecimiento, la irregularidad entre células y el umbral de pigmento. Una semilla elige las diferencias al azar entre células. Los **controles avanzados** dan acceso a todas las constantes de las ecuaciones, a la elección del modelo y a la inserción de células nuevas a medida que el borde crece. El registro espacio-tiempo se puede ver en el tiempo, que es el diagrama de Meinhardt, o desenrollado con las proporciones reales de la concha. Un **perfil del borde** representa el activador y el inhibidor o el sustrato en cualquier instante del crecimiento. Si un conjunto de valores no forma ningún patrón, la app lo indica en lugar de mostrar una concha vacía.
 
@@ -96,9 +98,9 @@ La dirección de la página también guarda la concha y el patrón actuales, as�
   <img src="images/report-page-3.png" width="32%" alt="Página 3 del informe: ecuaciones de los dos modelos en forma general y con los valores actuales" />
 </p>
 
-**Lámina de vistas estándar** (caracol de jardín, solo líneas):
+**Lámina de vistas estándar** (*Turritella*, líneas transparentes y eje de enrollamiento):
 
-![Lámina con las seis vistas estándar de una concha de caracol de jardín, dibujada con líneas](images/standard-views.png)
+![Lámina con las seis vistas estándar de una concha de Turritella, dibujada con líneas transparentes y con el eje de enrollamiento](images/standard-views.png)
 
 ## Ejecución local
 

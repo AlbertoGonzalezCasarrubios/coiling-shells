@@ -21,8 +21,9 @@
  * stripes are intercalated as the shell grows. Global control (activator–
  * substrate only): a signal c, shared by the whole margin, follows the mean
  * activity; when waves annihilate and activity drops, c falls and favours the
- * triggering of new waves, the branching mechanism of the triangles of
- * Oliva porphyria.
+ * triggering of new waves. It is a simplified version of the mechanism that
+ * Meinhardt and Klingler (1987) proposed for the triangles of Oliva porphyria;
+ * in this form it gives oblique lines and V shapes, not that full pattern.
  */
 
 export const MODELS = ['AI', 'AS'];

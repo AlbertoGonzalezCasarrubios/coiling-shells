@@ -15,7 +15,7 @@ An interactive 3D explorer of the **theoretical morphology of coiled shells**. T
 
 **▶ Open the app: https://albertogonzalezcasarrubios.github.io/coiling-shells/**
 
-![The app showing a Turritella shell drawn with lines, with Raup's parameters in the sidebar](docs/images/turritella-lines.png)
+![The app as it opens: a garden snail shell drawn with lines, with Raup's parameters in the sidebar](docs/images/app.png)
 
 ## What it is for
 
@@ -58,7 +58,7 @@ The plane is a **section of Raup's W–D–T cube at the current T**. The groups
 
 A mollusc only adds pigment at the growing margin, so a shell pattern is a **time record of a one-dimensional process**: space runs along the margin and time along the direction of growth. The app simulates the margin with Meinhardt's reaction–diffusion models and wraps the resulting space–time record onto Raup's surface, as Fowler, Meinhardt and Prusinkiewicz (1992) did.
 
-![A banded snail coloured with the activator–inhibitor model, with the space–time record in the sidebar and, over the 3D view, the morphospace and the activator and inhibitor profile along the margin](docs/images/pigmentation.png)
+![A Nautilus shell with the flame stripes of the activator–inhibitor model, with the space–time record in the sidebar and, over the 3D view, the morphospace and the activator and inhibitor profile along the margin](docs/images/pigmentation.png)
 
 - **Activator–inhibitor model.** A self-enhancing activator and a fast, far-reaching inhibitor give stable peaks, which draw bands along the spiral (*Cepaea nemoralis*). If the inhibitor outlives the activator, the margin oscillates and draws stripes parallel to the growth lines (the flames of *Nautilus*).
 
@@ -67,7 +67,9 @@ A mollusc only adds pigment at the growing margin, so a shell pattern is a **tim
   ∂h/∂t = s·a² − r_h·h + D_h·∂²h/∂x² + b_h
   ```
 
-- **Activator–substrate model.** The activator consumes a substrate that recovers slowly, so activation travels as waves that draw oblique lines and annihilate when they meet. With global control, a signal shared by the whole margin, they form the triangles of *Oliva porphyria*.
+- **Activator–substrate model.** The activator consumes a substrate that recovers slowly, so activation travels as waves that draw oblique lines and annihilate when they meet. Meinhardt and Klingler (1987) explained the triangles of *Oliva porphyria* by adding a signal shared by the whole margin that starts new waves when activity drops. The app includes a simplified version of that global control, which gives oblique lines and V shapes but not the full *Oliva* pattern, so it is available in the advanced controls and not as a species preset.
+
+Two presets reproduce real pattern types: the flame stripes of *Nautilus* and the spiral bands of *Cepaea nemoralis*.
 
 **Simple controls** set real quantities of the model: the number of cells along the margin, the growth time, the irregularity between cells and the pigment threshold. A seed chooses the random differences between cells. **Advanced controls** expose every constant of the equations, the choice of model and the insertion of new cells as the margin grows. The space–time record can be seen in time, which is Meinhardt's diagram, or unrolled with the true proportions of the shell. A **margin profile** plots the activator and the inhibitor or substrate at any moment of growth. If a set of values forms no pattern, the app says so instead of showing an empty shell.
 
@@ -94,9 +96,9 @@ The page address also stores the current shell and pattern, so copying the link 
   <img src="docs/images/report-page-3.png" width="32%" alt="Report page 3: equations of both models in general form and with the current values" />
 </p>
 
-**Plate of standard views** (garden snail, lines only):
+**Plate of standard views** (*Turritella*, transparent lines and coiling axis):
 
-![Plate of the six standard views of a garden snail shell, drawn with lines](docs/images/standard-views.png)
+![Plate of the six standard views of a Turritella shell, drawn with transparent lines and the coiling axis](docs/images/standard-views.png)
 
 ## Running locally
 

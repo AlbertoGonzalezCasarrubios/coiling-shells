@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { simulatePattern, PROFILE_WIDTH, rng32 } from '../js/meinhardt.js';
-import { PATTERN_PRESETS, MODEL_REFERENCE } from '../js/presets.js';
+import { PATTERN_PRESETS, MODEL_DEFAULTS } from '../js/presets.js';
 
 const g = { W: 2.4, turns: 4.5, rows: 256, width: 256, nMax: 256 };
 const preset = (k, extra = {}) => ({ ...PATTERN_PRESETS[k], seed: 7, ...extra });
@@ -43,7 +43,7 @@ test('the same seed gives the same pattern; another seed a different one', () =>
 
 test('no pattern is reported instead of rescaling tiny differences', () => {
   // Without substrate the activator dies out
-  const extinct = simulatePattern(preset('oliva', { b2: 0, ba: 0 }), g);
+  const extinct = simulatePattern({ ...MODEL_DEFAULTS.AS, seed: 7, b2: 0, globalCtl: 0 }, g);
   assert.equal(extinct.state, 'extinct');
   assert.ok(extinct.values.every((v) => v === 0));
   // Strong diffusion without noise keeps the margin uniform
@@ -68,8 +68,26 @@ test('bands are stable in time; oscillations change along time', () => {
   assert.ok(flames > 3 * bands, `flames ${flames} vs bands ${bands}`);
 });
 
-test('each model has a reference preset of that model', () => {
-  for (const [model, key] of Object.entries(MODEL_REFERENCE)) {
-    assert.equal(PATTERN_PRESETS[key].model, model);
+test('the default constants of each model form a pattern of that model', () => {
+  for (const [model, p] of Object.entries(MODEL_DEFAULTS)) {
+    assert.equal(p.model, model);
+    assert.equal(simulatePattern({ ...p, seed: 7 }, g).state, 'pattern', model);
   }
+});
+
+test('the activator–substrate defaults draw travelling waves (oblique lines)', () => {
+  // A travelling wave shifts sideways from one row to the next: the activator
+  // peak of a row is close to, but not at, the peak of a row a little earlier.
+  const { values } = simulatePattern({ ...MODEL_DEFAULTS.AS, seed: 7 }, g);
+  let shifted = 0, rowsWithPeaks = 0;
+  for (let r = g.rows / 2; r < g.rows; r++) {
+    const row = values.subarray(r * g.width, (r + 1) * g.width);
+    const prev = values.subarray((r - 2) * g.width, (r - 1) * g.width);
+    const peak = row.indexOf(Math.max(...row));
+    if (row[peak] < 0.5) continue;
+    rowsWithPeaks++;
+    if (prev[peak] < row[peak] * 0.9) shifted++;
+  }
+  assert.ok(rowsWithPeaks > 20);
+  assert.ok(shifted / rowsWithPeaks > 0.3, `${shifted} / ${rowsWithPeaks}`);
 });

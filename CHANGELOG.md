@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [semantic versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- *Nautilus* pattern preset: faster reactions, stronger saturation and weaker coupling between cells give about ten broad, wavy flame stripes per whorl instead of three thin lines.
+- Changing to the activator–substrate model now loads an excitable set of constants that draws travelling waves (oblique lines and V shapes).
+
+### Removed
+- *Oliva porphyria* pattern preset. The simplified global control of the app gives oblique lines and V shapes but not the dense network of triangles of a real *Oliva*, so the preset did not look like the species. The model remains available in the advanced controls, and the explanations now say what it can and cannot reproduce.
+
 ## [1.0.0] - 2026-11-06
 
 First release in its own repository. The app was previously published as `shells-morphology/` in [aplicaciones-varias](https://github.com/AlbertoGonzalezCasarrubios/aplicaciones-varias); that address now redirects here.

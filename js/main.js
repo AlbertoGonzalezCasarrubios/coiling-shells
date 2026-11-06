@@ -9,7 +9,7 @@ import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 import { buildShell } from './raup.js';
 import { buildPrintMesh, toSTL, to3MF } from './export3d.js';
 import { MORPHO_REGIONS } from './morphospace.js';
-import { PRESETS, DEFAULT_PRESET, PATTERN_PRESETS, DEFAULT_PATTERN, MODEL_REFERENCE } from './presets.js';
+import { PRESETS, DEFAULT_PRESET, PATTERN_PRESETS, DEFAULT_PATTERN, MODEL_DEFAULTS } from './presets.js';
 import { simulatePattern, PROFILE_WIDTH } from './meinhardt.js';
 import {
   setLang, getLang, t, tParam, tPreset, tPattern, applyStatic,
@@ -2388,7 +2388,7 @@ document.querySelectorAll('#pigMode [data-pmode]').forEach((b) => b.addEventList
 // other model make no sense here (e.g. without substrate production there is no pattern)
 $('patternModel').addEventListener('change', (e) => {
   const { base, pigment, size, amount } = pattern;
-  Object.assign(pattern, pickPattern(PATTERN_PRESETS[MODEL_REFERENCE[e.target.value]]), { base, pigment, size, amount });
+  Object.assign(pattern, pickPattern(MODEL_DEFAULTS[e.target.value]), { base, pigment, size, amount });
   syncPatternControls();
   markPatternCustom();
   schedulePattern();
