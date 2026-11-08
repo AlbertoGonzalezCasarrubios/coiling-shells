@@ -15,7 +15,7 @@ export const PRESETS = {
   },
   trochus: {
     group: 'Gasterópodos', name: 'Trompo (Trochus)',
-    W: 1.8, D: 0.0, T: 2.5, S: 0.8, turns: 7, hand: 1, mirror: false,
+    W: 1.45, D: 0.0, T: 3.0, S: 0.6, turns: 9, hand: 1, mirror: false,
   },
   planorbis: {
     group: 'Gasterópodos', name: 'Planorbis (planispiral)',
@@ -23,7 +23,11 @@ export const PRESETS = {
   },
   physa: {
     group: 'Gasterópodos', name: 'Physa (sinistral)',
-    W: 3.5, D: 0.05, T: 2.2, S: 1.4, turns: 4, hand: -1, mirror: false,
+    W: 2.6, D: 0.0, T: 3.0, S: 1.5, turns: 4.5, hand: -1, mirror: false,
+  },
+  peringia: {
+    group: 'Gasterópodos', name: 'Peringia (Peringia ulvae)',
+    W: 1.8, D: 0.0, T: 3.8, S: 1.2, turns: 6.5, hand: 1, mirror: false,
   },
   nautilus: {
     group: 'Cefalópodos', name: 'Nautilus (Nautilus pompilius)',

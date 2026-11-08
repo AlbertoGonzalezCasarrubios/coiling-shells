@@ -9,6 +9,7 @@ import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 import { buildShell } from './raup.js';
 import { buildPrintMesh, toSTL, to3MF } from './export3d.js';
 import { MORPHO_REGIONS } from './morphospace.js';
+import { encodeTIFF, fitFrame, slugify, plateLayout, FIXED_SIZES, MAX_SIDE } from './imagefile.js';
 import { PRESETS, DEFAULT_PRESET, PATTERN_PRESETS, DEFAULT_PATTERN, MODEL_DEFAULTS } from './presets.js';
 import { simulatePattern, PROFILE_WIDTH } from './meinhardt.js';
 import {
@@ -1154,14 +1155,46 @@ function downloadBlob(data, type, name) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
+/** Name typed by the user in the export dialog ("" if none). */
+const customName = () => $('exName').value.trim();
+
 function fileStem() {
+  const own = slugify(customName());
+  if (own) return own;
   const preset = PRESETS[presetSel.value] ? `${presetSel.value}_` : '';
   return `shell_${preset}W${formatW(state.W)}_D${f(state.D, 3)}_T${f(state.T, 2)}_S${f(state.S, 2)}${state.mirror ? '_mirror' : ''}`;
 }
 
-/** Readable name of the current shell (the preset's name or "custom"). */
+/** Readable name of the current shell: the user's own name, the preset's name or "custom". */
 function shellName() {
-  return PRESETS[presetSel.value] ? tPreset(presetSel.value) : t('ex.customShell');
+  return customName() || defaultShellName();
+}
+const defaultShellName = () => (PRESETS[presetSel.value] ? tPreset(presetSel.value) : t('ex.customShell'));
+
+/** Encodes a canvas in the format chosen in the export dialog and downloads it. */
+async function downloadImage(canvas, stem) {
+  const fmt = $('exFormat').value;
+  if (fmt === 'tiff') {
+    const { width, height } = canvas;
+    const rgba = canvas.getContext('2d').getImageData(0, 0, width, height).data;
+    downloadBlob(await encodeTIFF(width, height, rgba), 'image/tiff', `${stem}.tif`);
+    return;
+  }
+  let src = canvas;
+  if (fmt === 'jpg') {
+    // JPEG has no transparency: flatten onto white
+    src = document.createElement('canvas');
+    src.width = canvas.width;
+    src.height = canvas.height;
+    const ctx = src.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, src.width, src.height);
+    ctx.drawImage(canvas, 0, 0);
+  }
+  const type = fmt === 'jpg' ? 'image/jpeg' : 'image/png';
+  const blob = await new Promise((resolve, reject) =>
+    src.toBlob((b) => (b ? resolve(b) : reject(new Error('encoding failed'))), type, 0.95));
+  downloadBlob(blob, type, `${stem}.${fmt}`);
 }
 
 /** Runs `fn` with the button in a "Preparing…" state and reports failures. */
@@ -1201,34 +1234,96 @@ function withExportAxis(fn) {
   }
 }
 
-function renderCurrentView(scaleFactor) {
-  return withExportAxis(() => renderCurrentViewRaw(scaleFactor));
+/**
+ * Size in pixels chosen in one of the size menus: a multiple of the 3D view
+ * (x1, x2, x4), the device screen, a fixed size (1920x1080…) or a custom one.
+ */
+function chosenSize(value, customW, customH) {
+  const { clientWidth: w, clientHeight: h } = viewport;
+  let W, H;
+  if (value.startsWith('x')) {
+    const k = parseFloat(value.slice(1)) * renderer.getPixelRatio();
+    [W, H] = [w * k, h * k];
+  } else if (value === 'screen') {
+    const dpr = window.devicePixelRatio || 1;
+    [W, H] = [screen.width * dpr, screen.height * dpr];
+  } else if (value === 'custom') {
+    [W, H] = [parseFloat(customW) || 1920, parseFloat(customH) || 1080];
+  } else {
+    [W, H] = value.split('x').map(Number);
+  }
+  // Within the largest side, keeping the proportions
+  const fit = Math.min(1, MAX_SIDE / Math.max(W, H));
+  return { W: Math.max(16, Math.round(W * fit)), H: Math.max(16, Math.round(H * fit)) };
 }
 
-function renderCurrentViewRaw(scaleFactor) {
+const viewImageSize = () => chosenSize($('exRes').value, $('exW').value, $('exH').value);
+
+/** Size of the plate of views, or null for the standard 3 × 2 plate. */
+const plateImageSize = () => ($('exPlateRes').value === 'std'
+  ? null : chosenSize($('exPlateRes').value, $('exPlateW').value, $('exPlateH').value));
+
+const PLATE_TILE = 900; // view size of the standard plate
+
+function updateViewImageSize() {
+  const { W, H } = viewImageSize();
+  $('exResDims').textContent = `${W} × ${H} px`;
+  $('exCustomRow').hidden = $('exRes').value !== 'custom';
+  const p = plateImageSize();
+  const labelH = $('exLabels').checked ? Math.round(PLATE_TILE * 0.1) : 0;
+  const [pw, ph] = p ? [p.W, p.H] : [3 * PLATE_TILE, 2 * (PLATE_TILE + labelH)];
+  $('exPlateDims').textContent = `${pw} × ${ph} px`;
+  document.querySelectorAll('[data-plate-custom]').forEach((el) => (el.hidden = $('exPlateRes').value !== 'custom'));
+}
+
+/**
+ * Renders the current view at any size. The image is drawn in tiles (pieces of
+ * the same camera frustum), so it does not depend on how large a drawing buffer
+ * the browser grants. A different aspect ratio widens or narrows the framing so
+ * that everything seen on screen stays in the image.
+ * @returns {HTMLCanvasElement}
+ */
+function renderViewImage(W, H) {
+  return withExportAxis(() => renderViewImageRaw(W, H));
+}
+
+function renderViewImageRaw(W, H) {
   const { clientWidth: w, clientHeight: h } = viewport;
+  const frame = fitFrame(camera.fov, camera.aspect, W / H);
+  const cam = camera.clone();
+  cam.aspect = W / H;
+  cam.fov = frame.fov;
+  // Lines keep their width relative to the shell
+  const lineScale = (frame.scale * H) / h;
+
+  const out = document.createElement('canvas');
+  out.width = W;
+  out.height = H;
+  const ctx = out.getContext('2d');
   const prevPR = renderer.getPixelRatio();
   const gl = renderer.getContext();
-  const maxSide = Math.min(8192, ...gl.getParameter(gl.MAX_VIEWPORT_DIMS), gl.getParameter(gl.MAX_RENDERBUFFER_SIZE));
-  let pr = Math.min(prevPR * scaleFactor, maxSide / Math.max(w, h));
-  renderer.setPixelRatio(pr);
-  renderer.setSize(w, h, false);
-  // The browser may grant a smaller drawing buffer than requested (memory limits,
-  // especially on high-density screens). Drawing for the requested size would then
-  // crop the image, so the resolution is fitted to the buffer actually granted.
-  const granted = Math.min(gl.drawingBufferWidth / renderer.domElement.width, gl.drawingBufferHeight / renderer.domElement.height);
-  if (granted < 0.999) {
-    pr *= granted * 0.995;
-    renderer.setPixelRatio(pr);
-    renderer.setSize(w, h, false);
+  const tile = Math.min(2048, ...gl.getParameter(gl.MAX_VIEWPORT_DIMS), gl.getParameter(gl.MAX_RENDERBUFFER_SIZE));
+  renderer.setPixelRatio(1);
+  renderer.setScissorTest(false);
+  try {
+    for (let y = 0; y < H; y += tile) {
+      for (let x = 0; x < W; x += tile) {
+        const tw = Math.min(tile, W - x), th = Math.min(tile, H - y);
+        renderer.setSize(tw, th, false);
+        renderer.setViewport(0, 0, tw, th);
+        cam.setViewOffset(W, H, x, y, tw, th);
+        lineMat.resolution.set(tw / lineScale, th / lineScale);
+        axisMat.resolution.set(tw / lineScale, th / lineScale);
+        renderer.clear();
+        renderer.render(scene, cam);
+        ctx.drawImage(renderer.domElement, 0, 0, tw, th, x, y, tw, th);
+      }
+    }
+  } finally {
+    renderer.setPixelRatio(prevPR);
+    resize();
   }
-  renderer.setViewport(0, 0, w, h);
-  renderer.clear();
-  renderer.render(scene, camera);
-  const url = renderer.domElement.toDataURL('image/png');
-  renderer.setPixelRatio(prevPR);
-  resize();
-  return url;
+  return out;
 }
 
 // --- Plate of standard views (orthographic projection) ---------------------
@@ -1276,12 +1371,18 @@ function renderPlate(opts) {
   return withExportAxis(() => renderPlateRaw(opts));
 }
 
-function renderPlateRaw({ tile = 640, background = '#ffffff', labels = true } = {}) {
-  const cols = 3, rowsN = 2;
+function renderPlateRaw({ tile = 640, background = '#ffffff', labels = true, width = 0, height = 0 } = {}) {
+  const n = PLATE_VIEWS.length;
+  // Standard plate: 3 × 2 views (or one row). At a given size, the grid that
+  // gives the largest views, centred on the background.
+  let cols = Math.min(3, n), rowsN = Math.ceil(n / cols), x0 = 0, y0 = 0;
+  if (width && height && n === 6) {
+    ({ cols, rows: rowsN, tile, x0, y0 } = plateLayout(width, height, labels ? 0.1 : 0));
+  }
   const labelH = labels ? Math.round(tile * 0.1) : 0;
   const out = document.createElement('canvas');
-  out.width = cols * tile;
-  out.height = rowsN * (tile + labelH);
+  out.width = width || cols * tile;
+  out.height = height || rowsN * (tile + labelH);
   const ctx = out.getContext('2d');
   ctx.fillStyle = background;
   ctx.fillRect(0, 0, out.width, out.height);
@@ -1311,8 +1412,8 @@ function renderPlateRaw({ tile = 640, background = '#ffffff', labels = true } = 
     sun.position.copy(dir).multiplyScalar(0.7).addScaledVector(up, 0.6).addScaledVector(right, -0.5).normalize().multiplyScalar(10);
     renderer.clear();
     renderer.render(scene, cam);
-    const x = (k % cols) * tile;
-    const y = Math.floor(k / cols) * (tile + labelH);
+    const x = x0 + (k % cols) * tile;
+    const y = y0 + Math.floor(k / cols) * (tile + labelH);
     ctx.drawImage(renderer.domElement, x, y);
     if (labels) {
       ctx.fillStyle = ink;
@@ -1336,7 +1437,10 @@ function renderPlateRaw({ tile = 640, background = '#ffffff', labels = true } = 
 const plateBackground = () => ($('exBg').value === 'current' ? $('bgColor').value : '#ffffff');
 
 function updatePlatePreview() {
-  const c = renderPlate({ tile: 220, background: plateBackground(), labels: $('exLabels').checked });
+  const size = plateImageSize();
+  const k = size ? 660 / Math.max(size.W, size.H) : 0;
+  const c = renderPlate({ tile: 220, background: plateBackground(), labels: $('exLabels').checked,
+    width: size ? Math.round(size.W * k) : 0, height: size ? Math.round(size.H * k) : 0 });
   const img = $('exPlatePreview');
   img.src = c.toDataURL('image/png');
 }
@@ -1423,6 +1527,23 @@ const LIGHT_COLORS = {
   '--text': '#1c2430', '--muted': '#6b7280', '--accent': '#115e59',
 };
 
+/**
+ * Colours of the PDF sheet for a given page colour: the usual light palette on
+ * light pages, light ink on dark ones. Graphs drawn on canvas use the same keys.
+ */
+function pdfPalette(page) {
+  if (luminance(page) >= 0.5) {
+    const white = page.toLowerCase() === '#ffffff';
+    return { ...LIGHT_COLORS, '--surface': page, '--surface-2': white ? LIGHT_COLORS['--surface-2'] : mixHex(page, '#000000', 0.05) };
+  }
+  return {
+    '--surface': page, '--surface-2': mixHex(page, '#ffffff', 0.07), '--border': mixHex(page, '#ffffff', 0.22),
+    '--text': '#e8eaee', '--muted': '#a3abb5', '--accent': '#6cc7bb',
+  };
+}
+
+const mixHex = (a, b, k) => '#' + hexRgb(a).map((c, i) => Math.round(c + (hexRgb(b)[i] - c) * k).toString(16).padStart(2, '0')).join('');
+
 /** Standard PDF fonts only cover Latin-1: arrows, dashes and Greek letters are replaced. */
 function pdfSafe(text) {
   return String(text)
@@ -1440,13 +1561,21 @@ async function exportPDF() {
   doc.text = (s, ...rest) => rawText(Array.isArray(s) ? s.map(pdfSafe) : pdfSafe(s), ...rest);
   const M = 15, W = 210 - 2 * M;
   const lang = getLang();
-  const dark = [28, 36, 48], muted = [107, 114, 128], accent = [17, 94, 89];
+  // Background: white, the shell images on the current colour, or the whole sheet
+  const bgMode = $('exPdfBg').value;
+  const bgHex = $('bgColor').value;
+  const imgBg = bgMode === 'white' ? '#ffffff' : bgHex;
+  const pageBg = bgMode === 'page' ? hexRgb(bgHex) : null;
+  const pal = pdfPalette(bgMode === 'page' ? bgHex : '#ffffff');
+  const dark = hexRgb(pal['--text']), muted = hexRgb(pal['--muted']), accent = hexRgb(pal['--accent']);
+  const rule = hexRgb(pal['--border']);
 
   const header = () => {
+    if (pageBg) doc.setFillColor(...pageBg).rect(0, 0, 210, 297, 'F');
     doc.setFont('helvetica', 'normal').setFontSize(8.5).setTextColor(...muted);
     doc.text(t('doc.title'), M, 11);
     doc.text(new Date().toLocaleDateString(lang), 210 - M, 11, { align: 'right' });
-    doc.setDrawColor(227, 221, 208).line(M, 13, 210 - M, 13);
+    doc.setDrawColor(...rule).line(M, 13, 210 - M, 13);
   };
   const footer = () => {
     doc.setFont('helvetica', 'normal').setFontSize(7.5).setTextColor(...muted);
@@ -1477,7 +1606,7 @@ async function exportPDF() {
   doc.text(`W = ${formatW(state.W)}   D = ${f(state.D, 3)}   T = ${f(state.T, 2)}   S = ${f(state.S, 2)}   N = ${f(state.turns, 2)}   ·   ${t(state.hand > 0 ? 'geo.dextral' : 'geo.sinistral')}`, M, 30.5);
 
   heading(t('ex.pdf.views'), 39);
-  const plate = renderPlate({ tile: 560, background: '#ffffff', labels: true });
+  const plate = renderPlate({ tile: 560, background: imgBg, labels: true });
   const plateH = (W * plate.height) / plate.width;
   doc.addImage(plate.toDataURL('image/jpeg', 0.92), 'JPEG', M, 42, W, plateH);
   let y = 42 + plateH + 9;
@@ -1502,7 +1631,7 @@ async function exportPDF() {
   heading(t('morpho.title'), y, mx);
   const mc = document.createElement('canvas');
   const mh = Math.round(mw * 0.68 * 4);
-  drawMorphoOn(mc, { width: Math.round(mw * 4), height: mh, scale: 2, colors: LIGHT_COLORS });
+  drawMorphoOn(mc, { width: Math.round(mw * 4), height: mh, scale: 2, colors: pal });
   // drawMorphoOn works in CSS pixels: drawn at 4 px per mm with scale 2
   doc.addImage(mc.toDataURL('image/png'), 'PNG', mx, y + 3, mw, mw * 0.68);
   y = Math.max(yL, y + 3 + mw * 0.68) + 8;
@@ -1536,7 +1665,7 @@ async function exportPDF() {
     st.height = Math.round((512 * stH) / stW);
     st.getContext('2d').drawImage(patternCanvas, 0, 0, st.width, st.height);
     doc.addImage(st.toDataURL('image/jpeg', 0.92), 'JPEG', ax, stY, stW, stH);
-    doc.setDrawColor(227, 221, 208).setLineWidth(0.2).rect(ax, stY, stW, stH);
+    doc.setDrawColor(...rule).setLineWidth(0.2).rect(ax, stY, stW, stH);
 
     const arrow = (x1, y1, x2, y2) => {
       doc.setDrawColor(...dark).setFillColor(...dark).setLineWidth(0.3);
@@ -1569,7 +1698,7 @@ async function exportPDF() {
 
     // Pigmented shell in apertural and 3/4 views
     const sx = M + 7 + stW + 17, sw = W - (sx - M);
-    const two = renderPlateSubset(['apertural', 'iso'], 520);
+    const two = renderPlateSubset(['apertural', 'iso'], 520, imgBg);
     doc.addImage(two.toDataURL('image/jpeg', 0.92), 'JPEG', sx, 39, sw, sw / 2);
 
     // Margin profile: activator and inhibitor (or substrate) at that moment
@@ -1580,8 +1709,8 @@ async function exportPDF() {
     doc.text(atLines, sx, yy + 4.5);
     const ph = 36, py = yy + 4.5 + atLines.length * 3.4;
     const pc = document.createElement('canvas');
-    drawProfileOn(pc, row, getComputedStyle(document.documentElement), { width: Math.round(sw * 4), height: ph * 4, scale: 2, colors: LIGHT_COLORS });
-    doc.setFillColor(241, 238, 230).rect(sx, py, sw, ph, 'F');
+    drawProfileOn(pc, row, getComputedStyle(document.documentElement), { width: Math.round(sw * 4), height: ph * 4, scale: 2, colors: pal });
+    doc.setFillColor(...hexRgb(pal['--surface-2'])).rect(sx, py, sw, ph, 'F');
     doc.addImage(pc.toDataURL('image/png'), 'PNG', sx, py, sw, ph);
     // Legend
     let lx = sx, ly = py + ph + 4.5;
@@ -1654,7 +1783,7 @@ async function exportPDF() {
           doc.text(sub, M, y);
           y += 3;
           for (const piece of displayPieces(tex)) {
-            const img = await texToImage(MJ, piece, EX_MM * 12);
+            const img = await texToImage(MJ, piece, EX_MM * 12, pal['--text']);
             let w = img.wEx * EX_MM, h = img.hEx * EX_MM;
             if (w > W - 6) { h *= (W - 6) / w; w = W - 6; }
             newPageIfNeeded(h + 2);
@@ -1707,14 +1836,14 @@ function loadSvgMath() {
 }
 
 /** Typesets a formula as SVG and rasterises it to PNG. Also returns its size in ex. */
-async function texToImage(MJ, tex, exPx) {
+async function texToImage(MJ, tex, exPx, ink = '#1c2430') {
   const node = await MJ.tex2svgPromise(tex, { display: true });
   const svg = node.querySelector('svg');
   const wEx = parseFloat(svg.getAttribute('width'));
   const hEx = parseFloat(svg.getAttribute('height'));
   svg.setAttribute('width', `${wEx * exPx}px`);
   svg.setAttribute('height', `${hEx * exPx}px`);
-  svg.setAttribute('style', 'color:#1c2430');
+  svg.setAttribute('style', `color:${ink}`);
   if (!svg.getAttribute('xmlns')) svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   const xml = new XMLSerializer().serializeToString(svg);
   const img = new Image();
@@ -1728,11 +1857,11 @@ async function texToImage(MJ, tex, exPx) {
 }
 
 /** Some views of the plate, in one row (for the pattern page). */
-function renderPlateSubset(names, tile) {
+function renderPlateSubset(names, tile, background = '#ffffff') {
   const saved = PLATE_VIEWS.slice();
   PLATE_VIEWS.splice(0, PLATE_VIEWS.length, ...names);
   try {
-    const full = renderPlate({ tile, background: '#ffffff', labels: true });
+    const full = renderPlate({ tile, background, labels: true });
     const out = document.createElement('canvas');
     out.width = names.length * tile;
     out.height = full.height / 2;
@@ -1752,9 +1881,28 @@ function openExport() {
   $('exPatternCard').classList.toggle('disabled', !(pattern.on && patternValues));
   $('exPattern').disabled = !(pattern.on && patternValues);
   $('exPatternNone').hidden = pattern.on && !!patternValues;
+  $('exName').placeholder = defaultShellName();
+  fillFixedSizes();
   if (!exportDlg.open) exportDlg.showModal();
   updatePrintDims();
+  updateViewImageSize();
   requestAnimationFrame(updatePlatePreview);
+}
+
+/** Fixed sizes in the size menus (after "Your screen", which depends on the device). */
+function fillFixedSizes() {
+  const dpr = window.devicePixelRatio || 1;
+  const sw = Math.round(screen.width * dpr), sh = Math.round(screen.height * dpr);
+  for (const group of [$('exResFixed'), $('exPlateFixed')]) {
+    group.querySelector('[value="screen"]').textContent = `${t('ex.res.screen')} · ${sw} × ${sh}`;
+    if (group.children.length > 1) continue;
+    for (const z of FIXED_SIZES) {
+      const o = document.createElement('option');
+      o.value = z.key;
+      o.textContent = `${z.ratio} · ${z.w} × ${z.h}${z.label ? ` (${z.label})` : ''}`;
+      group.append(o);
+    }
+  }
 }
 
 $('openExport').addEventListener('click', openExport);
@@ -1764,15 +1912,21 @@ exportDlg.addEventListener('click', (e) => {
 });
 $('exBg').addEventListener('change', updatePlatePreview);
 $('exAxis').addEventListener('change', updatePlatePreview);
-$('exLabels').addEventListener('change', updatePlatePreview);
+$('exLabels').addEventListener('change', () => { updateViewImageSize(); updatePlatePreview(); });
 for (const id of ['exSize', 'exWall']) $(id).addEventListener('input', updatePrintDims);
 
-$('exPng').addEventListener('click', (e) => busy(e.currentTarget, () => {
-  download(renderCurrentView(parseFloat($('exRes').value)), `${fileStem()}.png`);
+$('exRes').addEventListener('change', updateViewImageSize);
+for (const id of ['exW', 'exH']) $(id).addEventListener('input', updateViewImageSize);
+$('exPlateRes').addEventListener('change', () => { updateViewImageSize(); updatePlatePreview(); });
+for (const id of ['exPlateW', 'exPlateH']) $(id).addEventListener('change', () => { updateViewImageSize(); updatePlatePreview(); });
+$('exPng').addEventListener('click', (e) => busy(e.currentTarget, async () => {
+  const { W, H } = viewImageSize();
+  await downloadImage(renderViewImage(W, H), `${fileStem()}_${W}x${H}`);
 }));
-$('exPlate').addEventListener('click', (e) => busy(e.currentTarget, () => {
-  const c = renderPlate({ tile: 900, background: plateBackground(), labels: $('exLabels').checked });
-  download(c.toDataURL('image/png'), `${fileStem()}_views.png`);
+$('exPlate').addEventListener('click', (e) => busy(e.currentTarget, async () => {
+  const size = plateImageSize();
+  const c = renderPlate({ tile: PLATE_TILE, background: plateBackground(), labels: $('exLabels').checked, width: size?.W, height: size?.H });
+  await downloadImage(c, `${fileStem()}_views${size ? `_${size.W}x${size.H}` : ''}`);
 }));
 $('exPdf').addEventListener('click', (e) => busy(e.currentTarget, exportPDF));
 $('exStl').addEventListener('click', (e) => busy(e.currentTarget, () => {
@@ -1782,8 +1936,10 @@ $('ex3mf').addEventListener('click', (e) => busy(e.currentTarget, async () => {
   downloadBlob(await to3MF(printMesh(), shellName()), 'model/3mf', `${fileStem()}_${printOptions().size}mm.3mf`);
 }));
 $('exGlb').addEventListener('click', (e) => busy(e.currentTarget, exportGLB));
-$('exPattern').addEventListener('click', () => {
-  if (patternValues) download(patternCanvas.toDataURL('image/png'), `meinhardt_${pattern.preset}_seed${pattern.seed}.png`);
+$('exPattern').addEventListener('click', (e) => {
+  if (!patternValues) return;
+  const own = slugify(customName());
+  busy(e.currentTarget, () => downloadImage(patternCanvas, own ? `${own}_pattern` : `meinhardt_${pattern.preset}_seed${pattern.seed}`));
 });
 
 // ---------------------------------------------------------------------------

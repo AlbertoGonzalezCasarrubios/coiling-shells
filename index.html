@@ -89,18 +89,6 @@
         </button>
       </section>
 
-      <details class="drawer" id="morphoDrawer">
-        <summary><span data-i18n="morpho.title">Morphospace W – D</span></summary>
-        <div class="drawer-body">
-          <div class="segmented wscale" role="group" data-i18n-title="morpho.scale">
-            <button type="button" data-wscale="1" aria-pressed="false">W 1–10</button>
-            <button type="button" data-wscale="4" aria-pressed="true">W 1–10⁴</button>
-          </div>
-          <canvas id="morpho" class="morpho" height="210"></canvas>
-          <p class="note" data-i18n="morpho.hint">Click or drag to choose W and D.</p>
-        </div>
-      </details>
-
       <details class="drawer">
         <summary><span data-i18n="look.title">Appearance</span></summary>
         <div class="drawer-body">
@@ -138,6 +126,18 @@
             <div id="axis-params" class="sub-params" hidden></div>
             <label class="toggle"><input type="checkbox" id="autoRotate" /><span data-i18n="look.autoRotate">Auto-rotate</span></label>
           </div>
+        </div>
+      </details>
+
+      <details class="drawer" id="morphoDrawer">
+        <summary><span data-i18n="morpho.title">Morphospace W – D</span></summary>
+        <div class="drawer-body">
+          <div class="segmented wscale" role="group" data-i18n-title="morpho.scale">
+            <button type="button" data-wscale="1" aria-pressed="false">W 1–10</button>
+            <button type="button" data-wscale="4" aria-pressed="true">W 1–10⁴</button>
+          </div>
+          <canvas id="morpho" class="morpho" height="210"></canvas>
+          <p class="note" data-i18n="morpho.hint">Click or drag to choose W and D.</p>
         </div>
       </details>
       </div>
@@ -391,6 +391,17 @@
     </div>
     <div class="info-body export-body">
       <div class="ex-options wide">
+        <div class="ex-row">
+          <label class="field ex-name"><span data-i18n="ex.name">Name of your shell</span><input type="text" id="exName" class="text" maxlength="60" autocomplete="off" /></label>
+          <label class="field"><span data-i18n="ex.format">Image format</span>
+            <select id="exFormat" class="select">
+              <option value="png">PNG</option>
+              <option value="jpg">JPG</option>
+              <option value="tiff">TIFF</option>
+            </select>
+          </label>
+        </div>
+        <p class="note" data-i18n="ex.name.hint"></p>
         <label class="toggle"><input type="checkbox" id="exAxis" /><span data-i18n="ex.axis">Show the coiling axis</span></label>
         <p class="note" data-i18n="ex.axis.hint"></p>
         <p class="note warn" id="exLinesNote" data-i18n="ex.linesOnly" hidden></p>
@@ -408,14 +419,37 @@
               <option value="current" data-i18n="ex.bg.current">Current colour</option>
             </select>
           </label>
+          <label class="field"><span data-i18n="ex.res">Size</span>
+            <select id="exPlateRes" class="select">
+              <option value="std" selected data-i18n="ex.plate.std">Standard (3 × 2)</option>
+              <optgroup data-i18n-label="ex.res.fixed" id="exPlateFixed">
+                <option value="screen" data-i18n="ex.res.screen">Your screen</option>
+              </optgroup>
+              <optgroup data-i18n-label="ex.res.other">
+                <option value="custom" data-i18n="ex.res.custom">Custom…</option>
+              </optgroup>
+            </select>
+          </label>
+          <label class="field" data-plate-custom hidden><span data-i18n="ex.width">Width (px)</span><input type="number" id="exPlateW" class="num" min="256" max="8192" step="1" value="3840" /></label>
+          <label class="field" data-plate-custom hidden><span data-i18n="ex.height">Height (px)</span><input type="number" id="exPlateH" class="num" min="256" max="8192" step="1" value="2160" /></label>
+          <span class="status" id="exPlateDims"></span>
+        </div>
+        <div class="ex-row">
           <label class="toggle"><input type="checkbox" id="exLabels" checked /><span data-i18n="ex.labels">Name each view</span></label>
-          <button type="button" class="btn primary" id="exPlate" data-i18n="ex.png">Download PNG</button>
+          <button type="button" class="btn primary" id="exPlate" data-i18n="ex.img">Download image</button>
         </div>
       </section>
 
       <section class="ex-card">
         <h3 data-i18n="ex.pdf">PDF sheet</h3>
         <p class="note" data-i18n="ex.pdf.desc"></p>
+        <label class="field"><span data-i18n="ex.pdf.bg">Background</span>
+          <select id="exPdfBg" class="select">
+            <option value="white" data-i18n="ex.pdf.bg.white">White</option>
+            <option value="images" data-i18n="ex.pdf.bg.images">Shell images on the current colour</option>
+            <option value="page" data-i18n="ex.pdf.bg.page">Whole sheet in the current colour</option>
+          </select>
+        </label>
         <label class="toggle"><input type="checkbox" id="exEq" checked /><span data-i18n="ex.eq">Include the model equations</span></label>
         <button type="button" class="btn primary" id="exPdf" data-i18n="ex.pdf.btn">Download PDF</button>
       </section>
@@ -423,14 +457,29 @@
       <section class="ex-card">
         <h3 data-i18n="ex.image">Image of the current view</h3>
         <p class="note" data-i18n="ex.image.desc"></p>
-        <label class="field"><span data-i18n="ex.res">Resolution</span>
-          <select id="exRes" class="select">
-            <option value="1" data-i18n="ex.res.1">Screen</option>
-            <option value="2" selected data-i18n="ex.res.2">Double</option>
-            <option value="4" data-i18n="ex.res.4">Quadruple (print)</option>
-          </select>
-        </label>
-        <button type="button" class="btn primary" id="exPng" data-i18n="ex.png">Download PNG</button>
+        <div class="ex-row">
+          <label class="field"><span data-i18n="ex.res">Size</span>
+            <select id="exRes" class="select">
+              <optgroup data-i18n-label="ex.res.view">
+                <option value="x1" data-i18n="ex.res.1">Screen</option>
+                <option value="x2" selected data-i18n="ex.res.2">Double</option>
+                <option value="x4" data-i18n="ex.res.4">Quadruple (print)</option>
+              </optgroup>
+              <optgroup data-i18n-label="ex.res.fixed" id="exResFixed">
+                <option value="screen" data-i18n="ex.res.screen">Your screen</option>
+              </optgroup>
+              <optgroup data-i18n-label="ex.res.other">
+                <option value="custom" data-i18n="ex.res.custom">Custom…</option>
+              </optgroup>
+            </select>
+          </label>
+          <span class="status" id="exResDims"></span>
+        </div>
+        <div class="ex-row" id="exCustomRow" hidden>
+          <label class="field"><span data-i18n="ex.width">Width (px)</span><input type="number" id="exW" class="num" min="64" max="8192" step="1" value="3840" /></label>
+          <label class="field"><span data-i18n="ex.height">Height (px)</span><input type="number" id="exH" class="num" min="64" max="8192" step="1" value="2160" /></label>
+        </div>
+        <button type="button" class="btn primary" id="exPng" data-i18n="ex.img">Download image</button>
       </section>
 
       <section class="ex-card wide">
@@ -458,7 +507,7 @@
         <h3 data-i18n="pig.spacetime">Space–time record</h3>
         <p class="note" data-i18n="ex.pattern.desc"></p>
         <p class="note warn" id="exPatternNone" data-i18n="ex.pattern.none" hidden></p>
-        <button type="button" class="btn primary" id="exPattern" data-i18n="ex.png">Download PNG</button>
+        <button type="button" class="btn primary" id="exPattern" data-i18n="ex.img">Download image</button>
       </section>
     </div>
   </dialog>

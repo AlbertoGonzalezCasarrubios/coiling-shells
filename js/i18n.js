@@ -98,7 +98,7 @@ export const STRINGS = {
     'look.autoRotate': 'Auto-rotate',
     'export.title': 'Export',
     'ex.open': 'Export…',
-    'ex.open.hint': 'Image, plate of standard views, PDF sheet, 3D printing (STL, 3MF) and 3D model with colour.',
+    'ex.open.hint': 'Image (PNG, JPG or TIFF, also at wallpaper sizes), plate of standard views, PDF sheet, 3D printing (STL, 3MF) and 3D model with colour.',
     'ex.title': 'Export',
     'ex.working': 'Preparing…',
     'ex.error': 'The file could not be generated. Please try again.',
@@ -140,11 +140,27 @@ export const STRINGS = {
     'ex.pdf.cells': 'Cells along the margin',
     'ex.pdf.cite': 'González Casarrubios, A. (2026). Theoretical Shells: Form and Colour. albertogonzalezcasarrubios.github.io/coiling-shells',
     'ex.image': 'Image of the current view',
-    'ex.image.desc': 'Exactly what you see in the 3D view, without panels or axes.',
-    'ex.res': 'Resolution',
+    'ex.image.desc': 'Exactly what you see in the 3D view, without panels or axes. At a fixed size, for example 16:9 for a wallpaper, the framing widens or narrows to the new proportions, so the shell is never cut.',
+    'ex.res': 'Size',
+    'ex.res.view': 'Like the 3D view',
     'ex.res.1': 'Screen',
     'ex.res.2': 'Double',
     'ex.res.4': 'Quadruple (for printing)',
+    'ex.res.fixed': 'Fixed size (wallpapers)',
+    'ex.res.screen': 'Your screen',
+    'ex.res.other': 'Other',
+    'ex.res.custom': 'Custom…',
+    'ex.plate.std': 'Standard (3 × 2)',
+    'ex.width': 'Width (px)',
+    'ex.height': 'Height (px)',
+    'ex.img': 'Download image',
+    'ex.name': 'Name of your shell',
+    'ex.name.hint': 'Optional. It appears as the title of the PDF sheet and names the files you download.',
+    'ex.format': 'Image format',
+    'ex.pdf.bg': 'Background',
+    'ex.pdf.bg.white': 'White',
+    'ex.pdf.bg.images': 'Shell images on the current colour',
+    'ex.pdf.bg.page': 'Whole sheet in the current colour',
     'ex.print': '3D printing',
     'ex.print.desc': 'A closed solid with a real wall thickness, ready to open in a slicer (Cura, PrusaSlicer, Bambu Studio…). Units are millimetres; the apex points up and the base rests on the print bed.',
     'ex.size': 'Size: largest dimension (mm)',
@@ -317,6 +333,7 @@ export const STRINGS = {
       trochus: 'Top shell (Trochus)',
       planorbis: 'Ramshorn snail (Planorbis)',
       physa: 'Bladder snail (Physa, sinistral)',
+      peringia: 'Laver spire shell (Peringia ulvae)',
       nautilus: 'Chambered nautilus (Nautilus pompilius)',
       ammonite: 'Evolute ammonite (Dactylioceras)',
       almeja: 'Venus clam (Venus)',
@@ -336,7 +353,7 @@ export const STRINGS = {
       <ul>
         <li><strong>\\(W\\) — whorl expansion rate.</strong> The factor by which the aperture grows in one full turn: with \\(W = 2\\) each whorl is twice as large as the one before. Low values (about 1.2 to 3) give many tightly packed whorls, as in most snails and ammonites. Very high values (hundreds to thousands) give a shell that is almost all aperture and completes only a small fraction of a turn, as in clams.</li>
         <li><strong>\\(D\\) — distance from the axis.</strong> The distance from the axis to the inner edge of the aperture, divided by the distance to its outer edge. With \\(D = 0\\) the inner edge touches the axis, so the whorls close it up (no umbilicus). As \\(D\\) increases, a hollow opens along the axis (the umbilicus), until the tube coils loosely like a ram's horn.</li>
-        <li><strong>\\(T\\) — translation rate.</strong> How far the aperture slides along the axis compared with how far it moves away from it. With \\(T = 0\\) all the whorls lie in one plane (planispiral shells such as the nautilus, ammonites or <i>Planorbis</i>). Small values give low spires, as in the garden snail or <i>Trochus</i>; large values give tall, slender spires, as in <i>Turritella</i>.</li>
+        <li><strong>\\(T\\) — translation rate.</strong> How far the aperture slides along the axis compared with how far it moves away from it. With \\(T = 0\\) all the whorls lie in one plane (planispiral shells such as the nautilus, ammonites or <i>Planorbis</i>). Small values give low spires, as in the garden snail; intermediate values give conical spires, as in <i>Trochus</i> or <i>Peringia</i>; large values give tall, slender spires, as in <i>Turritella</i>.</li>
         <li><strong>\\(S\\) — shape of the aperture.</strong> The ratio between the axial and the radial semi-axis of the ellipse. \\(S = 1\\) is a circle, \\(S > 1\\) an aperture taller than it is wide, and \\(S < 1\\) a flattened one.</li>
       </ul>
       <p>Two more settings are needed to draw a shell, although they do not change its proportions. The <strong>coiling direction</strong>: most snails are <em>dextral</em>, so with the apex up and the aperture facing you the aperture is on the right; <em>sinistral</em> shells, such as <i>Physa</i>, are their mirror images. And the <strong>number of whorls</strong> \\(N\\), which only sets how much of the spiral is drawn.</p>
@@ -498,7 +515,7 @@ export const STRINGS = {
     'look.autoRotate': 'Autorrotación',
     'export.title': 'Exportar',
     'ex.open': 'Exportar…',
-    'ex.open.hint': 'Imagen, lámina de vistas estándar, ficha en PDF, impresión 3D (STL, 3MF) y modelo 3D con color.',
+    'ex.open.hint': 'Imagen (PNG, JPG o TIFF, también a tamaños de fondo de pantalla), lámina de vistas estándar, ficha en PDF, impresión 3D (STL, 3MF) y modelo 3D con color.',
     'ex.title': 'Exportar',
     'ex.working': 'Preparando…',
     'ex.error': 'No se ha podido generar el archivo. Inténtalo de nuevo.',
@@ -540,11 +557,27 @@ export const STRINGS = {
     'ex.pdf.cells': 'Células del borde',
     'ex.pdf.cite': 'González Casarrubios, A. (2026). Conchas teóricas: forma y color. albertogonzalezcasarrubios.github.io/coiling-shells',
     'ex.image': 'Imagen de la vista actual',
-    'ex.image.desc': 'Exactamente lo que ves en la vista 3D, sin paneles ni ejes.',
-    'ex.res': 'Resolución',
+    'ex.image.desc': 'Exactamente lo que ves en la vista 3D, sin paneles ni ejes. Con un tamaño fijo, por ejemplo 16:9 para un fondo de pantalla, el encuadre se ensancha o se estrecha a las nuevas proporciones, así que la concha nunca queda cortada.',
+    'ex.res': 'Tamaño',
+    'ex.res.view': 'Como la vista 3D',
     'ex.res.1': 'Pantalla',
     'ex.res.2': 'Doble',
     'ex.res.4': 'Cuádruple (para imprimir)',
+    'ex.res.fixed': 'Tamaño fijo (fondos de pantalla)',
+    'ex.res.screen': 'Tu pantalla',
+    'ex.res.other': 'Otro',
+    'ex.res.custom': 'Personalizado…',
+    'ex.plate.std': 'Estándar (3 × 2)',
+    'ex.width': 'Ancho (px)',
+    'ex.height': 'Alto (px)',
+    'ex.img': 'Descargar imagen',
+    'ex.name': 'Nombre de tu concha',
+    'ex.name.hint': 'Opcional. Aparece como título de la ficha en PDF y da nombre a los archivos que descargues.',
+    'ex.format': 'Formato de imagen',
+    'ex.pdf.bg': 'Fondo',
+    'ex.pdf.bg.white': 'Blanco',
+    'ex.pdf.bg.images': 'Imágenes de la concha sobre el color actual',
+    'ex.pdf.bg.page': 'Toda la ficha en el color actual',
     'ex.print': 'Impresión 3D',
     'ex.print.desc': 'Un sólido cerrado con una pared de grosor real, listo para abrir en un programa de laminado (Cura, PrusaSlicer, Bambu Studio…). Las unidades son milímetros; el ápice queda hacia arriba y la base, apoyada en la cama de impresión.',
     'ex.size': 'Tamaño: dimensión mayor (mm)',
@@ -717,6 +750,7 @@ export const STRINGS = {
       trochus: 'Trompo (Trochus)',
       planorbis: 'Planorbis (planispiral)',
       physa: 'Physa (sinistral)',
+      peringia: 'Peringia (Peringia ulvae)',
       nautilus: 'Nautilus (Nautilus pompilius)',
       ammonite: 'Ammonite evoluto (Dactylioceras)',
       almeja: 'Almeja (Venus)',
@@ -737,7 +771,7 @@ export const STRINGS = {
       <ul>
         <li><strong>\\(W\\): tasa de expansión de la espiral.</strong> Cuánto crece la apertura en una vuelta completa: con \\(W = 2\\), cada vuelta mide el doble que la anterior. Con valores bajos (entre 1,2 y 3, aproximadamente) salen muchas vueltas apretadas, como en la mayoría de caracoles y ammonites. Con valores muy altos (de cientos a miles), la concha es casi toda apertura y apenas recorre una fracción de vuelta, como en las almejas.</li>
         <li><strong>\\(D\\): distancia al eje.</strong> La distancia del eje al borde interno de la apertura dividida entre la distancia a su borde externo. Con \\(D = 0\\), el borde interno toca el eje y las vueltas lo cierran por completo (no hay ombligo). Al aumentar \\(D\\) se abre un hueco a lo largo del eje, el ombligo, hasta que el tubo se enrolla suelto, como un cuerno de carnero.</li>
-        <li><strong>\\(T\\): tasa de traslación.</strong> Cuánto se desplaza la apertura a lo largo del eje en comparación con lo que se aleja de él. Con \\(T = 0\\), todas las vueltas quedan en un mismo plano: son las conchas planispirales, como el nautilus, los ammonites o <i>Planorbis</i>. Con valores pequeños, la espira es baja, como en el caracol de jardín o en <i>Trochus</i>; con valores grandes, alta y esbelta, como en <i>Turritella</i>.</li>
+        <li><strong>\\(T\\): tasa de traslación.</strong> Cuánto se desplaza la apertura a lo largo del eje en comparación con lo que se aleja de él. Con \\(T = 0\\), todas las vueltas quedan en un mismo plano: son las conchas planispirales, como el nautilus, los ammonites o <i>Planorbis</i>. Con valores pequeños, la espira es baja, como en el caracol de jardín; con valores intermedios, cónica, como en <i>Trochus</i> o <i>Peringia</i>; con valores grandes, alta y esbelta, como en <i>Turritella</i>.</li>
         <li><strong>\\(S\\): forma de la apertura.</strong> La razón entre el semieje axial y el radial de la elipse. \\(S = 1\\) es un círculo; con \\(S > 1\\), la apertura es más alta que ancha, y con \\(S < 1\\), aplanada.</li>
       </ul>
       <p>Para dibujar una concha hacen falta dos ajustes más, aunque no cambian sus proporciones. Uno es el <strong>sentido de enrollamiento</strong>. La mayoría de los caracoles son <em>dextrales</em>: con el ápice hacia arriba y la apertura de frente, la apertura queda a la derecha. Las conchas <em>sinistrales</em>, como las de <i>Physa</i>, son su imagen especular. El otro es el <strong>número de vueltas</strong> \\(N\\), que solo indica qué parte de la espiral se dibuja.</p>
@@ -891,6 +925,8 @@ export function tPreset(key) {
 export function applyStatic(root = document) {
   root.querySelectorAll('[data-i18n]').forEach((el) => (el.textContent = t(el.dataset.i18n)));
   root.querySelectorAll('[data-i18n-html]').forEach((el) => (el.innerHTML = t(el.dataset.i18nHtml)));
+  root.querySelectorAll('[data-i18n-label]').forEach((el) => (el.label = t(el.dataset.i18nLabel)));
+  root.querySelectorAll('[data-i18n-placeholder]').forEach((el) => (el.placeholder = t(el.dataset.i18nPlaceholder)));
   root.querySelectorAll('[data-i18n-title]').forEach((el) => {
     el.title = t(el.dataset.i18nTitle);
     // groups and buttons without visible text need an accessible name

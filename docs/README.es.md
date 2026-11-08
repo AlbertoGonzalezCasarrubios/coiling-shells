@@ -54,7 +54,7 @@ r_c = (1 + D)/2,   a = (1 − D)/2,   b = S·a,   θ ∈ [−2πN, 0],   φ ∈ 
 | **T** | Tasa de traslación a lo largo del eje | T = 0 da conchas planispirales (nautilos, ammonites); los valores altos dan espiras altas |
 | **S** | Forma de la apertura | Razón entre sus semiejes axial y radial |
 
-El número de vueltas N y el sentido de enrollamiento (dextral, ε = −1, o sinistral, ε = +1) completan la concha. Una valva especular convierte una sola valva en un bivalvo equivalvo. Los presets cubren formas reales: caracol de jardín, *Turritella*, *Trochus*, *Planorbis*, *Physa*, *Nautilus*, un ammonite evoluto y una almeja. La concha se puede dibujar con líneas, como sólido o de las dos formas, verse desde las seis vistas estándar de la malacología y animarse mientras crece.
+El número de vueltas N y el sentido de enrollamiento (dextral, ε = −1, o sinistral, ε = +1) completan la concha. Una valva especular convierte una sola valva en un bivalvo equivalvo. Los presets cubren formas reales: caracol de jardín, *Turritella*, *Trochus*, *Planorbis*, *Physa*, *Peringia*, *Nautilus*, un ammonite evoluto y una almeja. La concha se puede dibujar con líneas, como sólido o de las dos formas, verse desde las seis vistas estándar de la malacología y animarse mientras crece.
 
 ### Morfoespacio
 
@@ -83,16 +83,16 @@ Los **controles simples** fijan magnitudes reales del modelo: el número de cél
 
 ## Exportación
 
-El botón **Export…** de la parte inferior de la barra lateral abre una ventana con todas las opciones de exportación. Una sola casilla añade el eje de enrollamiento a las imágenes, a la lámina y al PDF, aunque esté oculto en la vista 3D. Lo exportado sigue el modo de dibujo: en el modo *Lines* no lleva color.
+El botón **Export…** de la parte inferior de la barra lateral abre una ventana con todas las opciones de exportación. Puedes poner un nombre a tu concha, que pasa a ser el título del PDF y el nombre de los archivos descargados, y elegir el formato de imagen (PNG, JPG o TIFF). Una sola casilla añade el eje de enrollamiento a las imágenes, a la lámina y al PDF, aunque esté oculto en la vista 3D. Lo exportado sigue el modo de dibujo: en el modo *Lines* no lleva color.
 
 | Salida | Formato | Contenido |
 |---|---|---|
-| Vista actual | PNG | Exactamente lo que muestra la vista 3D, a una, dos o cuatro veces la resolución de la pantalla |
-| Lámina de vistas estándar | PNG | Vistas apertural, dorsal, apical, umbilical, de perfil y 3/4, en proyección ortográfica, rotuladas, sobre fondo blanco o el fondo actual |
-| Informe | PDF (A4) | Lámina, valores de los parámetros, posición en el morfoespacio y un enlace que vuelve a abrir la misma concha. Con un patrón, una página con el registro espacio-tiempo, el perfil del borde y las constantes del modelo. De forma opcional, una página con las ecuaciones completas en forma general y con los valores actuales |
+| Vista actual | PNG, JPG, TIFF | Exactamente lo que muestra la vista 3D, a una, dos o cuatro veces la resolución de la pantalla, o a un tamaño fijo como 16:9 4K, 21:9 o la pantalla de un móvil, para fondos de pantalla. Con otras proporciones, el encuadre se ensancha o se estrecha para que la concha nunca quede cortada |
+| Lámina de vistas estándar | PNG, JPG, TIFF | Vistas apertural, dorsal, apical, umbilical, de perfil y 3/4, en proyección ortográfica, rotuladas, sobre fondo blanco o el fondo actual. También a los mismos tamaños fijos que la vista actual: las vistas se colocan en 3 × 2, 2 × 3 o en una sola fila o columna para llenar el formato |
+| Informe | PDF (A4) | Lámina, valores de los parámetros, posición en el morfoespacio y un enlace que vuelve a abrir la misma concha, sobre blanco, con las imágenes de la concha sobre el color de fondo actual o con toda la ficha en ese color. Con un patrón, una página con el registro espacio-tiempo, el perfil del borde y las constantes del modelo. De forma opcional, una página con las ecuaciones completas en forma general y con los valores actuales |
 | Impresión 3D | STL, 3MF | Un sólido cerrado y estanco con una pared de grosor real, en milímetros, con el ápice hacia arriba y la base sobre la cama de impresión. Tú eliges el tamaño y el grosor de la pared |
 | Modelo 3D | GLB (glTF) | La superficie con su color y su patrón, para visores 3D, Blender o realidad aumentada |
-| Patrón | PNG | El registro espacio-tiempo de la pigmentación |
+| Patrón | PNG, JPG, TIFF | El registro espacio-tiempo de la pigmentación |
 
 La dirección de la página también guarda la concha y el patrón actuales, así que al copiar el enlace se comparte exactamente lo que se ve en pantalla.
 

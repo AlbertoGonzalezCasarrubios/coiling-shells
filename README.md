@@ -52,7 +52,7 @@ r_c = (1 + D)/2,   a = (1 − D)/2,   b = S·a,   θ ∈ [−2πN, 0],   φ ∈ 
 | **T** | Translation rate along the axis | T = 0 gives planispiral shells (nautilus, ammonites); high values give tall spires |
 | **S** | Shape of the aperture | Ratio between its axial and radial semi-axes |
 
-The number of whorls N and the coiling direction (dextral, ε = −1, or sinistral, ε = +1) complete the shell. A mirror valve turns a single valve into an equivalve bivalve. Presets cover real forms: garden snail, *Turritella*, *Trochus*, *Planorbis*, *Physa*, *Nautilus*, an evolute ammonite and a clam. The shell can be drawn with lines, as a solid or both, seen from the six standard views of malacology, and animated as it grows.
+The number of whorls N and the coiling direction (dextral, ε = −1, or sinistral, ε = +1) complete the shell. A mirror valve turns a single valve into an equivalve bivalve. Presets cover real forms: garden snail, *Turritella*, *Trochus*, *Planorbis*, *Physa*, *Peringia*, *Nautilus*, an evolute ammonite and a clam. The shell can be drawn with lines, as a solid or both, seen from the six standard views of malacology, and animated as it grows.
 
 ### Morphospace
 
@@ -81,16 +81,16 @@ Two presets reproduce real pattern types: the flame stripes of *Nautilus* and th
 
 ## Exporting
 
-The **Export…** button at the bottom of the sidebar opens a dialog with every export option. A single checkbox adds the coiling axis to the images, the plate and the PDF, even if it is hidden in the 3D view. Exports follow the render mode: in *Lines* mode they contain no colour.
+The **Export…** button at the bottom of the sidebar opens a dialog with every export option. You can give your shell a name, which becomes the title of the PDF and the name of the downloaded files, and choose the image format (PNG, JPG or TIFF). A single checkbox adds the coiling axis to the images, the plate and the PDF, even if it is hidden in the 3D view. Exports follow the render mode: in *Lines* mode they contain no colour.
 
 | Output | Format | Content |
 |---|---|---|
-| Current view | PNG | Exactly what the 3D view shows, at one, two or four times the screen resolution |
-| Plate of standard views | PNG | Apertural, dorsal, apical, umbilical, profile and 3/4 views, in orthographic projection, labelled, on a white or the current background |
-| Report | PDF (A4) | Plate, parameter values, position in the morphospace and a link that reopens the same shell. With a pattern, a page with the space–time record, the margin profile and the model constants. Optionally, a page with the full equations in general form and with the current values |
+| Current view | PNG, JPG, TIFF | Exactly what the 3D view shows, at one, two or four times the screen resolution, or at a fixed size such as 16:9 4K, 21:9 or a phone screen, for wallpapers. At another aspect ratio the framing widens or narrows so the shell is never cut |
+| Plate of standard views | PNG, JPG, TIFF | Apertural, dorsal, apical, umbilical, profile and 3/4 views, in orthographic projection, labelled, on a white or the current background. Also at the same fixed sizes as the current view: the views are arranged in 3 × 2, 2 × 3 or a single row or column to fill the format |
+| Report | PDF (A4) | Plate, parameter values, position in the morphospace and a link that reopens the same shell, on white, with the shell images on the current background colour, or with the whole sheet in that colour. With a pattern, a page with the space–time record, the margin profile and the model constants. Optionally, a page with the full equations in general form and with the current values |
 | 3D printing | STL, 3MF | A closed, watertight solid with a real wall thickness, in millimetres, with the apex up and the base on the print bed. You choose the size and the wall thickness |
 | 3D model | GLB (glTF) | The surface with its colour and pattern, for 3D viewers, Blender or augmented reality |
-| Pattern | PNG | The space–time record of the pigmentation |
+| Pattern | PNG, JPG, TIFF | The space–time record of the pigmentation |
 
 The page address also stores the current shell and pattern, so copying the link shares exactly what is on screen.
 

@@ -23,6 +23,7 @@ js/meinhardt.js       Pigmentation: Meinhardt's reaction–diffusion models (pur
 js/pigment-worker.js  Web Worker that runs meinhardt.js off the main thread
 js/morphospace.js     W–D morphospace: contact curve and occupied regions (pure)
 js/export3d.js        3D printing: closed solid with a real wall, binary STL and 3MF (pure)
+js/imagefile.js       Image export: fixed sizes, reframing, file names, TIFF encoder (pure)
 js/presets.js         Shape and pigmentation presets
 js/i18n.js            English and Spanish strings, including the About pages
 js/main.js            Scene, interface, views, gizmo, morphospace, formulas, export and URL state
@@ -46,6 +47,7 @@ flowchart LR
   main --> raup["raup.js<br/>shell geometry"]
   main --> morpho["morphospace.js<br/>contact curve · regions"]
   main --> exp["export3d.js<br/>printable solid · STL · 3MF"]
+  main --> img["imagefile.js<br/>sizes · framing · TIFF"]
   main --> presets["presets.js"]
   main --> i18n["i18n.js<br/>EN / ES strings"]
   main -. "postMessage" .-> worker["pigment-worker.js"]
@@ -167,9 +169,10 @@ In `main.js` the result is coloured with a **pigmentation threshold**, as in Mei
 Everything happens in a dialog (`#exportDlg`) in the browser, with no server.
 
 - **What is exported follows what is shown.** `colourShown()` is false in *Lines* mode: then the PDF leaves out the pigmentation page and Meinhardt's equations, and the GLB contains only the lines. `withExportAxis` shows or hides the coiling axis according to `#exAxis` while the image, the plate or the PDF are rendered.
-- **PNG of the current view.** A frame is rendered with a multiplied `pixelRatio` (×1, ×2 or ×4, up to 8192 px) and the canvas is read with `toDataURL` in the same task, so `preserveDrawingBuffer` is not needed.
-- **Plate of standard views** (`renderPlate`). Six views (apertural, dorsal, apical, umbilical, profile and 3/4) with an `OrthographicCamera`. Each view is framed by projecting the vertices onto the camera plane. In the apical and umbilical views the `up` vector puts the aperture at the bottom. During rendering the ground is hidden and the key light is moved to the upper left of the viewer; everything is restored afterwards.
-- **PDF** (`exportPDF`). Page 1: plate, parameters, derived values, morphospace (drawn off-screen with the light palette) and a link with the current hash. Page 2, if a pattern is shown: space–time record with labelled axes and the profile moment marked, two pigmented views, the margin profile and the constants. Optional equations page (`#exEq`): `generalTeX(view)` and `liveTeX(view)` are typeset by MathJax with SVG output inside a separate iframe (the page uses CHTML output, which cannot be rasterised) and converted to PNG at about 300 dpi. The standard PDF fonts only cover Latin-1, so `pdfSafe` replaces arrows, dashes and Greek letters.
+- **Image formats and names.** Every image (current view, plate, space–time record) goes through `downloadImage`, which encodes the canvas as PNG or JPEG with `toBlob`, or as TIFF with `encodeTIFF` (`js/imagefile.js`: RGB, 8 bits, Deflate with horizontal predictor, strips of about 256 KB, 300 dpi). The optional name typed in `#exName` replaces the preset name in the PDF title and the 3D files, and `slugify` turns it into the file name.
+- **Image of the current view** (`renderViewImage`). The size is either the screen view multiplied (×1, ×2, ×4), a fixed size (`FIXED_SIZES`: 16:9, 16:10, 21:9, 4:3, 1:1 and phone formats, or the device screen) or a custom one, always within 8192 px. `fitFrame` keeps the whole region seen on screen: a wider image keeps the vertical field of view, a taller one widens it to keep the horizontal one. The image is drawn in tiles of up to 2048 px with `camera.setViewOffset` and assembled on a 2D canvas, so it never depends on how large a drawing buffer the browser grants; line widths are scaled with the image through `LineMaterial.resolution`. Each tile is copied in the same task as its render, so `preserveDrawingBuffer` is not needed.
+- **Plate of standard views** (`renderPlate`). Six views (apertural, dorsal, apical, umbilical, profile and 3/4) with an `OrthographicCamera`. Each view is framed by projecting the vertices onto the camera plane. In the apical and umbilical views the `up` vector puts the aperture at the bottom. At a fixed size, `plateLayout` (`js/imagefile.js`) picks the grid (3 × 2, 2 × 3, 6 × 1 or 1 × 6) that gives the largest views and centres it. During rendering the ground is hidden and the key light is moved to the upper left of the viewer; everything is restored afterwards.
+- **PDF** (`exportPDF`). The background (`#exPdfBg`) is white, the current colour behind the shell images only, or the current colour on the whole sheet; `pdfPalette` then switches text, rules, graphs and equations to light ink on dark colours. Page 1: plate, parameters, derived values, morphospace (drawn off-screen with the sheet palette) and a link with the current hash. Page 2, if a pattern is shown: space–time record with labelled axes and the profile moment marked, two pigmented views, the margin profile and the constants. Optional equations page (`#exEq`): `generalTeX(view)` and `liveTeX(view)` are typeset by MathJax with SVG output inside a separate iframe (the page uses CHTML output, which cannot be rasterised) and converted to PNG at about 300 dpi. The standard PDF fonts only cover Latin-1, so `pdfSafe` replaces arrows, dashes and Greek letters.
 - **3D printing** (`js/export3d.js`). `buildPrintMesh` rebuilds the shell at print resolution (at most 160 segments per whorl and 900 rows in total, 96 around the aperture) and turns it into a closed solid:
   - the inner wall is offset inwards along the normal, with the thickness capped at 45 % of the smallest radius of each ring (the tube is solid near the apex);
   - rings close the aperture and the apex;
@@ -180,7 +183,7 @@ Everything happens in a dialog (`#exportDlg`) in the browser, with no server.
 
   Coordinates are in millimetres, with z = coiling axis (apex up) and the base at z = 0. The 3MF writer is a minimal hand-written ZIP, compressed with `CompressionStream('deflate-raw')` when available. Raup's whorls overlap one another; slicers merge overlapping volumes.
 - **GLB** (`GLTFExporter`). Exports the surface with its material (colour, bands or pattern texture) as double-sided. Vertex colours are included only when used, because in glTF they always multiply the texture. In *Lines* and *Both* modes the lines are added as `LineSegments`.
-- **Space–time record.** The pattern canvas as PNG.
+- **Space–time record.** The pattern canvas, in the chosen image format.
 
 ## Tests
 
@@ -194,6 +197,7 @@ npm test        # node --test, Node.js ≥ 20, no dependencies
 | `tests/meinhardt.test.mjs` | Seeded generator; every pattern preset forms a pattern with values in [0, 1]; same seed, same pattern; `extinct` and `uniform` diagnoses; bands are stable in time while flames oscillate; the default constants of each model form a pattern, and those of the activator–substrate model draw travelling waves |
 | `tests/morphospace.test.mjs` | Contact curve; each shape preset lies in the region of its group; freely coiled forms lie outside; regions point to existing presets and state their range of T |
 | `tests/export3d.test.mjs` | Every preset and extreme parameters (W 1.01 and 10⁴, D 0.9, T 10, S 0.5 and 2, N 0.25 and 20, mirror valve; walls 0.4 and 6 mm; sizes 30 and 250 mm) give closed, consistently oriented, outward-facing solids of the exact size with the base at z = 0; STL structure; 3MF package (ZIP entries, units, vertex and triangle counts) |
+| `tests/imagefile.test.mjs` | TIFF round trip (decoded with zlib, predictor undone) for several sizes and strips; compression of a flat background; reframing at wider and taller aspect ratios; layout of the plate in landscape, portrait and strip formats; file names from free text; fixed sizes within the limit |
 | `tests/i18n.test.mjs` | English and Spanish have the same keys; every key and element id used in the HTML and `main.js` exists; no control characters in the strings |
 
 The tests run on every push and pull request through GitHub Actions (`.github/workflows/tests.yml`).

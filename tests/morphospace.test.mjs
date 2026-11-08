@@ -11,7 +11,7 @@ test('the contact curve is D = 1/W', () => {
 test('each shape preset lies in the region of its group', () => {
   const expected = {
     caracol: 'gastropods', turritella: 'gastropods', trochus: 'gastropods', planorbis: 'gastropods',
-    physa: 'gastropods', nautilus: 'ammonoids', ammonite: 'ammonoids', almeja: 'bivalves',
+    physa: 'gastropods', peringia: 'gastropods', nautilus: 'ammonoids', ammonite: 'ammonoids', almeja: 'bivalves',
   };
   for (const [key, p] of Object.entries(PRESETS)) {
     // D = 0 lies on the edge of the regions, so test just inside it

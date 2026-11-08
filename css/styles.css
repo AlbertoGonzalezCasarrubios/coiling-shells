@@ -654,6 +654,12 @@ div.adv-only.insertion { gap: 4px; }
 .ex-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 16px; }
 .ex-row .field { min-width: 120px; }
 .ex-row .num { width: 90px; }
+.ex-row .ex-name { flex: 1 1 260px; }
+.text {
+  font: inherit; font-size: 13px; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px;
+}
+.text::placeholder { color: var(--muted); opacity: 0.8; }
 .ex-row .status { align-self: center; }
 .ex-preview { width: 100%; aspect-ratio: 3 / 2.17; object-fit: contain; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
