@@ -6,7 +6,7 @@ import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { Line2 } from 'three/addons/lines/Line2.js';
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
-import { buildShell } from './raup.js';
+import { buildShell, hasOrnament } from './raup.js';
 import { buildPrintMesh, toSTL, to3MF } from './export3d.js';
 import { MORPHO_REGIONS } from './morphospace.js';
 import { encodeTIFF, fitFrame, slugify, plateLayout, FIXED_SIZES, MAX_SIDE } from './imagefile.js';
@@ -42,6 +42,30 @@ const VIS_PARAMS = [
   { key: 'lineOpacity', min: 0.1, max: 1, step: 0.05, digits: 2 },
 ];
 
+// Ornament (relief): axial ribs along the growth direction, spiral cords around the margin
+const ORN_PARAMS = [
+  { key: 'ribN', min: 0, max: 60, step: 1, digits: 0 },
+  { key: 'ribH', min: 0, max: 0.4, step: 0.01, digits: 2 },
+  { key: 'ribW', min: 0.05, max: 1, step: 0.01, digits: 2 },
+  { key: 'cordN', min: 0, max: 48, step: 1, digits: 0 },
+  { key: 'cordH', min: 0, max: 0.4, step: 0.01, digits: 2 },
+  { key: 'cordW', min: 0.05, max: 1, step: 0.01, digits: 2 },
+];
+const ORN_KEYS = [...ORN_PARAMS.map((d) => d.key), 'nodules'];
+const ORN_SMOOTH = { ribN: 0, ribH: 0.12, ribW: 0.35, cordN: 0, cordH: 0.08, cordW: 0.45, nodules: false };
+const ORN_PRESETS = {
+  smooth: ORN_SMOOTH,
+  ribs: { ...ORN_SMOOTH, ribN: 16, ribH: 0.14, ribW: 0.3 },
+  cords: { ...ORN_SMOOTH, cordN: 9, cordH: 0.07, cordW: 0.45 },
+  reticulate: { ...ORN_SMOOTH, ribN: 22, ribH: 0.06, ribW: 0.3, cordN: 12, cordH: 0.06, cordW: 0.3 },
+  nodules: { ...ORN_SMOOTH, ribN: 14, ribH: 0.12, ribW: 0.5, cordN: 5, cordH: 0.1, cordW: 0.6, nodules: true },
+  varices: { ...ORN_SMOOTH, ribN: 3, ribH: 0.25, ribW: 0.12, cordN: 14, cordH: 0.04, cordW: 0.4 },
+};
+const pickOrnament = (p) => Object.fromEntries(ORN_KEYS.map((k) => [k, p[k]]));
+
+// Display orientation of the shell (presentation only: geometry and 3D files keep the model frame)
+const ORIENTS = ['vertical', 'horizontal', 'free'];
+
 const QUALITY = {
   low: { segPerTurn: 48, segPhi: 24 },
   medium: { segPerTurn: 96, segPhi: 48 },
@@ -62,6 +86,8 @@ const state = {
   lineWidth: 1.2,
   lineOpacity: 0.9,
   axisWidth: 1,
+  ...ORN_SMOOTH,
+  orient: 'vertical',
 };
 
 function pickShape(p) {
@@ -82,6 +108,14 @@ for (const [short, key] of Object.entries(HASH_KEYS)) {
 }
 if (fromHash.has('v')) state.mirror = fromHash.get('v') === '1';
 if (MODES.includes(fromHash.get('m'))) state.mode = fromHash.get('m');
+const ORN_HASH = { rn: 'ribN', rh: 'ribH', rw: 'ribW', cn: 'cordN', ch: 'cordH', cw: 'cordW' };
+for (const [short, key] of Object.entries(ORN_HASH)) {
+  const v = parseFloat(fromHash.get(short));
+  if (Number.isFinite(v)) state[key] = v;
+}
+if (fromHash.has('nd')) state.nodules = fromHash.get('nd') === '1';
+const ORIENT_HASH = { v: 'vertical', h: 'horizontal', f: 'free' };
+if (ORIENT_HASH[fromHash.get('o')]) state.orient = ORIENT_HASH[fromHash.get('o')];
 
 // Small wrapper around localStorage: it can be unavailable (private mode, blocked
 // site data), and then the app simply does not remember anything
@@ -111,6 +145,11 @@ function writeHashNow() {
   for (const [short, key] of Object.entries(HASH_KEYS)) q.set(short, String(+Number(state[key]).toFixed(3)));
   q.set('v', state.mirror ? '1' : '0');
   q.set('m', state.mode);
+  if (hasOrnament(state)) {
+    for (const [short, key] of Object.entries(ORN_HASH)) q.set(short, String(+Number(state[key]).toFixed(3)));
+    if (state.nodules) q.set('nd', '1');
+  }
+  if (state.orient !== 'vertical') q.set('o', state.orient[0]);
   patternHash(q);
   history.replaceState(null, '', `#${q}`);
 }
@@ -239,7 +278,11 @@ const lines = new LineSegments2(new LineSegmentsGeometry(), lineMat);
 lines.renderOrder = 1;
 const axis = new Line2(new LineGeometry(), axisMat);
 axis.visible = false;
-scene.add(solid, inner, occluder, lines, axis);
+// The shell lives in a group whose rotation is only a display orientation:
+// the geometry, the equation and the 3D files keep the model frame (z = coiling axis)
+const shellGroup = new THREE.Group();
+shellGroup.add(solid, inner, occluder, lines, axis);
+scene.add(shellGroup);
 
 // ---------------------------------------------------------------------------
 // x, y, z axes gizmo (frame of the equation: z = coiling axis)
@@ -268,6 +311,10 @@ function makeLabel(text, color) {
   return sprite;
 }
 
+// The axes turn with the shell's display orientation
+const gizmoAxes = new THREE.Group();
+gizmo.scene.add(gizmoAxes);
+
 // Three.js: X = x, Y = z, Z = −y
 for (const { label, dir, color } of [
   { label: 'x', dir: [1, 0, 0], color: '#e5534b' },
@@ -283,10 +330,10 @@ for (const { label, dir, color } of [
   head.position.y = 0.92;
   arrow.add(shaft, head);
   arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v);
-  gizmo.scene.add(arrow);
+  gizmoAxes.add(arrow);
   const sprite = makeLabel(label, color);
   sprite.position.copy(v).multiplyScalar(1.34);
-  gizmo.scene.add(sprite);
+  gizmoAxes.add(sprite);
 }
 gizmo.scene.add(new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 12), new THREE.MeshBasicMaterial({ color: 0x8a8f98, toneMapped: false })));
 
@@ -301,10 +348,16 @@ function rebuild() {
   // With a high W almost the whole shell lies in the last fraction of a whorl
   // (bivalves): θ is refined so the mesh and the growth lines are not sparse.
   const boost = Math.max(1, Math.log10(state.W));
+  // Ornament needs about eight segments per rib and per cord, within a vertex budget
+  const orn = hasOrnament(state);
+  const segPhi = orn ? Math.min(256, Math.max(q.segPhi, Math.ceil(state.cordN * 8 / 4) * 4)) : q.segPhi;
+  let segPerTurn = Math.round(q.segPerTurn * boost);
+  if (orn) segPerTurn = Math.max(segPerTurn, Math.round(state.ribN * 8 * boost));
+  segPerTurn = Math.min(segPerTurn, Math.max(q.segPerTurn, Math.floor(900000 / (segPhi * Math.max(state.turns, 0.25)))));
   const shell = buildShell({
     ...state,
-    segPhi: q.segPhi,
-    segPerTurn: Math.round(q.segPerTurn * boost),
+    segPhi,
+    segPerTurn,
     ringsPerTurn: Math.round(state.ringsPerTurn * boost),
     size: SHELL_SIZE,
   });
@@ -345,7 +398,7 @@ function rebuild() {
   axis.geometry = new LineGeometry().setPositions([x, yBottom - 0.4, z, x, yTop + 0.4, z]);
   axis.computeLineDistances();
 
-  ground.position.y = yBottom - 0.002;
+  updateGround();
 
   writeHash();
   scheduleFormula();
@@ -424,8 +477,19 @@ function generalTeX(view = formulaView) {
     const isAS = pattern.model === 'AS';
     return (isAS ? AS_TEX : AI_TEX) + (isAS && pattern.globalCtl > 0 ? GLOBAL_TEX : '') + SOURCE_TEX;
   }
-  return GENERAL_TEX + DEFS_TEX + (state.mirror ? MIRROR_TEX : '');
+  return GENERAL_TEX + DEFS_TEX + (state.mirror ? MIRROR_TEX : '') + (hasOrnament(state) ? ORNAMENT_TEX(state.nodules) : '');
 }
+
+/** Relief added along the outward normal of the aperture (descriptive model of ornament). */
+const ORNAMENT_TEX = (nodules) => String.raw`\[
+  \mathbf{P}^{*} = \mathbf{P} + W^{\theta/2\pi}\,a\,\delta(\theta,\varphi)\,\mathbf{n}(\varphi),\qquad
+  \delta = ${nodules ? String.raw`(h_r + h_c)\,R(\theta)\,C(u)` : String.raw`h_r\,R(\theta) + h_c\,C(u)`}
+\]
+\[
+  R(\theta) = \beta\!\left(\frac{n_r\,\theta}{2\pi},\,w_r\right),\quad
+  C(u) = \beta(n_c\,u,\,w_c),\quad
+  \beta(t,w) = \begin{cases} \cos^2(\pi d/w), & d < w/2 \\ 0, & d \ge w/2 \end{cases}\quad d = \left|t - \operatorname{round}(t)\right|
+\]`;
 
 function meinhardtLiveTeX() {
   const { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl, T } = pattern;
@@ -466,7 +530,11 @@ function liveTeX(view = formulaView) {
     `\\[ r_c = ${f(rc, 3)},\\; a = ${f(a, 3)},\\; b = ${f(b, 3)},\\; \\varepsilon = ${hand > 0 ? '-1' : '+1'} \\]` +
     `\\[ \\mathbf{P}(\\theta,\\varphi) = ${formatW(W)}^{\\theta/2\\pi}` +
     `\\begin{pmatrix} ${R}\\cos\\theta \\\\ ${ySign}${R}\\sin\\theta \\\\ ${zTerm} \\end{pmatrix} \\]` +
-    (state.mirror ? `\\[ \\mathbf{P}' = (x,\\,-y,\\,z) \\]` : '')
+    (state.mirror ? `\\[ \\mathbf{P}' = (x,\\,-y,\\,z) \\]` : '') +
+    (hasOrnament(state)
+      ? `\\[ n_r = ${state.ribN},\\; h_r = ${f(state.ribN > 0 ? state.ribH : 0, 2)},\\; w_r = ${f(state.ribW, 2)},\\quad ` +
+        `n_c = ${state.cordN},\\; h_c = ${f(state.cordN > 0 ? state.cordH : 0, 2)},\\; w_c = ${f(state.cordW, 2)}\\]`
+      : '')
   );
 }
 
@@ -690,6 +758,41 @@ VIS_PARAMS.forEach((d) =>
   })
 );
 
+// Ornament tab
+function ornPresetKey() {
+  return Object.keys(ORN_PRESETS).find((k) => ORN_KEYS.every((key) => {
+    const a = ORN_PRESETS[k][key], b = state[key];
+    return typeof a === 'boolean' ? a === b : Math.abs(a - b) < 1e-9;
+  })) ?? 'custom';
+}
+function onOrnamentChange() {
+  $('ornPreset').value = ornPresetKey();
+  if (state.mode === 'lines' && hasOrnament(state)) {
+    state.mode = 'solid'; // relief is read on the surface
+    applyMode();
+  }
+  dirty = true;
+}
+ORN_PARAMS.forEach((d) => createParam(d, $(d.key.startsWith('rib') ? 'rib-params' : 'cord-params'), { onChange: onOrnamentChange }));
+$('nodules').checked = state.nodules;
+$('nodules').addEventListener('change', (e) => {
+  state.nodules = e.target.checked;
+  onOrnamentChange();
+});
+$('ornPreset').addEventListener('change', (e) => {
+  const p = ORN_PRESETS[e.target.value];
+  if (!p) return;
+  for (const d of ORN_PARAMS) controlsByKey[d.key].set(p[d.key]);
+  state.nodules = p.nodules;
+  $('nodules').checked = p.nodules;
+  onOrnamentChange();
+});
+$('ornPreset').value = ornPresetKey();
+$('ornTheory').addEventListener('click', () => {
+  openInfo('raup');
+  requestAnimationFrame(() => document.getElementById('orn-theory')?.scrollIntoView({ block: 'start' }));
+});
+
 // Grouped presets
 const presetSel = $('preset');
 function buildPresetOptions() {
@@ -730,6 +833,8 @@ presetSel.addEventListener('change', () => {
   state.hand = shape.hand;
   $('hand').value = String(shape.hand);
   setMirror(shape.mirror);
+  // Planispiral shells are shown with the plane of coiling upright (unless rotating freely)
+  if (state.orient !== 'free') setOrient(shape.T === 0 && !shape.mirror ? 'horizontal' : 'vertical');
   dirty = true;
 });
 
@@ -883,6 +988,95 @@ function stepGrow(now) {
 // Standard views with a smooth transition
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Display orientation: coiling axis vertical (orbit around it), horizontal
+// (planispiral shells seen face-on with a horizontal drag) or free rotation
+// (the shell is turned by hand, in any direction)
+// ---------------------------------------------------------------------------
+
+const ORIENT_BASE = {
+  vertical: new THREE.Quaternion(),
+  // Axis horizontal, pointing to the 3/4 camera: the plane of coiling stands
+  // upright and faces the default view
+  horizontal: new THREE.Quaternion()
+    .setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(CAMERA_HOME.x, CAMERA_HOME.z))
+    .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2)),
+};
+let orientTween = null;
+
+/** The ground (shadow) touches the lowest point of the shell in its current orientation. */
+function updateGround() {
+  const P = solid.geometry.attributes.position?.array;
+  if (!P) return;
+  const e = new THREE.Matrix4().makeRotationFromQuaternion(shellGroup.quaternion).elements;
+  let minY = Infinity;
+  for (let k = 0; k < P.length; k += 3) {
+    const y = e[1] * P[k] + e[5] * P[k + 1] + e[9] * P[k + 2];
+    if (y < minY) minY = y;
+  }
+  ground.position.y = minY - 0.002;
+}
+
+function setOrient(mode, { animate = true } = {}) {
+  state.orient = mode;
+  controls.enableRotate = mode !== 'free';
+  document.querySelectorAll('.orient [data-orient]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.orient === mode)));
+  if (mode !== 'free') {
+    const to = ORIENT_BASE[mode];
+    if (animate) orientTween = { t0: performance.now(), dur: 600, from: shellGroup.quaternion.clone(), to };
+    else {
+      orientTween = null;
+      shellGroup.quaternion.copy(to);
+      updateGround();
+    }
+  }
+  writeHash();
+}
+
+function stepOrient(now) {
+  const u = Math.min(1, (now - orientTween.t0) / orientTween.dur);
+  shellGroup.quaternion.slerpQuaternions(orientTween.from, orientTween.to, easeInOut(u));
+  updateGround();
+  if (u >= 1) orientTween = null;
+}
+
+document.querySelectorAll('.orient [data-orient]').forEach((b) => b.addEventListener('click', () => setOrient(b.dataset.orient)));
+
+// Free rotation: dragging turns the shell about the screen's vertical and
+// horizontal axes, like turning it in the hand. Zoom and pan stay with the camera.
+const freeDrag = { id: null, x: 0, y: 0, pointers: new Set() };
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  freeDrag.pointers.add(e.pointerId);
+  const ok = state.orient === 'free' && e.button === 0 && freeDrag.pointers.size === 1 && !e.ctrlKey && !e.metaKey && !e.shiftKey;
+  freeDrag.id = ok ? e.pointerId : null;
+  if (!ok) return;
+  freeDrag.x = e.clientX;
+  freeDrag.y = e.clientY;
+  orientTween = null;
+  tween = null;
+});
+renderer.domElement.addEventListener('pointermove', (e) => {
+  if (e.pointerId !== freeDrag.id) return;
+  if (freeDrag.pointers.size > 1) { freeDrag.id = null; return; }
+  const k = Math.PI / Math.max(200, viewport.clientHeight); // half a turn per viewport height
+  const dx = (e.clientX - freeDrag.x) * k, dy = (e.clientY - freeDrag.y) * k;
+  freeDrag.x = e.clientX;
+  freeDrag.y = e.clientY;
+  const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+  const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+  shellGroup.quaternion
+    .premultiply(new THREE.Quaternion().setFromAxisAngle(up, dx))
+    .premultiply(new THREE.Quaternion().setFromAxisAngle(right, dy))
+    .normalize();
+  updateGround();
+});
+for (const type of ['pointerup', 'pointercancel', 'pointerleave']) {
+  renderer.domElement.addEventListener(type, (e) => {
+    freeDrag.pointers.delete(e.pointerId);
+    if (e.pointerId === freeDrag.id) freeDrag.id = null;
+  });
+}
+
 const VIEWS = {
   iso: () => CAMERA_HOME.clone(),
   apertural: () => new THREE.Vector3(0, 0, state.hand), // the aperture faces +Z in dextral shells
@@ -904,12 +1098,17 @@ function flyTo(name) {
   const offset = camera.position.clone().sub(controls.target);
   const dist = name === 'iso' ? CAMERA_HOME.length() : THREE.MathUtils.clamp(offset.length(), 7, 16);
   const from = new THREE.Spherical().setFromVector3(offset);
-  const to = new THREE.Spherical().setFromVector3(VIEWS[name]().normalize().multiplyScalar(dist));
+  // Standard views are defined on the shell: they follow its display orientation.
+  // In free rotation the shell is first set upright again.
+  if (state.orient === 'free') orientTween = { t0: performance.now(), dur: 700, from: shellGroup.quaternion.clone(), to: ORIENT_BASE.vertical };
+  const base = ORIENT_BASE[state.orient] ?? ORIENT_BASE.vertical;
+  const dir = name === 'iso' ? VIEWS.iso() : VIEWS[name]().applyQuaternion(base);
+  const to = new THREE.Spherical().setFromVector3(dir.normalize().multiplyScalar(dist));
   // Azimuth along the shortest path
   let dTheta = to.theta - from.theta;
   dTheta = Math.atan2(Math.sin(dTheta), Math.cos(dTheta));
   tween = { t0: performance.now(), dur: 700, from, dTheta, to, fromTarget: controls.target.clone() };
-  document.querySelectorAll('.views button').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
+  document.querySelectorAll('.views [data-view]').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
 }
 
 function stepTween(now) {
@@ -930,10 +1129,10 @@ function stepTween(now) {
   if (u >= 1) tween = null;
 }
 
-document.querySelectorAll('.views button').forEach((b) => b.addEventListener('click', () => flyTo(b.dataset.view)));
+document.querySelectorAll('.views [data-view]').forEach((b) => b.addEventListener('click', () => flyTo(b.dataset.view)));
 controls.addEventListener('start', () => {
   tween = null;
-  document.querySelectorAll('.views button.active').forEach((b) => b.classList.remove('active'));
+  document.querySelectorAll('.views [data-view].active').forEach((b) => b.classList.remove('active'));
 });
 
 // ---------------------------------------------------------------------------
@@ -1388,6 +1587,7 @@ function renderPlateRaw({ tile = 640, background = '#ffffff', labels = true, wid
   ctx.fillRect(0, 0, out.width, out.height);
 
   const prev = {
+    orient: shellGroup.quaternion.clone(),
     pr: renderer.getPixelRatio(),
     bg: scene.background.clone(),
     ground: ground.visible,
@@ -1401,6 +1601,7 @@ function renderPlateRaw({ tile = 640, background = '#ffffff', labels = true, wid
   renderer.setViewport(0, 0, tile, tile);
   scene.background = new THREE.Color(background);
   ground.visible = false;
+  shellGroup.quaternion.identity(); // the views of the plate are defined in the model frame
   lineMat.resolution.set(720, 720); // line width similar to the screen
   axisMat.resolution.set(720, 720);
 
@@ -1426,6 +1627,7 @@ function renderPlateRaw({ tile = 640, background = '#ffffff', labels = true, wid
 
   scene.background = prev.bg;
   ground.visible = prev.ground;
+  shellGroup.quaternion.copy(prev.orient);
   sun.position.copy(prev.sun);
   lineMat.resolution.copy(prev.res);
   axisMat.resolution.copy(prev.axisRes);
@@ -1457,7 +1659,7 @@ function printOptions() {
 
 function printMesh() {
   const { size, wall } = printOptions();
-  const shape = pickShape(state);
+  const shape = { ...pickShape(state), ...(hasOrnament(state) ? pickOrnament(state) : {}) };
   const key = JSON.stringify({ shape, size, wall });
   if (printCache.key !== key) printCache = { key, mesh: buildPrintMesh(shape, { size, wall }) };
   return printCache.mesh;
@@ -1622,6 +1824,11 @@ async function exportPDF() {
     [`N · ${tParam('turns').name}`, f(state.turns, 2)],
     [t('geo.hand'), t(state.hand > 0 ? 'geo.dextral' : 'geo.sinistral')],
     [t('geo.mirror'), t(state.mirror ? 'ex.yes' : 'ex.no')],
+    ...(hasOrnament(state) ? [
+      [`${t('orn.ribs')} (n, h, w)`, state.ribN ? `${state.ribN}, ${f(state.ribH, 2)}, ${f(state.ribW, 2)}` : '-'],
+      [`${t('orn.cords')} (n, h, w)`, state.cordN ? `${state.cordN}, ${f(state.cordH, 2)}, ${f(state.cordW, 2)}` : '-'],
+      ...(state.nodules ? [[t('orn.p.nodules').replace(/ \(.*\)/, ''), t('ex.yes')]] : []),
+    ] : []),
   ], M, y + 6.5, colW - 24, 24);
   doc.setFont('helvetica', 'normal').setFontSize(8.5).setTextColor(...muted);
   doc.text(`${t('ex.pdf.derived')}: rc = ${f(rc, 3)}   a = ${f(a, 3)}   b = ${f(b, 3)}`, M, yL + 1.5);
@@ -2617,6 +2824,12 @@ function showTab(name) {
   });
   $('tab-shape').hidden = name !== 'shape';
   $('tab-pigment').hidden = name !== 'pigment';
+  $('tab-ornament').hidden = name !== 'ornament';
+  if (name === 'ornament' && state.mode === 'lines') {
+    state.mode = 'solid';
+    applyMode();
+    writeHash();
+  }
   if (name === 'pigment') {
     computeThumbs();
     ensureSurfaceMode();
@@ -2627,7 +2840,9 @@ document.querySelectorAll('.tabs [data-tab]').forEach((b) => {
   b.addEventListener('click', () => showTab(b.dataset.tab));
   b.addEventListener('keydown', (e) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-    const next = b.dataset.tab === 'shape' ? 'pigment' : 'shape';
+    const order = ['shape', 'pigment', 'ornament'];
+    const i = order.indexOf(b.dataset.tab);
+    const next = order[(i + (e.key === 'ArrowRight' ? 1 : order.length - 1)) % order.length];
     showTab(next);
     document.querySelector(`.tabs [data-tab="${next}"]`).focus();
   });
@@ -2983,6 +3198,7 @@ function renderFrame() {
     const y = w < 760 ? 56 : 8; // above the views bar on narrow screens
     gizmo.camera.position.copy(camera.position).sub(controls.target).setLength(4);
     gizmo.camera.quaternion.copy(camera.quaternion);
+    gizmoAxes.quaternion.copy(shellGroup.quaternion);
     renderer.setScissorTest(true);
     renderer.setScissor(x, y, s, s);
     renderer.setViewport(x, y, s, s);
@@ -2995,6 +3211,7 @@ function renderFrame() {
 
 applyLanguage(getLang());
 applyMode();
+setOrient(state.orient, { animate: false });
 
 renderer.setAnimationLoop((now) => {
   if (welcomeDlg.open) return; // the guide covers the viewer: no need to draw it
@@ -3004,6 +3221,7 @@ renderer.setAnimationLoop((now) => {
     rebuild();
     applyMode();
   }
+  if (orientTween) stepOrient(now);
   if (tween) stepTween(now);
   else controls.update();
   renderFrame();

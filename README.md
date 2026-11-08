@@ -52,7 +52,9 @@ r_c = (1 + D)/2,   a = (1 − D)/2,   b = S·a,   θ ∈ [−2πN, 0],   φ ∈ 
 | **T** | Translation rate along the axis | T = 0 gives planispiral shells (nautilus, ammonites); high values give tall spires |
 | **S** | Shape of the aperture | Ratio between its axial and radial semi-axes |
 
-The number of whorls N and the coiling direction (dextral, ε = −1, or sinistral, ε = +1) complete the shell. A mirror valve turns a single valve into an equivalve bivalve. Presets cover real forms: garden snail, *Turritella*, *Trochus*, *Planorbis*, *Physa*, *Peringia*, *Nautilus*, an evolute ammonite and a clam. The shell can be drawn with lines, as a solid or both, seen from the six standard views of malacology, and animated as it grows.
+The number of whorls N and the coiling direction (dextral, ε = −1, or sinistral, ε = +1) complete the shell. A mirror valve turns a single valve into an equivalve bivalve. Presets cover real forms: garden snail, *Turritella*, *Trochus*, *Planorbis*, *Physa*, *Peringia*, *Nautilus*, an evolute ammonite and a clam. The shell can be drawn with lines, as a solid or both, seen from the six standard views of malacology, and animated as it grows. The viewer can keep the coiling axis vertical, lay it horizontal so planispiral shells are seen face-on, or let you turn the shell freely.
+
+An *Ornament* tab adds relief to the surface: axial ribs, spiral cords, a reticulate pattern or nodules where they cross. It is a descriptive extension, in the spirit of Fowler, Meinhardt and Prusinkiewicz (1992) and Cortie (1993); the explanation in the app also points to the mechanical models of Moulton, Goriely and Chirat, in which ribs and spines arise from the growth of the mantle edge.
 
 ### Morphospace
 

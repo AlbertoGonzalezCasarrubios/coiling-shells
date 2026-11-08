@@ -23,6 +23,21 @@ test('every shape preset gives a closed, outward, correctly sized solid', () => 
   }
 });
 
+test('ornamented shells (ribs, cords, nodules, varices) give valid solids', () => {
+  const ornaments = [
+    { ribN: 16, ribH: 0.14, ribW: 0.3 },
+    { cordN: 9, cordH: 0.07, cordW: 0.45 },
+    { ribN: 22, ribH: 0.06, ribW: 0.3, cordN: 12, cordH: 0.06, cordW: 0.3 },
+    { ribN: 14, ribH: 0.12, ribW: 0.5, cordN: 5, cordH: 0.1, cordW: 0.6, nodules: true },
+    { ribN: 3, ribH: 0.4, ribW: 0.12, cordN: 14, cordH: 0.4, cordW: 0.4 },
+  ];
+  for (const key of ['caracol', 'turritella', 'nautilus']) {
+    for (const o of ornaments) {
+      assertPrintable(buildPrintMesh({ ...PRESETS[key], ...o }, { size: 80, wall: 1.2 }), 80, `${key} ${JSON.stringify(o)}`);
+    }
+  }
+});
+
 test('extreme parameters, walls and sizes still give valid solids', () => {
   const cases = [
     { W: 1.01, turns: 20 }, { W: 10000, turns: 0.5 }, { D: 0.9 }, { T: 10 },

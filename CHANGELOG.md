@@ -13,6 +13,8 @@ All notable changes to this project are documented in this file. The format is b
 - A name of your own for the shell, used as the title of the PDF sheet and as the name of the downloaded files.
 - PDF background: white, the shell images on the current colour, or the whole sheet in the current colour.
 - *Peringia ulvae* shape preset.
+- *Ornament* tab: a relief added to Raup's surface along the normal of the aperture, growing with the shell. Axial ribs (number per whorl, height, width), spiral cords (number around the aperture, height, width) and nodules where they cross, with presets for smooth, ribbed (*Epitonium*), corded (*Turritella*), reticulate (*Cancellaria*), nodulose (*Cerithium*) and varicose (*Murex*) shells. The relief appears in the equation, the PDF sheet and the 3D files, and the About pages explain it with references to descriptive and mechanical models of ornament.
+- Orientation of the shell in the viewer: coiling axis vertical (orbit around it, as before), horizontal (planispiral shells such as *Nautilus* and ammonites seen face-on, chosen automatically by their presets) or free rotation, turning the shell by hand in any direction. It only changes the presentation: the plate of views, the GLB, STL and 3MF files keep the model frame, while the image of the current view shows what is on screen.
 
 ### Fixed
 - The PNG export at four times the screen resolution was cropped on high-density screens, because the browser granted a smaller drawing buffer than requested. Images of the current view are now drawn in tiles, so their size no longer depends on the drawing buffer.

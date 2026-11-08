@@ -164,6 +164,11 @@ In `main.js` the result is coloured with a **pigmentation threshold**, as in Mei
 - **Fullscreen and hide info.** Fullscreen uses the Fullscreen API on the viewer container. *Hide info* adds the `clean` class to `<body>`, which hides everything except the canvas and a button to come back.
 - **Pointer capture.** `capturePointer` wraps `setPointerCapture`, which throws if the pointer is no longer active (e.g. a cancelled touch).
 
+## Ornament and display orientation
+
+- **Ornament** (`buildShell` in `js/raup.js`). The generating curve is displaced along its outward normal in the meridian plane, n ∝ (b cos φ, a sin φ), by g·a·δ, so the relief scales with the aperture. δ adds a periodic bump in θ (axial ribs, counted from the final aperture) and one in the arc-length coordinate u (spiral cords), or multiplies them (nodules). `bump(t, w)` is a cos² pulse covering a fraction w of each period. The mesh resolution rises to about eight segments per rib and per cord, within a budget of about 900 000 vertices; the printable solid does the same. The pattern coordinates (u, v) do not change, so pigmentation lies on top of the relief.
+- **Display orientation.** The meshes, lines and axis are children of `shellGroup`; its quaternion is a presentation transform only. *Vertical* is the identity (OrbitControls orbits around the coiling axis). *Horizontal* turns the axis towards the 3/4 camera, so the plane of coiling stands upright and a horizontal drag shows a planispiral shell face-on. *Free* disables the orbit rotation and turns the group about the screen axes on drag (zoom and pan stay with the camera). The ground is moved to the lowest rotated vertex, the axes gizmo turns with the group, and the standard views are rotated with the base orientation (in free mode a standard view first sets the shell upright). The plate of views resets the group to the model frame while it renders; the GLB, STL and 3MF exports never use it.
+
 ## Export
 
 Everything happens in a dialog (`#exportDlg`) in the browser, with no server.

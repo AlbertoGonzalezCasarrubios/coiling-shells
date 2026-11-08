@@ -19,7 +19,7 @@ const PRINT_QUALITY = { segPerTurn: 160, segPhi: 96, maxRows: 900 };
 const END_WINDOW = Math.PI / 3;
 
 /**
- * @param {object} shape  W, D, T, S, turns, hand, mirror
+ * @param {object} shape  W, D, T, S, turns, hand, mirror and, optionally, the ornament (ribN, ribH…)
  * @param {object} opt    size (mm, largest dimension), wall (mm)
  * @returns {{ positions: Float32Array, indices: Uint32Array, dims: number[] }}
  */
@@ -28,8 +28,11 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
   const shell = buildShell({
     ...shape,
     grow: 1,
-    segPhi: PRINT_QUALITY.segPhi,
-    segPerTurn: Math.min(Math.round(PRINT_QUALITY.segPerTurn * boost), Math.floor(PRINT_QUALITY.maxRows / Math.max(shape.turns, 0.25))),
+    // Ornament needs about eight segments per rib and per cord
+    segPhi: Math.min(256, Math.max(PRINT_QUALITY.segPhi, 8 * (shape.cordN || 0))),
+    segPerTurn: Math.min(
+      Math.max(Math.round(PRINT_QUALITY.segPerTurn * boost), 8 * (shape.ribN || 0)),
+      Math.floor(PRINT_QUALITY.maxRows * (shape.ribN ? 2 : 1) / Math.max(shape.turns, 0.25))),
     spiralLines: 0,
     ringsPerTurn: 0,
     size,

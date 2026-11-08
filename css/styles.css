@@ -398,6 +398,11 @@ input[type='range']::-moz-range-thumb {
 }
 .views button:hover { background: var(--surface-2); color: var(--text); }
 .views button.active { color: var(--accent); }
+.views-sep { width: 1px; align-self: stretch; margin: 4px 4px; background: var(--border); }
+.views .orient { display: inline-flex; gap: 2px; }
+.views .orient button { padding-inline: 7px; }
+.views .orient button svg { width: 17px; height: 17px; display: block; }
+.views .orient button[aria-pressed='true'] { color: var(--accent); background: var(--surface-2); }
 
 .hint {
   position: absolute;
@@ -469,7 +474,7 @@ body.clean .main { height: 100vh; height: 100dvh; }
 /* ---------- Sidebar tabs ---------- */
 .tabs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 3px;
   padding: 3px;
   background: var(--surface-2);
@@ -482,9 +487,14 @@ body.clean .main { height: 100vh; height: 100dvh; }
   background: transparent;
   border: 0;
   border-radius: 6px;
-  padding: 7px 4px;
+  padding: 6px 2px 5px;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
 }
+.tabs button small { font-size: 10.5px; font-weight: 400; opacity: 0.8; }
 .tabs button:hover { color: var(--text); }
 .tabs button[aria-selected='true'] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14); }
 .tabs button:focus-visible, .info-tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }

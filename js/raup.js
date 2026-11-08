@@ -25,7 +25,36 @@
  *
  * Mirror valve (bivalves): reflection across the plane of the aperture,
  * y → −y (Z → −Z in Three.js).
+ *
+ * Ornament (optional): a relief added to the generating curve along its
+ * outward normal n(φ), in units of the aperture radius, so it grows with the
+ * shell like the rest of the aperture:
+ *
+ *   P'(θ,φ) = P(θ,φ) + g · a · δ(θ,φ) · n(φ)
+ *   δ = h_r · R(θ) + h_c · C(u)            reticulate (ribs and cords add up)
+ *   δ = (h_r + h_c) · R(θ) · C(u)          nodules (only where they cross)
+ *
+ * R and C are periodic bumps: n_r axial ribs per whorl along θ and n_c spiral
+ * cords around the margin (u = arc length). Each bump has the shape cos² and
+ * covers a fraction w of the spacing (w = 1: a smooth wave; small w: thin ribs).
+ * This is a descriptive model of ornament (as in Cortie, 1993, and Fowler,
+ * Meinhardt & Prusinkiewicz, 1992), not a mechanism.
  */
+
+/**
+ * Periodic bump of height 1: cos² over a fraction `w` of each period, zero
+ * elsewhere. `t` is measured in periods; bumps are centred on whole numbers.
+ */
+export function bump(t, w) {
+  const d = Math.abs(t - Math.round(t)); // distance to the nearest centre, 0–0.5
+  const half = Math.max(w, 1e-3) / 2;
+  if (d >= half) return 0;
+  const c = Math.cos((Math.PI / 2) * (d / half));
+  return c * c;
+}
+
+/** True when the parameters ask for some relief. */
+export const hasOrnament = (p) => (p.ribN > 0 && p.ribH > 0) || (p.cordN > 0 && p.cordH > 0);
 
 /**
  * @param {object} p
@@ -41,6 +70,13 @@
  * @param {number} p.segPhi       segments in φ around the aperture
  * @param {number} p.spiralLines  number of spiral lines (along θ)
  * @param {number} p.ringsPerTurn number of growth lines per whorl
+ * @param {number} [p.ribN]       axial ribs per whorl (0: none)
+ * @param {number} [p.ribH]       rib height, relative to the aperture radius
+ * @param {number} [p.ribW]       rib width, fraction of the spacing (0, 1]
+ * @param {number} [p.cordN]      spiral cords around the aperture (0: none)
+ * @param {number} [p.cordH]      cord height, relative to the aperture radius
+ * @param {number} [p.cordW]      cord width, fraction of the spacing (0, 1]
+ * @param {boolean} [p.nodules]   relief only where ribs and cords cross
  * @param {number} p.size         largest dimension after normalisation
  * @returns {{positions: Float32Array, colors: Float32Array, uvs: Float32Array,
  *   indices: Uint32Array, lineIndices: Uint32Array, axis: object,
@@ -96,6 +132,22 @@ export function buildShell(p) {
     for (let j = 0; j <= segPhi; j++) arcU[j] = L > 0 ? arcU[j] / L : j / segPhi;
   }
 
+  // Ornament: outward normal of the ellipse in the meridian plane, and the
+  // cord profile around the margin (it depends only on the column)
+  const ornament = hasOrnament(p);
+  const ribN = p.ribN || 0, ribH = ribN > 0 ? p.ribH || 0 : 0, ribW = p.ribW ?? 0.5;
+  const cordN = p.cordN || 0, cordH = cordN > 0 ? p.cordH || 0 : 0, cordW = p.cordW ?? 0.5;
+  const nodules = !!p.nodules && ribH + cordH > 0;
+  const nR = new Float64Array(cols), nZ = new Float64Array(cols), cord = new Float64Array(cols);
+  if (ornament) {
+    for (let j = 0; j < cols; j++) {
+      const len = Math.hypot(b * cosPhi[j], a * sinPhi[j]) || 1;
+      nR[j] = (b * cosPhi[j]) / len;
+      nZ[j] = (a * sinPhi[j]) / len;
+      cord[j] = cordN > 0 ? bump(arcU[j] * cordN, cordW) : nodules ? 1 : 0;
+    }
+  }
+
   const logW = Math.log(W);
   let minX = Infinity, minY = Infinity, minZ = Infinity;
   let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
@@ -107,11 +159,15 @@ export function buildShell(p) {
     const st = Math.sin(theta) * hand;
     // Growth bands (they only affect the colour in solid mode)
     const growth = 0.5 + 0.5 * Math.cos(theta * 3.0);
+    // Axial ribs are counted from the final aperture, so the lip carries one
+    const rib = ribN > 0 ? bump((theta / (2 * Math.PI)) * ribN, ribW) : nodules ? 1 : 0;
     for (let j = 0; j < cols; j++) {
-      const R = g * (rc + a * cosPhi[j]);
+      let delta = 0;
+      if (ornament) delta = a * (nodules ? (ribH + cordH) * rib * cord[j] : ribH * rib + cordH * cord[j]);
+      const R = g * (rc + a * cosPhi[j] + delta * nR[j]);
       const x = R * ct;
       const z = R * st;
-      const y = g * (-T * rc + b * sinPhi[j]);
+      const y = g * (-T * rc + b * sinPhi[j] + delta * nZ[j]);
       const k = (i * cols + j) * 3;
       positions[k] = x;
       positions[k + 1] = y;

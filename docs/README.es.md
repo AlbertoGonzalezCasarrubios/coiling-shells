@@ -54,7 +54,9 @@ r_c = (1 + D)/2,   a = (1 − D)/2,   b = S·a,   θ ∈ [−2πN, 0],   φ ∈ 
 | **T** | Tasa de traslación a lo largo del eje | T = 0 da conchas planispirales (nautilos, ammonites); los valores altos dan espiras altas |
 | **S** | Forma de la apertura | Razón entre sus semiejes axial y radial |
 
-El número de vueltas N y el sentido de enrollamiento (dextral, ε = −1, o sinistral, ε = +1) completan la concha. Una valva especular convierte una sola valva en un bivalvo equivalvo. Los presets cubren formas reales: caracol de jardín, *Turritella*, *Trochus*, *Planorbis*, *Physa*, *Peringia*, *Nautilus*, un ammonite evoluto y una almeja. La concha se puede dibujar con líneas, como sólido o de las dos formas, verse desde las seis vistas estándar de la malacología y animarse mientras crece.
+El número de vueltas N y el sentido de enrollamiento (dextral, ε = −1, o sinistral, ε = +1) completan la concha. Una valva especular convierte una sola valva en un bivalvo equivalvo. Los presets cubren formas reales: caracol de jardín, *Turritella*, *Trochus*, *Planorbis*, *Physa*, *Peringia*, *Nautilus*, un ammonite evoluto y una almeja. La concha se puede dibujar con líneas, como sólido o de las dos formas, verse desde las seis vistas estándar de la malacología y animarse mientras crece. El visor puede mantener vertical el eje de enrollamiento, tumbarlo para ver de frente las conchas planispirales o dejarte girar la concha libremente.
+
+Una pestaña de *Ornamentación* añade relieve a la superficie: costillas axiales, cordones espirales, un dibujo reticulado o nódulos donde se cruzan. Es una extensión descriptiva, en la línea de Fowler, Meinhardt y Prusinkiewicz (1992) y Cortie (1993); la explicación de la app remite también a los modelos mecánicos de Moulton, Goriely y Chirat, en los que costillas y espinas surgen del crecimiento del borde del manto.
 
 ### Morfoespacio
 
