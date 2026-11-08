@@ -87,7 +87,7 @@ export function makeOrnament(p, { a, b, rc, cols, cosPhi, sinPhi, arcU, perimete
   const o = { ...ORNAMENT_DEFAULTS, ...p };
   const active = hasOrnament(o);
   const nR = new Float64Array(cols), nZ = new Float64Array(cols);
-  if (!active) return { active, nR, nZ, delta: () => 0 };
+  if (!active) return { active, nR, nZ, delta: () => 0, crests: { ribs: [], cords: [], spines: [] } };
 
   const ribH = o.ribN > 0 ? o.ribH : 0;
   const cordH = o.cordN > 0 ? o.cordH : 0;
@@ -137,7 +137,25 @@ export function makeOrnament(p, { a, b, rc, cols, cosPhi, sinPhi, arcU, perimete
     }
     return d * growthFactor(o.ornGrowth, s);
   };
-  return { active, nR, nZ, delta };
+  // Where the relief is, for the line drawing: crests of ribs (angles θ), of
+  // cords and keel (positions u), and the spines that are drawn (centre θ,
+  // row u and half-widths of the base)
+  const ribCrests = [], spines = [];
+  if (ribH > 0) {
+    for (let k = 0; -2 * Math.PI * k / o.ribN >= -2 * Math.PI * nTurns; k++) ribCrests.push((-2 * Math.PI * k) / o.ribN);
+  }
+  const uCrests = [];
+  if (cordH > 0) for (let k = 0; k < o.cordN; k++) uCrests.push(k / o.cordN);
+  if (o.keelH > 0) uCrests.push(((o.keelPos % 1) + 1) % 1);
+  if (spineH > 0) {
+    for (let k = 0; ; k++) {
+      const c = (-2 * Math.PI * k) / o.spineN;
+      if (c < spineFirst) break;
+      if (c <= spineLast) for (const u of rows) spines.push({ theta: c, u });
+    }
+  }
+  const crests = { ribs: ribCrests, cords: uCrests, spines, halfTheta, halfU };
+  return { active, nR, nZ, delta, crests };
 }
 
 /** Segments needed to draw the relief: about six across each rib, cord and spine base. */

@@ -49,7 +49,7 @@
       </header>
 
       <button type="button" class="btn primary btn-wide create-btn" id="openWizard">
-        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5l1.8 4.6 4.7.4-3.6 3.1 1.1 4.7L10 12.8l-4 2.5 1.1-4.7-3.6-3.1 4.7-.4z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6.5 4.2v11.6L15.8 10z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
         <span data-i18n="wz.open">Create your own shell</span>
       </button>
 
@@ -695,6 +695,8 @@
           <section class="wizard-panel" data-step="2" hidden>
             <p class="note" data-i18n="wz.colour.intro"></p>
             <div class="wz-choices" id="wzPatterns" role="radiogroup"></div>
+            <div id="wz-pig" class="wz-pig"></div>
+            <button type="button" class="btn btn-wide wz-pig" id="wzSeed" data-i18n="wz.seed">Another variant of this pattern</button>
             <div class="colors">
               <label class="color-field"><input type="color" id="wzBase" /><span data-i18n="pig.base">Shell</span></label>
               <label class="color-field"><input type="color" id="wzPigment" /><span data-i18n="pig.pigment">Pigment</span></label>

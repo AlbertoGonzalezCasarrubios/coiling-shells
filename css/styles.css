@@ -778,3 +778,4 @@ kbd { font-family: var(--mono); font-size: 12px; padding: 1px 5px; border: 1px s
   .wizard-body { grid-template-columns: 1fr; grid-template-rows: 38vh 1fr; }
   .wizard-view { border-right: 0; }
 }
+.wz-pig[hidden] { display: none !important; }

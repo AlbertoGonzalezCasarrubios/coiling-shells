@@ -196,17 +196,63 @@ export function buildShell(p) {
     }
   }
 
-  // Lines: spiral lines (constant φ) and growth lines (constant θ)
+  // Lines: spiral lines (constant φ) and growth lines (constant θ). With
+  // ornament the drawing follows the relief, like a scientific illustration:
+  // growth lines on the crests of the ribs, spiral lines on the crests of the
+  // cords and keel, and each spine outlined as a cone (its base and two profiles).
+  const rowOf = (theta) => Math.round(((theta - thetaMin) / -thetaMin) * nTheta);
+  const colOf = (u) => {
+    let best = 0, bd = Infinity;
+    for (let j = 0; j < segPhi; j++) {
+      const d = Math.min(Math.abs(arcU[j] - u), 1 - Math.abs(arcU[j] - u));
+      if (d < bd) { bd = d; best = j; }
+    }
+    return best;
+  };
+  const cr = orn.crests;
   const lineIdx = [];
-  const nSpiral = Math.min(p.spiralLines, segPhi);
   const usedPhi = new Set();
-  for (let m = 0; m < nSpiral; m++) usedPhi.add(Math.round((m * segPhi) / nSpiral) % segPhi);
+  if (p.spiralLines > 0 && cr.cords.length) {
+    for (const u of cr.cords) usedPhi.add(colOf(u));
+  } else {
+    const nSpiral = Math.min(p.spiralLines, segPhi);
+    for (let m = 0; m < nSpiral; m++) usedPhi.add(Math.round((m * segPhi) / nSpiral) % segPhi);
+  }
   const usedTheta = new Set([cutRow]);
-  const totalRings = p.ringsPerTurn > 0 ? Math.floor(p.turns * p.ringsPerTurn) : 0;
-  for (let m = 1; m <= totalRings; m++) {
-    // count from the aperture towards the apex so the aperture always has a ring
-    const i = nTheta - Math.round((m * p.segPerTurn) / p.ringsPerTurn);
-    if (i >= 0 && i <= cutRow) usedTheta.add(i);
+  if (p.ringsPerTurn > 0 && cr.ribs.length) {
+    for (const t of cr.ribs) {
+      const i = rowOf(t);
+      if (i >= 0 && i <= cutRow) usedTheta.add(i);
+    }
+  } else {
+    const totalRings = p.ringsPerTurn > 0 ? Math.floor(p.turns * p.ringsPerTurn) : 0;
+    for (let m = 1; m <= totalRings; m++) {
+      // count from the aperture towards the apex so the aperture always has a ring
+      const i = nTheta - Math.round((m * p.segPerTurn) / p.ringsPerTurn);
+      if (i >= 0 && i <= cutRow) usedTheta.add(i);
+    }
+  }
+  // Spine outlines, as index paths on the grid
+  const spinePaths = [];
+  if ((p.spiralLines > 0 || p.ringsPerTurn > 0) && cr.spines.length) {
+    const dRow = nTheta / -thetaMin;          // rows per radian of θ
+    const ri = Math.max(1, Math.round(cr.halfTheta * dRow));
+    const rj = Math.max(1, Math.round(cr.halfU * segPhi));
+    const wrap = (j) => ((j % segPhi) + segPhi) % segPhi;
+    for (const { theta, u } of cr.spines) {
+      const ic = rowOf(theta), jc = colOf(u);
+      if (ic + ri > cutRow) continue; // not grown yet
+      const base = [];
+      for (let k = 0; k <= 24; k++) {
+        const a = (k / 24) * 2 * Math.PI;
+        base.push([ic + Math.round(Math.cos(a) * ri), wrap(jc + Math.round(Math.sin(a) * rj))]);
+      }
+      spinePaths.push(base);
+      const across = [], along = [];
+      for (let d = -ri; d <= ri; d++) along.push([ic + d, jc]);
+      for (let d = -rj; d <= rj; d++) across.push([ic, wrap(jc + d)]);
+      spinePaths.push(along, across);
+    }
   }
   for (let c = 0; c < copies; c++) {
     const off = c * count;
@@ -215,6 +261,14 @@ export function buildShell(p) {
     }
     for (const i of usedTheta) {
       for (let j = 0; j < segPhi; j++) lineIdx.push(off + i * cols + j, off + i * cols + j + 1);
+    }
+    for (const path of spinePaths) {
+      for (let k = 1; k < path.length; k++) {
+        const [i0, j0] = path[k - 1], [i1, j1] = path[k];
+        if (i0 === i1 && j0 === j1) continue;
+        if (Math.min(i0, i1) < 0 || Math.max(i0, i1) > nTheta) continue;
+        lineIdx.push(off + i0 * cols + j0, off + i1 * cols + j1);
+      }
     }
   }
 
