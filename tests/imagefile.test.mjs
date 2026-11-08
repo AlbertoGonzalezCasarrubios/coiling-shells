@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { inflateSync } from 'node:zlib';
-import { encodeTIFF, fitFrame, slugify, plateLayout, FIXED_SIZES, MAX_SIDE } from '../js/imagefile.js';
+import { encodeTIFF, fitFrame, slugify, plateLayout, FIXED_SIZES, MAX_SIDE } from '../js/export/imagefile.js';
 
 /** Minimal reader for the TIFF files written by encodeTIFF. */
 function readTIFF(bytes) {

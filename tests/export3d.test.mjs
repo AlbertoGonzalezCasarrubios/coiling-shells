@@ -2,8 +2,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { inflateRawSync } from 'node:zlib';
-import { buildPrintMesh, checkClosed, signedVolume, toSTL, to3MF } from '../js/export3d.js';
-import { PRESETS, ORNAMENT_PRESETS } from '../js/presets.js';
+import { buildPrintMesh, checkClosed, signedVolume, toSTL, to3MF } from '../js/export/export3d.js';
+import { PRESETS, ORNAMENT_PRESETS } from '../js/model/presets.js';
 
 const base = { W: 2.4, D: 0.08, T: 1.6, S: 1, turns: 4.5, hand: 1, mirror: false };
 

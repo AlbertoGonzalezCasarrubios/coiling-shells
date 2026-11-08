@@ -6,18 +6,18 @@ import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { Line2 } from 'three/addons/lines/Line2.js';
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
-import { buildShell } from './raup.js';
-import { hasOrnament, ornamentResolution, ORNAMENT_DEFAULTS } from './ornament.js';
-import { criticalWaves, lambdaForWaves, loadRatio, firstMode, unstableBand, mechanicalCords } from './mechanics.js';
-import { buildPrintMesh, toSTL, to3MF } from './export3d.js';
-import { MORPHO_REGIONS } from './morphospace.js';
-import { encodeTIFF, fitFrame, slugify, plateLayout, FIXED_SIZES, MAX_SIDE } from './imagefile.js';
-import { PRESETS, DEFAULT_PRESET, PATTERN_PRESETS, DEFAULT_PATTERN, MODEL_DEFAULTS, ORNAMENT_PRESETS } from './presets.js';
-import { simulatePattern, PROFILE_WIDTH } from './meinhardt.js';
+import { buildShell } from './model/raup.js';
+import { hasOrnament, ornamentResolution, ORNAMENT_DEFAULTS } from './model/ornament.js';
+import { criticalWaves, lambdaForWaves, loadRatio, firstMode, unstableBand, mechanicalCords } from './model/mechanics.js';
+import { buildPrintMesh, toSTL, to3MF } from './export/export3d.js';
+import { MORPHO_REGIONS } from './model/morphospace.js';
+import { encodeTIFF, fitFrame, slugify, plateLayout, FIXED_SIZES, MAX_SIDE } from './export/imagefile.js';
+import { PRESETS, DEFAULT_PRESET, PATTERN_PRESETS, DEFAULT_PATTERN, MODEL_DEFAULTS, ORNAMENT_PRESETS } from './model/presets.js';
+import { simulatePattern, PROFILE_WIDTH } from './model/meinhardt.js';
 import {
   setLang, getLang, t, tParam, tPreset, tPattern, applyStatic,
   GENERAL_TEX, DEFS_TEX, MIRROR_TEX, AI_TEX, AS_TEX, GLOBAL_TEX,
-} from './i18n.js';
+} from './i18n/i18n.js';
 
 // ---------------------------------------------------------------------------
 // Control definitions (the texts live in i18n.js)
@@ -2744,7 +2744,7 @@ function applyShellMaterial() {
 let patternWorker = null;
 let workerBusy = false;
 let workerFailed = false;
-const workerUrl = new URL('./pigment-worker.js', import.meta.url);
+const workerUrl = new URL('./workers/pigment-worker.js', import.meta.url);
 
 function startWorker() {
   try {

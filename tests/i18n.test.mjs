@@ -1,11 +1,13 @@
 // Tests for the interface strings (js/i18n.js).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { STRINGS } from '../js/i18n.js';
+import { readFileSync, readdirSync } from 'node:fs';
+import { STRINGS } from '../js/i18n/i18n.js';
 
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-const main = readFileSync(new URL('../js/main.js', import.meta.url), 'utf8');
+// All the interface code (main.js and the modules of js/ui/), read as one text
+const UI_FILES = ['../js/main.js', ...readdirSync(new URL('../js/ui/', import.meta.url)).filter((f) => f.endsWith('.js')).map((f) => `../js/ui/${f}`)];
+const main = UI_FILES.map((f) => readFileSync(new URL(f, import.meta.url), 'utf8')).join('\n');
 
 test('English and Spanish have the same keys', () => {
   assert.deepEqual(Object.keys(STRINGS.es).sort(), Object.keys(STRINGS.en).sort());

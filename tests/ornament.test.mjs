@@ -1,10 +1,10 @@
 // Tests for the ornament (js/ornament.js) and its mechanical model (js/mechanics.js).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { bump, cone, growthFactor, hasOrnament, makeOrnament, ornamentResolution, ORNAMENT_DEFAULTS } from '../js/ornament.js';
-import { criticalWaves, lambdaForWaves, loadRatio, firstMode, unstableBand, cordAmplitude, mechanicalCords } from '../js/mechanics.js';
-import { ORNAMENT_PRESETS, PRESETS } from '../js/presets.js';
-import { regionsAt } from '../js/morphospace.js';
+import { bump, cone, growthFactor, hasOrnament, makeOrnament, ornamentResolution, ORNAMENT_DEFAULTS } from '../js/model/ornament.js';
+import { criticalWaves, lambdaForWaves, loadRatio, firstMode, unstableBand, cordAmplitude, mechanicalCords } from '../js/model/mechanics.js';
+import { ORNAMENT_PRESETS, PRESETS } from '../js/model/presets.js';
+import { regionsAt } from '../js/model/morphospace.js';
 
 test('bumps: centred, periodic, with a width and an asymmetry', () => {
   assert.equal(bump(0, 0.5), 1);

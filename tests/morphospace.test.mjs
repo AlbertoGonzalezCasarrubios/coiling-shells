@@ -1,8 +1,8 @@
 // Tests for the W–D morphospace (js/morphospace.js).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { contactD, regionsAt, MORPHO_REGIONS } from '../js/morphospace.js';
-import { PRESETS } from '../js/presets.js';
+import { contactD, regionsAt, MORPHO_REGIONS } from '../js/model/morphospace.js';
+import { PRESETS } from '../js/model/presets.js';
 
 test('the contact curve is D = 1/W', () => {
   for (const W of [1.5, 2, 3, 10]) assert.equal(contactD(W), 1 / W);

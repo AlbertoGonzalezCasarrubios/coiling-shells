@@ -1,5 +1,5 @@
 // Computes the pigmentation pattern off the main thread so the interface does not freeze
-import { simulatePattern } from './meinhardt.js';
+import { simulatePattern } from '../model/meinhardt.js';
 
 self.onmessage = (e) => {
   const { id, p, g } = e.data;
