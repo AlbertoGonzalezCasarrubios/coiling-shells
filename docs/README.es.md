@@ -85,7 +85,7 @@ Los **controles simples** fijan magnitudes reales del modelo: el número de cél
 
 ## Exportación
 
-El botón **Export…** de la parte inferior de la barra lateral abre una ventana con todas las opciones de exportación. Puedes poner un nombre a tu concha, que pasa a ser el título del PDF y el nombre de los archivos descargados, y elegir el formato de imagen (PNG, JPG o TIFF). Una sola casilla añade el eje de enrollamiento a las imágenes, a la lámina y al PDF, aunque esté oculto en la vista 3D. Lo exportado sigue el modo de dibujo: en el modo *Lines* no lleva color.
+El botón **Export…** de la parte inferior de la barra lateral abre una ventana con todas las opciones de exportación. Puedes poner un nombre a tu concha, que pasa a ser el título del PDF y el nombre de los archivos descargados, y cada imagen se descarga al tamaño y en el formato (PNG, JPG o TIFF) que se eligen junto a ella. Una sola casilla añade el eje de enrollamiento a las imágenes, a la lámina y al PDF, aunque esté oculto en la vista 3D. Lo exportado sigue el modo de dibujo: en el modo *Lines* no lleva color.
 
 | Salida | Formato | Contenido |
 |---|---|---|

@@ -83,7 +83,7 @@ Two presets reproduce real pattern types: the flame stripes of *Nautilus* and th
 
 ## Exporting
 
-The **Export…** button at the bottom of the sidebar opens a dialog with every export option. You can give your shell a name, which becomes the title of the PDF and the name of the downloaded files, and choose the image format (PNG, JPG or TIFF). A single checkbox adds the coiling axis to the images, the plate and the PDF, even if it is hidden in the 3D view. Exports follow the render mode: in *Lines* mode they contain no colour.
+The **Export…** button at the bottom of the sidebar opens a dialog with every export option. You can give your shell a name, which becomes the title of the PDF and the name of the downloaded files, and each image is downloaded at the size and in the format (PNG, JPG or TIFF) chosen next to it. A single checkbox adds the coiling axis to the images, the plate and the PDF, even if it is hidden in the 3D view. Exports follow the render mode: in *Lines* mode they contain no colour.
 
 | Output | Format | Content |
 |---|---|---|
