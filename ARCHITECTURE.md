@@ -23,6 +23,8 @@ js/meinhardt.js       Pigmentation: Meinhardt's reaction–diffusion models (pur
 js/pigment-worker.js  Web Worker that runs meinhardt.js off the main thread
 js/morphospace.js     W–D morphospace: contact curve and occupied regions (pure)
 js/export3d.js        3D printing: closed solid with a real wall, binary STL and 3MF (pure)
+js/ornament.js        Ornament: ribs, cords, keel, spines and change with growth (pure)
+js/mechanics.js       Mechanical model of the cords: buckling of the mantle edge (pure)
 js/imagefile.js       Image export: fixed sizes, reframing, file names, TIFF encoder (pure)
 js/presets.js         Shape and pigmentation presets
 js/i18n.js            English and Spanish strings, including the About pages
@@ -48,6 +50,8 @@ flowchart LR
   main --> morpho["morphospace.js<br/>contact curve · regions"]
   main --> exp["export3d.js<br/>printable solid · STL · 3MF"]
   main --> img["imagefile.js<br/>sizes · framing · TIFF"]
+  main --> mech["mechanics.js<br/>buckling of the mantle edge"]
+  raup --> orn["ornament.js<br/>ribs · cords · spines"]
   main --> presets["presets.js"]
   main --> i18n["i18n.js<br/>EN / ES strings"]
   main -. "postMessage" .-> worker["pigment-worker.js"]
@@ -166,7 +170,9 @@ In `main.js` the result is coloured with a **pigmentation threshold**, as in Mei
 
 ## Ornament and display orientation
 
-- **Ornament** (`buildShell` in `js/raup.js`). The generating curve is displaced along its outward normal in the meridian plane, n ∝ (b cos φ, a sin φ), by g·a·δ, so the relief scales with the aperture. δ adds a periodic bump in θ (axial ribs, counted from the final aperture) and one in the arc-length coordinate u (spiral cords), or multiplies them (nodules). `bump(t, w)` is a cos² pulse covering a fraction w of each period. The mesh resolution rises to about eight segments per rib and per cord, within a budget of about 900 000 vertices; the printable solid does the same. The pattern coordinates (u, v) do not change, so pigmentation lies on top of the relief.
+- **Ornament** (`js/ornament.js`, used by `buildShell`). The generating curve is displaced along its outward normal in the meridian plane, n ∝ (b cos φ, a sin φ), by g·a·δ, so the relief scales with the aperture. δ = f(s)·[h_r R(θ) + h_c C(u) + h_k K(u) + h_s Σ(θ,u)]: axial ribs (cos² bumps in θ, counted from the final aperture, with an optional skew for varices), spiral cords in the arc-length coordinate u, a keel (one cord at u_k), spines (cones at n_s positions per whorl in one or two rows) and a growth factor f(s) = clamp(1 + c(2s − 1), 0, 2). With nodules, ribs and cords multiply. `makeOrnament` precomputes the per-column normals and profiles; `ornamentResolution` asks for about eight segments per rib, cord and spine base, which `rebuild` and the printable solid honour within a vertex budget. The pattern coordinates (u, v) do not change, so pigmentation lies on top of the relief. Ornamented presets (`ORNAMENT_PRESETS` in `presets.js`) carry Raup's parameters of the real shell as well as its relief.
+- **Mechanical model of the cords** (`js/mechanics.js`). The mantle edge is an elastic rod (bending stiffness B) on a Winkler foundation (stiffness k) around a margin of length L₀. The buckling load P(n)/P_c = ½[(n/n*)² + (n*/n)²], with n* = Λ^¼/2π and Λ = kL₀⁴/B; `firstMode` picks the whole number of waves with the lowest load, `unstableBand` the range unstable under a load η = P/P_c, and the cord height grows as 0.08·√(η − 1). The panel in the ornament tab draws the curve and the buckled margin on a canvas, and `mechanicalCords` turns the result into cords with a sinusoidal profile.
+- **Appearance** lives in a toolbar menu (`#lookMenu`), not in a tab, because it affects every tab; the toolbar menus close one another, on a click outside and on Escape.
 - **Display orientation.** The meshes, lines and axis are children of `shellGroup`; its quaternion is a presentation transform only. *Vertical* is the identity (OrbitControls orbits around the coiling axis). *Horizontal* turns the axis towards the 3/4 camera, so the plane of coiling stands upright and a horizontal drag shows a planispiral shell face-on. *Free* disables the orbit rotation and turns the group about the screen axes on drag (zoom and pan stay with the camera). The ground is moved to the lowest rotated vertex, the axes gizmo turns with the group, and the standard views are rotated with the base orientation (in free mode a standard view first sets the shell upright). The plate of views resets the group to the model frame while it renders; the GLB, STL and 3MF exports never use it.
 
 ## Export
@@ -201,7 +207,8 @@ npm test        # node --test, Node.js ≥ 20, no dependencies
 | `tests/raup.test.mjs` | Grid sizes and index ranges; normalisation to the requested size; mirror valve; dextral/sinistral symmetry; arc-length u coordinate; **whorls touch exactly at D = 1/W for any S** (measured on the mesh); growth animation |
 | `tests/meinhardt.test.mjs` | Seeded generator; every pattern preset forms a pattern with values in [0, 1]; same seed, same pattern; `extinct` and `uniform` diagnoses; bands are stable in time while flames oscillate; the default constants of each model form a pattern, and those of the activator–substrate model draw travelling waves |
 | `tests/morphospace.test.mjs` | Contact curve; each shape preset lies in the region of its group; freely coiled forms lie outside; regions point to existing presets and state their range of T |
-| `tests/export3d.test.mjs` | Every preset and extreme parameters (W 1.01 and 10⁴, D 0.9, T 10, S 0.5 and 2, N 0.25 and 20, mirror valve; walls 0.4 and 6 mm; sizes 30 and 250 mm) give closed, consistently oriented, outward-facing solids of the exact size with the base at z = 0; STL structure; 3MF package (ZIP entries, units, vertex and triangle counts) |
+| `tests/export3d.test.mjs` | Every preset and extreme parameters (W 1.01 and 10⁴, D 0.9, T 10, S 0.5 and 2, N 0.25 and 20, mirror valve; walls 0.4 and 6 mm; sizes 30 and 250 mm), every kind of ornament and every ornamented preset give closed, consistently oriented, outward-facing solids of the exact size with the base at z = 0; STL structure; 3MF package (ZIP entries, units, vertex and triangle counts) |
+| `tests/ornament.test.mjs` | Bumps (width, asymmetry), cones and growth factor; no relief when every term is off; spines only at their positions and in symmetric rows; nodules only at crossings; keel at its position; buckling: minimum load at n*, first whole mode, unstable band, threshold and amplitude; ornamented presets use complete shapes inside the morphospace |
 | `tests/imagefile.test.mjs` | TIFF round trip (decoded with zlib, predictor undone) for several sizes and strips; compression of a flat background; reframing at wider and taller aspect ratios; layout of the plate in landscape, portrait and strip formats; file names from free text; fixed sizes within the limit |
 | `tests/i18n.test.mjs` | English and Spanish have the same keys; every key and element id used in the HTML and `main.js` exists; no control characters in the strings |
 

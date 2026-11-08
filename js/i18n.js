@@ -25,6 +25,7 @@ const ORN_REFS = `
     <li>Cortie, M. B. (1993). Digital seashells. <i>Computers &amp; Graphics</i> 17, 79–84.</li>
     <li>Moulton, D. E., Goriely, A. &amp; Chirat, R. (2012). Mechanical growth and morphogenesis of seashells. <i>J. Theoretical Biology</i> 311, 69–79.</li>
     <li>Chirat, R., Moulton, D. E. &amp; Goriely, A. (2013). Mechanical basis of morphogenesis and convergent evolution of spiny seashells. <i>PNAS</i> 110, 6015–6020.</li>
+    <li>Moulton, D. E., Goriely, A. &amp; Chirat, R. (2015). The morpho-mechanical basis of ammonite form. <i>J. Theoretical Biology</i> 364, 220–230.</li>
   </ul>`;
 
 const REFS = `
@@ -220,24 +221,46 @@ export const STRINGS = {
     'graphs.time': 'Moment of growth shown in the profile',
     'tab.shape': 'Shape · Raup',
     'tab.pigment': 'Pigment · Meinhardt',
+    'look.hint': 'Colours, background, mesh resolution, lines and coiling axis',
     'tab.n.shape': 'Shape',
     'tab.n.pigment': 'Pigment',
     'tab.n.ornament': 'Ornament',
     'tab.n.ornament.sub': 'relief',
-    'orn.preset': 'Ornament',
-    'orn.p.smooth': 'Smooth',
-    'orn.p.ribs': 'Axial ribs (Epitonium)',
-    'orn.p.cords': 'Spiral cords (Turritella)',
-    'orn.p.reticulate': 'Reticulate (Cancellaria)',
-    'orn.p.nodules': 'Nodules (Cerithium)',
-    'orn.p.varices': 'Varices (Murex)',
+    'orn.preset': 'Ornamented shells',
+    'orn.p.smooth': 'Smooth (keeps the shape)',
+    'orn.p.epitonium': 'Wentletrap (Epitonium): lamellar ribs',
+    'orn.p.turritella': 'Tower shell (Turritella): spiral cords',
+    'orn.p.calliostoma': 'Top shell (Calliostoma): keel and cords',
+    'orn.p.cancellaria': 'Nutmeg (Cancellaria): reticulate',
+    'orn.p.cerithium': 'Horn shell (Cerithium): nodules',
+    'orn.p.dactylioceras': 'Ribbed ammonite (Dactylioceras)',
+    'orn.p.spinyAmmonite': 'Ammonite with ribs and spines',
+    'orn.p.cerastoderma': 'Cockle (Cerastoderma): radial ribs',
+    'orn.p.venus': 'Warty venus (Venus verrucosa)',
     'orn.p.custom': 'Custom',
-    'orn.note': 'Relief added to Raup’s surface along the outward normal of the aperture. It grows with the shell and works with any shape and any pattern.',
+    'orn.note': 'Each example loads the shape of the shell and its relief. The relief is added along the outward normal of the aperture, grows with the shell and works with any pattern. Shells that Raup’s model cannot draw, such as Murex with its long siphonal canal, are not included.',
     'orn.ribs': 'Axial ribs',
-    'orn.ribs.desc': 'Across the whorls, parallel to the growth lines.',
+    'orn.ribs.desc': 'Across the whorls, parallel to the growth lines (commarginal). A few strong, asymmetric ribs are varices.',
     'orn.cords': 'Spiral cords',
-    'orn.cords.desc': 'Along the whorls, parallel to the suture.',
+    'orn.cords.desc': 'Along the whorls, parallel to the suture (antimarginal). In bivalves they are the radial ribs.',
     'orn.nodules': 'Nodules: relief only where ribs and cords cross',
+    'orn.nodules.short': 'Nodules',
+    'orn.spines': 'Spines',
+    'orn.spines.desc': 'Cones that stand out of the surface at regular intervals, in one row or in two rows on either side of the periphery.',
+    'orn.spineBoth': 'Two rows, symmetric about the periphery',
+    'orn.keel': 'Keel',
+    'orn.keel.desc': 'A single sharp ridge running along the whorls, for example on the periphery of a top shell.',
+    'orn.growth': 'Change with growth',
+    'orn.growth.desc': 'Negative values make the ornament fade towards the aperture (many shells become smooth when adult); positive values make it appear late.',
+    'mech.title': 'Mechanical model of the cords',
+    'mech.desc': 'The soft edge of the mantle grows on the shell it has just built. If it grows faster than the margin it is compressed and buckles into waves, which the shell records as cords. Choose the stiffness of the attachment and the excess of growth.',
+    'mech.axis.n': 'waves, n',
+    'mech.ring': 'margin (×3)',
+    'mech.out': (ns, n, h) => `n* = ${ns} → ${n} cords, height ${h} a`,
+    'mech.out.none': (ns) => `n* = ${ns} · below the threshold (η < 1): the margin stays smooth`,
+    'mech.apply': 'Grow these cords on the shell',
+    'mech.theory': 'How the model works →',
+    'info.page.ornament': 'Ornament · mechanics',
     'orient.label': 'Orientation of the shell',
     'orient.vertical': 'Coiling axis vertical: drag to turn around it',
     'orient.horizontal': 'Coiling axis horizontal: planispiral shells seen face-on',
@@ -334,6 +357,17 @@ export const STRINGS = {
       lineOpacity: { name: 'Line opacity' },
       axisWidth: { name: 'Axis width (px)' },
       ribN: { name: 'Ribs per whorl', desc: 'n_r · 0 = none' },
+      ribSkew: { name: 'Asymmetry', desc: 'k · steep towards the aperture, gentle behind (varices)' },
+      keelH: { name: 'Height', desc: 'h_k · relative to the aperture radius' },
+      keelW: { name: 'Width', desc: 'w_k · fraction of the margin' },
+      keelPos: { name: 'Position', desc: 'u_k · 0 = periphery, + towards the apex' },
+      spineN: { name: 'Spines per whorl', desc: 'n_s · 0 = none' },
+      spineH: { name: 'Length', desc: 'h_s · relative to the aperture radius' },
+      spineW: { name: 'Base', desc: 'w_s · fraction of the spacing' },
+      spinePos: { name: 'Position', desc: 'u_s · 0 = periphery, + towards the apex' },
+      ornGrowth: { name: 'Change with growth', desc: 'c · − fades towards the aperture, + appears late' },
+      mechLambda: { name: 'Stiffness ratio Λ', desc: 'attachment / bending of the mantle edge (k L⁴ / B)' },
+      mechEta: { name: 'Excess growth η', desc: 'compression / critical compression (P / P_c)' },
       ribH: { name: 'Height', desc: 'h_r · relative to the aperture radius' },
       ribW: { name: 'Width', desc: 'w_r · fraction of the spacing (1 = smooth wave)' },
       cordN: { name: 'Cords around the aperture', desc: 'n_c · 0 = none' },
@@ -418,18 +452,58 @@ export const STRINGS = {
       <p>The mirror construction does not apply to oysters and scallops, whose two valves are different, or to brachiopods: although they look like clams, their two valves are dorsal and ventral rather than left and right, and are not mirror images of each other.</p>
 
       <h3>What the model leaves out</h3>
-      <p>Raup's model is deliberately minimal. It assumes that the aperture keeps the same shape and orientation throughout life, so it ignores changes of proportion with age (allometry). It also assumes that the aperture lies in a plane containing the axis and that growth is perfectly regular. The basic model does not include ornament (ribs, spines, varices, keels; the <em>Ornament</em> tab adds a descriptive version, explained below), the thickened lip of adult snails, internal structures such as the septa of ammonites and nautiloids, or the hinge of bivalves. Its value is not in reproducing one species in detail, but in showing how much of the diversity of shells follows from a few simple rules of growth.</p>
-
-      <h3 id="orn-theory">Ornament: ribs, cords and nodules</h3>
-      <p>Many shells are not smooth. <em>Axial ribs</em> run across the whorls, parallel to the growth lines: each one is a moment when the mantle laid down a thicker lip, as in <i>Epitonium</i>. <em>Spiral cords</em> run along the whorls, parallel to the suture: each one is a point of the margin that always secretes more, as in <i>Turritella</i>. When both are present they form a <em>reticulate</em> pattern, and where they cross they can rise into <em>nodules</em>. <em>Varices</em> are a few strong ribs per whorl, the remains of old lips, as in <i>Murex</i>.</p>
-      <p>The <em>Ornament</em> tab adds this relief to Raup's surface. At each point, the generating curve is pushed outwards along its normal by an amount proportional to the size of the aperture, so the ornament grows with the shell:</p>
-      \\[ \\mathbf{P}^{*} = \\mathbf{P} + W^{\\theta/2\\pi}\\,a\\,\\delta(\\theta,\\varphi)\\,\\mathbf{n}(\\varphi),\\qquad \\delta = h_r\\,R(\\theta) + h_c\\,C(u) \\]
-      <p>\\(R\\) repeats \\(n_r\\) times per whorl and \\(C\\) repeats \\(n_c\\) times around the margin; each bump covers a fraction \\(w\\) of the spacing, from thin ribs (small \\(w\\)) to a smooth wave (\\(w = 1\\)). With <em>nodules</em> the two profiles multiply, \\(\\delta = (h_r + h_c)\\,R\\,C\\), so relief appears only where ribs and cords cross.</p>
-      <p>This part is <strong>descriptive</strong>, like Raup's own model: it reproduces the shape of the ornament without explaining where it comes from (Fowler, Meinhardt &amp; Prusinkiewicz, 1992; Cortie, 1993). Mechanical models go further: the soft edge of the mantle is attached to a rigid shell while it grows, and when it grows faster than the shell it buckles, so ribs and spines appear as a mechanical instability, with a spacing set by growth rate and stiffness (Moulton, Goriely &amp; Chirat, 2012; Chirat et al., 2013). In the same way, Meinhardt's models explain the colour pattern that the pigment tab draws.</p>
-      ${ORN_REFS}
+      <p>Raup's model is deliberately minimal. It assumes that the aperture keeps the same shape and orientation throughout life, so it ignores changes of proportion with age (allometry). It also assumes that the aperture lies in a plane containing the axis and that growth is perfectly regular. The basic model does not include ornament (ribs, spines, varices, keels; the <em>Ornament</em> tab adds them, explained on their own page), the thickened lip of adult snails, internal structures such as the septa of ammonites and nautiloids, or the hinge of bivalves. Its value is not in reproducing one species in detail, but in showing how much of the diversity of shells follows from a few simple rules of growth.</p>
 
       <h3>References</h3>
       ${REFS}`,
+    'info.ornament': `
+      <blockquote class="quote">
+        Shells are not only coiled tubes: many are ribbed, corded, keeled or spiny, and this relief, like the colour pattern, is laid down at the growing edge.
+      </blockquote>
+
+      <h3>Kinds of ornament</h3>
+      <p>All ornament is built at the margin of the aperture, by the edge of the mantle, and stays fixed in the shell afterwards. It is described by its direction relative to that margin.</p>
+      <ul>
+        <li><strong>Axial ribs</strong> (commarginal) run parallel to the margin, so across the whorls, like the growth lines. Each one records a moment when the mantle laid down a thicker or flared lip, as in <i>Epitonium</i> or many ammonites. A few strong ribs per whorl, steep on the side of the aperture, are <strong>varices</strong>: the remains of old lips.</li>
+        <li><strong>Spiral cords</strong> (antimarginal) run perpendicular to the margin, so along the whorls, parallel to the suture. Each one is a point of the margin that always secretes more, as in <i>Turritella</i>. In bivalves they are the radial ribs of a cockle.</li>
+        <li>When both are present they form a <strong>reticulate</strong> pattern (<i>Cancellaria</i>), and where they cross they can rise into <strong>nodules</strong> (<i>Cerithium</i>).</li>
+        <li>A <strong>keel</strong> is a single strong cord, often on the periphery. <strong>Spines</strong> are long projections, usually on ribs or on the shoulder.</li>
+      </ul>
+
+      <h3>The descriptive model</h3>
+      <p>The <em>Ornament</em> tab adds the relief to Raup's surface. At each point the generating curve is pushed outwards along its normal \\(\\mathbf{n}(\\varphi)\\), by an amount proportional to the size of the aperture, so the ornament grows with the shell exactly as the rest of the aperture does:</p>
+      \\[ \\mathbf{P}^{*}(\\theta,\\varphi) = \\mathbf{P}(\\theta,\\varphi) + W^{\\theta/2\\pi}\\,a\\,\\delta(\\theta,\\varphi)\\,\\mathbf{n}(\\varphi) \\]
+      \\[ \\delta = f(s)\\,\\bigl[\\,h_r R(\\theta) + h_c C(u) + h_k K(u) + h_s \\Sigma(\\theta,u)\\,\\bigr] \\]
+      <ul>
+        <li>\\(R\\): \\(n_r\\) axial ribs per whorl along \\(\\theta\\), counted from the final aperture. Each is a \\(\\cos^2\\) bump covering a fraction \\(w_r\\) of the spacing; the asymmetry \\(k\\) makes it steep on the side of the aperture and gentle behind, as varices are.</li>
+        <li>\\(C\\): \\(n_c\\) spiral cords around the margin, in the arc-length coordinate \\(u\\), which runs from 0 to 1 starting at the periphery. With <em>nodules</em> the two profiles multiply, \\((h_r + h_c)\\,R\\,C\\), so relief appears only where they cross.</li>
+        <li>\\(K\\): a keel, one cord at position \\(u_k\\).</li>
+        <li>\\(\\Sigma\\): spines, cones of length \\(h_s\\) placed \\(n_s\\) times per whorl, in one row at \\(u_s\\) or two rows at \\(\\pm u_s\\).</li>
+        <li>\\(f(s) = 1 + c\\,(2s-1)\\), with \\(s\\) the fraction of growth from the apex (0) to the aperture (1): with \\(c < 0\\) the ornament fades as the shell grows, as in many shells that become smooth when adult.</li>
+      </ul>
+      <p>This part is <strong>descriptive</strong>, like Raup's model: it reproduces the form of the ornament without explaining it (Fowler, Meinhardt &amp; Prusinkiewicz, 1992; Cortie, 1993). It also inherits Raup's limits. The aperture keeps one shape, so shells with a long siphonal canal, such as <i>Murex</i>, cannot be drawn and are left out of the examples. Spines point along the normal of the surface, while real spines often curve back or are open gutters.</p>
+
+      <h3 id="mech-theory">A mechanical explanation of the cords</h3>
+      <p>Why should a shell have nine cords and not twenty? Moulton, Goriely &amp; Chirat (2012) proposed a mechanical answer. The edge of the mantle is a soft, elastic strip that lies along the margin of the aperture and is attached to the shell it has just secreted. If the mantle grows a little faster than the margin it has to follow, it is compressed along its length, and a compressed strip on an elastic support buckles into waves, like a rug pushed against a wall. The shell records those waves as cords.</p>
+      <p>In the simplest version, the mantle edge is an elastic rod of bending stiffness \\(B\\) on an elastic foundation of stiffness \\(k\\) (a Winkler foundation). A wave of wavenumber \\(q\\) costs bending energy, which grows with \\(q^2\\), and foundation energy, which grows with \\(1/q^2\\). The compression \\(P\\) needed to buckle into that wave is</p>
+      \\[ P(q) = B\\,q^2 + \\frac{k}{q^2}, \\qquad P_c = 2\\sqrt{kB}, \\qquad q^{*} = \\left(\\frac{k}{B}\\right)^{1/4}. \\]
+      <p>Around a margin of length \\(L_0\\), \\(q\\) corresponds to \\(n = qL_0/2\\pi\\) waves. With the dimensionless stiffness ratio \\(\\Lambda = kL_0^4/B\\) and the load \\(\\eta = P/P_c\\):</p>
+      \\[ \\frac{P(n)}{P_c} = \\frac{1}{2}\\left[\\left(\\frac{n}{n^{*}}\\right)^2 + \\left(\\frac{n^{*}}{n}\\right)^2\\right], \\qquad n^{*} = \\frac{\\Lambda^{1/4}}{2\\pi}. \\]
+      <ul>
+        <li>Below the threshold (\\(\\eta < 1\\)) no wave is possible and the shell is smooth.</li>
+        <li>Just above it, the first wave to appear is the one with the lowest load: \\(n^{*}\\) crests, rounded to a whole number. Its amplitude grows as \\(\\sqrt{\\eta - 1}\\), as in any supercritical bifurcation; the linear theory does not give the constant, and the app uses \\(0.08\\,a\\sqrt{\\eta - 1}\\).</li>
+        <li>A stiffer attachment or a softer mantle (larger \\(\\Lambda\\)) gives more, finer cords. Because \\(n^{*}\\) grows with \\(L_0\\), a growing aperture favours more waves; this is consistent with cords being added between the old ones as many shells grow.</li>
+      </ul>
+      <p>The panel <em>Mechanical model of the cords</em> draws this curve. The shaded band shows the wave numbers that are unstable under the chosen load, and the point marks the one that appears first. The button grows those cords on the shell with a smooth, sinusoidal profile (\\(w_c = 1\\)), because that is the shape of a buckling mode.</p>
+
+      <h3>Ribs and spines</h3>
+      <p>The same ideas extend to the other kinds of ornament. Axial ribs can arise as an oscillation in time: the mantle edge is held back by its elastic attachment while it grows, so the aperture overshoots and recoils, and the shell records each cycle as a rib (Moulton, Goriely &amp; Chirat, 2015, for ammonites). Spines appear when the excess growth is concentrated at a few points of the margin, which bend out of the surface; this explains why spines in unrelated groups look so alike (Chirat, Moulton &amp; Goriely, 2013). In the app these forms are drawn with the descriptive model; only the cords have an interactive mechanical model, because their theory is the simplest.</p>
+
+      <h3>What the mechanical model leaves out</h3>
+      <p>It is a linear, one-dimensional model: the mantle is a uniform rod, the foundation is uniform, and only the onset of buckling is described. Real mantles vary in thickness and stiffness along the margin, waves interact once they are large, and the secretion of calcium carbonate has its own rules. The model explains why regular cords should appear, and what sets their number, not the detailed shape of a particular shell.</p>
+
+      <h3>References</h3>
+      ${ORN_REFS}`,
     'info.meinhardt': `
       <h3>A pattern that records its own history</h3>
       <p>A mollusc can only add pigment where it adds shell: along the edge of the aperture, where the mantle secretes new material. Once laid down, the pigment cannot be changed; the shell simply grows beyond it. A shell pattern is therefore a <strong>record in time of a one-dimensional process</strong>. The direction along the margin is space (\\(x\\)) and the direction of growth is time. Reading a shell from the apex to the aperture is like watching, frame by frame, what happened along the margin throughout the animal's life.</p>
@@ -673,24 +747,46 @@ export const STRINGS = {
     'graphs.time': 'Instante del crecimiento que muestra el perfil',
     'tab.shape': 'Forma · Raup',
     'tab.pigment': 'Pigmento · Meinhardt',
+    'look.hint': 'Colores, fondo, resolución de la malla, líneas y eje de enrollamiento',
     'tab.n.shape': 'Forma',
     'tab.n.pigment': 'Pigmento',
     'tab.n.ornament': 'Ornamento',
     'tab.n.ornament.sub': 'relieve',
-    'orn.preset': 'Ornamentación',
-    'orn.p.smooth': 'Lisa',
-    'orn.p.ribs': 'Costillas axiales (Epitonium)',
-    'orn.p.cords': 'Cordones espirales (Turritella)',
-    'orn.p.reticulate': 'Reticulada (Cancellaria)',
-    'orn.p.nodules': 'Nódulos (Cerithium)',
-    'orn.p.varices': 'Várices (Murex)',
+    'orn.preset': 'Conchas ornamentadas',
+    'orn.p.smooth': 'Lisa (mantiene la forma)',
+    'orn.p.epitonium': 'Escalaria (Epitonium): costillas laminares',
+    'orn.p.turritella': 'Turritela (Turritella): cordones espirales',
+    'orn.p.calliostoma': 'Trompo (Calliostoma): quilla y cordones',
+    'orn.p.cancellaria': 'Cancelaria (Cancellaria): reticulada',
+    'orn.p.cerithium': 'Cerito (Cerithium): nódulos',
+    'orn.p.dactylioceras': 'Ammonites con costillas (Dactylioceras)',
+    'orn.p.spinyAmmonite': 'Ammonites con costillas y espinas',
+    'orn.p.cerastoderma': 'Berberecho (Cerastoderma): costillas radiales',
+    'orn.p.venus': 'Almejón verrugoso (Venus verrucosa)',
     'orn.p.custom': 'Personalizada',
-    'orn.note': 'Relieve añadido a la superficie de Raup a lo largo de la normal de la apertura. Crece con la concha y funciona con cualquier forma y cualquier patrón.',
+    'orn.note': 'Cada ejemplo carga la forma de la concha y su relieve. El relieve se añade a lo largo de la normal de la apertura, crece con la concha y funciona con cualquier patrón. Las conchas que el modelo de Raup no puede dibujar, como Murex con su largo canal sifonal, no se incluyen.',
     'orn.ribs': 'Costillas axiales',
-    'orn.ribs.desc': 'Cruzan las vueltas, paralelas a las líneas de crecimiento.',
+    'orn.ribs.desc': 'Cruzan las vueltas, paralelas a las líneas de crecimiento (comarginales). Unas pocas costillas fuertes y asimétricas son várices.',
     'orn.cords': 'Cordones espirales',
-    'orn.cords.desc': 'Recorren las vueltas, paralelos a la sutura.',
+    'orn.cords.desc': 'Recorren las vueltas, paralelos a la sutura (antimarginales). En los bivalvos son las costillas radiales.',
     'orn.nodules': 'Nódulos: relieve solo donde se cruzan costillas y cordones',
+    'orn.nodules.short': 'Nódulos',
+    'orn.spines': 'Espinas',
+    'orn.spines.desc': 'Conos que sobresalen de la superficie a intervalos regulares, en una fila o en dos filas a ambos lados de la periferia.',
+    'orn.spineBoth': 'Dos filas, simétricas respecto a la periferia',
+    'orn.keel': 'Quilla',
+    'orn.keel.desc': 'Una sola cresta afilada que recorre las vueltas, por ejemplo en la periferia de un trompo.',
+    'orn.growth': 'Cambio con el crecimiento',
+    'orn.growth.desc': 'Los valores negativos hacen que la ornamentación se desvanezca hacia la apertura (muchas conchas se vuelven lisas de adultas); los positivos, que aparezca tarde.',
+    'mech.title': 'Modelo mecánico de los cordones',
+    'mech.desc': 'El borde blando del manto crece sobre la concha que acaba de construir. Si crece más deprisa que el borde de la concha, se comprime y se pandea en ondas, que la concha registra como cordones. Elige la rigidez de la unión y el exceso de crecimiento.',
+    'mech.axis.n': 'ondas, n',
+    'mech.ring': 'borde (×3)',
+    'mech.out': (ns, n, h) => `n* = ${ns} → ${n} cordones, altura ${h} a`,
+    'mech.out.none': (ns) => `n* = ${ns} · por debajo del umbral (η < 1): el borde sigue liso`,
+    'mech.apply': 'Hacer crecer estos cordones en la concha',
+    'mech.theory': 'Cómo funciona el modelo →',
+    'info.page.ornament': 'Ornamento · mecánica',
     'orient.label': 'Orientación de la concha',
     'orient.vertical': 'Eje de enrollamiento vertical: arrastra para girar a su alrededor',
     'orient.horizontal': 'Eje de enrollamiento horizontal: conchas planispirales vistas de frente',
@@ -787,6 +883,17 @@ export const STRINGS = {
       lineOpacity: { name: 'Opacidad de líneas' },
       axisWidth: { name: 'Grosor del eje (px)' },
       ribN: { name: 'Costillas por vuelta', desc: 'n_r · 0 = ninguna' },
+      ribSkew: { name: 'Asimetría', desc: 'k · abrupta hacia la apertura, suave detrás (várices)' },
+      keelH: { name: 'Altura', desc: 'h_k · relativa al radio de la apertura' },
+      keelW: { name: 'Anchura', desc: 'w_k · fracción del borde' },
+      keelPos: { name: 'Posición', desc: 'u_k · 0 = periferia, + hacia el ápice' },
+      spineN: { name: 'Espinas por vuelta', desc: 'n_s · 0 = ninguna' },
+      spineH: { name: 'Longitud', desc: 'h_s · relativa al radio de la apertura' },
+      spineW: { name: 'Base', desc: 'w_s · fracción del espaciado' },
+      spinePos: { name: 'Posición', desc: 'u_s · 0 = periferia, + hacia el ápice' },
+      ornGrowth: { name: 'Cambio con el crecimiento', desc: 'c · − se desvanece hacia la apertura, + aparece tarde' },
+      mechLambda: { name: 'Razón de rigideces Λ', desc: 'unión / flexión del borde del manto (k L⁴ / B)' },
+      mechEta: { name: 'Exceso de crecimiento η', desc: 'compresión / compresión crítica (P / P_c)' },
       ribH: { name: 'Altura', desc: 'h_r · relativa al radio de la apertura' },
       ribW: { name: 'Anchura', desc: 'w_r · fracción del espaciado (1 = ondulación suave)' },
       cordN: { name: 'Cordones alrededor de la apertura', desc: 'n_c · 0 = ninguno' },
@@ -872,18 +979,58 @@ export const STRINGS = {
       <p>Esta construcción no sirve para las ostras ni las vieiras, cuyas dos valvas son distintas, ni para los braquiópodos: aunque se parecen a las almejas, sus valvas son dorsal y ventral, no izquierda y derecha, y no son imágenes especulares una de otra.</p>
 
       <h3>Qué deja fuera el modelo</h3>
-      <p>El modelo de Raup es deliberadamente mínimo. Supone que la apertura conserva la misma forma y orientación durante toda la vida, así que ignora los cambios de proporción con la edad (alometría). Supone también que la apertura está en un plano que contiene el eje y que el crecimiento es perfectamente regular. El modelo básico no incluye la ornamentación (costillas, espinas, várices, quillas; la pestaña <em>Ornamentación</em> añade una versión descriptiva, explicada más abajo), el labio engrosado de los caracoles adultos, las estructuras internas, como los septos de ammonites y nautilos, ni la charnela de los bivalvos. Su valor no está en reproducir con detalle una especie, sino en mostrar cuánta diversidad de conchas se explica con unas pocas reglas de crecimiento.</p>
-
-      <h3 id="orn-theory">Ornamentación: costillas, cordones y nódulos</h3>
-      <p>Muchas conchas no son lisas. Las <em>costillas axiales</em> cruzan las vueltas, paralelas a las líneas de crecimiento: cada una es un momento en que el manto depositó un labio más grueso, como en <i>Epitonium</i>. Los <em>cordones espirales</em> recorren las vueltas, paralelos a la sutura: cada uno es un punto del borde que siempre segrega más, como en <i>Turritella</i>. Cuando hay de los dos forman un dibujo <em>reticulado</em>, y donde se cruzan pueden elevarse en <em>nódulos</em>. Las <em>várices</em> son unas pocas costillas fuertes por vuelta, restos de labios antiguos, como en <i>Murex</i>.</p>
-      <p>La pestaña <em>Ornamentación</em> añade este relieve a la superficie de Raup. En cada punto, la curva generatriz se desplaza hacia fuera a lo largo de su normal, en una cantidad proporcional al tamaño de la apertura, así que la ornamentación crece con la concha:</p>
-      \\[ \\mathbf{P}^{*} = \\mathbf{P} + W^{\\theta/2\\pi}\\,a\\,\\delta(\\theta,\\varphi)\\,\\mathbf{n}(\\varphi),\\qquad \\delta = h_r\\,R(\\theta) + h_c\\,C(u) \\]
-      <p>\\(R\\) se repite \\(n_r\\) veces por vuelta y \\(C\\), \\(n_c\\) veces alrededor del borde; cada relieve ocupa una fracción \\(w\\) del espaciado, desde costillas finas (\\(w\\) pequeño) hasta una ondulación suave (\\(w = 1\\)). Con <em>nódulos</em>, los dos perfiles se multiplican, \\(\\delta = (h_r + h_c)\\,R\\,C\\), y el relieve solo aparece donde se cruzan costillas y cordones.</p>
-      <p>Esta parte es <strong>descriptiva</strong>, como el propio modelo de Raup: reproduce la forma de la ornamentación sin explicar de dónde sale (Fowler, Meinhardt y Prusinkiewicz, 1992; Cortie, 1993). Los modelos mecánicos van más allá: el borde blando del manto está unido a una concha rígida mientras crece, y cuando crece más deprisa que ella se pandea, así que costillas y espinas aparecen como una inestabilidad mecánica, con un espaciado que fijan la tasa de crecimiento y la rigidez (Moulton, Goriely y Chirat, 2012; Chirat y cols., 2013). Del mismo modo, los modelos de Meinhardt explican el dibujo de color que traza la pestaña de pigmento.</p>
-      ${ORN_REFS}
+      <p>El modelo de Raup es deliberadamente mínimo. Supone que la apertura conserva la misma forma y orientación durante toda la vida, así que ignora los cambios de proporción con la edad (alometría). Supone también que la apertura está en un plano que contiene el eje y que el crecimiento es perfectamente regular. El modelo básico no incluye la ornamentación (costillas, espinas, várices, quillas; la pestaña <em>Ornamento</em> los añade, y se explican en su propia página), el labio engrosado de los caracoles adultos, las estructuras internas, como los septos de ammonites y nautilos, ni la charnela de los bivalvos. Su valor no está en reproducir con detalle una especie, sino en mostrar cuánta diversidad de conchas se explica con unas pocas reglas de crecimiento.</p>
 
       <h3>Referencias</h3>
       ${REFS}`,
+    'info.ornament': `
+      <blockquote class="quote">
+        Las conchas no son solo tubos enrollados: muchas tienen costillas, cordones, quillas o espinas, y este relieve, como el dibujo de color, se forma en el borde que crece.
+      </blockquote>
+
+      <h3>Tipos de ornamentación</h3>
+      <p>Toda la ornamentación se construye en el borde de la apertura, con el borde del manto, y después queda fija en la concha. Se describe por su dirección respecto a ese borde.</p>
+      <ul>
+        <li>Las <strong>costillas axiales</strong> (comarginales) son paralelas al borde, así que cruzan las vueltas, como las líneas de crecimiento. Cada una registra un momento en que el manto depositó un labio más grueso o más abierto, como en <i>Epitonium</i> o en muchos ammonites. Unas pocas costillas fuertes por vuelta, abruptas por el lado de la apertura, son <strong>várices</strong>: restos de labios antiguos.</li>
+        <li>Los <strong>cordones espirales</strong> (antimarginales) son perpendiculares al borde, así que recorren las vueltas, paralelos a la sutura. Cada uno es un punto del borde que siempre segrega más, como en <i>Turritella</i>. En los bivalvos son las costillas radiales de un berberecho.</li>
+        <li>Cuando hay de los dos forman un dibujo <strong>reticulado</strong> (<i>Cancellaria</i>), y donde se cruzan pueden elevarse en <strong>nódulos</strong> (<i>Cerithium</i>).</li>
+        <li>Una <strong>quilla</strong> es un solo cordón fuerte, a menudo en la periferia. Las <strong>espinas</strong> son proyecciones largas, normalmente sobre las costillas o en el hombro.</li>
+      </ul>
+
+      <h3>El modelo descriptivo</h3>
+      <p>La pestaña <em>Ornamento</em> añade el relieve a la superficie de Raup. En cada punto, la curva generatriz se desplaza hacia fuera a lo largo de su normal \\(\\mathbf{n}(\\varphi)\\), en una cantidad proporcional al tamaño de la apertura, así que la ornamentación crece con la concha igual que el resto de la apertura:</p>
+      \\[ \\mathbf{P}^{*}(\\theta,\\varphi) = \\mathbf{P}(\\theta,\\varphi) + W^{\\theta/2\\pi}\\,a\\,\\delta(\\theta,\\varphi)\\,\\mathbf{n}(\\varphi) \\]
+      \\[ \\delta = f(s)\\,\\bigl[\\,h_r R(\\theta) + h_c C(u) + h_k K(u) + h_s \\Sigma(\\theta,u)\\,\\bigr] \\]
+      <ul>
+        <li>\\(R\\): \\(n_r\\) costillas axiales por vuelta a lo largo de \\(\\theta\\), contadas desde la apertura final. Cada una es un relieve en \\(\\cos^2\\) que ocupa una fracción \\(w_r\\) del espaciado; la asimetría \\(k\\) la hace abrupta por el lado de la apertura y suave por detrás, como las várices.</li>
+        <li>\\(C\\): \\(n_c\\) cordones espirales alrededor del borde, en la coordenada de longitud de arco \\(u\\), que va de 0 a 1 empezando en la periferia. Con <em>nódulos</em>, los dos perfiles se multiplican, \\((h_r + h_c)\\,R\\,C\\), y el relieve solo aparece donde se cruzan.</li>
+        <li>\\(K\\): una quilla, un cordón en la posición \\(u_k\\).</li>
+        <li>\\(\\Sigma\\): espinas, conos de longitud \\(h_s\\) colocados \\(n_s\\) veces por vuelta, en una fila en \\(u_s\\) o en dos filas en \\(\\pm u_s\\).</li>
+        <li>\\(f(s) = 1 + c\\,(2s-1)\\), con \\(s\\) la fracción de crecimiento desde el ápice (0) hasta la apertura (1): con \\(c < 0\\), la ornamentación se desvanece al crecer, como en muchas conchas que se vuelven lisas de adultas.</li>
+      </ul>
+      <p>Esta parte es <strong>descriptiva</strong>, como el modelo de Raup: reproduce la forma de la ornamentación sin explicarla (Fowler, Meinhardt y Prusinkiewicz, 1992; Cortie, 1993). También hereda los límites de Raup. La apertura conserva una misma forma, así que las conchas con un canal sifonal largo, como <i>Murex</i>, no se pueden dibujar y quedan fuera de los ejemplos. Las espinas apuntan según la normal de la superficie, mientras que las reales a menudo se curvan hacia atrás o son canales abiertos.</p>
+
+      <h3 id="mech-theory">Una explicación mecánica de los cordones</h3>
+      <p>¿Por qué una concha tiene nueve cordones y no veinte? Moulton, Goriely y Chirat (2012) propusieron una respuesta mecánica. El borde del manto es una tira blanda y elástica que recorre el borde de la apertura y está unida a la concha que acaba de segregar. Si el manto crece un poco más deprisa que el borde que debe seguir, queda comprimido a lo largo, y una tira comprimida sobre un soporte elástico se pandea en ondas, como una alfombra empujada contra la pared. La concha registra esas ondas como cordones.</p>
+      <p>En la versión más sencilla, el borde del manto es una varilla elástica de rigidez a flexión \\(B\\) sobre una base elástica de rigidez \\(k\\) (una base de Winkler). Una onda de número de onda \\(q\\) cuesta energía de flexión, que crece con \\(q^2\\), y energía de la base, que crece con \\(1/q^2\\). La compresión \\(P\\) necesaria para pandearse en esa onda es</p>
+      \\[ P(q) = B\\,q^2 + \\frac{k}{q^2}, \\qquad P_c = 2\\sqrt{kB}, \\qquad q^{*} = \\left(\\frac{k}{B}\\right)^{1/4}. \\]
+      <p>Alrededor de un borde de longitud \\(L_0\\), \\(q\\) corresponde a \\(n = qL_0/2\\pi\\) ondas. Con la razón de rigideces adimensional \\(\\Lambda = kL_0^4/B\\) y la carga \\(\\eta = P/P_c\\):</p>
+      \\[ \\frac{P(n)}{P_c} = \\frac{1}{2}\\left[\\left(\\frac{n}{n^{*}}\\right)^2 + \\left(\\frac{n^{*}}{n}\\right)^2\\right], \\qquad n^{*} = \\frac{\\Lambda^{1/4}}{2\\pi}. \\]
+      <ul>
+        <li>Por debajo del umbral (\\(\\eta < 1\\)) no hay ninguna onda posible y la concha es lisa.</li>
+        <li>Justo por encima, la primera onda que aparece es la de menor carga: \\(n^{*}\\) crestas, redondeado a un número entero. Su amplitud crece como \\(\\sqrt{\\eta - 1}\\), como en cualquier bifurcación supercrítica; la teoría lineal no da la constante, y la app usa \\(0{,}08\\,a\\sqrt{\\eta - 1}\\).</li>
+        <li>Una unión más rígida o un manto más blando (\\(\\Lambda\\) mayor) dan más cordones y más finos. Como \\(n^{*}\\) crece con \\(L_0\\), una apertura que crece favorece más ondas; esto encaja con que muchas conchas añadan cordones entre los antiguos a medida que crecen.</li>
+      </ul>
+      <p>El panel <em>Modelo mecánico de los cordones</em> dibuja esta curva. La banda sombreada muestra los números de onda inestables con la carga elegida, y el punto marca el primero que aparece. El botón hace crecer esos cordones en la concha con un perfil suave y sinusoidal (\\(w_c = 1\\)), porque esa es la forma de un modo de pandeo.</p>
+
+      <h3>Costillas y espinas</h3>
+      <p>Las mismas ideas se extienden a los otros tipos de ornamentación. Las costillas axiales pueden surgir como una oscilación en el tiempo: la unión elástica frena al borde del manto mientras crece, así que la apertura se pasa y retrocede, y la concha registra cada ciclo como una costilla (Moulton, Goriely y Chirat, 2015, para los ammonites). Las espinas aparecen cuando el exceso de crecimiento se concentra en unos pocos puntos del borde, que se doblan fuera de la superficie; esto explica que las espinas de grupos sin parentesco se parezcan tanto (Chirat, Moulton y Goriely, 2013). En la app estas formas se dibujan con el modelo descriptivo; solo los cordones tienen un modelo mecánico interactivo, porque su teoría es la más sencilla.</p>
+
+      <h3>Qué deja fuera el modelo mecánico</h3>
+      <p>Es un modelo lineal y unidimensional: el manto es una varilla uniforme, la base es uniforme y solo se describe el comienzo del pandeo. Los mantos reales varían en grosor y rigidez a lo largo del borde, las ondas interaccionan cuando son grandes y la secreción del carbonato cálcico tiene sus propias reglas. El modelo explica por qué deberían aparecer cordones regulares y qué fija su número, no la forma detallada de una concha concreta.</p>
+
+      <h3>Referencias</h3>
+      ${ORN_REFS}`,
     'info.meinhardt': `
       <h3>Un patrón que registra su propia historia</h3>
       <p>Un molusco solo puede añadir pigmento donde añade concha: en el borde de la apertura, donde el manto segrega material nuevo. Una vez depositado, el pigmento ya no cambia; la concha simplemente sigue creciendo más allá. Por eso un patrón de concha es un <strong>registro en el tiempo de un proceso unidimensional</strong>. La dirección a lo largo del borde es el espacio (\\(x\\)), y la dirección de crecimiento es el tiempo. Recorrer una concha desde el ápice hasta la apertura es como ver, fotograma a fotograma, lo que ocurrió en el borde durante toda la vida del animal.</p>

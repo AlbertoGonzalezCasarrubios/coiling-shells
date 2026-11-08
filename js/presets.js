@@ -83,3 +83,51 @@ export const MODEL_DEFAULTS = {
     noise: 0.4, globalCtl: 0.02, T: 8000, insertion: false, amount: 0.6, base: '#efe3cf', pigment: '#5a2d1e',
   },
 };
+
+/**
+ * Ornamented shells. Ornament is part of the shape, so each preset sets Raup's
+ * parameters of a real shell together with its relief (`shape: null` keeps the
+ * current shape). Shells whose form Raup's model cannot draw are left out: for
+ * example *Murex*, whose long siphonal canal is not a coiled tube.
+ */
+const SHAPE = (k, extra = {}) => ({ ...pick(PRESETS[k]), ...extra });
+function pick(p) {
+  const { W, D, T, S, turns, hand, mirror } = p;
+  return { W, D, T, S, turns, hand, mirror };
+}
+export const ORNAMENT_PRESETS = {
+  smooth: { shape: null, orn: {} },
+  // Wentletrap: rounded whorls barely touching, crossed by thin lamellar ribs
+  epitonium: {
+    shape: { W: 1.6, D: 0.3, T: 3.4, S: 1, turns: 8, hand: 1, mirror: false },
+    orn: { ribN: 9, ribH: 0.3, ribW: 0.14, ribSkew: 0.4 },
+  },
+  // Tower shell: spiral cords along the whorls
+  turritella: { shape: SHAPE('turritella'), orn: { cordN: 5, cordH: 0.1, cordW: 0.5 } },
+  // Top shell with a peripheral keel and fine cords
+  calliostoma: { shape: SHAPE('trochus'), orn: { cordN: 7, cordH: 0.04, cordW: 0.4, keelH: 0.14, keelW: 0.08, keelPos: 0 } },
+  // Nutmeg shell: ribs and cords of similar strength, a reticulate pattern
+  cancellaria: {
+    shape: { W: 2.1, D: 0.05, T: 2.6, S: 1.3, turns: 6, hand: 1, mirror: false },
+    orn: { ribN: 18, ribH: 0.07, ribW: 0.3, cordN: 10, cordH: 0.06, cordW: 0.3 },
+  },
+  // Horn shell: a tall spire with rows of nodules
+  cerithium: {
+    shape: { W: 1.55, D: 0.05, T: 5, S: 1.15, turns: 11, hand: 1, mirror: false },
+    orn: { ribN: 11, ribH: 0.16, ribW: 0.5, cordN: 3, cordH: 0.14, cordW: 0.6, nodules: true },
+  },
+  // Ribbed ammonite
+  dactylioceras: { shape: SHAPE('ammonite'), orn: { ribN: 34, ribH: 0.12, ribW: 0.4 } },
+  // Ammonite with ribs ending in a pair of spines on the flanks of the venter
+  spinyAmmonite: {
+    shape: { W: 2.3, D: 0.3, T: 0, S: 1.15, turns: 5, hand: 1, mirror: false },
+    orn: { ribN: 12, ribH: 0.1, ribW: 0.4, spineN: 12, spineH: 0.55, spineW: 0.35, spinePos: 0.12, spineBoth: true },
+  },
+  // Cockle: radial ribs, which run along the growth direction (spiral cords in Raup's terms)
+  cerastoderma: { shape: SHAPE('almeja'), orn: { cordN: 24, cordH: 0.07, cordW: 0.7 } },
+  // Warty venus: concentric lamellae broken into warts where radial ribs cross them
+  venus: {
+    shape: SHAPE('almeja'),
+    orn: { ribN: 28, ribH: 0.07, ribW: 0.35, ribSkew: 0.3, cordN: 30, cordH: 0.05, cordW: 0.6, nodules: true },
+  },
+};

@@ -12,6 +12,7 @@
  * Pure module (no Three.js): it can be tested in Node.
  */
 import { buildShell } from './raup.js';
+import { ornamentResolution } from './ornament.js';
 
 // Print resolution: fine but bounded (about 350,000 triangles at most)
 const PRINT_QUALITY = { segPerTurn: 160, segPhi: 96, maxRows: 900 };
@@ -25,14 +26,15 @@ const END_WINDOW = Math.PI / 3;
  */
 export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
   const boost = Math.max(1, Math.log10(Math.max(shape.W, 1)));
+  const res = ornamentResolution(shape);
   const shell = buildShell({
     ...shape,
     grow: 1,
-    // Ornament needs about eight segments per rib and per cord
-    segPhi: Math.min(256, Math.max(PRINT_QUALITY.segPhi, 8 * (shape.cordN || 0))),
+    // Ornament needs about eight segments per rib, cord and spine
+    segPhi: Math.min(256, Math.max(PRINT_QUALITY.segPhi, res.phi)),
     segPerTurn: Math.min(
-      Math.max(Math.round(PRINT_QUALITY.segPerTurn * boost), 8 * (shape.ribN || 0)),
-      Math.floor(PRINT_QUALITY.maxRows * (shape.ribN ? 2 : 1) / Math.max(shape.turns, 0.25))),
+      Math.max(Math.round(PRINT_QUALITY.segPerTurn * boost), res.perTurn),
+      Math.floor(PRINT_QUALITY.maxRows * (res.perTurn ? 2 : 1) / Math.max(shape.turns, 0.25))),
     spiralLines: 0,
     ringsPerTurn: 0,
     size,

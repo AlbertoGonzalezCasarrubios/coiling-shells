@@ -6,11 +6,13 @@ import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { Line2 } from 'three/addons/lines/Line2.js';
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
-import { buildShell, hasOrnament } from './raup.js';
+import { buildShell } from './raup.js';
+import { hasOrnament, ornamentResolution, ORNAMENT_DEFAULTS } from './ornament.js';
+import { criticalWaves, lambdaForWaves, loadRatio, firstMode, unstableBand, mechanicalCords } from './mechanics.js';
 import { buildPrintMesh, toSTL, to3MF } from './export3d.js';
 import { MORPHO_REGIONS } from './morphospace.js';
 import { encodeTIFF, fitFrame, slugify, plateLayout, FIXED_SIZES, MAX_SIDE } from './imagefile.js';
-import { PRESETS, DEFAULT_PRESET, PATTERN_PRESETS, DEFAULT_PATTERN, MODEL_DEFAULTS } from './presets.js';
+import { PRESETS, DEFAULT_PRESET, PATTERN_PRESETS, DEFAULT_PATTERN, MODEL_DEFAULTS, ORNAMENT_PRESETS } from './presets.js';
 import { simulatePattern, PROFILE_WIDTH } from './meinhardt.js';
 import {
   setLang, getLang, t, tParam, tPreset, tPattern, applyStatic,
@@ -42,25 +44,27 @@ const VIS_PARAMS = [
   { key: 'lineOpacity', min: 0.1, max: 1, step: 0.05, digits: 2 },
 ];
 
-// Ornament (relief): axial ribs along the growth direction, spiral cords around the margin
+// Ornament (relief): axial ribs along the growth direction, spiral cords around
+// the margin, a keel, spines, and a change of strength with growth (ornament.js)
 const ORN_PARAMS = [
-  { key: 'ribN', min: 0, max: 60, step: 1, digits: 0 },
-  { key: 'ribH', min: 0, max: 0.4, step: 0.01, digits: 2 },
-  { key: 'ribW', min: 0.05, max: 1, step: 0.01, digits: 2 },
-  { key: 'cordN', min: 0, max: 48, step: 1, digits: 0 },
-  { key: 'cordH', min: 0, max: 0.4, step: 0.01, digits: 2 },
-  { key: 'cordW', min: 0.05, max: 1, step: 0.01, digits: 2 },
+  { key: 'ribN', min: 0, max: 60, step: 1, digits: 0, box: 'rib' },
+  { key: 'ribH', min: 0, max: 0.4, step: 0.01, digits: 2, box: 'rib' },
+  { key: 'ribW', min: 0.05, max: 1, step: 0.01, digits: 2, box: 'rib' },
+  { key: 'ribSkew', min: -0.8, max: 0.8, step: 0.05, digits: 2, box: 'rib' },
+  { key: 'cordN', min: 0, max: 48, step: 1, digits: 0, box: 'cord' },
+  { key: 'cordH', min: 0, max: 0.4, step: 0.01, digits: 2, box: 'cord' },
+  { key: 'cordW', min: 0.05, max: 1, step: 0.01, digits: 2, box: 'cord' },
+  { key: 'keelH', min: 0, max: 0.4, step: 0.01, digits: 2, box: 'keel' },
+  { key: 'keelW', min: 0.02, max: 0.3, step: 0.01, digits: 2, box: 'keel' },
+  { key: 'keelPos', min: -0.5, max: 0.5, step: 0.01, digits: 2, box: 'keel' },
+  { key: 'spineN', min: 0, max: 40, step: 1, digits: 0, box: 'spine' },
+  { key: 'spineH', min: 0, max: 1.5, step: 0.01, digits: 2, box: 'spine' },
+  { key: 'spineW', min: 0.1, max: 1, step: 0.01, digits: 2, box: 'spine' },
+  { key: 'spinePos', min: -0.5, max: 0.5, step: 0.01, digits: 2, box: 'spine' },
+  { key: 'ornGrowth', min: -1, max: 1, step: 0.05, digits: 2, box: 'growth' },
 ];
-const ORN_KEYS = [...ORN_PARAMS.map((d) => d.key), 'nodules'];
-const ORN_SMOOTH = { ribN: 0, ribH: 0.12, ribW: 0.35, cordN: 0, cordH: 0.08, cordW: 0.45, nodules: false };
-const ORN_PRESETS = {
-  smooth: ORN_SMOOTH,
-  ribs: { ...ORN_SMOOTH, ribN: 16, ribH: 0.14, ribW: 0.3 },
-  cords: { ...ORN_SMOOTH, cordN: 9, cordH: 0.07, cordW: 0.45 },
-  reticulate: { ...ORN_SMOOTH, ribN: 22, ribH: 0.06, ribW: 0.3, cordN: 12, cordH: 0.06, cordW: 0.3 },
-  nodules: { ...ORN_SMOOTH, ribN: 14, ribH: 0.12, ribW: 0.5, cordN: 5, cordH: 0.1, cordW: 0.6, nodules: true },
-  varices: { ...ORN_SMOOTH, ribN: 3, ribH: 0.25, ribW: 0.12, cordN: 14, cordH: 0.04, cordW: 0.4 },
-};
+const ORN_KEYS = Object.keys(ORNAMENT_DEFAULTS);
+const ORN_BOOLS = ['nodules', 'spineBoth'];
 const pickOrnament = (p) => Object.fromEntries(ORN_KEYS.map((k) => [k, p[k]]));
 
 // Display orientation of the shell (presentation only: geometry and 3D files keep the model frame)
@@ -86,7 +90,7 @@ const state = {
   lineWidth: 1.2,
   lineOpacity: 0.9,
   axisWidth: 1,
-  ...ORN_SMOOTH,
+  ...ORNAMENT_DEFAULTS,
   orient: 'vertical',
 };
 
@@ -108,12 +112,16 @@ for (const [short, key] of Object.entries(HASH_KEYS)) {
 }
 if (fromHash.has('v')) state.mirror = fromHash.get('v') === '1';
 if (MODES.includes(fromHash.get('m'))) state.mode = fromHash.get('m');
-const ORN_HASH = { rn: 'ribN', rh: 'ribH', rw: 'ribW', cn: 'cordN', ch: 'cordH', cw: 'cordW' };
+const ORN_HASH = {
+  rn: 'ribN', rh: 'ribH', rw: 'ribW', rk: 'ribSkew', cn: 'cordN', ch: 'cordH', cw: 'cordW',
+  kh: 'keelH', kw: 'keelW', kp: 'keelPos', sn: 'spineN', sh: 'spineH', sw: 'spineW', sp: 'spinePos', og: 'ornGrowth',
+};
 for (const [short, key] of Object.entries(ORN_HASH)) {
   const v = parseFloat(fromHash.get(short));
   if (Number.isFinite(v)) state[key] = v;
 }
 if (fromHash.has('nd')) state.nodules = fromHash.get('nd') === '1';
+if (fromHash.has('sb')) state.spineBoth = fromHash.get('sb') === '1';
 const ORIENT_HASH = { v: 'vertical', h: 'horizontal', f: 'free' };
 if (ORIENT_HASH[fromHash.get('o')]) state.orient = ORIENT_HASH[fromHash.get('o')];
 
@@ -146,8 +154,11 @@ function writeHashNow() {
   q.set('v', state.mirror ? '1' : '0');
   q.set('m', state.mode);
   if (hasOrnament(state)) {
-    for (const [short, key] of Object.entries(ORN_HASH)) q.set(short, String(+Number(state[key]).toFixed(3)));
+    for (const [short, key] of Object.entries(ORN_HASH)) {
+      if (state[key] !== ORNAMENT_DEFAULTS[key]) q.set(short, String(+Number(state[key]).toFixed(3)));
+    }
     if (state.nodules) q.set('nd', '1');
+    if (state.spineBoth) q.set('sb', '1');
   }
   if (state.orient !== 'vertical') q.set('o', state.orient[0]);
   patternHash(q);
@@ -348,11 +359,10 @@ function rebuild() {
   // With a high W almost the whole shell lies in the last fraction of a whorl
   // (bivalves): θ is refined so the mesh and the growth lines are not sparse.
   const boost = Math.max(1, Math.log10(state.W));
-  // Ornament needs about eight segments per rib and per cord, within a vertex budget
-  const orn = hasOrnament(state);
-  const segPhi = orn ? Math.min(256, Math.max(q.segPhi, Math.ceil(state.cordN * 8 / 4) * 4)) : q.segPhi;
-  let segPerTurn = Math.round(q.segPerTurn * boost);
-  if (orn) segPerTurn = Math.max(segPerTurn, Math.round(state.ribN * 8 * boost));
+  // Ornament needs about eight segments per rib, cord and spine, within a vertex budget
+  const res = ornamentResolution(state);
+  const segPhi = Math.min(256, Math.max(q.segPhi, res.phi));
+  let segPerTurn = Math.max(Math.round(q.segPerTurn * boost), Math.round(res.perTurn * boost));
   segPerTurn = Math.min(segPerTurn, Math.max(q.segPerTurn, Math.floor(900000 / (segPhi * Math.max(state.turns, 0.25)))));
   const shell = buildShell({
     ...state,
@@ -477,19 +487,48 @@ function generalTeX(view = formulaView) {
     const isAS = pattern.model === 'AS';
     return (isAS ? AS_TEX : AI_TEX) + (isAS && pattern.globalCtl > 0 ? GLOBAL_TEX : '') + SOURCE_TEX;
   }
-  return GENERAL_TEX + DEFS_TEX + (state.mirror ? MIRROR_TEX : '') + (hasOrnament(state) ? ORNAMENT_TEX(state.nodules) : '');
+  return GENERAL_TEX + DEFS_TEX + (state.mirror ? MIRROR_TEX : '') + (hasOrnament(state) ? ORNAMENT_TEX : '');
 }
 
 /** Relief added along the outward normal of the aperture (descriptive model of ornament). */
-const ORNAMENT_TEX = (nodules) => String.raw`\[
-  \mathbf{P}^{*} = \mathbf{P} + W^{\theta/2\pi}\,a\,\delta(\theta,\varphi)\,\mathbf{n}(\varphi),\qquad
-  \delta = ${nodules ? String.raw`(h_r + h_c)\,R(\theta)\,C(u)` : String.raw`h_r\,R(\theta) + h_c\,C(u)`}
+const ORNAMENT_TEX = String.raw`\[
+  \mathbf{P}^{*} = \mathbf{P} + W^{\theta/2\pi}\,a\,\delta(\theta,\varphi)\,\mathbf{n}(\varphi)
 \]
 \[
-  R(\theta) = \beta\!\left(\frac{n_r\,\theta}{2\pi},\,w_r\right),\quad
-  C(u) = \beta(n_c\,u,\,w_c),\quad
-  \beta(t,w) = \begin{cases} \cos^2(\pi d/w), & d < w/2 \\ 0, & d \ge w/2 \end{cases}\quad d = \left|t - \operatorname{round}(t)\right|
+  \delta = f(s)\,\bigl[\,h_r R(\theta) + h_c C(u) + h_k K(u) + h_s \Sigma(\theta,u)\,\bigr],\qquad
+  f(s) = 1 + c\,(2s - 1)
+\]
+\[
+  R = \beta\!\left(\tfrac{n_r\theta}{2\pi},\,w_r,\,k\right),\quad
+  C = \beta(n_c u,\,w_c),\quad
+  K = \beta(u - u_k,\,w_k),\quad
+  \beta(t,w) = \cos^2\!\left(\tfrac{\pi d}{w}\right)\ (d < \tfrac{w}{2}),\quad d = \left|t - \operatorname{round}(t)\right|
 \]`;
+
+/** Rows of the PDF parameter table for the ornament terms in use. */
+function ornamentRows() {
+  const s = state, rows = [];
+  if (!hasOrnament(s)) return rows;
+  if (s.ribN > 0 && s.ribH > 0) rows.push([`${t('orn.ribs')} (n, h, w)`, `${s.ribN}, ${f(s.ribH, 2)}, ${f(s.ribW, 2)}`]);
+  if (s.cordN > 0 && s.cordH > 0) rows.push([`${t('orn.cords')} (n, h, w)`, `${s.cordN}, ${f(s.cordH, 2)}, ${f(s.cordW, 2)}`]);
+  if (s.nodules) rows.push([t('orn.nodules.short'), t('ex.yes')]);
+  if (s.keelH > 0) rows.push([`${t('orn.keel')} (h, w, u)`, `${f(s.keelH, 2)}, ${f(s.keelW, 2)}, ${f(s.keelPos, 2)}`]);
+  if (s.spineN > 0 && s.spineH > 0) rows.push([`${t('orn.spines')} (n, h, w)`, `${s.spineN}, ${f(s.spineH, 2)}, ${f(s.spineW, 2)}`]);
+  if (s.ornGrowth) rows.push([t('orn.growth'), f(s.ornGrowth, 2)]);
+  return rows;
+}
+
+/** Values of the ornament terms in use (terms that are off are left out). */
+function ornamentLiveTeX() {
+  const s = state, parts = [];
+  if (s.ribN > 0 && s.ribH > 0) parts.push(String.raw`n_r = ${s.ribN},\; h_r = ${f(s.ribH, 2)},\; w_r = ${f(s.ribW, 2)}${s.ribSkew ? String.raw`,\; k = ${f(s.ribSkew, 2)}` : ''}`);
+  if (s.cordN > 0 && s.cordH > 0) parts.push(String.raw`n_c = ${s.cordN},\; h_c = ${f(s.cordH, 2)},\; w_c = ${f(s.cordW, 2)}`);
+  if (s.nodules) parts.push(String.raw`h_r R + h_c C \;\to\; (h_r + h_c)\,R\,C`);
+  if (s.keelH > 0) parts.push(String.raw`h_k = ${f(s.keelH, 2)},\; w_k = ${f(s.keelW, 2)},\; u_k = ${f(s.keelPos, 2)}`);
+  if (s.spineN > 0 && s.spineH > 0) parts.push(String.raw`n_s = ${s.spineN},\; h_s = ${f(s.spineH, 2)},\; w_s = ${f(s.spineW, 2)},\; u_s = ${s.spineBoth ? '\\pm' : ''}${f(s.spinePos, 2)}`);
+  if (s.ornGrowth) parts.push(String.raw`c = ${f(s.ornGrowth, 2)}`);
+  return parts.map((p) => String.raw`\[ ${p} \]`).join('');
+}
 
 function meinhardtLiveTeX() {
   const { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl, T } = pattern;
@@ -531,10 +570,7 @@ function liveTeX(view = formulaView) {
     `\\[ \\mathbf{P}(\\theta,\\varphi) = ${formatW(W)}^{\\theta/2\\pi}` +
     `\\begin{pmatrix} ${R}\\cos\\theta \\\\ ${ySign}${R}\\sin\\theta \\\\ ${zTerm} \\end{pmatrix} \\]` +
     (state.mirror ? `\\[ \\mathbf{P}' = (x,\\,-y,\\,z) \\]` : '') +
-    (hasOrnament(state)
-      ? `\\[ n_r = ${state.ribN},\\; h_r = ${f(state.ribN > 0 ? state.ribH : 0, 2)},\\; w_r = ${f(state.ribW, 2)},\\quad ` +
-        `n_c = ${state.cordN},\\; h_c = ${f(state.cordN > 0 ? state.cordH : 0, 2)},\\; w_c = ${f(state.cordW, 2)}\\]`
-      : '')
+    (hasOrnament(state) ? ornamentLiveTeX() : '')
   );
 }
 
@@ -656,8 +692,8 @@ function createParam(def, container, { compact = false, onChange, target = state
     range.max = logScale ? Math.log10(def.max) : max;
     range.step = logScale ? 0.001 : def.step;
     if (!compact) {
-      el.querySelector('.scale-min').textContent = def.min;
-      el.querySelector('.scale-max').textContent = logScale ? '10⁴' : max;
+      el.querySelector('.scale-min').textContent = def.minLabel ?? def.min;
+      el.querySelector('.scale-max').textContent = def.maxLabel ?? (logScale ? '10⁴' : max);
     }
     scaleGroup?.querySelectorAll('button').forEach((b) =>
       b.setAttribute('aria-pressed', String((b.dataset.scale === 'log') === logScale))
@@ -742,6 +778,7 @@ function markCustom() {
 
 function onShapeChange() {
   markCustom();
+  ornPresetSel.value = ornPresetKey();
   dirty = true;
 }
 
@@ -759,38 +796,176 @@ VIS_PARAMS.forEach((d) =>
 );
 
 // Ornament tab
-function ornPresetKey() {
-  return Object.keys(ORN_PRESETS).find((k) => ORN_KEYS.every((key) => {
-    const a = ORN_PRESETS[k][key], b = state[key];
-    return typeof a === 'boolean' ? a === b : Math.abs(a - b) < 1e-9;
-  })) ?? 'custom';
+const ornPresetSel = $('ornPreset');
+function buildOrnPresetOptions() {
+  const v = ornPresetSel.value;
+  ornPresetSel.innerHTML = '';
+  for (const key of [...Object.keys(ORNAMENT_PRESETS), 'custom']) {
+    const o = document.createElement('option');
+    o.value = key;
+    o.textContent = t(`orn.p.${key}`);
+    if (key === 'custom') o.hidden = true;
+    ornPresetSel.append(o);
+  }
+  ornPresetSel.value = v || ornPresetKey();
 }
+
+/** The ornament preset matching the current shape and relief, or "custom". */
+function ornPresetKey() {
+  const same = (a, b) => (typeof a === 'boolean' || typeof b === 'boolean' ? !!a === !!b : Math.abs(a - b) < 1e-9);
+  return Object.keys(ORNAMENT_PRESETS).find((k) => {
+    const p = ORNAMENT_PRESETS[k];
+    const orn = { ...ORNAMENT_DEFAULTS, ...p.orn };
+    if (!ORN_KEYS.every((key) => same(orn[key], state[key]))) return false;
+    return !p.shape || SHAPE_KEYS.every((key) => same(p.shape[key], state[key]));
+  }) ?? 'custom';
+}
+
+function syncOrnamentControls() {
+  for (const d of ORN_PARAMS) controlsByKey[d.key].set(state[d.key]);
+  for (const k of ORN_BOOLS) $(k).checked = !!state[k];
+  ornPresetSel.value = ornPresetKey();
+}
+
 function onOrnamentChange() {
-  $('ornPreset').value = ornPresetKey();
+  ornPresetSel.value = ornPresetKey();
   if (state.mode === 'lines' && hasOrnament(state)) {
     state.mode = 'solid'; // relief is read on the surface
     applyMode();
   }
   dirty = true;
 }
-ORN_PARAMS.forEach((d) => createParam(d, $(d.key.startsWith('rib') ? 'rib-params' : 'cord-params'), { onChange: onOrnamentChange }));
-$('nodules').checked = state.nodules;
-$('nodules').addEventListener('change', (e) => {
-  state.nodules = e.target.checked;
-  onOrnamentChange();
-});
-$('ornPreset').addEventListener('change', (e) => {
-  const p = ORN_PRESETS[e.target.value];
+ORN_PARAMS.forEach((d) => createParam(d, $(`${d.box}-params`), { onChange: onOrnamentChange }));
+for (const k of ORN_BOOLS) {
+  $(k).checked = !!state[k];
+  $(k).addEventListener('change', (e) => {
+    state[k] = e.target.checked;
+    onOrnamentChange();
+  });
+}
+ornPresetSel.addEventListener('change', () => {
+  const p = ORNAMENT_PRESETS[ornPresetSel.value];
   if (!p) return;
-  for (const d of ORN_PARAMS) controlsByKey[d.key].set(p[d.key]);
-  state.nodules = p.nodules;
-  $('nodules').checked = p.nodules;
+  Object.assign(state, ORNAMENT_DEFAULTS, p.orn);
+  if (p.shape) applyShape(p.shape);
+  syncOrnamentControls();
   onOrnamentChange();
 });
-$('ornPreset').value = ornPresetKey();
-$('ornTheory').addEventListener('click', () => {
-  openInfo('raup');
-  requestAnimationFrame(() => document.getElementById('orn-theory')?.scrollIntoView({ block: 'start' }));
+buildOrnPresetOptions();
+$('ornTheory').addEventListener('click', () => openInfo('ornament'));
+
+// Mechanical model of the cords: the mantle edge buckles on its elastic attachment
+const mech = { lambda: lambdaForWaves(9), eta: 1.6 };
+const MECH_PARAMS = [
+  // The number box needs a plain number: scientific notation such as 2.4e+6
+  { key: 'lambda', id: 'mechLambda', i18n: 'mechLambda', min: 1e3, max: 1e10, minLabel: '10³', maxLabel: '10¹⁰', step: 0.01, log: true, format: (v) => v.toExponential(1) },
+  { key: 'eta', id: 'mechEta', i18n: 'mechEta', min: 0.5, max: 4, step: 0.05, digits: 2 },
+];
+MECH_PARAMS.forEach((d) => createParam(d, $('mech-params'), { target: mech, onChange: drawMech }));
+
+function drawMech() {
+  const canvas = $('mechCanvas');
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (!w || !h) return;
+  const dpr = Math.min(window.devicePixelRatio, 2);
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const css = getComputedStyle(document.documentElement);
+  const col = (n) => css.getPropertyValue(n).trim();
+  const text = col('--text'), muted = col('--muted'), accent = col('--accent');
+  ctx.font = `11px ${col('--font') || 'sans-serif'}`;
+
+  const { lambda, eta } = mech;
+  const nStar = criticalWaves(lambda);
+  const result = mechanicalCords(lambda, eta);
+  const n1 = firstMode(lambda);
+
+  // Left: load needed to buckle into n waves, relative to the critical load
+  const gw = Math.round(w * 0.58), pad = { l: 30, r: 8, t: 10, b: 26 };
+  const nMax = Math.max(8, Math.ceil(nStar * 2.6));
+  const yMax = 4;
+  const X = (n) => pad.l + (n / nMax) * (gw - pad.l - pad.r);
+  const Y = (v) => pad.t + (1 - v / yMax) * (h - pad.t - pad.b);
+  ctx.strokeStyle = muted;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, h - pad.b); ctx.lineTo(gw - pad.r, h - pad.b);
+  ctx.stroke();
+  // Unstable band: modes whose load is below the applied one
+  const band = unstableBand(lambda, eta);
+  if (band) {
+    ctx.fillStyle = `color-mix(in srgb, ${accent} 16%, transparent)`;
+    ctx.fillRect(X(band.from), pad.t, X(Math.min(band.to, nMax)) - X(band.from), h - pad.t - pad.b);
+  }
+  ctx.strokeStyle = text;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  for (let k = 0; k <= 200; k++) {
+    const n = 0.3 + (k / 200) * (nMax - 0.3);
+    const v = Math.min(yMax, loadRatio(n, lambda));
+    k ? ctx.lineTo(X(n), Y(v)) : ctx.moveTo(X(n), Y(v));
+  }
+  ctx.stroke();
+  // Applied load
+  ctx.strokeStyle = accent;
+  ctx.setLineDash([4, 3]);
+  ctx.beginPath();
+  ctx.moveTo(pad.l, Y(Math.min(eta, yMax))); ctx.lineTo(gw - pad.r, Y(Math.min(eta, yMax)));
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // First mode
+  ctx.fillStyle = accent;
+  ctx.beginPath();
+  ctx.arc(X(n1), Y(loadRatio(n1, lambda)), 3.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = muted;
+  ctx.textAlign = 'center';
+  ctx.fillText(t('mech.axis.n'), (pad.l + gw - pad.r) / 2, h - 6);
+  for (const v of [0, Math.round(nMax / 2), nMax]) ctx.fillText(String(v), X(v), h - pad.b + 11);
+  ctx.textAlign = 'right';
+  ctx.fillText('P/Pc', pad.l - 4, pad.t + 8);
+  ctx.fillText('1', pad.l - 4, Y(1) + 4);
+  ctx.fillStyle = accent;
+  ctx.textAlign = 'left';
+  ctx.fillText('η', gw - pad.r - 8, Y(Math.min(eta, yMax)) - 4);
+
+  // Right: the margin, smooth (dashed) and buckled into n waves (amplitude exaggerated ×3)
+  const cx = gw + (w - gw) / 2, cy = h / 2 - 4, R = Math.min(w - gw, h) * 0.34;
+  ctx.strokeStyle = muted;
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.strokeStyle = result.cordN ? accent : text;
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  const A = result.cordN ? Math.min(0.3, 3 * result.cordH) : 0;
+  for (let k = 0; k <= 360; k++) {
+    const ph = (k / 360) * Math.PI * 2;
+    const r = R * (1 + A * Math.cos(n1 * ph));
+    k ? ctx.lineTo(cx + r * Math.cos(ph), cy + r * Math.sin(ph)) : ctx.moveTo(cx + r * Math.cos(ph), cy + r * Math.sin(ph));
+  }
+  ctx.stroke();
+  ctx.fillStyle = muted;
+  ctx.textAlign = 'center';
+  ctx.fillText(t('mech.ring'), cx, h - 6);
+
+  $('mechOut').textContent = result.cordN
+    ? t('mech.out', f(nStar, 1), result.cordN, f(result.cordH, 2))
+    : t('mech.out.none', f(nStar, 1));
+}
+$('mechDrawer').addEventListener('toggle', drawMech);
+$('mechApply').addEventListener('click', () => {
+  Object.assign(state, mechanicalCords(mech.lambda, mech.eta));
+  syncOrnamentControls();
+  onOrnamentChange();
+});
+$('mechTheory').addEventListener('click', () => {
+  openInfo('ornament');
+  requestAnimationFrame(() => document.getElementById('mech-theory')?.scrollIntoView({ block: 'start' }));
 });
 
 // Grouped presets
@@ -825,17 +1000,24 @@ function setMirror(on) {
 }
 setMirror(state.mirror);
 
-presetSel.addEventListener('change', () => {
-  const p = PRESETS[presetSel.value];
-  if (!p) return;
-  const shape = pickShape(p);
+/** Loads Raup's parameters of a shell (from a shape or an ornament preset). */
+function applyShape(shape) {
   for (const k of ['W', 'D', 'T', 'S', 'turns']) controlsByKey[k].set(shape[k], { fitScale: true });
   state.hand = shape.hand;
   $('hand').value = String(shape.hand);
   setMirror(shape.mirror);
   // Planispiral shells are shown with the plane of coiling upright (unless rotating freely)
   if (state.orient !== 'free') setOrient(shape.T === 0 && !shape.mirror ? 'horizontal' : 'vertical');
+  const match = Object.keys(PRESETS).find((k) => SHAPE_KEYS.every((key) => pickShape(PRESETS[k])[key] === shape[key]));
+  presetSel.value = match ?? 'custom';
   dirty = true;
+}
+
+presetSel.addEventListener('change', () => {
+  const p = PRESETS[presetSel.value];
+  if (!p) return;
+  applyShape(pickShape(p));
+  ornPresetSel.value = ornPresetKey();
 });
 
 $('hand').value = String(state.hand);
@@ -1823,11 +2005,7 @@ async function exportPDF() {
     [`N · ${tParam('turns').name}`, f(state.turns, 2)],
     [t('geo.hand'), t(state.hand > 0 ? 'geo.dextral' : 'geo.sinistral')],
     [t('geo.mirror'), t(state.mirror ? 'ex.yes' : 'ex.no')],
-    ...(hasOrnament(state) ? [
-      [`${t('orn.ribs')} (n, h, w)`, state.ribN ? `${state.ribN}, ${f(state.ribH, 2)}, ${f(state.ribW, 2)}` : '-'],
-      [`${t('orn.cords')} (n, h, w)`, state.cordN ? `${state.cordN}, ${f(state.cordH, 2)}, ${f(state.cordW, 2)}` : '-'],
-      ...(state.nodules ? [[t('orn.p.nodules').replace(/ \(.*\)/, ''), t('ex.yes')]] : []),
-    ] : []),
+    ...ornamentRows(),
   ], M, y + 6.5, colW - 24, 24);
   doc.setFont('helvetica', 'normal').setFontSize(8.5).setTextColor(...muted);
   doc.text(`${t('ex.pdf.derived')}: rc = ${f(rc, 3)}   a = ${f(a, 3)}   b = ${f(b, 3)}`, M, yL + 1.5);
@@ -2864,15 +3042,22 @@ $('ovProfileToggle').addEventListener('change', (e) => {
   $('ovProfile').hidden = !e.target.checked;
   drawProfile();
 });
+// Toolbar menus (graphs, appearance): one open at a time, closed by a click outside or Escape
+const toolbarMenus = [graphsMenu, $('lookMenu')];
 document.addEventListener('pointerdown', (e) => {
-  if (graphsMenu.open && !graphsMenu.contains(e.target)) graphsMenu.open = false;
+  for (const m of toolbarMenus) if (m.open && !m.contains(e.target)) m.open = false;
 });
-graphsMenu.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    graphsMenu.open = false;
-    graphsMenu.querySelector('summary').focus();
-  }
-});
+for (const m of toolbarMenus) {
+  m.addEventListener('toggle', () => {
+    if (m.open) for (const o of toolbarMenus) if (o !== m) o.open = false;
+  });
+  m.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      m.open = false;
+      m.querySelector('summary').focus();
+    }
+  });
+}
 new ResizeObserver(() => {
   if (!$('ovMorpho').hidden) drawMorphoOn(morphoOv);
   if (!$('ovProfile').hidden) drawProfile();
@@ -3144,6 +3329,7 @@ function applyLanguage(lang) {
   applyStatic();
   Object.values(controlsByKey).forEach((c) => c.relabel());
   buildPresetOptions();
+  buildOrnPresetOptions();
   updateGrowButton();
   updateFullscreenButton();
   drawMorpho();
@@ -3158,6 +3344,7 @@ function applyLanguage(lang) {
   drawSpacetime();
   if (!formulaPanel.hidden) setFormulaOpen(true);
   updateWelcomeText();
+  if ($('mechDrawer').open) drawMech();
 }
 
 document.querySelectorAll('.lang button').forEach((b) => b.addEventListener('click', () => {

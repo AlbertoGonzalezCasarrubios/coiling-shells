@@ -620,6 +620,9 @@ div.adv-only.insertion { gap: 4px; }
   background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
 }
+.chip-menu .menu.look-menu {
+  width: 300px; gap: 12px; max-height: min(70vh, 620px); overflow-y: auto;
+}
 .overlays {
   position: absolute; top: 12px; right: 12px; width: 300px;
   display: flex; flex-direction: column; gap: 8px;
@@ -730,3 +733,7 @@ div.adv-only.insertion { gap: 4px; }
   .welcome-view { height: 280px; }
   .welcome-intro { font-size: 14px; }
 }
+
+/* Mechanical model of the cords */
+.mech-canvas { width: 100%; height: 190px; display: block; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.mech-out { font-family: var(--mono); font-size: 12px; }
