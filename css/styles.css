@@ -733,3 +733,48 @@ div.adv-only.insertion { gap: 4px; }
 .keys td { padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
 .keys td:first-child { font-family: var(--mono); font-size: 12.5px; color: var(--text); width: 36%; }
 kbd { font-family: var(--mono); font-size: 12px; padding: 1px 5px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; background: var(--surface-2); }
+
+/* ---------- Shell creator ---------- */
+.create-btn { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px; }
+.create-btn svg { width: 17px; height: 17px; }
+.info.wizard { width: min(1180px, calc(100vw - 32px)); height: min(760px, calc(100vh - 32px)); max-height: none; display: none; }
+.info.wizard[open] { display: flex; flex-direction: column; }
+.wizard-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.45fr 1fr; }
+.wizard-view { position: relative; min-height: 0; overflow: hidden; border-top: 1px solid var(--border); border-right: 1px solid var(--border); }
+.wizard-view canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; touch-action: none; }
+.wizard-side { display: flex; flex-direction: column; min-height: 0; border-top: 1px solid var(--border); }
+.wizard-steps { list-style: none; margin: 0; padding: 12px 12px 6px; display: flex; gap: 2px; counter-reset: wz; justify-content: space-between; }
+.wizard-steps li { counter-increment: wz; }
+.wizard-steps button {
+  font: 500 12.5px var(--font); color: var(--muted); background: none; border: 1px solid transparent;
+  border-radius: 999px; padding: 4px 8px 4px 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+}
+.wizard-steps button::before {
+  content: counter(wz); display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+  font-size: 11px; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted);
+}
+.wizard-steps button.done::before { content: '✓'; background: color-mix(in srgb, var(--accent) 18%, var(--surface)); color: var(--accent); }
+.wizard-steps button[aria-current='step'] { color: var(--text); border-color: var(--border); background: var(--surface-2); }
+.wizard-steps button[aria-current='step']::before { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.wizard-panels { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 16px 12px; }
+.wizard-panel { display: flex; flex-direction: column; gap: 12px; }
+.wizard-panel[hidden] { display: none; }
+.wizard-panel > .note { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--text); }
+.wizard-panel .segmented { width: 100%; }
+.wz-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.wz-choices button {
+  font: 500 13px var(--font); color: var(--text); background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 9px 10px; cursor: pointer; text-align: left;
+}
+.wz-choices button[aria-pressed='true'] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); color: var(--accent); }
+.wizard-nav { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); }
+.wizard-nav #wzUndo { margin-right: auto; display: inline-flex; align-items: center; gap: 6px; }
+.wizard-nav #wzUndo svg { width: 16px; height: 16px; }
+.wizard-nav .btn:disabled { opacity: 0.45; cursor: default; }
+@media (max-width: 760px) {
+  .wizard-steps button { font-size: 0; gap: 0; padding: 3px; }
+  .wizard-steps button[aria-current='step'] { font-size: 12px; gap: 5px; padding-right: 8px; }
+  .info.wizard { height: calc(100vh - 24px); width: calc(100vw - 16px); }
+  .wizard-body { grid-template-columns: 1fr; grid-template-rows: 38vh 1fr; }
+  .wizard-view { border-right: 0; }
+}

@@ -48,6 +48,11 @@
         </div>
       </header>
 
+      <button type="button" class="btn primary btn-wide create-btn" id="openWizard">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5l1.8 4.6 4.7.4-3.6 3.1 1.1 4.7L10 12.8l-4 2.5 1.1-4.7-3.6-3.1 4.7-.4z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        <span data-i18n="wz.open">Create your own shell</span>
+      </button>
+
       <nav class="tabs" role="tablist" data-i18n-title="tab.label">
         <button type="button" role="tab" id="tabbtn-shape" data-tab="shape" aria-controls="tab-shape" aria-selected="true" ><span data-i18n="tab.n.shape">Shape</span><small>Raup</small></button>
         <button type="button" role="tab" id="tabbtn-ornament" data-tab="ornament" aria-controls="tab-ornament" aria-selected="false" tabindex="-1"><span data-i18n="tab.n.ornament">Ornament</span><small data-i18n="tab.n.ornament.sub">relief</small></button>
@@ -648,7 +653,94 @@
       <div class="welcome-actions">
         <p class="welcome-author" data-i18n="wel.author">Alberto González Casarrubios · Universidad Complutense de Madrid</p>
         <button type="button" class="btn" id="welcomeTheory" data-i18n="wel.theory">Read the theory</button>
+        <button type="button" class="btn" id="welcomeCreate" data-i18n="wz.open">Create your own shell</button>
         <button type="button" class="btn primary" id="welcomeStart" data-i18n="wel.start">Start exploring</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="info wizard" id="wizard" aria-labelledby="wizardTitle">
+    <div class="info-head">
+      <h2 id="wizardTitle" data-i18n="wz.title">Create your own shell</h2>
+      <button type="button" class="icon-btn" id="closeWizard" data-i18n-title="info.close">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="wizard-body">
+      <div class="wizard-view" id="wizView"></div>
+      <div class="wizard-side">
+        <ol class="wizard-steps" id="wizSteps">
+          <li><button type="button" data-step="0" data-i18n="wz.s.shape">Shape</button></li>
+          <li><button type="button" data-step="1" data-i18n="wz.s.ornament">Ornament</button></li>
+          <li><button type="button" data-step="2" data-i18n="wz.s.colour">Colour</button></li>
+          <li><button type="button" data-step="3" data-i18n="wz.s.look">Look</button></li>
+          <li><button type="button" data-step="4" data-i18n="wz.s.export">Export</button></li>
+        </ol>
+        <div class="wizard-panels">
+          <section class="wizard-panel" data-step="0">
+            <p class="note" data-i18n="wz.shape.intro"></p>
+            <label class="field"><span data-i18n="wz.start">Start from</span><select id="wzPreset" class="select"></select></label>
+            <div id="wz-shape"></div>
+            <div class="segmented two" id="wzHand" role="radiogroup" data-i18n-title="geo.hand">
+              <button type="button" data-hand="1" data-i18n="geo.dextral">Dextral</button>
+              <button type="button" data-hand="-1" data-i18n="geo.sinistral">Sinistral</button>
+            </div>
+          </section>
+          <section class="wizard-panel" data-step="1" hidden>
+            <p class="note" data-i18n="wz.orn.intro"></p>
+            <label class="field"><span data-i18n="wz.example">Example</span><select id="wzOrn" class="select"></select></label>
+            <div id="wz-orn"></div>
+            <label class="toggle"><input type="checkbox" id="wzNodules" /><span data-i18n="orn.nodules">Nodules where ribs and cords cross</span></label>
+          </section>
+          <section class="wizard-panel" data-step="2" hidden>
+            <p class="note" data-i18n="wz.colour.intro"></p>
+            <div class="wz-choices" id="wzPatterns" role="radiogroup"></div>
+            <div class="colors">
+              <label class="color-field"><input type="color" id="wzBase" /><span data-i18n="pig.base">Shell</span></label>
+              <label class="color-field"><input type="color" id="wzPigment" /><span data-i18n="pig.pigment">Pigment</span></label>
+            </div>
+          </section>
+          <section class="wizard-panel" data-step="3" hidden>
+            <p class="note" data-i18n="wz.look.intro"></p>
+            <div class="segmented" id="wzMode" role="radiogroup" data-i18n-title="mode.label">
+              <button type="button" data-mode="lines" data-i18n="mode.lines">Lines</button>
+              <button type="button" data-mode="solid" data-i18n="mode.solid">Solid</button>
+              <button type="button" data-mode="both" data-i18n="mode.both">Both</button>
+            </div>
+            <div class="wz-choices two" id="wzPalettes">
+              <button type="button" data-palette="light" data-i18n="palette.light">Light</button>
+              <button type="button" data-palette="dark" data-i18n="palette.dark">Dark</button>
+            </div>
+            <div class="colors">
+              <label class="color-field"><input type="color" id="wzBg" /><span data-i18n="look.bg">Background</span></label>
+              <label class="color-field"><input type="color" id="wzShell" /><span data-i18n="look.shell">Shell</span></label>
+              <label class="color-field"><input type="color" id="wzLine" /><span data-i18n="look.lines">Lines</span></label>
+            </div>
+            <label class="field"><span data-i18n="look.quality">Mesh resolution</span>
+              <select id="wzQuality" class="select">
+                <option value="low" data-i18n="look.low">Low</option>
+                <option value="medium" data-i18n="look.medium">Medium</option>
+                <option value="high" data-i18n="look.high">High</option>
+              </select>
+            </label>
+            <label class="toggle"><input type="checkbox" id="wzAxis" /><span data-i18n="look.axis">Show coiling axis</span></label>
+          </section>
+          <section class="wizard-panel" data-step="4" hidden>
+            <p class="note" data-i18n="wz.export.intro"></p>
+            <label class="field"><span data-i18n="ex.name">Name of your shell</span><input type="text" id="wzName" class="text" maxlength="60" autocomplete="off" /></label>
+            <button type="button" class="btn primary btn-wide" id="wzWallpaper" data-i18n="wz.wallpaper">Wallpaper for this screen (PNG)</button>
+            <button type="button" class="btn btn-wide" id="wzPdf" data-i18n="wz.pdf">PDF sheet</button>
+            <button type="button" class="btn btn-wide" id="wzMore" data-i18n="wz.more">More export options…</button>
+          </section>
+        </div>
+        <div class="wizard-nav">
+          <button type="button" class="btn icon-btn-text" id="wzUndo" data-i18n-title="tb.undo" disabled>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 5.5 4 9l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 9h7a4.5 4.5 0 0 1 0 9H9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span data-i18n="wz.undo">Undo</span>
+          </button>
+          <button type="button" class="btn" id="wzBack" data-i18n="wz.back">Back</button>
+          <button type="button" class="btn primary" id="wzNext" data-i18n="wz.next">Next</button>
+        </div>
       </div>
     </div>
   </dialog>
