@@ -30,7 +30,7 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
   const shell = buildShell({
     ...shape,
     grow: 1,
-    // Ornament needs about eight segments per rib, cord and spine
+    // Ornament needs about six segments across each rib, cord and spine
     segPhi: Math.min(256, Math.max(PRINT_QUALITY.segPhi, res.phi)),
     segPerTurn: Math.min(
       Math.max(Math.round(PRINT_QUALITY.segPerTurn * boost), res.perTurn),

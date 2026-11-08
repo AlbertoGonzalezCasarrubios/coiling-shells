@@ -140,17 +140,18 @@ export function makeOrnament(p, { a, b, rc, cols, cosPhi, sinPhi, arcU, perimete
   return { active, nR, nZ, delta };
 }
 
-/** Segments needed to draw the relief: about eight per rib, cord and spine base. */
+/** Segments needed to draw the relief: about six across each rib, cord and spine base. */
 export function ornamentResolution(p) {
   const o = { ...ORNAMENT_DEFAULTS, ...p };
   if (!hasOrnament(o)) return { perTurn: 0, phi: 0 };
+  const K = 6;
   let perTurn = 0, phi = 0;
-  if (o.ribN > 0 && o.ribH > 0) perTurn = Math.max(perTurn, (8 * o.ribN) / Math.max(o.ribW * (1 - Math.abs(o.ribSkew)), 0.15));
+  if (o.ribN > 0 && o.ribH > 0) perTurn = Math.max(perTurn, (K * o.ribN) / Math.max(o.ribW * (1 - Math.abs(o.ribSkew)), 0.15));
   if (o.spineN > 0 && o.spineH > 0) {
-    perTurn = Math.max(perTurn, (8 * o.spineN) / Math.max(o.spineW, 0.1));
-    phi = Math.max(phi, 64 / Math.max(o.spineW, 0.1));
+    perTurn = Math.max(perTurn, (K * o.spineN) / Math.max(o.spineW, 0.1));
+    phi = Math.max(phi, 48 / Math.max(o.spineW, 0.1));
   }
-  if (o.cordN > 0 && o.cordH > 0) phi = Math.max(phi, (8 * o.cordN) / Math.max(o.cordW, 0.25));
-  if (o.keelH > 0) phi = Math.max(phi, 8 / Math.max(o.keelW, 0.02));
+  if (o.cordN > 0 && o.cordH > 0) phi = Math.max(phi, (K * o.cordN) / Math.max(o.cordW, 0.25));
+  if (o.keelH > 0) phi = Math.max(phi, K / Math.max(o.keelW, 0.02));
   return { perTurn: Math.ceil(perTurn), phi: Math.ceil(phi / 4) * 4 };
 }

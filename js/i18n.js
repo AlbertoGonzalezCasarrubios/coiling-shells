@@ -227,7 +227,7 @@ export const STRINGS = {
     'tab.n.ornament': 'Ornament',
     'tab.n.ornament.sub': 'relief',
     'orn.preset': 'Ornamented shells',
-    'orn.p.smooth': 'Smooth (keeps the shape)',
+    'orn.p.smooth': 'No ornament',
     'orn.p.epitonium': 'Wentletrap (Epitonium): lamellar ribs',
     'orn.p.turritella': 'Tower shell (Turritella): spiral cords',
     'orn.p.calliostoma': 'Top shell (Calliostoma): keel and cords',
@@ -253,7 +253,7 @@ export const STRINGS = {
     'orn.growth': 'Change with growth',
     'orn.growth.desc': 'Below 0 the relief fades as the shell grows (many shells are smooth when adult); above 0 it appears late.',
     'mech.title': 'Why this number of cords? (mechanical model)',
-    'mech.desc': 'The edge of the mantle builds the shell. If it grows a little faster than the shell, it wrinkles into waves, like a rug pushed against a wall, and each wave leaves a cord. Bending the edge is costly, so it prefers few, wide waves; pulling it away from the shell is costly too, so it prefers many, narrow ones. The balance sets the number.',
+    'mech.desc': 'The edge of the mantle builds the shell. If it grows a little faster than the shell, it wrinkles into waves, like a rug pushed against a wall, and each wave leaves a cord. Bending the edge is costly, so it prefers few, wide waves; pulling it away from the shell is costly too, so it prefers many, narrow ones. The balance sets the number. The sliders above choose the cords by hand; this model explains where their number comes from, and the button applies its prediction.',
     'mech.caption': 'The curve is the push needed for each number of waves; the dot, its minimum, is the number that appears. The dashed line is the push of growth: if it does not reach the curve, the shell stays smooth.',
     'mech.axis.n': 'waves, n',
     'mech.ring': 'margin (×3)',
@@ -313,6 +313,36 @@ export const STRINGS = {
     'pig.note': 'The shell starts in a plain colour. Choose a pattern to paint it; each one is computed from Meinhardt’s equations, not drawn. “Solid colour” takes you back to a plain shell.',
     'info.page.raup': 'Raup · shape',
     'info.page.meinhardt': 'Meinhardt · pigment',
+    'tb.undo': 'Undo the last change (Ctrl+Z / ⌘Z)',
+    'orn.clear': 'Remove ornament',
+    'pig.clear': 'Remove colour',
+    'info.page.controls': 'Controls',
+    'info.controls': `
+      <h3>3D view</h3>
+      <table class="keys">
+        <tr><td>Drag</td><td>Turn around the shell. In free rotation (the globe button, bottom right) it turns the shell itself, in any direction.</td></tr>
+        <tr><td>Wheel · pinch</td><td>Zoom in and out.</td></tr>
+        <tr><td>Right-drag · two fingers</td><td>Move the view.</td></tr>
+        <tr><td>3/4 · Apertural · Dorsal…</td><td>The standard views of malacology. In free rotation they also set the shell upright again.</td></tr>
+        <tr><td>↕ · ↔ · globe</td><td>Coiling axis vertical, horizontal (planispiral shells seen face-on) or free rotation.</td></tr>
+      </table>
+      <h3>Keyboard</h3>
+      <table class="keys">
+        <tr><td><kbd>Ctrl</kbd> <kbd>Z</kbd> · <kbd>⌘</kbd> <kbd>Z</kbd></td><td>Undo the last change (also the arrow button in the toolbar).</td></tr>
+        <tr><td><kbd>F</kbd></td><td>Full screen.</td></tr>
+        <tr><td><kbd>H</kbd></td><td>Hide or show the panels, to see only the shell.</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>Show the panels again, or close a window.</td></tr>
+      </table>
+      <h3>Toolbar</h3>
+      <table class="keys">
+        <tr><td>Lines · Solid · Both</td><td>How the shell is drawn.</td></tr>
+        <tr><td>Equation</td><td>The model equations, in general form and with the current values.</td></tr>
+        <tr><td>Axes</td><td>The x, y, z axes in the corner.</td></tr>
+        <tr><td>Appearance</td><td>Colours, background, mesh resolution, lines and coiling axis.</td></tr>
+        <tr><td>Graphs</td><td>The morphospace and the pigment profile over the 3D view.</td></tr>
+      </table>
+      <h3>Sliders</h3>
+      <p>Drag a slider or type a value in its box. The arrow keys move a focused slider step by step. Every change is stored in the page address, so copying the link shares exactly what is on screen.</p>`,
     'info.page.app': 'Credits',
     'info.pages': 'About sections',
     'tb.fullscreen': 'Fullscreen',
@@ -342,7 +372,6 @@ export const STRINGS = {
     'view.apical.hint': 'From the apex, along the coiling axis (side view of a planispiral shell)',
     'view.umbilical.hint': 'From the base, into the umbilicus',
     'view.profile.hint': 'Side view, aperture seen edge-on',
-    'hint.controls': 'Drag: rotate · Wheel: zoom · Right-click: pan · F: fullscreen · H: hide info',
     loading: 'Loading Three.js…',
     'info.title': 'About',
     'info.close': 'Close',
@@ -754,7 +783,7 @@ export const STRINGS = {
     'tab.n.ornament': 'Ornamento',
     'tab.n.ornament.sub': 'relieve',
     'orn.preset': 'Conchas ornamentadas',
-    'orn.p.smooth': 'Lisa (mantiene la forma)',
+    'orn.p.smooth': 'Sin ornamentación',
     'orn.p.epitonium': 'Escalaria (Epitonium): costillas laminares',
     'orn.p.turritella': 'Turritela (Turritella): cordones espirales',
     'orn.p.calliostoma': 'Trompo (Calliostoma): quilla y cordones',
@@ -780,7 +809,7 @@ export const STRINGS = {
     'orn.growth': 'Cambio con el crecimiento',
     'orn.growth.desc': 'Por debajo de 0, el relieve se desvanece al crecer (muchas conchas son lisas de adultas); por encima de 0, aparece tarde.',
     'mech.title': '¿Por qué ese número de cordones? (modelo mecánico)',
-    'mech.desc': 'El borde del manto fabrica la concha. Si crece un poco más deprisa que ella, se arruga en ondas, como una alfombra empujada contra la pared, y cada onda deja un cordón. Doblar el borde cuesta, así que prefiere pocas ondas anchas; despegarlo de la concha también cuesta, así que prefiere muchas estrechas. El equilibrio fija el número.',
+    'mech.desc': 'El borde del manto fabrica la concha. Si crece un poco más deprisa que ella, se arruga en ondas, como una alfombra empujada contra la pared, y cada onda deja un cordón. Doblar el borde cuesta, así que prefiere pocas ondas anchas; despegarlo de la concha también cuesta, así que prefiere muchas estrechas. El equilibrio fija el número. Los deslizadores de arriba eligen los cordones a mano; este modelo explica de dónde sale su número, y el botón aplica su predicción.',
     'mech.caption': 'La curva es el empuje necesario para cada número de ondas; el punto, su mínimo, es el número que aparece. La línea discontinua es el empuje del crecimiento: si no llega a la curva, la concha queda lisa.',
     'mech.axis.n': 'ondas, n',
     'mech.ring': 'borde (×3)',
@@ -840,6 +869,36 @@ export const STRINGS = {
     'pig.note': 'La concha empieza en un color liso. Elige un patrón para pintarla: cada uno se calcula con las ecuaciones de Meinhardt, no está dibujado. «Color sólido» vuelve a la concha lisa.',
     'info.page.raup': 'Raup · forma',
     'info.page.meinhardt': 'Meinhardt · pigmento',
+    'tb.undo': 'Deshacer el último cambio (Ctrl+Z / ⌘Z)',
+    'orn.clear': 'Quitar ornamentación',
+    'pig.clear': 'Quitar color',
+    'info.page.controls': 'Controles',
+    'info.controls': `
+      <h3>Vista 3D</h3>
+      <table class="keys">
+        <tr><td>Arrastrar</td><td>Girar alrededor de la concha. Con el giro libre (el botón del globo, abajo a la derecha) gira la propia concha, en cualquier dirección.</td></tr>
+        <tr><td>Rueda · pellizco</td><td>Acercar y alejar.</td></tr>
+        <tr><td>Arrastrar con botón derecho · dos dedos</td><td>Desplazar la vista.</td></tr>
+        <tr><td>3/4 · Apertural · Dorsal…</td><td>Las vistas estándar de la malacología. Con el giro libre, además vuelven a enderezar la concha.</td></tr>
+        <tr><td>↕ · ↔ · globo</td><td>Eje de enrollamiento vertical, horizontal (conchas planispirales vistas de frente) o giro libre.</td></tr>
+      </table>
+      <h3>Teclado</h3>
+      <table class="keys">
+        <tr><td><kbd>Ctrl</kbd> <kbd>Z</kbd> · <kbd>⌘</kbd> <kbd>Z</kbd></td><td>Deshacer el último cambio (también la flecha de la barra de herramientas).</td></tr>
+        <tr><td><kbd>F</kbd></td><td>Pantalla completa.</td></tr>
+        <tr><td><kbd>H</kbd></td><td>Ocultar o mostrar los paneles, para ver solo la concha.</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>Volver a mostrar los paneles o cerrar una ventana.</td></tr>
+      </table>
+      <h3>Barra de herramientas</h3>
+      <table class="keys">
+        <tr><td>Líneas · Sólido · Ambos</td><td>Cómo se dibuja la concha.</td></tr>
+        <tr><td>Ecuación</td><td>Las ecuaciones del modelo, en forma general y con los valores actuales.</td></tr>
+        <tr><td>Ejes</td><td>Los ejes x, y, z de la esquina.</td></tr>
+        <tr><td>Apariencia</td><td>Colores, fondo, resolución de la malla, líneas y eje de enrollamiento.</td></tr>
+        <tr><td>Gráficos</td><td>El morfoespacio y el perfil del pigmento sobre la vista 3D.</td></tr>
+      </table>
+      <h3>Deslizadores</h3>
+      <p>Arrastra un deslizador o escribe un valor en su casilla. Las flechas del teclado mueven paso a paso el deslizador seleccionado. Cada cambio se guarda en la dirección de la página, así que al copiar el enlace se comparte exactamente lo que se ve.</p>`,
     'info.page.app': 'Créditos',
     'info.pages': 'Secciones de la información',
     'tb.fullscreen': 'Pantalla completa',
@@ -869,7 +928,6 @@ export const STRINGS = {
     'view.apical.hint': 'Desde el ápice, a lo largo del eje (vista lateral de una concha planispiral)',
     'view.umbilical.hint': 'Desde la base, hacia el ombligo',
     'view.profile.hint': 'Vista lateral, apertura de canto',
-    'hint.controls': 'Arrastrar: rotar · Rueda: zoom · Clic derecho: panear · F: pantalla completa · H: ocultar info',
     loading: 'Cargando Three.js…',
     'info.title': 'Información',
     'info.close': 'Cerrar',

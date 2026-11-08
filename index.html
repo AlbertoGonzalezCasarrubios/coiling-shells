@@ -112,6 +112,7 @@
           </div>
           <select id="ornPreset" class="select"></select>
           <p class="note" data-i18n="orn.note"></p>
+          <button type="button" class="btn btn-wide" id="ornClear" data-i18n="orn.clear">Remove ornament</button>
         </section>
 
         <section class="panel">
@@ -174,6 +175,7 @@
             <button type="button" class="link-btn" id="pigTheory" data-i18n="pig.theory">Theory →</button>
           </div>
           <div class="pattern-gallery" id="patternGallery" role="radiogroup" data-i18n-title="pig.preset"></div>
+          <button type="button" class="btn btn-wide" id="pigClear" data-i18n="pig.clear">Remove colour</button>
           <p class="note" data-i18n="pig.note"></p>
         </section>
 
@@ -304,6 +306,9 @@
             <button type="button" data-mode="solid" aria-pressed="false" data-i18n="mode.solid">Solid</button>
             <button type="button" data-mode="both" aria-pressed="false" data-i18n="mode.both">Both</button>
           </div>
+          <button type="button" class="chip icon-only" id="undo" data-i18n-title="tb.undo" disabled>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 5.5 4 9l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 9h7a4.5 4.5 0 0 1 0 9H9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
           <button type="button" class="chip" id="toggleFormula" aria-pressed="false">
             <span class="chip-sym">∑</span><span data-i18n="tb.equation">Equation</span>
           </button>
@@ -436,7 +441,6 @@
           </span>
         </div>
 
-        <div class="hint" data-i18n="hint.controls">Drag: rotate · Wheel: zoom · Right-click: pan</div>
         <div class="loading" id="loading" data-i18n="loading">Loading Three.js…</div>
       </div>
     </main>
@@ -453,12 +457,14 @@
       <button type="button" role="tab" data-page="raup" aria-selected="true" data-i18n="info.page.raup">Raup · shape</button>
       <button type="button" role="tab" data-page="meinhardt" aria-selected="false" tabindex="-1" data-i18n="info.page.meinhardt">Meinhardt · pigment</button>
       <button type="button" role="tab" data-page="ornament" aria-selected="false" tabindex="-1" data-i18n="info.page.ornament">Ornament · mechanics</button>
+      <button type="button" role="tab" data-page="controls" aria-selected="false" tabindex="-1" data-i18n="info.page.controls">Controls</button>
       <button type="button" role="tab" data-page="app" aria-selected="false" tabindex="-1" data-i18n="info.page.app">Credits</button>
     </div>
     <div class="info-body" id="infoBody">
       <div class="info-page" data-page="raup" role="tabpanel" data-i18n-html="info.raup"></div>
       <div class="info-page" data-page="meinhardt" role="tabpanel" data-i18n-html="info.meinhardt" hidden></div>
       <div class="info-page" data-page="ornament" role="tabpanel" data-i18n-html="info.ornament" hidden></div>
+      <div class="info-page" data-page="controls" role="tabpanel" data-i18n-html="info.controls" hidden></div>
       <div class="info-page" data-page="app" role="tabpanel" data-i18n-html="info.app" hidden></div>
     </div>
   </dialog>

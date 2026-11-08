@@ -142,7 +142,13 @@ const WELCOME_KEY = 'coiling-shells.welcome';
 setLang(storage.get(LANG_KEY) ?? 'en');
 
 let hashTimer = 0;
+// Undo history (see "Undo" below); declared early because writeHash records the steps
+const undoStack = [];
+const UNDO_LIMIT = 50;
+let committed = null;
+let undoTimer = 0;
 function writeHash() {
+  noteChange();
   clearTimeout(hashTimer);
   hashTimer = setTimeout(writeHashNow, 250);
 }
@@ -359,11 +365,11 @@ function rebuild() {
   // With a high W almost the whole shell lies in the last fraction of a whorl
   // (bivalves): θ is refined so the mesh and the growth lines are not sparse.
   const boost = Math.max(1, Math.log10(state.W));
-  // Ornament needs about eight segments per rib, cord and spine, within a vertex budget
+  // Ornament needs about six segments across each rib, cord and spine, within a vertex budget
   const res = ornamentResolution(state);
   const segPhi = Math.min(256, Math.max(q.segPhi, res.phi));
   let segPerTurn = Math.max(Math.round(q.segPerTurn * boost), Math.round(res.perTurn * boost));
-  segPerTurn = Math.min(segPerTurn, Math.max(q.segPerTurn, Math.floor(900000 / (segPhi * Math.max(state.turns, 0.25)))));
+  segPerTurn = Math.min(segPerTurn, Math.max(q.segPerTurn, Math.floor(500000 / (segPhi * Math.max(state.turns, 0.25)))));
   const shell = buildShell({
     ...state,
     segPhi,
@@ -804,7 +810,8 @@ function buildOrnPresetOptions() {
     const o = document.createElement('option');
     o.value = key;
     o.textContent = t(`orn.p.${key}`);
-    if (key === 'custom') o.hidden = true;
+    // "No ornament" and "custom" are states, not examples to choose
+    if (key === 'custom' || key === 'smooth') o.hidden = true;
     ornPresetSel.append(o);
   }
   ornPresetSel.value = v || ornPresetKey();
@@ -853,6 +860,11 @@ ornPresetSel.addEventListener('change', () => {
 });
 buildOrnPresetOptions();
 $('ornTheory').addEventListener('click', () => openInfo('ornament'));
+$('ornClear').addEventListener('click', () => {
+  Object.assign(state, ORNAMENT_DEFAULTS);
+  syncOrnamentControls();
+  onOrnamentChange();
+});
 function setOrnMode(mode) {
   $('tab-ornament').dataset.omode = mode;
   document.querySelectorAll('#ornMode [data-omode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.omode === mode)));
@@ -1118,7 +1130,15 @@ $('hideInfo').addEventListener('click', () => setClean(true));
 $('showInfo').addEventListener('click', () => setClean(false));
 
 window.addEventListener('keydown', (e) => {
-  if (e.ctrlKey || e.metaKey || e.altKey || infoDialog.open || $('welcome').open || $('exportDlg').open) return;
+  if (infoDialog.open || $('welcome').open || $('exportDlg').open) return;
+  // Ctrl+Z / ⌘Z undoes the last step (outside text boxes, which have their own undo)
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'z'
+      && !(e.target instanceof Element && e.target.closest('input[type=text], input[type=number], textarea'))) {
+    e.preventDefault();
+    undo();
+    return;
+  }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.target instanceof Element && e.target.closest('input, select, textarea')) return;
   const key = e.key.toLowerCase();
   if (key === 'f' && fsSupported) toggleFullscreen();
@@ -2989,6 +3009,7 @@ for (const [id, key] of [['pigBase', 'base'], ['pigColor', 'pigment']]) {
 }
 
 $('pigTheory').addEventListener('click', () => openInfo('meinhardt'));
+$('pigClear').addEventListener('click', () => setPatternOn(false));
 
 $('savePattern').addEventListener('click', () => {
   if (patternValues) download(patternCanvas.toDataURL('image/png'), `meinhardt_${pattern.preset}_seed${pattern.seed}.png`);
@@ -3356,6 +3377,69 @@ document.querySelectorAll('.lang button').forEach((b) => b.addEventListener('cli
 }));
 
 // ---------------------------------------------------------------------------
+// Undo: each step is a snapshot of the shape, the ornament, the render mode and
+// the pattern. Changes that follow one another quickly (dragging a slider) make
+// a single step. The view (camera, orientation) is not a step.
+// ---------------------------------------------------------------------------
+
+function takeSnapshot() {
+  return JSON.stringify({
+    shape: pickShape(state),
+    orn: pickOrnament(state),
+    mode: state.mode,
+    pattern: { ...pattern },
+  });
+}
+
+/** Called on every change (through writeHash): closes the step once changes stop. */
+function noteChange() {
+  if (committed === null) return; // not started yet
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(commitStep, 450);
+}
+
+function commitStep() {
+  clearTimeout(undoTimer);
+  const now = takeSnapshot();
+  if (now === committed) return;
+  undoStack.push(committed);
+  if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+  committed = now;
+  $('undo').disabled = false;
+}
+
+function undo() {
+  commitStep(); // a change still in progress becomes a step of its own
+  const prev = undoStack.pop();
+  $('undo').disabled = undoStack.length === 0;
+  if (!prev) return;
+  committed = prev;
+  restoreSnapshot(JSON.parse(prev));
+}
+
+function restoreSnapshot({ shape, orn, mode, pattern: pat }) {
+  for (const k of ['W', 'D', 'T', 'S', 'turns']) controlsByKey[k].set(shape[k], { fitScale: true });
+  state.hand = shape.hand;
+  $('hand').value = String(shape.hand);
+  setMirror(shape.mirror);
+  presetSel.value = Object.keys(PRESETS).find((k) => SHAPE_KEYS.every((key) => pickShape(PRESETS[k])[key] === shape[key])) ?? 'custom';
+  Object.assign(state, orn);
+  syncOrnamentControls();
+  state.mode = mode;
+  applyMode();
+  const patternChanged = JSON.stringify({ ...pattern }) !== JSON.stringify(pat);
+  if (patternChanged) {
+    Object.assign(pattern, pat);
+    syncPatternControls();
+    if (pattern.on) computePattern();
+    setPatternOn(pattern.on);
+  }
+  dirty = true;
+}
+
+$('undo').addEventListener('click', undo);
+
+// ---------------------------------------------------------------------------
 // Render loop
 // ---------------------------------------------------------------------------
 
@@ -3401,6 +3485,7 @@ function renderFrame() {
 applyLanguage(getLang());
 applyMode();
 setOrient(state.orient, { animate: false });
+committed = takeSnapshot(); // undo history starts from the state the page opened with
 
 renderer.setAnimationLoop((now) => {
   if (welcomeDlg.open) return; // the guide covers the viewer: no need to draw it
