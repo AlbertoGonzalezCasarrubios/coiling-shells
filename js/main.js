@@ -1860,12 +1860,8 @@ function renderPlateSubset(names, tile, background = '#ffffff') {
   const saved = PLATE_VIEWS.slice();
   PLATE_VIEWS.splice(0, PLATE_VIEWS.length, ...names);
   try {
-    const full = renderPlate({ tile, background, labels: true });
-    const out = document.createElement('canvas');
-    out.width = names.length * tile;
-    out.height = full.height / 2;
-    out.getContext('2d').drawImage(full, 0, 0);
-    return out;
+    // With up to three views the plate is a single row, labels included
+    return renderPlate({ tile, background, labels: true });
   } finally {
     PLATE_VIEWS.splice(0, PLATE_VIEWS.length, ...saved);
   }
@@ -1966,6 +1962,8 @@ const PATTERN_HASH = { pm: 'model', pDa: 'Da', pD2: 'D2', pra: 'ra', pr2: 'r2', 
 if (fromHash.get('pg') === '1') {
   pattern.on = true;
   pattern.preset = PATTERN_PRESETS[fromHash.get('pp')] ? fromHash.get('pp') : 'custom';
+  // A named pattern starts from its own constants; the link may then change some of them
+  if (PATTERN_PRESETS[pattern.preset]) Object.assign(pattern, pickPattern(PATTERN_PRESETS[pattern.preset]));
   for (const [short, key] of Object.entries(PATTERN_HASH)) {
     if (!fromHash.has(short)) continue;
     if (key === 'model') pattern.model = fromHash.get(short) === 'AS' ? 'AS' : 'AI';
