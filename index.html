@@ -393,13 +393,6 @@
       <div class="ex-options wide">
         <div class="ex-row">
           <label class="field ex-name"><span data-i18n="ex.name">Name of your shell</span><input type="text" id="exName" class="text" maxlength="60" autocomplete="off" /></label>
-          <label class="field"><span data-i18n="ex.format">Image format</span>
-            <select id="exFormat" class="select">
-              <option value="png">PNG</option>
-              <option value="jpg">JPG</option>
-              <option value="tiff">TIFF</option>
-            </select>
-          </label>
         </div>
         <p class="note" data-i18n="ex.name.hint"></p>
         <label class="toggle"><input type="checkbox" id="exAxis" /><span data-i18n="ex.axis">Show the coiling axis</span></label>
@@ -432,6 +425,13 @@
           </label>
           <label class="field" data-plate-custom hidden><span data-i18n="ex.width">Width (px)</span><input type="number" id="exPlateW" class="num" min="256" max="8192" step="1" value="3840" /></label>
           <label class="field" data-plate-custom hidden><span data-i18n="ex.height">Height (px)</span><input type="number" id="exPlateH" class="num" min="256" max="8192" step="1" value="2160" /></label>
+          <label class="field ex-format"><span data-i18n="ex.format">Format</span>
+            <select id="exPlateFormat" class="select">
+              <option value="png">PNG</option>
+              <option value="jpg">JPG</option>
+              <option value="tiff">TIFF</option>
+            </select>
+          </label>
           <span class="status" id="exPlateDims"></span>
         </div>
         <div class="ex-row">
@@ -473,6 +473,13 @@
               </optgroup>
             </select>
           </label>
+          <label class="field ex-format"><span data-i18n="ex.format">Format</span>
+            <select id="exFormat" class="select">
+              <option value="png">PNG</option>
+              <option value="jpg">JPG</option>
+              <option value="tiff">TIFF</option>
+            </select>
+          </label>
           <span class="status" id="exResDims"></span>
         </div>
         <div class="ex-row" id="exCustomRow" hidden>
@@ -507,6 +514,15 @@
         <h3 data-i18n="pig.spacetime">Space–time record</h3>
         <p class="note" data-i18n="ex.pattern.desc"></p>
         <p class="note warn" id="exPatternNone" data-i18n="ex.pattern.none" hidden></p>
+        <div class="ex-row">
+          <label class="field ex-format"><span data-i18n="ex.format">Format</span>
+            <select id="exPatternFormat" class="select">
+              <option value="png">PNG</option>
+              <option value="jpg">JPG</option>
+              <option value="tiff">TIFF</option>
+            </select>
+          </label>
+        </div>
         <button type="button" class="btn primary" id="exPattern" data-i18n="ex.img">Download image</button>
       </section>
     </div>

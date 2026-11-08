@@ -1172,8 +1172,7 @@ function shellName() {
 const defaultShellName = () => (PRESETS[presetSel.value] ? tPreset(presetSel.value) : t('ex.customShell'));
 
 /** Encodes a canvas in the format chosen in the export dialog and downloads it. */
-async function downloadImage(canvas, stem) {
-  const fmt = $('exFormat').value;
+async function downloadImage(canvas, stem, fmt = 'png') {
   if (fmt === 'tiff') {
     const { width, height } = canvas;
     const rgba = canvas.getContext('2d').getImageData(0, 0, width, height).data;
@@ -1921,12 +1920,12 @@ $('exPlateRes').addEventListener('change', () => { updateViewImageSize(); update
 for (const id of ['exPlateW', 'exPlateH']) $(id).addEventListener('change', () => { updateViewImageSize(); updatePlatePreview(); });
 $('exPng').addEventListener('click', (e) => busy(e.currentTarget, async () => {
   const { W, H } = viewImageSize();
-  await downloadImage(renderViewImage(W, H), `${fileStem()}_${W}x${H}`);
+  await downloadImage(renderViewImage(W, H), `${fileStem()}_${W}x${H}`, $('exFormat').value);
 }));
 $('exPlate').addEventListener('click', (e) => busy(e.currentTarget, async () => {
   const size = plateImageSize();
   const c = renderPlate({ tile: PLATE_TILE, background: plateBackground(), labels: $('exLabels').checked, width: size?.W, height: size?.H });
-  await downloadImage(c, `${fileStem()}_views${size ? `_${size.W}x${size.H}` : ''}`);
+  await downloadImage(c, `${fileStem()}_views${size ? `_${size.W}x${size.H}` : ''}`, $('exPlateFormat').value);
 }));
 $('exPdf').addEventListener('click', (e) => busy(e.currentTarget, exportPDF));
 $('exStl').addEventListener('click', (e) => busy(e.currentTarget, () => {
@@ -1939,7 +1938,7 @@ $('exGlb').addEventListener('click', (e) => busy(e.currentTarget, exportGLB));
 $('exPattern').addEventListener('click', (e) => {
   if (!patternValues) return;
   const own = slugify(customName());
-  busy(e.currentTarget, () => downloadImage(patternCanvas, own ? `${own}_pattern` : `meinhardt_${pattern.preset}_seed${pattern.seed}`));
+  busy(e.currentTarget, () => downloadImage(patternCanvas, own ? `${own}_pattern` : `meinhardt_${pattern.preset}_seed${pattern.seed}`, $('exPatternFormat').value));
 });
 
 // ---------------------------------------------------------------------------

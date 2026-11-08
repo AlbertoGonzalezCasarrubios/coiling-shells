@@ -655,6 +655,7 @@ div.adv-only.insertion { gap: 4px; }
 .ex-row .field { min-width: 120px; }
 .ex-row .num { width: 90px; }
 .ex-row .ex-name { flex: 1 1 260px; }
+.ex-row .field.ex-format { min-width: 92px; }
 .text {
   font: inherit; font-size: 13px; color: var(--text); background: var(--surface);
   border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px;
