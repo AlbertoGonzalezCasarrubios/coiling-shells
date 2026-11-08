@@ -97,10 +97,11 @@ function pick(p) {
 }
 export const ORNAMENT_PRESETS = {
   smooth: { shape: null, orn: {} },
-  // Wentletrap: rounded whorls barely touching, crossed by thin lamellar ribs
+  // Wentletrap (Epitonium clathrus): a tall spire of convex whorls that just
+  // touch, crossed by thin lamellar ribs (costae) that line up from whorl to whorl
   epitonium: {
-    shape: { W: 1.6, D: 0.3, T: 3.4, S: 1, turns: 8, hand: 1, mirror: false },
-    orn: { ribN: 9, ribH: 0.3, ribW: 0.14, ribSkew: 0.4 },
+    shape: { W: 1.4, D: 0.15, T: 5.2, S: 1, turns: 10, hand: 1, mirror: false },
+    orn: { ribN: 10, ribH: 0.25, ribW: 0.12, ribSkew: 0.3 },
   },
   // Tower shell: spiral cords along the whorls
   turritella: { shape: SHAPE('turritella'), orn: { cordN: 5, cordH: 0.1, cordW: 0.5 } },
@@ -114,7 +115,13 @@ export const ORNAMENT_PRESETS = {
   // Horn shell: a tall spire with rows of nodules
   cerithium: {
     shape: { W: 1.55, D: 0.05, T: 5, S: 1.15, turns: 11, hand: 1, mirror: false },
-    orn: { ribN: 11, ribH: 0.16, ribW: 0.5, cordN: 3, cordH: 0.14, cordW: 0.6, nodules: true },
+    orn: { ribN: 12, ribH: 0.16, ribW: 0.45, cordN: 6, cordH: 0.12, cordW: 0.5, nodules: true },
+  },
+  // Sun shell (Astraea heliotropium): a low cone whose periphery carries
+  // triangular spines, so it looks like a star from above
+  astraea: {
+    shape: { W: 2.2, D: 0.02, T: 1.6, S: 0.7, turns: 4.5, hand: 1, mirror: false },
+    orn: { ribN: 16, ribH: 0.04, ribW: 0.3, spineN: 10, spineH: 0.9, spineW: 0.35, spinePos: 0 },
   },
   // Ribbed ammonite
   dactylioceras: { shape: SHAPE('ammonite'), orn: { ribN: 34, ribH: 0.12, ribW: 0.4 } },
@@ -125,9 +132,4 @@ export const ORNAMENT_PRESETS = {
   },
   // Cockle: radial ribs, which run along the growth direction (spiral cords in Raup's terms)
   cerastoderma: { shape: SHAPE('almeja'), orn: { cordN: 24, cordH: 0.07, cordW: 0.7 } },
-  // Warty venus: concentric lamellae broken into warts where radial ribs cross them
-  venus: {
-    shape: SHAPE('almeja'),
-    orn: { ribN: 28, ribH: 0.07, ribW: 0.35, ribSkew: 0.3, cordN: 30, cordH: 0.05, cordW: 0.6, nodules: true },
-  },
 };

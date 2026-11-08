@@ -15,7 +15,10 @@
  *       periphery, φ = 0).
  *   K   keel: a single cord at position u_k.
  *   Σ   spines: cones on n_s positions per whorl, in one row at u_s or in two
- *       rows at ±u_s; their base covers a fraction w_s of the spacing.
+ *       rows at ±u_s; their base covers a fraction w_s of the spacing. A spine
+ *       is only drawn when it lies whole on the shell: not across the lip of
+ *       the aperture (it would open the lip into a funnel) and not on the
+ *       first whorls (one, or 30 % of them), where spines would be specks.
  *   f   change with growth: f(s) = clamp(1 + c (2s − 1), 0, 2), with s the
  *       fraction of growth (0 apex, 1 aperture). c < 0: ornament fades towards
  *       the aperture; c > 0: it appears late.
@@ -34,7 +37,7 @@ export const ORNAMENT_DEFAULTS = {
   cordN: 0, cordH: 0.08, cordW: 0.45,
   nodules: false,
   keelH: 0, keelW: 0.06, keelPos: 0,
-  spineN: 0, spineH: 0.5, spineW: 0.35, spinePos: 0, spineBoth: false,
+  spineN: 0, spineH: 0.5, spineW: 0.35, spinePos: 0.12, spineBoth: false,
   ornGrowth: 0,
 };
 
@@ -97,7 +100,18 @@ export function makeOrnament(p, { a, b, rc, cols, cosPhi, sinPhi, arcU, perimete
   // half-width along the spiral, measured at the outer edge of the whorl
   const halfTheta = o.spineN > 0 ? (o.spineW / 2) * (2 * Math.PI / o.spineN) : 0;
   const halfU = Math.max(1e-3, (halfTheta * (rc + a)) / (perimeter * a));
-  const rows = o.spineBoth && o.spinePos > 0 ? [o.spinePos, -o.spinePos] : [o.spinePos];
+  // The centre of each row is moved to the nearest column, so the tip of every spine is a vertex
+  const snap = (u) => {
+    let best = arcU[0];
+    for (let j = 0; j < cols; j++) if (circDist(arcU[j], u) < circDist(best, u)) best = arcU[j];
+    return best;
+  };
+  const rows = (o.spineBoth && o.spinePos !== 0 ? [o.spinePos, -o.spinePos] : [o.spinePos]).map((u) => snap(((u % 1) + 1) % 1));
+  // Spines centred between these angles are drawn whole (θ = 0 is the final aperture)
+  const nTurns = p.turns ?? 1;
+  // The first whorls stay smooth (at least one, or 30 % of the whorls)
+  const spineFirst = -2 * Math.PI * Math.max(0, nTurns - Math.max(1, 0.3 * nTurns));
+  const spineLast = -halfTheta;
   for (let j = 0; j < cols; j++) {
     const len = Math.hypot(b * cosPhi[j], a * sinPhi[j]) || 1;
     nR[j] = (b * cosPhi[j]) / len;
@@ -115,8 +129,11 @@ export function makeOrnament(p, { a, b, rc, cols, cosPhi, sinPhi, arcU, perimete
     d += o.keelH * keel[j];
     if (spineH > 0 && spineU[j] < 1) {
       const t = turns * o.spineN;
-      const dt = Math.abs(t - Math.round(t)) / (o.spineW / 2); // distance along the spiral, in base radii
-      d += spineH * cone(Math.hypot(dt, spineU[j]));
+      const centre = (Math.round(t) / o.spineN) * 2 * Math.PI;
+      if (centre >= spineFirst && centre <= spineLast) {
+        const dt = Math.abs(t - Math.round(t)) / (o.spineW / 2); // distance along the spiral, in base radii
+        d += spineH * cone(Math.hypot(dt, spineU[j]));
+      }
     }
     return d * growthFactor(o.ornGrowth, s);
   };

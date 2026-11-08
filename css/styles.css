@@ -545,7 +545,8 @@ body.clean .main { height: 100vh; height: 100dvh; }
 .pattern-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .pig-body { display: flex; flex-direction: column; gap: 18px; }
 .segmented.two { grid-template-columns: 1fr 1fr; background: var(--surface-2); backdrop-filter: none; }
-#tab-pigment[data-pmode='simple'] .adv-only { display: none !important; }
+#tab-pigment[data-pmode='simple'] .adv-only,
+#tab-ornament[data-omode='simple'] .adv-only { display: none !important; }
 div.adv-only { display: flex; flex-direction: column; gap: 12px; }
 div.adv-only.insertion { gap: 4px; }
 .insertion .note { padding-left: 24px; }

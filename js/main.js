@@ -49,18 +49,18 @@ const VIS_PARAMS = [
 const ORN_PARAMS = [
   { key: 'ribN', min: 0, max: 60, step: 1, digits: 0, box: 'rib' },
   { key: 'ribH', min: 0, max: 0.4, step: 0.01, digits: 2, box: 'rib' },
-  { key: 'ribW', min: 0.05, max: 1, step: 0.01, digits: 2, box: 'rib' },
-  { key: 'ribSkew', min: -0.8, max: 0.8, step: 0.05, digits: 2, box: 'rib' },
+  { key: 'ribW', min: 0.05, max: 1, step: 0.01, digits: 2, box: 'ribAdv' },
+  { key: 'ribSkew', min: -0.8, max: 0.8, step: 0.05, digits: 2, box: 'ribAdv' },
   { key: 'cordN', min: 0, max: 48, step: 1, digits: 0, box: 'cord' },
   { key: 'cordH', min: 0, max: 0.4, step: 0.01, digits: 2, box: 'cord' },
-  { key: 'cordW', min: 0.05, max: 1, step: 0.01, digits: 2, box: 'cord' },
+  { key: 'cordW', min: 0.05, max: 1, step: 0.01, digits: 2, box: 'cordAdv' },
   { key: 'keelH', min: 0, max: 0.4, step: 0.01, digits: 2, box: 'keel' },
   { key: 'keelW', min: 0.02, max: 0.3, step: 0.01, digits: 2, box: 'keel' },
   { key: 'keelPos', min: -0.5, max: 0.5, step: 0.01, digits: 2, box: 'keel' },
   { key: 'spineN', min: 0, max: 40, step: 1, digits: 0, box: 'spine' },
   { key: 'spineH', min: 0, max: 1.5, step: 0.01, digits: 2, box: 'spine' },
-  { key: 'spineW', min: 0.1, max: 1, step: 0.01, digits: 2, box: 'spine' },
-  { key: 'spinePos', min: -0.5, max: 0.5, step: 0.01, digits: 2, box: 'spine' },
+  { key: 'spineW', min: 0.1, max: 1, step: 0.01, digits: 2, box: 'spineAdv' },
+  { key: 'spinePos', min: -0.5, max: 0.5, step: 0.01, digits: 2, box: 'spineAdv' },
   { key: 'ornGrowth', min: -1, max: 1, step: 0.05, digits: 2, box: 'growth' },
 ];
 const ORN_KEYS = Object.keys(ORNAMENT_DEFAULTS);
@@ -835,7 +835,7 @@ function onOrnamentChange() {
   }
   dirty = true;
 }
-ORN_PARAMS.forEach((d) => createParam(d, $(`${d.box}-params`), { onChange: onOrnamentChange }));
+ORN_PARAMS.forEach((d) => createParam(d, $(`${d.box}-params`), { compact: true, onChange: onOrnamentChange }));
 for (const k of ORN_BOOLS) {
   $(k).checked = !!state[k];
   $(k).addEventListener('change', (e) => {
@@ -853,6 +853,11 @@ ornPresetSel.addEventListener('change', () => {
 });
 buildOrnPresetOptions();
 $('ornTheory').addEventListener('click', () => openInfo('ornament'));
+function setOrnMode(mode) {
+  $('tab-ornament').dataset.omode = mode;
+  document.querySelectorAll('#ornMode [data-omode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.omode === mode)));
+}
+document.querySelectorAll('#ornMode [data-omode]').forEach((b) => b.addEventListener('click', () => setOrnMode(b.dataset.omode)));
 
 // Mechanical model of the cords: the mantle edge buckles on its elastic attachment
 const mech = { lambda: lambdaForWaves(9), eta: 1.6 };
@@ -3017,7 +3022,7 @@ document.querySelectorAll('.tabs [data-tab]').forEach((b) => {
   b.addEventListener('click', () => showTab(b.dataset.tab));
   b.addEventListener('keydown', (e) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-    const order = ['shape', 'pigment', 'ornament'];
+    const order = ['shape', 'ornament', 'pigment'];
     const i = order.indexOf(b.dataset.tab);
     const next = order[(i + (e.key === 'ArrowRight' ? 1 : order.length - 1)) % order.length];
     showTab(next);

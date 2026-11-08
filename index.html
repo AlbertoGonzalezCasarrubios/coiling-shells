@@ -50,8 +50,8 @@
 
       <nav class="tabs" role="tablist" data-i18n-title="tab.label">
         <button type="button" role="tab" id="tabbtn-shape" data-tab="shape" aria-controls="tab-shape" aria-selected="true" ><span data-i18n="tab.n.shape">Shape</span><small>Raup</small></button>
-        <button type="button" role="tab" id="tabbtn-pigment" data-tab="pigment" aria-controls="tab-pigment" aria-selected="false" tabindex="-1"><span data-i18n="tab.n.pigment">Pigment</span><small>Meinhardt</small></button>
         <button type="button" role="tab" id="tabbtn-ornament" data-tab="ornament" aria-controls="tab-ornament" aria-selected="false" tabindex="-1"><span data-i18n="tab.n.ornament">Ornament</span><small data-i18n="tab.n.ornament.sub">relief</small></button>
+        <button type="button" role="tab" id="tabbtn-pigment" data-tab="pigment" aria-controls="tab-pigment" aria-selected="false" tabindex="-1"><span data-i18n="tab.n.pigment">Pigment</span><small>Meinhardt</small></button>
       </nav>
 
       <div class="tab-panel" id="tab-shape" role="tabpanel" aria-labelledby="tabbtn-shape">
@@ -104,7 +104,7 @@
       </details>
       </div>
 
-      <div class="tab-panel" id="tab-ornament" role="tabpanel" aria-labelledby="tabbtn-ornament" hidden>
+      <div class="tab-panel" id="tab-ornament" role="tabpanel" aria-labelledby="tabbtn-ornament" data-omode="simple" hidden>
         <section class="panel">
           <div class="panel-row">
             <label class="panel-title" for="ornPreset" data-i18n="orn.preset">Ornamented shells</label>
@@ -113,45 +113,53 @@
           <select id="ornPreset" class="select"></select>
           <p class="note" data-i18n="orn.note"></p>
         </section>
+
+        <section class="panel">
+          <div class="segmented two" id="ornMode" role="radiogroup" data-i18n-title="pig.mode">
+            <button type="button" data-omode="simple" aria-pressed="true" data-i18n="pig.mode.simple">Simple</button>
+            <button type="button" data-omode="advanced" aria-pressed="false" data-i18n="pig.mode.advanced">Advanced</button>
+          </div>
+        </section>
+
         <section class="panel">
           <h2 class="panel-title" data-i18n="orn.ribs">Axial ribs</h2>
           <p class="note" data-i18n="orn.ribs.desc"></p>
           <div id="rib-params"></div>
+          <div id="ribAdv-params" class="adv-only"></div>
         </section>
         <section class="panel">
           <h2 class="panel-title" data-i18n="orn.cords">Spiral cords</h2>
           <p class="note" data-i18n="orn.cords.desc"></p>
           <div id="cord-params"></div>
-          <label class="toggle"><input type="checkbox" id="nodules" /><span data-i18n="orn.nodules">Nodules: relief only where ribs and cords cross</span></label>
+          <div id="cordAdv-params" class="adv-only"></div>
+          <label class="toggle"><input type="checkbox" id="nodules" /><span data-i18n="orn.nodules">Nodules where ribs and cords cross</span></label>
         </section>
-        <details class="drawer">
-          <summary><span data-i18n="orn.spines">Spines</span></summary>
-          <div class="drawer-body">
-            <p class="note" data-i18n="orn.spines.desc"></p>
-            <div id="spine-params"></div>
+        <section class="panel">
+          <h2 class="panel-title" data-i18n="orn.spines">Spines</h2>
+          <p class="note" data-i18n="orn.spines.desc"></p>
+          <div id="spine-params"></div>
+          <div class="adv-only">
+            <div id="spineAdv-params"></div>
             <label class="toggle"><input type="checkbox" id="spineBoth" /><span data-i18n="orn.spineBoth">Two rows, symmetric about the periphery</span></label>
           </div>
-        </details>
-        <details class="drawer">
-          <summary><span data-i18n="orn.keel">Keel</span></summary>
-          <div class="drawer-body">
-            <p class="note" data-i18n="orn.keel.desc"></p>
-            <div id="keel-params"></div>
-          </div>
-        </details>
-        <details class="drawer">
-          <summary><span data-i18n="orn.growth">Change with growth</span></summary>
-          <div class="drawer-body">
-            <p class="note" data-i18n="orn.growth.desc"></p>
-            <div id="growth-params"></div>
-          </div>
-        </details>
-        <details class="drawer" id="mechDrawer">
-          <summary><span data-i18n="mech.title">Mechanical model of the cords</span></summary>
+        </section>
+        <section class="panel adv-only">
+          <h2 class="panel-title" data-i18n="orn.keel">Keel</h2>
+          <p class="note" data-i18n="orn.keel.desc"></p>
+          <div id="keel-params"></div>
+        </section>
+        <section class="panel adv-only">
+          <h2 class="panel-title" data-i18n="orn.growth">Change with growth</h2>
+          <p class="note" data-i18n="orn.growth.desc"></p>
+          <div id="growth-params"></div>
+        </section>
+        <details class="drawer adv-only" id="mechDrawer">
+          <summary><span data-i18n="mech.title">Why this number of cords?</span></summary>
           <div class="drawer-body">
             <p class="note" data-i18n="mech.desc"></p>
             <div id="mech-params"></div>
             <canvas id="mechCanvas" class="mech-canvas" height="190"></canvas>
+            <p class="note" data-i18n="mech.caption"></p>
             <p class="note mech-out" id="mechOut"></p>
             <button type="button" class="btn btn-wide" id="mechApply" data-i18n="mech.apply">Grow these cords on the shell</button>
             <button type="button" class="link-btn" id="mechTheory" data-i18n="mech.theory">How the model works →</button>

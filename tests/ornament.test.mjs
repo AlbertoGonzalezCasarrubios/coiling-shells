@@ -45,18 +45,22 @@ function geometry(cols = 65) {
   return { a: 0.45, b: 0.45, rc: 0.55, cols, cosPhi, sinPhi, arcU, perimeter: 2 * Math.PI };
 }
 
-test('spines rise at their positions and nowhere else', () => {
+test('spines rise at their positions, whole, and not on the lip or the first whorl', () => {
   const g = geometry();
-  const o = makeOrnament({ spineN: 4, spineH: 0.8, spineW: 0.4, spinePos: 0 }, g);
+  const T = -2 * Math.PI; // one whorl behind the final aperture
+  const o = makeOrnament({ turns: 3, spineN: 4, spineH: 0.8, spineW: 0.4, spinePos: 0 }, g);
   assert.ok(o.active);
-  // On a spine (θ = 0, u = 0): full length; between spines or away from the row: nothing
-  assert.ok(Math.abs(o.delta(0, 0.5, 0) - 0.8) < 1e-9);
-  assert.equal(o.delta(Math.PI / 4, 0.5, 0), 0);
-  assert.equal(o.delta(0, 0.5, 32), 0);
+  // On a spine (u = 0): full length; between spines or away from the row: nothing
+  assert.ok(Math.abs(o.delta(T, 0.5, 0) - 0.8) < 1e-9);
+  assert.equal(o.delta(T + Math.PI / 4, 0.5, 0), 0);
+  assert.equal(o.delta(T, 0.5, 32), 0);
+  // A spine centred on the lip would open it into a funnel, and spines on the first whorl would be specks
+  assert.equal(o.delta(0, 1, 0), 0);
+  assert.equal(o.delta(-5 * Math.PI, 0.1, 0), 0);
   // Two symmetric rows
-  const two = makeOrnament({ spineN: 4, spineH: 0.8, spineW: 0.4, spinePos: 0.25, spineBoth: true }, g);
-  assert.ok(two.delta(0, 0.5, 16) > 0.79 && two.delta(0, 0.5, 48) > 0.79);
-  assert.equal(two.delta(0, 0.5, 0), 0);
+  const two = makeOrnament({ turns: 3, spineN: 4, spineH: 0.8, spineW: 0.4, spinePos: 0.25, spineBoth: true }, g);
+  assert.ok(two.delta(T, 0.5, 16) > 0.79 && two.delta(T, 0.5, 48) > 0.79);
+  assert.equal(two.delta(T, 0.5, 0), 0);
 });
 
 test('nodules only where ribs and cords cross; keel at its position', () => {
