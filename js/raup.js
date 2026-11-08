@@ -25,7 +25,13 @@
  *
  * Mirror valve (bivalves): reflection across the plane of the aperture,
  * y → −y (Z → −Z in Three.js).
+ *
+ * Ornament (optional): a relief added along the outward normal of the
+ * generating curve, which grows with the shell (see ornament.js).
  */
+
+import { makeOrnament } from './ornament.js';
+export { bump, hasOrnament } from './ornament.js';
 
 /**
  * @param {object} p
@@ -41,6 +47,8 @@
  * @param {number} p.segPhi       segments in φ around the aperture
  * @param {number} p.spiralLines  number of spiral lines (along θ)
  * @param {number} p.ringsPerTurn number of growth lines per whorl
+ * @param {number} [p.ribN] …    ornament parameters (ribs, cords, keel, spines,
+ *                                change with growth: see ornament.js)
  * @param {number} p.size         largest dimension after normalisation
  * @returns {{positions: Float32Array, colors: Float32Array, uvs: Float32Array,
  *   indices: Uint32Array, lineIndices: Uint32Array, axis: object,
@@ -96,6 +104,11 @@ export function buildShell(p) {
     for (let j = 0; j <= segPhi; j++) arcU[j] = L > 0 ? arcU[j] / L : j / segPhi;
   }
 
+  // Ornament: per-column normals and profiles (perimeter of the ellipse in
+  // units of a, Ramanujan's approximation, to make spines round)
+  const perimeter = Math.PI * (3 * (1 + S) - Math.sqrt((3 + S) * (1 + 3 * S)));
+  const orn = makeOrnament(p, { a, b, rc, cols, cosPhi, sinPhi, arcU, perimeter });
+
   const logW = Math.log(W);
   let minX = Infinity, minY = Infinity, minZ = Infinity;
   let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
@@ -107,11 +120,13 @@ export function buildShell(p) {
     const st = Math.sin(theta) * hand;
     // Growth bands (they only affect the colour in solid mode)
     const growth = 0.5 + 0.5 * Math.cos(theta * 3.0);
+    const sGrow = i / nTheta; // fraction of growth, 0 at the apex
     for (let j = 0; j < cols; j++) {
-      const R = g * (rc + a * cosPhi[j]);
+      const delta = orn.active ? a * orn.delta(theta, sGrow, j) : 0;
+      const R = g * (rc + a * cosPhi[j] + delta * orn.nR[j]);
       const x = R * ct;
       const z = R * st;
-      const y = g * (-T * rc + b * sinPhi[j]);
+      const y = g * (-T * rc + b * sinPhi[j] + delta * orn.nZ[j]);
       const k = (i * cols + j) * 3;
       positions[k] = x;
       positions[k + 1] = y;
@@ -181,17 +196,63 @@ export function buildShell(p) {
     }
   }
 
-  // Lines: spiral lines (constant φ) and growth lines (constant θ)
+  // Lines: spiral lines (constant φ) and growth lines (constant θ). With
+  // ornament the drawing follows the relief, like a scientific illustration:
+  // growth lines on the crests of the ribs, spiral lines on the crests of the
+  // cords and keel, and each spine outlined as a cone (its base and two profiles).
+  const rowOf = (theta) => Math.round(((theta - thetaMin) / -thetaMin) * nTheta);
+  const colOf = (u) => {
+    let best = 0, bd = Infinity;
+    for (let j = 0; j < segPhi; j++) {
+      const d = Math.min(Math.abs(arcU[j] - u), 1 - Math.abs(arcU[j] - u));
+      if (d < bd) { bd = d; best = j; }
+    }
+    return best;
+  };
+  const cr = orn.crests;
   const lineIdx = [];
-  const nSpiral = Math.min(p.spiralLines, segPhi);
   const usedPhi = new Set();
-  for (let m = 0; m < nSpiral; m++) usedPhi.add(Math.round((m * segPhi) / nSpiral) % segPhi);
+  if (p.spiralLines > 0 && cr.cords.length) {
+    for (const u of cr.cords) usedPhi.add(colOf(u));
+  } else {
+    const nSpiral = Math.min(p.spiralLines, segPhi);
+    for (let m = 0; m < nSpiral; m++) usedPhi.add(Math.round((m * segPhi) / nSpiral) % segPhi);
+  }
   const usedTheta = new Set([cutRow]);
-  const totalRings = p.ringsPerTurn > 0 ? Math.floor(p.turns * p.ringsPerTurn) : 0;
-  for (let m = 1; m <= totalRings; m++) {
-    // count from the aperture towards the apex so the aperture always has a ring
-    const i = nTheta - Math.round((m * p.segPerTurn) / p.ringsPerTurn);
-    if (i >= 0 && i <= cutRow) usedTheta.add(i);
+  if (p.ringsPerTurn > 0 && cr.ribs.length) {
+    for (const t of cr.ribs) {
+      const i = rowOf(t);
+      if (i >= 0 && i <= cutRow) usedTheta.add(i);
+    }
+  } else {
+    const totalRings = p.ringsPerTurn > 0 ? Math.floor(p.turns * p.ringsPerTurn) : 0;
+    for (let m = 1; m <= totalRings; m++) {
+      // count from the aperture towards the apex so the aperture always has a ring
+      const i = nTheta - Math.round((m * p.segPerTurn) / p.ringsPerTurn);
+      if (i >= 0 && i <= cutRow) usedTheta.add(i);
+    }
+  }
+  // Spine outlines, as index paths on the grid
+  const spinePaths = [];
+  if ((p.spiralLines > 0 || p.ringsPerTurn > 0) && cr.spines.length) {
+    const dRow = nTheta / -thetaMin;          // rows per radian of θ
+    const ri = Math.max(1, Math.round(cr.halfTheta * dRow));
+    const rj = Math.max(1, Math.round(cr.halfU * segPhi));
+    const wrap = (j) => ((j % segPhi) + segPhi) % segPhi;
+    for (const { theta, u } of cr.spines) {
+      const ic = rowOf(theta), jc = colOf(u);
+      if (ic + ri > cutRow) continue; // not grown yet
+      const base = [];
+      for (let k = 0; k <= 24; k++) {
+        const a = (k / 24) * 2 * Math.PI;
+        base.push([ic + Math.round(Math.cos(a) * ri), wrap(jc + Math.round(Math.sin(a) * rj))]);
+      }
+      spinePaths.push(base);
+      const across = [], along = [];
+      for (let d = -ri; d <= ri; d++) along.push([ic + d, jc]);
+      for (let d = -rj; d <= rj; d++) across.push([ic, wrap(jc + d)]);
+      spinePaths.push(along, across);
+    }
   }
   for (let c = 0; c < copies; c++) {
     const off = c * count;
@@ -200,6 +261,14 @@ export function buildShell(p) {
     }
     for (const i of usedTheta) {
       for (let j = 0; j < segPhi; j++) lineIdx.push(off + i * cols + j, off + i * cols + j + 1);
+    }
+    for (const path of spinePaths) {
+      for (let k = 1; k < path.length; k++) {
+        const [i0, j0] = path[k - 1], [i1, j1] = path[k];
+        if (i0 === i1 && j0 === j1) continue;
+        if (Math.min(i0, i1) < 0 || Math.max(i0, i1) > nTheta) continue;
+        lineIdx.push(off + i0 * cols + j0, off + i1 * cols + j1);
+      }
     }
   }
 

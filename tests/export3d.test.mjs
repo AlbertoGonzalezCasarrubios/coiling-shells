@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { inflateRawSync } from 'node:zlib';
 import { buildPrintMesh, checkClosed, signedVolume, toSTL, to3MF } from '../js/export3d.js';
-import { PRESETS } from '../js/presets.js';
+import { PRESETS, ORNAMENT_PRESETS } from '../js/presets.js';
 
 const base = { W: 2.4, D: 0.08, T: 1.6, S: 1, turns: 4.5, hand: 1, mirror: false };
 
@@ -20,6 +20,27 @@ function assertPrintable(mesh, size, label) {
 test('every shape preset gives a closed, outward, correctly sized solid', () => {
   for (const [key, p] of Object.entries(PRESETS)) {
     assertPrintable(buildPrintMesh(p, { size: 80, wall: 1.2 }), 80, key);
+  }
+});
+
+test('ornamented shells (ribs, cords, nodules, varices, spines, keel) give valid solids', () => {
+  const ornaments = [
+    { ribN: 16, ribH: 0.14, ribW: 0.3 },
+    { cordN: 9, cordH: 0.07, cordW: 0.45 },
+    { ribN: 22, ribH: 0.06, ribW: 0.3, cordN: 12, cordH: 0.06, cordW: 0.3 },
+    { ribN: 14, ribH: 0.12, ribW: 0.5, cordN: 5, cordH: 0.1, cordW: 0.6, nodules: true },
+    { ribN: 3, ribH: 0.4, ribW: 0.12, ribSkew: 0.6, cordN: 14, cordH: 0.4, cordW: 0.4 },
+    { ribN: 12, ribH: 0.1, ribW: 0.4, spineN: 12, spineH: 0.55, spineW: 0.35, spinePos: 0.12, spineBoth: true },
+    { keelH: 0.14, keelW: 0.08, cordN: 7, cordH: 0.04, ornGrowth: -0.8 },
+  ];
+  for (const key of ['caracol', 'turritella', 'nautilus']) {
+    for (const o of ornaments) {
+      assertPrintable(buildPrintMesh({ ...PRESETS[key], ...o }, { size: 80, wall: 1.2 }), 80, `${key} ${JSON.stringify(o)}`);
+    }
+  }
+  for (const [key, p] of Object.entries(ORNAMENT_PRESETS)) {
+    if (!p.shape) continue;
+    assertPrintable(buildPrintMesh({ ...p.shape, ...p.orn }, { size: 80, wall: 1.2 }), 80, `ornament preset ${key}`);
   }
 });
 

@@ -119,3 +119,33 @@ test('growth animation shows a fraction of the triangles', () => {
   assert.ok(half.indices.length < full.indices.length * 0.55);
   assert.ok(half.indices.length > full.indices.length * 0.45);
 });
+
+test('ornament: bumps, relief along the normal and no relief when off', async () => {
+  const { bump, hasOrnament } = await import('../js/raup.js');
+  assert.equal(bump(0, 0.5), 1);
+  assert.equal(bump(3, 0.2), 1);
+  assert.equal(bump(0.3, 0.5), 0);          // outside the bump
+  assert.ok(Math.abs(bump(0.5, 1)) < 1e-12); // w = 1: a smooth wave, zero half-way
+  assert.ok(!hasOrnament({ ribN: 0, ribH: 0.2, cordN: 0, cordH: 0.2 }));
+  assert.ok(hasOrnament({ ribN: 10, ribH: 0.1 }));
+
+  const base = { W: 2, D: 0.1, T: 1.5, S: 1, turns: 3, hand: 1, mirror: false, segPerTurn: 160, segPhi: 64, spiralLines: 0, ringsPerTurn: 0, size: 4 };
+  const plain = buildShell(base);
+  const off = buildShell({ ...base, ribN: 0, ribH: 0.3, cordN: 0, cordH: 0.3 });
+  assert.deepEqual(off.positions, plain.positions);
+
+  // Axial ribs push the outer edge (φ = 0) outwards on some rows only. Both
+  // shells are normalised to the same size, so the ratio of distances to the
+  // axis is the common scale on smooth rows and larger on the ribs.
+  const ribbed = buildShell({ ...base, ribN: 10, ribH: 0.2, ribW: 0.4 });
+  const outer = (sh, i) => {
+    const k = i * sh.grid.cols * 3;
+    return Math.hypot(sh.positions[k] - sh.axis.x, sh.positions[k + 2] - sh.axis.z);
+  };
+  const ratios = [];
+  for (let i = 1; i < plain.grid.rows; i++) ratios.push(outer(ribbed, i) / outer(plain, i));
+  const lo = Math.min(...ratios), hi = Math.max(...ratios);
+  assert.ok(hi > lo * 1.05, 'ribs stand out'); // 0.2 · a at the outer edge, about 9 %
+  const flat = ratios.filter((r) => r < lo * 1.001).length;
+  assert.ok(flat > ratios.length * 0.4 && flat < ratios.length, 'between ribs the surface is unchanged');
+});

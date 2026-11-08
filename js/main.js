@@ -7,10 +7,12 @@ import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { Line2 } from 'three/addons/lines/Line2.js';
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 import { buildShell } from './raup.js';
+import { hasOrnament, ornamentResolution, ORNAMENT_DEFAULTS } from './ornament.js';
+import { criticalWaves, lambdaForWaves, loadRatio, firstMode, unstableBand, mechanicalCords } from './mechanics.js';
 import { buildPrintMesh, toSTL, to3MF } from './export3d.js';
 import { MORPHO_REGIONS } from './morphospace.js';
 import { encodeTIFF, fitFrame, slugify, plateLayout, FIXED_SIZES, MAX_SIDE } from './imagefile.js';
-import { PRESETS, DEFAULT_PRESET, PATTERN_PRESETS, DEFAULT_PATTERN, MODEL_DEFAULTS } from './presets.js';
+import { PRESETS, DEFAULT_PRESET, PATTERN_PRESETS, DEFAULT_PATTERN, MODEL_DEFAULTS, ORNAMENT_PRESETS } from './presets.js';
 import { simulatePattern, PROFILE_WIDTH } from './meinhardt.js';
 import {
   setLang, getLang, t, tParam, tPreset, tPattern, applyStatic,
@@ -42,6 +44,32 @@ const VIS_PARAMS = [
   { key: 'lineOpacity', min: 0.1, max: 1, step: 0.05, digits: 2 },
 ];
 
+// Ornament (relief): axial ribs along the growth direction, spiral cords around
+// the margin, a keel, spines, and a change of strength with growth (ornament.js)
+const ORN_PARAMS = [
+  { key: 'ribN', min: 0, max: 60, step: 1, digits: 0, box: 'rib' },
+  { key: 'ribH', min: 0, max: 0.4, step: 0.01, digits: 2, box: 'rib' },
+  { key: 'ribW', min: 0.05, max: 1, step: 0.01, digits: 2, box: 'ribAdv' },
+  { key: 'ribSkew', min: -0.8, max: 0.8, step: 0.05, digits: 2, box: 'ribAdv' },
+  { key: 'cordN', min: 0, max: 48, step: 1, digits: 0, box: 'cord' },
+  { key: 'cordH', min: 0, max: 0.4, step: 0.01, digits: 2, box: 'cord' },
+  { key: 'cordW', min: 0.05, max: 1, step: 0.01, digits: 2, box: 'cordAdv' },
+  { key: 'keelH', min: 0, max: 0.4, step: 0.01, digits: 2, box: 'keel' },
+  { key: 'keelW', min: 0.02, max: 0.3, step: 0.01, digits: 2, box: 'keel' },
+  { key: 'keelPos', min: -0.5, max: 0.5, step: 0.01, digits: 2, box: 'keel' },
+  { key: 'spineN', min: 0, max: 40, step: 1, digits: 0, box: 'spine' },
+  { key: 'spineH', min: 0, max: 1.5, step: 0.01, digits: 2, box: 'spine' },
+  { key: 'spineW', min: 0.1, max: 1, step: 0.01, digits: 2, box: 'spineAdv' },
+  { key: 'spinePos', min: -0.5, max: 0.5, step: 0.01, digits: 2, box: 'spineAdv' },
+  { key: 'ornGrowth', min: -1, max: 1, step: 0.05, digits: 2, box: 'growth' },
+];
+const ORN_KEYS = Object.keys(ORNAMENT_DEFAULTS);
+const ORN_BOOLS = ['nodules', 'spineBoth'];
+const pickOrnament = (p) => Object.fromEntries(ORN_KEYS.map((k) => [k, p[k]]));
+
+// Display orientation of the shell (presentation only: geometry and 3D files keep the model frame)
+const ORIENTS = ['vertical', 'horizontal', 'free'];
+
 const QUALITY = {
   low: { segPerTurn: 48, segPhi: 24 },
   medium: { segPerTurn: 96, segPhi: 48 },
@@ -62,6 +90,8 @@ const state = {
   lineWidth: 1.2,
   lineOpacity: 0.9,
   axisWidth: 1,
+  ...ORNAMENT_DEFAULTS,
+  orient: 'vertical',
 };
 
 function pickShape(p) {
@@ -82,6 +112,18 @@ for (const [short, key] of Object.entries(HASH_KEYS)) {
 }
 if (fromHash.has('v')) state.mirror = fromHash.get('v') === '1';
 if (MODES.includes(fromHash.get('m'))) state.mode = fromHash.get('m');
+const ORN_HASH = {
+  rn: 'ribN', rh: 'ribH', rw: 'ribW', rk: 'ribSkew', cn: 'cordN', ch: 'cordH', cw: 'cordW',
+  kh: 'keelH', kw: 'keelW', kp: 'keelPos', sn: 'spineN', sh: 'spineH', sw: 'spineW', sp: 'spinePos', og: 'ornGrowth',
+};
+for (const [short, key] of Object.entries(ORN_HASH)) {
+  const v = parseFloat(fromHash.get(short));
+  if (Number.isFinite(v)) state[key] = v;
+}
+if (fromHash.has('nd')) state.nodules = fromHash.get('nd') === '1';
+if (fromHash.has('sb')) state.spineBoth = fromHash.get('sb') === '1';
+const ORIENT_HASH = { v: 'vertical', h: 'horizontal', f: 'free' };
+if (ORIENT_HASH[fromHash.get('o')]) state.orient = ORIENT_HASH[fromHash.get('o')];
 
 // Small wrapper around localStorage: it can be unavailable (private mode, blocked
 // site data), and then the app simply does not remember anything
@@ -100,7 +142,13 @@ const WELCOME_KEY = 'coiling-shells.welcome';
 setLang(storage.get(LANG_KEY) ?? 'en');
 
 let hashTimer = 0;
+// Undo history (see "Undo" below); declared early because writeHash records the steps
+const undoStack = [];
+const UNDO_LIMIT = 50;
+let committed = null;
+let undoTimer = 0;
 function writeHash() {
+  noteChange();
   clearTimeout(hashTimer);
   hashTimer = setTimeout(writeHashNow, 250);
 }
@@ -111,6 +159,14 @@ function writeHashNow() {
   for (const [short, key] of Object.entries(HASH_KEYS)) q.set(short, String(+Number(state[key]).toFixed(3)));
   q.set('v', state.mirror ? '1' : '0');
   q.set('m', state.mode);
+  if (hasOrnament(state)) {
+    for (const [short, key] of Object.entries(ORN_HASH)) {
+      if (state[key] !== ORNAMENT_DEFAULTS[key]) q.set(short, String(+Number(state[key]).toFixed(3)));
+    }
+    if (state.nodules) q.set('nd', '1');
+    if (state.spineBoth) q.set('sb', '1');
+  }
+  if (state.orient !== 'vertical') q.set('o', state.orient[0]);
   patternHash(q);
   history.replaceState(null, '', `#${q}`);
 }
@@ -120,7 +176,8 @@ function writeHashNow() {
 // ---------------------------------------------------------------------------
 
 const $ = (id) => document.getElementById(id);
-const viewport = $('viewport');
+// The 3D view; while the shell creator is open its canvas (and this variable) move into it
+let viewport = $('viewport');
 
 const PALETTES = {
   light: { line: '#2b3a4a', shell: '#e8d3b0', bg: '#f4f0e6' }, // ink on paper
@@ -239,7 +296,11 @@ const lines = new LineSegments2(new LineSegmentsGeometry(), lineMat);
 lines.renderOrder = 1;
 const axis = new Line2(new LineGeometry(), axisMat);
 axis.visible = false;
-scene.add(solid, inner, occluder, lines, axis);
+// The shell lives in a group whose rotation is only a display orientation:
+// the geometry, the equation and the 3D files keep the model frame (z = coiling axis)
+const shellGroup = new THREE.Group();
+shellGroup.add(solid, inner, occluder, lines, axis);
+scene.add(shellGroup);
 
 // ---------------------------------------------------------------------------
 // x, y, z axes gizmo (frame of the equation: z = coiling axis)
@@ -268,6 +329,10 @@ function makeLabel(text, color) {
   return sprite;
 }
 
+// The axes turn with the shell's display orientation
+const gizmoAxes = new THREE.Group();
+gizmo.scene.add(gizmoAxes);
+
 // Three.js: X = x, Y = z, Z = −y
 for (const { label, dir, color } of [
   { label: 'x', dir: [1, 0, 0], color: '#e5534b' },
@@ -283,10 +348,10 @@ for (const { label, dir, color } of [
   head.position.y = 0.92;
   arrow.add(shaft, head);
   arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v);
-  gizmo.scene.add(arrow);
+  gizmoAxes.add(arrow);
   const sprite = makeLabel(label, color);
   sprite.position.copy(v).multiplyScalar(1.34);
-  gizmo.scene.add(sprite);
+  gizmoAxes.add(sprite);
 }
 gizmo.scene.add(new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 12), new THREE.MeshBasicMaterial({ color: 0x8a8f98, toneMapped: false })));
 
@@ -301,10 +366,15 @@ function rebuild() {
   // With a high W almost the whole shell lies in the last fraction of a whorl
   // (bivalves): θ is refined so the mesh and the growth lines are not sparse.
   const boost = Math.max(1, Math.log10(state.W));
+  // Ornament needs about six segments across each rib, cord and spine, within a vertex budget
+  const res = ornamentResolution(state);
+  const segPhi = Math.min(256, Math.max(q.segPhi, res.phi));
+  let segPerTurn = Math.max(Math.round(q.segPerTurn * boost), Math.round(res.perTurn * boost));
+  segPerTurn = Math.min(segPerTurn, Math.max(q.segPerTurn, Math.floor(500000 / (segPhi * Math.max(state.turns, 0.25)))));
   const shell = buildShell({
     ...state,
-    segPhi: q.segPhi,
-    segPerTurn: Math.round(q.segPerTurn * boost),
+    segPhi,
+    segPerTurn,
     ringsPerTurn: Math.round(state.ringsPerTurn * boost),
     size: SHELL_SIZE,
   });
@@ -345,7 +415,7 @@ function rebuild() {
   axis.geometry = new LineGeometry().setPositions([x, yBottom - 0.4, z, x, yTop + 0.4, z]);
   axis.computeLineDistances();
 
-  ground.position.y = yBottom - 0.002;
+  updateGround();
 
   writeHash();
   scheduleFormula();
@@ -424,7 +494,61 @@ function generalTeX(view = formulaView) {
     const isAS = pattern.model === 'AS';
     return (isAS ? AS_TEX : AI_TEX) + (isAS && pattern.globalCtl > 0 ? GLOBAL_TEX : '') + SOURCE_TEX;
   }
-  return GENERAL_TEX + DEFS_TEX + (state.mirror ? MIRROR_TEX : '');
+  return GENERAL_TEX + DEFS_TEX + (state.mirror ? MIRROR_TEX : '') + (hasOrnament(state) ? ORNAMENT_TEX : '');
+}
+
+/** Relief added along the outward normal of the aperture (descriptive model of ornament). */
+const ORNAMENT_TEX = String.raw`\[
+  \mathbf{P}^{*} = \mathbf{P} + W^{\theta/2\pi}\,a\,\delta(\theta,\varphi)\,\mathbf{n}(\varphi)
+\]
+\[
+  \delta = f(s)\,\bigl[\,h_r R(\theta) + h_c C(u) + h_k K(u) + h_s \Sigma(\theta,u)\,\bigr],\qquad
+  f(s) = 1 + c\,(2s - 1)
+\]
+\[
+  R = \beta\!\left(\tfrac{n_r\theta}{2\pi},\,w_r,\,k\right),\quad
+  C = \beta(n_c u,\,w_c),\quad
+  K = \beta(u - u_k,\,w_k),\quad
+  \beta(t,w) = \cos^2\!\left(\tfrac{\pi d}{w}\right)\ (d < \tfrac{w}{2}),\quad d = \left|t - \operatorname{round}(t)\right|
+\]`;
+
+/** One line describing the relief in use, for the PDF ("" if the shell is smooth). */
+function ornamentSummary() {
+  const o = state, parts = [];
+  if (!hasOrnament(o)) return '';
+  if (o.ribN > 0 && o.ribH > 0) parts.push(t('ex.pdf.orn.ribs', o.ribN));
+  if (o.cordN > 0 && o.cordH > 0) parts.push(t('ex.pdf.orn.cords', o.cordN));
+  if (o.nodules && o.ribN > 0 && o.cordN > 0) parts.push(t('ex.pdf.orn.nodules'));
+  if (o.keelH > 0) parts.push(t('ex.pdf.orn.keel'));
+  if (o.spineN > 0 && o.spineH > 0) parts.push(t('ex.pdf.orn.spines', o.spineN));
+  if (o.ornGrowth < 0) parts.push(t('ex.pdf.orn.fades'));
+  else if (o.ornGrowth > 0) parts.push(t('ex.pdf.orn.late'));
+  return `${t('ex.pdf.orn')}: ${parts.join(' · ')}`;
+}
+
+/** Rows of the PDF parameter table for the ornament terms in use. */
+function ornamentRows() {
+  const s = state, rows = [];
+  if (!hasOrnament(s)) return rows;
+  if (s.ribN > 0 && s.ribH > 0) rows.push([`${t('orn.ribs')} (n, h, w)`, `${s.ribN}, ${f(s.ribH, 2)}, ${f(s.ribW, 2)}`]);
+  if (s.cordN > 0 && s.cordH > 0) rows.push([`${t('orn.cords')} (n, h, w)`, `${s.cordN}, ${f(s.cordH, 2)}, ${f(s.cordW, 2)}`]);
+  if (s.nodules) rows.push([t('orn.nodules.short'), t('ex.yes')]);
+  if (s.keelH > 0) rows.push([`${t('orn.keel')} (h, w, u)`, `${f(s.keelH, 2)}, ${f(s.keelW, 2)}, ${f(s.keelPos, 2)}`]);
+  if (s.spineN > 0 && s.spineH > 0) rows.push([`${t('orn.spines')} (n, h, w)`, `${s.spineN}, ${f(s.spineH, 2)}, ${f(s.spineW, 2)}`]);
+  if (s.ornGrowth) rows.push([t('orn.growth'), f(s.ornGrowth, 2)]);
+  return rows;
+}
+
+/** Values of the ornament terms in use (terms that are off are left out). */
+function ornamentLiveTeX() {
+  const s = state, parts = [];
+  if (s.ribN > 0 && s.ribH > 0) parts.push(String.raw`n_r = ${s.ribN},\; h_r = ${f(s.ribH, 2)},\; w_r = ${f(s.ribW, 2)}${s.ribSkew ? String.raw`,\; k = ${f(s.ribSkew, 2)}` : ''}`);
+  if (s.cordN > 0 && s.cordH > 0) parts.push(String.raw`n_c = ${s.cordN},\; h_c = ${f(s.cordH, 2)},\; w_c = ${f(s.cordW, 2)}`);
+  if (s.nodules) parts.push(String.raw`h_r R + h_c C \;\to\; (h_r + h_c)\,R\,C`);
+  if (s.keelH > 0) parts.push(String.raw`h_k = ${f(s.keelH, 2)},\; w_k = ${f(s.keelW, 2)},\; u_k = ${f(s.keelPos, 2)}`);
+  if (s.spineN > 0 && s.spineH > 0) parts.push(String.raw`n_s = ${s.spineN},\; h_s = ${f(s.spineH, 2)},\; w_s = ${f(s.spineW, 2)},\; u_s = ${s.spineBoth ? '\\pm' : ''}${f(s.spinePos, 2)}`);
+  if (s.ornGrowth) parts.push(String.raw`c = ${f(s.ornGrowth, 2)}`);
+  return parts.map((p) => String.raw`\[ ${p} \]`).join('');
 }
 
 function meinhardtLiveTeX() {
@@ -466,7 +590,8 @@ function liveTeX(view = formulaView) {
     `\\[ r_c = ${f(rc, 3)},\\; a = ${f(a, 3)},\\; b = ${f(b, 3)},\\; \\varepsilon = ${hand > 0 ? '-1' : '+1'} \\]` +
     `\\[ \\mathbf{P}(\\theta,\\varphi) = ${formatW(W)}^{\\theta/2\\pi}` +
     `\\begin{pmatrix} ${R}\\cos\\theta \\\\ ${ySign}${R}\\sin\\theta \\\\ ${zTerm} \\end{pmatrix} \\]` +
-    (state.mirror ? `\\[ \\mathbf{P}' = (x,\\,-y,\\,z) \\]` : '')
+    (state.mirror ? `\\[ \\mathbf{P}' = (x,\\,-y,\\,z) \\]` : '') +
+    (hasOrnament(state) ? ornamentLiveTeX() : '')
   );
 }
 
@@ -588,8 +713,8 @@ function createParam(def, container, { compact = false, onChange, target = state
     range.max = logScale ? Math.log10(def.max) : max;
     range.step = logScale ? 0.001 : def.step;
     if (!compact) {
-      el.querySelector('.scale-min').textContent = def.min;
-      el.querySelector('.scale-max').textContent = logScale ? '10⁴' : max;
+      el.querySelector('.scale-min').textContent = def.minLabel ?? def.min;
+      el.querySelector('.scale-max').textContent = def.maxLabel ?? (logScale ? '10⁴' : max);
     }
     scaleGroup?.querySelectorAll('button').forEach((b) =>
       b.setAttribute('aria-pressed', String((b.dataset.scale === 'log') === logScale))
@@ -674,6 +799,7 @@ function markCustom() {
 
 function onShapeChange() {
   markCustom();
+  ornPresetSel.value = ornPresetKey();
   dirty = true;
 }
 
@@ -689,6 +815,190 @@ VIS_PARAMS.forEach((d) =>
     },
   })
 );
+
+// Ornament tab
+const ornPresetSel = $('ornPreset');
+function buildOrnPresetOptions() {
+  const v = ornPresetSel.value;
+  ornPresetSel.innerHTML = '';
+  for (const key of [...Object.keys(ORNAMENT_PRESETS), 'custom']) {
+    const o = document.createElement('option');
+    o.value = key;
+    o.textContent = t(`orn.p.${key}`);
+    // "No ornament" and "custom" are states, not examples to choose
+    if (key === 'custom' || key === 'smooth') o.hidden = true;
+    ornPresetSel.append(o);
+  }
+  ornPresetSel.value = v || ornPresetKey();
+}
+
+/** The ornament preset matching the current shape and relief, or "custom". */
+function ornPresetKey() {
+  const same = (a, b) => (typeof a === 'boolean' || typeof b === 'boolean' ? !!a === !!b : Math.abs(a - b) < 1e-9);
+  return Object.keys(ORNAMENT_PRESETS).find((k) => {
+    const p = ORNAMENT_PRESETS[k];
+    const orn = { ...ORNAMENT_DEFAULTS, ...p.orn };
+    if (!ORN_KEYS.every((key) => same(orn[key], state[key]))) return false;
+    return !p.shape || SHAPE_KEYS.every((key) => same(p.shape[key], state[key]));
+  }) ?? 'custom';
+}
+
+function syncOrnamentControls() {
+  for (const d of ORN_PARAMS) controlsByKey[d.key].set(state[d.key]);
+  for (const k of ORN_BOOLS) $(k).checked = !!state[k];
+  ornPresetSel.value = ornPresetKey();
+}
+
+function onOrnamentChange() {
+  ornPresetSel.value = ornPresetKey();
+  if (state.mode === 'lines' && hasOrnament(state)) {
+    state.mode = 'solid'; // relief is read on the surface
+    applyMode();
+  }
+  dirty = true;
+}
+ORN_PARAMS.forEach((d) => createParam(d, $(`${d.box}-params`), { compact: true, onChange: onOrnamentChange }));
+for (const k of ORN_BOOLS) {
+  $(k).checked = !!state[k];
+  $(k).addEventListener('change', (e) => {
+    state[k] = e.target.checked;
+    onOrnamentChange();
+  });
+}
+ornPresetSel.addEventListener('change', () => {
+  const p = ORNAMENT_PRESETS[ornPresetSel.value];
+  if (!p) return;
+  Object.assign(state, ORNAMENT_DEFAULTS, p.orn);
+  if (p.shape) applyShape(p.shape);
+  syncOrnamentControls();
+  onOrnamentChange();
+});
+buildOrnPresetOptions();
+$('ornTheory').addEventListener('click', () => openInfo('ornament'));
+$('ornClear').addEventListener('click', () => {
+  Object.assign(state, ORNAMENT_DEFAULTS);
+  syncOrnamentControls();
+  onOrnamentChange();
+});
+function setOrnMode(mode) {
+  $('tab-ornament').dataset.omode = mode;
+  document.querySelectorAll('#ornMode [data-omode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.omode === mode)));
+}
+document.querySelectorAll('#ornMode [data-omode]').forEach((b) => b.addEventListener('click', () => setOrnMode(b.dataset.omode)));
+
+// Mechanical model of the cords: the mantle edge buckles on its elastic attachment
+const mech = { lambda: lambdaForWaves(9), eta: 1.6 };
+const MECH_PARAMS = [
+  // The number box needs a plain number: scientific notation such as 2.4e+6
+  { key: 'lambda', id: 'mechLambda', i18n: 'mechLambda', min: 1e3, max: 1e10, minLabel: '10³', maxLabel: '10¹⁰', step: 0.01, log: true, format: (v) => v.toExponential(1) },
+  { key: 'eta', id: 'mechEta', i18n: 'mechEta', min: 0.5, max: 4, step: 0.05, digits: 2 },
+];
+MECH_PARAMS.forEach((d) => createParam(d, $('mech-params'), { target: mech, onChange: drawMech }));
+
+function drawMech() {
+  const canvas = $('mechCanvas');
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (!w || !h) return;
+  const dpr = Math.min(window.devicePixelRatio, 2);
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const css = getComputedStyle(document.documentElement);
+  const col = (n) => css.getPropertyValue(n).trim();
+  const text = col('--text'), muted = col('--muted'), accent = col('--accent');
+  ctx.font = `11px ${col('--font') || 'sans-serif'}`;
+
+  const { lambda, eta } = mech;
+  const nStar = criticalWaves(lambda);
+  const result = mechanicalCords(lambda, eta);
+  const n1 = firstMode(lambda);
+
+  // Left: load needed to buckle into n waves, relative to the critical load
+  const gw = Math.round(w * 0.58), pad = { l: 30, r: 8, t: 10, b: 26 };
+  const nMax = Math.max(8, Math.ceil(nStar * 2.6));
+  const yMax = 4;
+  const X = (n) => pad.l + (n / nMax) * (gw - pad.l - pad.r);
+  const Y = (v) => pad.t + (1 - v / yMax) * (h - pad.t - pad.b);
+  ctx.strokeStyle = muted;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, h - pad.b); ctx.lineTo(gw - pad.r, h - pad.b);
+  ctx.stroke();
+  // Unstable band: modes whose load is below the applied one
+  const band = unstableBand(lambda, eta);
+  if (band) {
+    ctx.fillStyle = `color-mix(in srgb, ${accent} 16%, transparent)`;
+    ctx.fillRect(X(band.from), pad.t, X(Math.min(band.to, nMax)) - X(band.from), h - pad.t - pad.b);
+  }
+  ctx.strokeStyle = text;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  for (let k = 0; k <= 200; k++) {
+    const n = 0.3 + (k / 200) * (nMax - 0.3);
+    const v = Math.min(yMax, loadRatio(n, lambda));
+    k ? ctx.lineTo(X(n), Y(v)) : ctx.moveTo(X(n), Y(v));
+  }
+  ctx.stroke();
+  // Applied load
+  ctx.strokeStyle = accent;
+  ctx.setLineDash([4, 3]);
+  ctx.beginPath();
+  ctx.moveTo(pad.l, Y(Math.min(eta, yMax))); ctx.lineTo(gw - pad.r, Y(Math.min(eta, yMax)));
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // First mode
+  ctx.fillStyle = accent;
+  ctx.beginPath();
+  ctx.arc(X(n1), Y(loadRatio(n1, lambda)), 3.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = muted;
+  ctx.textAlign = 'center';
+  ctx.fillText(t('mech.axis.n'), (pad.l + gw - pad.r) / 2, h - 6);
+  for (const v of [0, Math.round(nMax / 2), nMax]) ctx.fillText(String(v), X(v), h - pad.b + 11);
+  ctx.textAlign = 'right';
+  ctx.fillText('P/Pc', pad.l - 4, pad.t + 8);
+  ctx.fillText('1', pad.l - 4, Y(1) + 4);
+  ctx.fillStyle = accent;
+  ctx.textAlign = 'left';
+  ctx.fillText('η', gw - pad.r - 8, Y(Math.min(eta, yMax)) - 4);
+
+  // Right: the margin, smooth (dashed) and buckled into n waves (amplitude exaggerated ×3)
+  const cx = gw + (w - gw) / 2, cy = h / 2 - 4, R = Math.min(w - gw, h) * 0.34;
+  ctx.strokeStyle = muted;
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.strokeStyle = result.cordN ? accent : text;
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  const A = result.cordN ? Math.min(0.3, 3 * result.cordH) : 0;
+  for (let k = 0; k <= 360; k++) {
+    const ph = (k / 360) * Math.PI * 2;
+    const r = R * (1 + A * Math.cos(n1 * ph));
+    k ? ctx.lineTo(cx + r * Math.cos(ph), cy + r * Math.sin(ph)) : ctx.moveTo(cx + r * Math.cos(ph), cy + r * Math.sin(ph));
+  }
+  ctx.stroke();
+  ctx.fillStyle = muted;
+  ctx.textAlign = 'center';
+  ctx.fillText(t('mech.ring'), cx, h - 6);
+
+  $('mechOut').textContent = result.cordN
+    ? t('mech.out', f(nStar, 1), result.cordN, f(result.cordH, 2))
+    : t('mech.out.none', f(nStar, 1));
+}
+$('mechDrawer').addEventListener('toggle', drawMech);
+$('mechApply').addEventListener('click', () => {
+  Object.assign(state, mechanicalCords(mech.lambda, mech.eta));
+  syncOrnamentControls();
+  onOrnamentChange();
+});
+$('mechTheory').addEventListener('click', () => {
+  openInfo('ornament');
+  requestAnimationFrame(() => document.getElementById('mech-theory')?.scrollIntoView({ block: 'start' }));
+});
 
 // Grouped presets
 const presetSel = $('preset');
@@ -722,15 +1032,24 @@ function setMirror(on) {
 }
 setMirror(state.mirror);
 
-presetSel.addEventListener('change', () => {
-  const p = PRESETS[presetSel.value];
-  if (!p) return;
-  const shape = pickShape(p);
+/** Loads Raup's parameters of a shell (from a shape or an ornament preset). */
+function applyShape(shape) {
   for (const k of ['W', 'D', 'T', 'S', 'turns']) controlsByKey[k].set(shape[k], { fitScale: true });
   state.hand = shape.hand;
   $('hand').value = String(shape.hand);
   setMirror(shape.mirror);
+  // Planispiral shells are shown with the plane of coiling upright (unless rotating freely)
+  if (state.orient !== 'free') setOrient(shape.T === 0 && !shape.mirror ? 'horizontal' : 'vertical');
+  const match = Object.keys(PRESETS).find((k) => SHAPE_KEYS.every((key) => pickShape(PRESETS[k])[key] === shape[key]));
+  presetSel.value = match ?? 'custom';
   dirty = true;
+}
+
+presetSel.addEventListener('change', () => {
+  const p = PRESETS[presetSel.value];
+  if (!p) return;
+  applyShape(pickShape(p));
+  ornPresetSel.value = ornPresetKey();
 });
 
 $('hand').value = String(state.hand);
@@ -826,7 +1145,16 @@ $('hideInfo').addEventListener('click', () => setClean(true));
 $('showInfo').addEventListener('click', () => setClean(false));
 
 window.addEventListener('keydown', (e) => {
-  if (e.ctrlKey || e.metaKey || e.altKey || infoDialog.open || $('welcome').open || $('exportDlg').open) return;
+  if (infoDialog.open || $('welcome').open || $('exportDlg').open) return;
+  // Ctrl+Z / ⌘Z undoes the last step (outside text boxes, which have their own undo)
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'z'
+      && !(e.target instanceof Element && e.target.closest('input[type=text], input[type=number], textarea'))) {
+    e.preventDefault();
+    undo();
+    if ($('wizard').open) syncWizard();
+    return;
+  }
+  if (e.ctrlKey || e.metaKey || e.altKey || $('wizard').open) return;
   if (e.target instanceof Element && e.target.closest('input, select, textarea')) return;
   const key = e.key.toLowerCase();
   if (key === 'f' && fsSupported) toggleFullscreen();
@@ -883,6 +1211,95 @@ function stepGrow(now) {
 // Standard views with a smooth transition
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Display orientation: coiling axis vertical (orbit around it), horizontal
+// (planispiral shells seen face-on with a horizontal drag) or free rotation
+// (the shell is turned by hand, in any direction)
+// ---------------------------------------------------------------------------
+
+const ORIENT_BASE = {
+  vertical: new THREE.Quaternion(),
+  // Axis horizontal, pointing to the 3/4 camera: the plane of coiling stands
+  // upright and faces the default view
+  horizontal: new THREE.Quaternion()
+    .setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(CAMERA_HOME.x, CAMERA_HOME.z))
+    .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2)),
+};
+let orientTween = null;
+
+/** The ground (shadow) touches the lowest point of the shell in its current orientation. */
+function updateGround() {
+  const P = solid.geometry.attributes.position?.array;
+  if (!P) return;
+  const e = new THREE.Matrix4().makeRotationFromQuaternion(shellGroup.quaternion).elements;
+  let minY = Infinity;
+  for (let k = 0; k < P.length; k += 3) {
+    const y = e[1] * P[k] + e[5] * P[k + 1] + e[9] * P[k + 2];
+    if (y < minY) minY = y;
+  }
+  ground.position.y = minY - 0.002;
+}
+
+function setOrient(mode, { animate = true } = {}) {
+  state.orient = mode;
+  controls.enableRotate = mode !== 'free';
+  document.querySelectorAll('.orient [data-orient]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.orient === mode)));
+  if (mode !== 'free') {
+    const to = ORIENT_BASE[mode];
+    if (animate) orientTween = { t0: performance.now(), dur: 600, from: shellGroup.quaternion.clone(), to };
+    else {
+      orientTween = null;
+      shellGroup.quaternion.copy(to);
+      updateGround();
+    }
+  }
+  writeHash();
+}
+
+function stepOrient(now) {
+  const u = Math.min(1, (now - orientTween.t0) / orientTween.dur);
+  shellGroup.quaternion.slerpQuaternions(orientTween.from, orientTween.to, easeInOut(u));
+  updateGround();
+  if (u >= 1) orientTween = null;
+}
+
+document.querySelectorAll('.orient [data-orient]').forEach((b) => b.addEventListener('click', () => setOrient(b.dataset.orient)));
+
+// Free rotation: dragging turns the shell about the screen's vertical and
+// horizontal axes, like turning it in the hand. Zoom and pan stay with the camera.
+const freeDrag = { id: null, x: 0, y: 0, pointers: new Set() };
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  freeDrag.pointers.add(e.pointerId);
+  const ok = state.orient === 'free' && e.button === 0 && freeDrag.pointers.size === 1 && !e.ctrlKey && !e.metaKey && !e.shiftKey;
+  freeDrag.id = ok ? e.pointerId : null;
+  if (!ok) return;
+  freeDrag.x = e.clientX;
+  freeDrag.y = e.clientY;
+  orientTween = null;
+  tween = null;
+});
+renderer.domElement.addEventListener('pointermove', (e) => {
+  if (e.pointerId !== freeDrag.id) return;
+  if (freeDrag.pointers.size > 1) { freeDrag.id = null; return; }
+  const k = Math.PI / Math.max(200, viewport.clientHeight); // half a turn per viewport height
+  const dx = (e.clientX - freeDrag.x) * k, dy = (e.clientY - freeDrag.y) * k;
+  freeDrag.x = e.clientX;
+  freeDrag.y = e.clientY;
+  const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+  const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+  shellGroup.quaternion
+    .premultiply(new THREE.Quaternion().setFromAxisAngle(up, dx))
+    .premultiply(new THREE.Quaternion().setFromAxisAngle(right, dy))
+    .normalize();
+  updateGround();
+});
+for (const type of ['pointerup', 'pointercancel', 'pointerleave']) {
+  renderer.domElement.addEventListener(type, (e) => {
+    freeDrag.pointers.delete(e.pointerId);
+    if (e.pointerId === freeDrag.id) freeDrag.id = null;
+  });
+}
+
 const VIEWS = {
   iso: () => CAMERA_HOME.clone(),
   apertural: () => new THREE.Vector3(0, 0, state.hand), // the aperture faces +Z in dextral shells
@@ -904,12 +1321,17 @@ function flyTo(name) {
   const offset = camera.position.clone().sub(controls.target);
   const dist = name === 'iso' ? CAMERA_HOME.length() : THREE.MathUtils.clamp(offset.length(), 7, 16);
   const from = new THREE.Spherical().setFromVector3(offset);
-  const to = new THREE.Spherical().setFromVector3(VIEWS[name]().normalize().multiplyScalar(dist));
+  // Standard views are defined on the shell: they follow its display orientation.
+  // In free rotation the shell is first set upright again.
+  if (state.orient === 'free') orientTween = { t0: performance.now(), dur: 700, from: shellGroup.quaternion.clone(), to: ORIENT_BASE.vertical };
+  const base = ORIENT_BASE[state.orient] ?? ORIENT_BASE.vertical;
+  const dir = name === 'iso' ? VIEWS.iso() : VIEWS[name]().applyQuaternion(base);
+  const to = new THREE.Spherical().setFromVector3(dir.normalize().multiplyScalar(dist));
   // Azimuth along the shortest path
   let dTheta = to.theta - from.theta;
   dTheta = Math.atan2(Math.sin(dTheta), Math.cos(dTheta));
   tween = { t0: performance.now(), dur: 700, from, dTheta, to, fromTarget: controls.target.clone() };
-  document.querySelectorAll('.views button').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
+  document.querySelectorAll('.views [data-view]').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
 }
 
 function stepTween(now) {
@@ -930,10 +1352,10 @@ function stepTween(now) {
   if (u >= 1) tween = null;
 }
 
-document.querySelectorAll('.views button').forEach((b) => b.addEventListener('click', () => flyTo(b.dataset.view)));
+document.querySelectorAll('.views [data-view]').forEach((b) => b.addEventListener('click', () => flyTo(b.dataset.view)));
 controls.addEventListener('start', () => {
   tween = null;
-  document.querySelectorAll('.views button.active').forEach((b) => b.classList.remove('active'));
+  document.querySelectorAll('.views [data-view].active').forEach((b) => b.classList.remove('active'));
 });
 
 // ---------------------------------------------------------------------------
@@ -1387,6 +1809,7 @@ function renderPlateRaw({ tile = 640, background = '#ffffff', labels = true, wid
   ctx.fillRect(0, 0, out.width, out.height);
 
   const prev = {
+    orient: shellGroup.quaternion.clone(),
     pr: renderer.getPixelRatio(),
     bg: scene.background.clone(),
     ground: ground.visible,
@@ -1400,6 +1823,7 @@ function renderPlateRaw({ tile = 640, background = '#ffffff', labels = true, wid
   renderer.setViewport(0, 0, tile, tile);
   scene.background = new THREE.Color(background);
   ground.visible = false;
+  shellGroup.quaternion.identity(); // the views of the plate are defined in the model frame
   lineMat.resolution.set(720, 720); // line width similar to the screen
   axisMat.resolution.set(720, 720);
 
@@ -1425,6 +1849,7 @@ function renderPlateRaw({ tile = 640, background = '#ffffff', labels = true, wid
 
   scene.background = prev.bg;
   ground.visible = prev.ground;
+  shellGroup.quaternion.copy(prev.orient);
   sun.position.copy(prev.sun);
   lineMat.resolution.copy(prev.res);
   axisMat.resolution.copy(prev.axisRes);
@@ -1456,7 +1881,7 @@ function printOptions() {
 
 function printMesh() {
   const { size, wall } = printOptions();
-  const shape = pickShape(state);
+  const shape = { ...pickShape(state), ...(hasOrnament(state) ? pickOrnament(state) : {}) };
   const key = JSON.stringify({ shape, size, wall });
   if (printCache.key !== key) printCache = { key, mesh: buildPrintMesh(shape, { size, wall }) };
   return printCache.mesh;
@@ -1603,12 +2028,19 @@ async function exportPDF() {
   doc.text(shellName(), M, 24);
   doc.setFont('helvetica', 'normal').setFontSize(10).setTextColor(...muted);
   doc.text(`W = ${formatW(state.W)}   D = ${f(state.D, 3)}   T = ${f(state.T, 2)}   S = ${f(state.S, 2)}   N = ${f(state.turns, 2)}   ·   ${t(state.hand > 0 ? 'geo.dextral' : 'geo.sinistral')}`, M, 30.5);
+  // The relief, in words, right under the parameters
+  const ornText = ornamentSummary();
+  if (ornText) {
+    doc.setFontSize(9).setTextColor(...accent);
+    doc.text(ornText, M, 35.3, { maxWidth: W });
+  }
 
-  heading(t('ex.pdf.views'), 39);
+  const off = ornText ? 4 : 0; // room for the ornament line
+  heading(t('ex.pdf.views'), 39 + off);
   const plate = renderPlate({ tile: 560, background: imgBg, labels: true });
   const plateH = (W * plate.height) / plate.width;
-  doc.addImage(plate.toDataURL('image/jpeg', 0.92), 'JPEG', M, 42, W, plateH);
-  let y = 42 + plateH + 9;
+  doc.addImage(plate.toDataURL('image/jpeg', 0.92), 'JPEG', M, 42 + off, W, plateH);
+  let y = 42 + off + plateH + 9;
 
   heading(t('ex.pdf.params'), y);
   const colW = 84;
@@ -1621,6 +2053,7 @@ async function exportPDF() {
     [`N · ${tParam('turns').name}`, f(state.turns, 2)],
     [t('geo.hand'), t(state.hand > 0 ? 'geo.dextral' : 'geo.sinistral')],
     [t('geo.mirror'), t(state.mirror ? 'ex.yes' : 'ex.no')],
+    ...ornamentRows(),
   ], M, y + 6.5, colW - 24, 24);
   doc.setFont('helvetica', 'normal').setFontSize(8.5).setTextColor(...muted);
   doc.text(`${t('ex.pdf.derived')}: rc = ${f(rc, 3)}   a = ${f(a, 3)}   b = ${f(b, 3)}`, M, yL + 1.5);
@@ -2599,6 +3032,7 @@ for (const [id, key] of [['pigBase', 'base'], ['pigColor', 'pigment']]) {
 }
 
 $('pigTheory').addEventListener('click', () => openInfo('meinhardt'));
+$('pigClear').addEventListener('click', () => setPatternOn(false));
 
 $('savePattern').addEventListener('click', () => {
   if (patternValues) download(patternCanvas.toDataURL('image/png'), `meinhardt_${pattern.preset}_seed${pattern.seed}.png`);
@@ -2614,6 +3048,12 @@ function showTab(name) {
   });
   $('tab-shape').hidden = name !== 'shape';
   $('tab-pigment').hidden = name !== 'pigment';
+  $('tab-ornament').hidden = name !== 'ornament';
+  if (name === 'ornament' && state.mode === 'lines') {
+    state.mode = 'solid';
+    applyMode();
+    writeHash();
+  }
   if (name === 'pigment') {
     computeThumbs();
     ensureSurfaceMode();
@@ -2624,7 +3064,9 @@ document.querySelectorAll('.tabs [data-tab]').forEach((b) => {
   b.addEventListener('click', () => showTab(b.dataset.tab));
   b.addEventListener('keydown', (e) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-    const next = b.dataset.tab === 'shape' ? 'pigment' : 'shape';
+    const order = ['shape', 'ornament', 'pigment'];
+    const i = order.indexOf(b.dataset.tab);
+    const next = order[(i + (e.key === 'ArrowRight' ? 1 : order.length - 1)) % order.length];
     showTab(next);
     document.querySelector(`.tabs [data-tab="${next}"]`).focus();
   });
@@ -2647,15 +3089,22 @@ $('ovProfileToggle').addEventListener('change', (e) => {
   $('ovProfile').hidden = !e.target.checked;
   drawProfile();
 });
+// Toolbar menus (graphs, appearance): one open at a time, closed by a click outside or Escape
+const toolbarMenus = [graphsMenu, $('lookMenu')];
 document.addEventListener('pointerdown', (e) => {
-  if (graphsMenu.open && !graphsMenu.contains(e.target)) graphsMenu.open = false;
+  for (const m of toolbarMenus) if (m.open && !m.contains(e.target)) m.open = false;
 });
-graphsMenu.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    graphsMenu.open = false;
-    graphsMenu.querySelector('summary').focus();
-  }
-});
+for (const m of toolbarMenus) {
+  m.addEventListener('toggle', () => {
+    if (m.open) for (const o of toolbarMenus) if (o !== m) o.open = false;
+  });
+  m.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      m.open = false;
+      m.querySelector('summary').focus();
+    }
+  });
+}
 new ResizeObserver(() => {
   if (!$('ovMorpho').hidden) drawMorphoOn(morphoOv);
   if (!$('ovProfile').hidden) drawProfile();
@@ -2683,7 +3132,21 @@ function gridPoint(shell, row, col) {
  * whorl (spire, suture, body whorl) have several candidate points; each frame the
  * label goes to the closest one that is in view, so it follows the shell as it turns.
  */
-function shellAnchors(shell, turns) {
+// Shell of the guide: a garden snail with a taller spire, a reticulate relief and a row of spines
+const GUIDE_SHAPE = { W: 2.2, D: 0.06, T: 2.4, S: 1.05, turns: 5, hand: 1, mirror: false };
+const GUIDE_ORNAMENT = { ribN: 26, ribH: 0.07, ribW: 0.45, cordN: 16, cordH: 0.07, cordW: 0.5, spineN: 8, spineH: 0.45, spineW: 0.35, spinePos: 0.12 };
+
+/** Angles θ = −2πk/n (ribs or spines counted from the aperture) between two limits. */
+function ornamentAngles(n, from, to) {
+  const out = [];
+  for (let k = 1; k <= n * 3; k++) {
+    const t = (-2 * Math.PI * k) / n;
+    if (t <= to && t >= from) out.push(t);
+  }
+  return out;
+}
+
+function shellAnchors(shell, turns, orn = {}) {
   const { rows, cols } = shell.grid;
   const nTheta = rows - 1;
   const seg = cols - 1;
@@ -2736,9 +3199,16 @@ function shellAnchors(shell, turns) {
     // The suture lies where two whorls meet, so a ray always grazes the neighbour:
     // it simply uses the candidate closest to the camera
     { key: 'wel.suture', cands: along(-TAU * 0.95, -TAU * 0.05, 19, sutureAt).filter(Boolean), free: true },
-    { key: 'wel.body', cands: along(-TAU * 0.9, -TAU * 0.15, 13, (t) => gridPoint(shell, rowAt(t), colAt(0))) },
+    // Body whorl: on the periphery, below the row of spines on the shoulder
+    { key: 'wel.body', cands: along(-TAU * 0.9, -TAU * 0.15, 13, (t) => gridPoint(shell, rowAt(t), colAt(-0.15))) },
     { key: 'wel.aperture', cands: [ap] },
     { key: 'wel.axis', cands: [new THREE.Vector3(x, yTop + 0.35, z)], free: true },
+    // Ornament: the crest of a rib and of a cord on the last whorl, and the tip of
+    // a spine (its row is snapped to a mesh column, so the tip is a vertex). In a
+    // circular aperture the arc-length coordinate u is φ / 2π.
+    ...(orn.ribN ? [{ key: 'wel.rib', cands: ornamentAngles(orn.ribN, -TAU * 0.8, -TAU * 0.2).map((t) => gridPoint(shell, rowAt(t), colAt(-0.6))) }] : []),
+    ...(orn.cordN ? [{ key: 'wel.cord', cands: ornamentAngles(orn.ribN || 1, -TAU * 0.8, -TAU * 0.2).map((t) => gridPoint(shell, rowAt(t + Math.PI / (orn.ribN || 1)), colAt(TAU / orn.cordN))) }] : []),
+    ...(orn.spineN ? [{ key: 'wel.spine', cands: ornamentAngles(orn.spineN, -TAU * 0.85, -TAU * 0.12).map((t) => gridPoint(shell, rowAt(t), colAt(TAU * orn.spinePos))), profile: true }] : []),
   ];
 }
 
@@ -2763,9 +3233,13 @@ function buildWelcome() {
   const ctl = new OrbitControls(cam, canvas);
   Object.assign(ctl, { enableDamping: true, dampingFactor: 0.08, enablePan: false, enableZoom: false });
 
-  // Garden snail generated by Raup's model, in a plain shell colour
-  const shape = pickShape(PRESETS.caracol);
-  const shell = buildShell({ ...shape, grow: 1, segPerTurn: 96, segPhi: 64, spiralLines: 0, ringsPerTurn: 0, size: 4 });
+  // A snail generated by Raup's model, with a reticulate relief (ribs and cords)
+  // and a row of spines on the shoulder, so the ornament can be pointed at too.
+  // It is not a real species. Plain shell colour.
+  const shape = GUIDE_SHAPE;
+  const orn = { ...ORNAMENT_DEFAULTS, ...GUIDE_ORNAMENT };
+  const res = ornamentResolution({ ...shape, ...orn });
+  const shell = buildShell({ ...shape, ...orn, grow: 1, segPerTurn: res.perTurn, segPhi: Math.min(256, res.phi), spiralLines: 0, ringsPerTurn: 0, size: 4 });
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(shell.positions, 3));
   geo.setIndex(new THREE.BufferAttribute(shell.indices, 1));
@@ -2791,7 +3265,7 @@ function buildWelcome() {
   sc.add(axisLine);
 
   // Labels: an HTML tag per part, joined to its anchor by a line drawn in SVG
-  const anchors = shellAnchors(shell, shape.turns);
+  const anchors = shellAnchors(shell, shape.turns, orn);
   const labelBox = $('welcomeLabels');
   const svg = $('welcomeLines');
   labelBox.innerHTML = '';
@@ -2837,7 +3311,12 @@ function buildWelcome() {
         return !hit || hit.distance > dist - (a.tolerance ?? 0.08);
       };
       if (recheck || !a.point) {
-        const byDistance = a.cands.slice().sort((u, v) => u.distanceToSquared(cam.position) - v.distanceToSquared(cam.position));
+        // Usually the candidate closest to the camera; for spines, the one seen most
+        // in profile (farthest from the centre on screen), so it is not foreshortened
+        const far = (v) => { const [x, y] = toScreen(v); return -Math.hypot(x - cx, y - cy); };
+        const byDistance = a.cands.slice().sort(a.profile
+          ? (u, v) => far(u) - far(v)
+          : (u, v) => u.distanceToSquared(cam.position) - v.distanceToSquared(cam.position));
         const chosen = byDistance.find(visible);
         a.hidden = !chosen; // hidden parts are faded, not removed
         a.point = chosen ?? byDistance[0];
@@ -2848,6 +3327,16 @@ function buildWelcome() {
       const side = px < cx ? -1 : 1;
       placed.push({ a, px, py, hidden, side, lx: px + side * 56, ly: py + (py - cy) * 0.15 });
     }
+    // Balance the two sides: when one side has too many labels, the points
+    // closest to the centre move theirs to the other side
+    for (let guard = 0; guard < placed.length; guard++) {
+      const left = placed.filter((q) => q.side < 0), right = placed.filter((q) => q.side > 0);
+      if (Math.abs(left.length - right.length) <= 2) break;
+      const [from, sign] = left.length > right.length ? [left, 1] : [right, -1];
+      const q = from.reduce((m, v) => (Math.abs(v.px - cx) < Math.abs(m.px - cx) ? v : m));
+      q.side = sign;
+      q.lx = q.px + sign * 56;
+    }
     // On each side, spread the labels vertically so they never overlap
     const gap = 24;
     for (const side of [-1, 1]) {
@@ -2857,6 +3346,8 @@ function buildWelcome() {
       if (overflow > 0) for (const q of col) q.ly -= overflow;
       for (let i = col.length - 2; i >= 0; i--) col[i].ly = Math.min(col[i].ly, col[i + 1].ly - gap);
       for (const q of col) q.ly = Math.max(14, q.ly);
+      // The top edge may have squeezed them again: space them downwards once more
+      for (let i = 1; i < col.length; i++) col[i].ly = Math.max(col[i].ly, col[i - 1].ly + gap);
     }
     for (const { a, px, py, hidden, side, lx, ly } of placed) {
       const lw = a.el.offsetWidth;
@@ -2927,6 +3418,7 @@ function applyLanguage(lang) {
   applyStatic();
   Object.values(controlsByKey).forEach((c) => c.relabel());
   buildPresetOptions();
+  buildOrnPresetOptions();
   updateGrowButton();
   updateFullscreenButton();
   drawMorpho();
@@ -2941,12 +3433,293 @@ function applyLanguage(lang) {
   drawSpacetime();
   if (!formulaPanel.hidden) setFormulaOpen(true);
   updateWelcomeText();
+  if ($('mechDrawer').open) drawMech();
 }
 
 document.querySelectorAll('.lang button').forEach((b) => b.addEventListener('click', () => {
   applyLanguage(b.dataset.lang);
   storage.set(LANG_KEY, b.dataset.lang);
 }));
+
+// ---------------------------------------------------------------------------
+// Shell creator: a window that walks through shape → ornament → colour → look
+// → export with simplified controls. It is not a separate program: the 3D
+// canvas of the app moves into the window, and every control acts on the same
+// state, so undo, the URL and every export keep working.
+// ---------------------------------------------------------------------------
+
+const wizardDlg = $('wizard');
+const WZ_STEPS = 5;
+let wzStep = 0;
+
+// Plain-language names for the creator (wzW, wzD…), the symbols stay in brackets
+const WZ_SHAPE = ['W', 'D', 'T', 'S', 'turns'].map((k) => ({ ...[...RAUP_PARAMS, ...GEO_PARAMS].find((d) => d.key === k), id: `wz-${k}`, i18n: `wz${k}` }));
+const WZ_ORN = ['ribN', 'ribH', 'cordN', 'cordH', 'spineN', 'spineH'].map((k) => ({ ...ORN_PARAMS.find((d) => d.key === k), id: `wz-${k}`, i18n: k }));
+
+WZ_SHAPE.forEach((d) => createParam(d, $('wz-shape'), {
+  compact: true,
+  onChange: (key) => {
+    controlsByKey[key].set(state[key]);
+    onShapeChange();
+    $('wzPreset').value = 'custom';
+  },
+}));
+WZ_ORN.forEach((d) => createParam(d, $('wz-orn'), {
+  compact: true,
+  onChange: (key) => {
+    controlsByKey[key].set(state[key]);
+    onOrnamentChange();
+    $('wzOrn').value = ornPresetSel.value;
+  },
+}));
+
+/** Copies the options of a sidebar menu (already translated) into a wizard menu. */
+function copyOptions(from, to, { showHidden = [] } = {}) {
+  to.innerHTML = from.innerHTML;
+  for (const o of to.querySelectorAll('option')) if (showHidden.includes(o.value)) o.hidden = false;
+  to.value = from.value;
+}
+
+// Colour step: solid colour, the pattern presets and the travelling waves of the
+// activator–substrate model (its default constants), plus the simple sliders
+const WZ_PIG = PIG_SIMPLE.map((d) => ({ ...d, id: `wz-${d.id}` }));
+WZ_PIG.forEach((d) => createParam(d, $('wz-pig'), {
+  compact: true,
+  target: pattern,
+  onChange: (key) => {
+    pigControls[d.id.slice(3)].set(pattern[key]);
+    if (key === 'amount') {
+      paintPattern();
+      writeHash();
+      return;
+    }
+    markPatternCustom();
+    schedulePattern();
+    syncWizard();
+  },
+}));
+
+function buildWzPatterns() {
+  const box = $('wzPatterns');
+  box.innerHTML = '';
+  for (const key of ['none', ...Object.keys(PATTERN_PRESETS), 'waves']) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.key = key;
+    b.textContent = key === 'none' ? t('pig.none') : key === 'waves' ? t('wz.p.waves') : tPattern(key);
+    b.addEventListener('click', () => {
+      if (key === 'waves') {
+        Object.assign(pattern, pickPattern(MODEL_DEFAULTS.AS));
+        pattern.preset = 'custom';
+        syncPatternControls();
+        setPatternOn(true);
+        computePattern();
+      } else {
+        selectPattern(key);
+      }
+      syncWizard();
+    });
+    box.append(b);
+  }
+}
+
+/** Brings the wizard controls in line with the state (the sidebar may have changed it). */
+function syncWizard() {
+  copyOptions(presetSel, $('wzPreset'));
+  copyOptions(ornPresetSel, $('wzOrn'), { showHidden: ['smooth'] });
+  for (const d of [...WZ_SHAPE, ...WZ_ORN]) controlsByKey[d.id].set(state[d.key]);
+  $('wzNodules').checked = state.nodules;
+  document.querySelectorAll('#wzHand [data-hand]').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.hand === state.hand)));
+  const sel = !pattern.on ? 'none' : PATTERN_PRESETS[pattern.preset] ? pattern.preset : pattern.model === 'AS' ? 'waves' : '';
+  $('wzPatterns').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.key === sel)));
+  for (const d of WZ_PIG) controlsByKey[d.id].set(pattern[d.key]);
+  document.querySelectorAll('.wz-pig').forEach((el) => (el.hidden = !pattern.on));
+  $('wzBase').value = pattern.base;
+  $('wzPigment').value = pattern.pigment;
+  $('wzBase').disabled = $('wzPigment').disabled = !pattern.on;
+  document.querySelectorAll('#wzMode [data-mode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === state.mode)));
+  $('wzBg').value = $('bgColor').value;
+  $('wzShell').value = $('shellColor').value;
+  $('wzLine').value = $('lineColor').value;
+  $('wzQuality').value = state.quality;
+  $('wzAxis').checked = $('showAxis').checked;
+  $('wzName').value = $('exName').value;
+  $('wzName').placeholder = defaultShellName();
+}
+
+function showWizardStep(i) {
+  wzStep = Math.max(0, Math.min(WZ_STEPS - 1, i));
+  document.querySelectorAll('.wizard-panel').forEach((p) => (p.hidden = +p.dataset.step !== wzStep));
+  document.querySelectorAll('#wizSteps [data-step]').forEach((b) => {
+    const k = +b.dataset.step;
+    b.setAttribute('aria-current', k === wzStep ? 'step' : 'false');
+    b.classList.toggle('done', k < wzStep);
+  });
+  $('wzBack').disabled = wzStep === 0;
+  $('wzNext').textContent = t(wzStep === WZ_STEPS - 1 ? 'wz.finish' : 'wz.next');
+  // Relief and colour are read on the surface
+  if ((wzStep === 1 || wzStep === 2) && state.mode === 'lines') {
+    state.mode = 'solid';
+    applyMode();
+    writeHash();
+  }
+  syncWizard();
+}
+
+function openWizard() {
+  if (welcomeDlg.open) welcomeDlg.close();
+  buildWzPatterns();
+  wizardDlg.showModal();
+  // The app's own 3D canvas moves into the window
+  viewport = $('wizView');
+  viewport.prepend(renderer.domElement);
+  resize();
+  showWizardStep(0);
+}
+
+function closeWizardView() {
+  viewport = $('viewport');
+  viewport.prepend(renderer.domElement);
+  resize();
+}
+
+$('openWizard').addEventListener('click', openWizard);
+$('closeWizard').addEventListener('click', () => wizardDlg.close());
+wizardDlg.addEventListener('close', closeWizardView);
+$('wzBack').addEventListener('click', () => showWizardStep(wzStep - 1));
+$('wzNext').addEventListener('click', () => (wzStep === WZ_STEPS - 1 ? wizardDlg.close() : showWizardStep(wzStep + 1)));
+document.querySelectorAll('#wizSteps [data-step]').forEach((b) => b.addEventListener('click', () => showWizardStep(+b.dataset.step)));
+
+$('wzPreset').addEventListener('change', (e) => {
+  if (!PRESETS[e.target.value]) return;
+  presetSel.value = e.target.value;
+  presetSel.dispatchEvent(new Event('change'));
+  syncWizard();
+});
+document.querySelectorAll('#wzHand [data-hand]').forEach((b) => b.addEventListener('click', () => {
+  $('hand').value = b.dataset.hand;
+  $('hand').dispatchEvent(new Event('change'));
+  syncWizard();
+}));
+$('wzOrn').addEventListener('change', (e) => {
+  if (e.target.value === 'smooth') {
+    $('ornClear').click();
+  } else if (ORNAMENT_PRESETS[e.target.value]) {
+    ornPresetSel.value = e.target.value;
+    ornPresetSel.dispatchEvent(new Event('change'));
+  }
+  syncWizard();
+});
+$('wzNodules').addEventListener('change', (e) => {
+  $('nodules').checked = e.target.checked;
+  $('nodules').dispatchEvent(new Event('change'));
+});
+// Colours and appearance: the wizard sets the sidebar inputs and lets their own handlers act
+const relay = (fromId, toId, type = 'input') => $(fromId).addEventListener(type, (e) => {
+  $(toId).value = e.target.value;
+  $(toId).dispatchEvent(new Event(type));
+});
+relay('wzBase', 'pigBase');
+relay('wzPigment', 'pigColor');
+relay('wzBg', 'bgColor');
+relay('wzShell', 'shellColor');
+relay('wzLine', 'lineColor');
+relay('wzQuality', 'quality', 'change');
+$('wzAxis').addEventListener('change', (e) => {
+  $('showAxis').checked = e.target.checked;
+  $('showAxis').dispatchEvent(new Event('change'));
+});
+document.querySelectorAll('#wzMode [data-mode]').forEach((b) => b.addEventListener('click', () => {
+  document.querySelector(`#mode [data-mode="${b.dataset.mode}"]`).click();
+  syncWizard();
+}));
+// The palette buttons share the sidebar handler (they carry data-palette); then resync
+document.querySelectorAll('#wzPalettes [data-palette]').forEach((b) => b.addEventListener('click', syncWizard));
+$('wzName').addEventListener('input', (e) => ($('exName').value = e.target.value));
+$('wzSeed').addEventListener('click', () => $('newSeed').click());
+
+// Export: the same functions as the export window
+$('wzWallpaper').addEventListener('click', (e) => busy(e.currentTarget, async () => {
+  const { W, H } = chosenSize('screen');
+  await downloadImage(renderViewImage(W, H), `${fileStem()}_${W}x${H}`, 'png');
+}));
+$('wzPdf').addEventListener('click', (e) => busy(e.currentTarget, exportPDF));
+$('wzMore').addEventListener('click', () => {
+  wizardDlg.close();
+  openExport();
+});
+
+// ---------------------------------------------------------------------------
+// Undo: each step is a snapshot of the shape, the ornament, the render mode and
+// the pattern. Changes that follow one another quickly (dragging a slider) make
+// a single step. The view (camera, orientation) is not a step.
+// ---------------------------------------------------------------------------
+
+function takeSnapshot() {
+  return JSON.stringify({
+    shape: pickShape(state),
+    orn: pickOrnament(state),
+    mode: state.mode,
+    pattern: { ...pattern },
+  });
+}
+
+/** Called on every change (through writeHash): closes the step once changes stop. */
+function noteChange() {
+  if (committed === null) return; // not started yet
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(commitStep, 450);
+}
+
+function commitStep() {
+  clearTimeout(undoTimer);
+  const now = takeSnapshot();
+  if (now === committed) return;
+  undoStack.push(committed);
+  if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+  committed = now;
+  setUndoEnabled(true);
+}
+
+function undo() {
+  commitStep(); // a change still in progress becomes a step of its own
+  const prev = undoStack.pop();
+  setUndoEnabled(undoStack.length > 0);
+  if (!prev) return;
+  committed = prev;
+  restoreSnapshot(JSON.parse(prev));
+}
+
+function restoreSnapshot({ shape, orn, mode, pattern: pat }) {
+  for (const k of ['W', 'D', 'T', 'S', 'turns']) controlsByKey[k].set(shape[k], { fitScale: true });
+  state.hand = shape.hand;
+  $('hand').value = String(shape.hand);
+  setMirror(shape.mirror);
+  presetSel.value = Object.keys(PRESETS).find((k) => SHAPE_KEYS.every((key) => pickShape(PRESETS[k])[key] === shape[key])) ?? 'custom';
+  Object.assign(state, orn);
+  syncOrnamentControls();
+  state.mode = mode;
+  applyMode();
+  const patternChanged = JSON.stringify({ ...pattern }) !== JSON.stringify(pat);
+  if (patternChanged) {
+    Object.assign(pattern, pat);
+    syncPatternControls();
+    if (pattern.on) computePattern();
+    setPatternOn(pattern.on);
+  }
+  dirty = true;
+}
+
+function setUndoEnabled(on) {
+  $('undo').disabled = !on;
+  $('wzUndo').disabled = !on;
+}
+
+$('undo').addEventListener('click', undo);
+$('wzUndo').addEventListener('click', () => {
+  undo();
+  syncWizard();
+});
 
 // ---------------------------------------------------------------------------
 // Render loop
@@ -2965,6 +3738,7 @@ function resize() {
   axisMat.resolution.set(w, h);
 }
 new ResizeObserver(resize).observe(viewport);
+new ResizeObserver(() => wizardDlg.open && resize()).observe($('wizView'));
 resize();
 
 function renderFrame() {
@@ -2980,6 +3754,7 @@ function renderFrame() {
     const y = w < 760 ? 56 : 8; // above the views bar on narrow screens
     gizmo.camera.position.copy(camera.position).sub(controls.target).setLength(4);
     gizmo.camera.quaternion.copy(camera.quaternion);
+    gizmoAxes.quaternion.copy(shellGroup.quaternion);
     renderer.setScissorTest(true);
     renderer.setScissor(x, y, s, s);
     renderer.setViewport(x, y, s, s);
@@ -2992,6 +3767,8 @@ function renderFrame() {
 
 applyLanguage(getLang());
 applyMode();
+setOrient(state.orient, { animate: false });
+committed = takeSnapshot(); // undo history starts from the state the page opened with
 
 renderer.setAnimationLoop((now) => {
   if (welcomeDlg.open) return; // the guide covers the viewer: no need to draw it
@@ -3001,6 +3778,7 @@ renderer.setAnimationLoop((now) => {
     rebuild();
     applyMode();
   }
+  if (orientTween) stepOrient(now);
   if (tween) stepTween(now);
   else controls.update();
   renderFrame();

@@ -48,9 +48,15 @@
         </div>
       </header>
 
+      <button type="button" class="btn primary btn-wide create-btn" id="openWizard">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6.5 4.2v11.6L15.8 10z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+        <span data-i18n="wz.open">Create your own shell</span>
+      </button>
+
       <nav class="tabs" role="tablist" data-i18n-title="tab.label">
-        <button type="button" role="tab" id="tabbtn-shape" data-tab="shape" aria-controls="tab-shape" aria-selected="true" data-i18n="tab.shape">Shape · Raup</button>
-        <button type="button" role="tab" id="tabbtn-pigment" data-tab="pigment" aria-controls="tab-pigment" aria-selected="false" tabindex="-1" data-i18n="tab.pigment">Pigment · Meinhardt</button>
+        <button type="button" role="tab" id="tabbtn-shape" data-tab="shape" aria-controls="tab-shape" aria-selected="true" ><span data-i18n="tab.n.shape">Shape</span><small>Raup</small></button>
+        <button type="button" role="tab" id="tabbtn-ornament" data-tab="ornament" aria-controls="tab-ornament" aria-selected="false" tabindex="-1"><span data-i18n="tab.n.ornament">Ornament</span><small data-i18n="tab.n.ornament.sub">relief</small></button>
+        <button type="button" role="tab" id="tabbtn-pigment" data-tab="pigment" aria-controls="tab-pigment" aria-selected="false" tabindex="-1"><span data-i18n="tab.n.pigment">Pigment</span><small>Meinhardt</small></button>
       </nav>
 
       <div class="tab-panel" id="tab-shape" role="tabpanel" aria-labelledby="tabbtn-shape">
@@ -89,45 +95,6 @@
         </button>
       </section>
 
-      <details class="drawer">
-        <summary><span data-i18n="look.title">Appearance</span></summary>
-        <div class="drawer-body">
-          <div class="field">
-            <span data-i18n="look.palette">Colour presets</span>
-            <div class="palettes">
-              <button type="button" class="palette" data-palette="light" data-i18n-title="palette.hint">
-                <span class="swatches"><i style="background:#f4f0e6"></i><i style="background:#2b3a4a"></i><i style="background:#e8d3b0"></i></span>
-                <span data-i18n="palette.light">Light</span>
-              </button>
-              <button type="button" class="palette" data-palette="dark" data-i18n-title="palette.hint">
-                <span class="swatches"><i style="background:#111821"></i><i style="background:#d8c08c"></i><i style="background:#e4cfae"></i></span>
-                <span data-i18n="palette.dark">Dark</span>
-              </button>
-            </div>
-          </div>
-          <div class="colors">
-            <label class="color-field"><input type="color" id="lineColor" value="#1f2a37" /><span data-i18n="look.lines">Lines</span></label>
-            <label class="color-field"><input type="color" id="shellColor" value="#e7d3b3" /><span data-i18n="look.shell">Shell</span></label>
-            <label class="color-field"><input type="color" id="bgColor" value="#f3f0e8" /><span data-i18n="look.bg">Background</span></label>
-          </div>
-          <label class="field">
-            <span data-i18n="look.quality">Mesh resolution</span>
-            <select id="quality" class="select">
-              <option value="low" data-i18n="look.low">Low</option>
-              <option value="medium" selected data-i18n="look.medium">Medium</option>
-              <option value="high" data-i18n="look.high">High</option>
-            </select>
-          </label>
-          <div id="vis-params"></div>
-          <div class="toggles">
-            <label class="toggle"><input type="checkbox" id="hideHidden" checked /><span data-i18n="look.hideHidden">Hide back lines</span></label>
-            <label class="toggle"><input type="checkbox" id="bands" checked /><span data-i18n="look.bands">Growth bands (solid)</span></label>
-            <label class="toggle"><input type="checkbox" id="showAxis" /><span data-i18n="look.axis">Show coiling axis</span></label>
-            <div id="axis-params" class="sub-params" hidden></div>
-            <label class="toggle"><input type="checkbox" id="autoRotate" /><span data-i18n="look.autoRotate">Auto-rotate</span></label>
-          </div>
-        </div>
-      </details>
 
       <details class="drawer" id="morphoDrawer">
         <summary><span data-i18n="morpho.title">Morphospace W – D</span></summary>
@@ -142,6 +109,70 @@
       </details>
       </div>
 
+      <div class="tab-panel" id="tab-ornament" role="tabpanel" aria-labelledby="tabbtn-ornament" data-omode="simple" hidden>
+        <section class="panel">
+          <div class="panel-row">
+            <label class="panel-title" for="ornPreset" data-i18n="orn.preset">Ornamented shells</label>
+            <button type="button" class="link-btn" id="ornTheory" data-i18n="pig.theory">Theory →</button>
+          </div>
+          <select id="ornPreset" class="select"></select>
+          <p class="note" data-i18n="orn.note"></p>
+          <button type="button" class="btn btn-wide" id="ornClear" data-i18n="orn.clear">Remove ornament</button>
+        </section>
+
+        <section class="panel">
+          <div class="segmented two" id="ornMode" role="radiogroup" data-i18n-title="pig.mode">
+            <button type="button" data-omode="simple" aria-pressed="true" data-i18n="pig.mode.simple">Simple</button>
+            <button type="button" data-omode="advanced" aria-pressed="false" data-i18n="pig.mode.advanced">Advanced</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel-title" data-i18n="orn.ribs">Axial ribs</h2>
+          <p class="note" data-i18n="orn.ribs.desc"></p>
+          <div id="rib-params"></div>
+          <div id="ribAdv-params" class="adv-only"></div>
+        </section>
+        <section class="panel">
+          <h2 class="panel-title" data-i18n="orn.cords">Spiral cords</h2>
+          <p class="note" data-i18n="orn.cords.desc"></p>
+          <div id="cord-params"></div>
+          <div id="cordAdv-params" class="adv-only"></div>
+          <label class="toggle"><input type="checkbox" id="nodules" /><span data-i18n="orn.nodules">Nodules where ribs and cords cross</span></label>
+        </section>
+        <section class="panel">
+          <h2 class="panel-title" data-i18n="orn.spines">Spines</h2>
+          <p class="note" data-i18n="orn.spines.desc"></p>
+          <div id="spine-params"></div>
+          <div class="adv-only">
+            <div id="spineAdv-params"></div>
+            <label class="toggle"><input type="checkbox" id="spineBoth" /><span data-i18n="orn.spineBoth">Two rows, symmetric about the periphery</span></label>
+          </div>
+        </section>
+        <section class="panel adv-only">
+          <h2 class="panel-title" data-i18n="orn.keel">Keel</h2>
+          <p class="note" data-i18n="orn.keel.desc"></p>
+          <div id="keel-params"></div>
+        </section>
+        <section class="panel adv-only">
+          <h2 class="panel-title" data-i18n="orn.growth">Change with growth</h2>
+          <p class="note" data-i18n="orn.growth.desc"></p>
+          <div id="growth-params"></div>
+        </section>
+        <details class="drawer adv-only" id="mechDrawer">
+          <summary><span data-i18n="mech.title">Why this number of cords?</span></summary>
+          <div class="drawer-body">
+            <p class="note" data-i18n="mech.desc"></p>
+            <div id="mech-params"></div>
+            <canvas id="mechCanvas" class="mech-canvas" height="190"></canvas>
+            <p class="note" data-i18n="mech.caption"></p>
+            <p class="note mech-out" id="mechOut"></p>
+            <button type="button" class="btn btn-wide" id="mechApply" data-i18n="mech.apply">Grow these cords on the shell</button>
+            <button type="button" class="link-btn" id="mechTheory" data-i18n="mech.theory">How the model works →</button>
+          </div>
+        </details>
+      </div>
+
       <div class="tab-panel" id="tab-pigment" role="tabpanel" aria-labelledby="tabbtn-pigment" data-pmode="simple" hidden>
         <section class="panel">
           <div class="panel-row">
@@ -149,6 +180,7 @@
             <button type="button" class="link-btn" id="pigTheory" data-i18n="pig.theory">Theory →</button>
           </div>
           <div class="pattern-gallery" id="patternGallery" role="radiogroup" data-i18n-title="pig.preset"></div>
+          <button type="button" class="btn btn-wide" id="pigClear" data-i18n="pig.clear">Remove colour</button>
           <p class="note" data-i18n="pig.note"></p>
         </section>
 
@@ -279,6 +311,9 @@
             <button type="button" data-mode="solid" aria-pressed="false" data-i18n="mode.solid">Solid</button>
             <button type="button" data-mode="both" aria-pressed="false" data-i18n="mode.both">Both</button>
           </div>
+          <button type="button" class="chip icon-only" id="undo" data-i18n-title="tb.undo" disabled>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 5.5 4 9l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 9h7a4.5 4.5 0 0 1 0 9H9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
           <button type="button" class="chip" id="toggleFormula" aria-pressed="false">
             <span class="chip-sym">∑</span><span data-i18n="tb.equation">Equation</span>
           </button>
@@ -286,6 +321,48 @@
             <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 15V3M5 15h12M5 15l-3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
             <span data-i18n="tb.axes">Axes</span>
           </button>
+          <details class="chip-menu" id="lookMenu">
+            <summary class="chip" data-i18n-title="look.hint">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5a7.5 7.5 0 1 0 0 15c1.2 0 1.6-.8 1.2-1.7-.5-1 .1-2.1 1.3-2.1h1.6a3.4 3.4 0 0 0 3.4-3.4C17.5 5.6 14.1 2.5 10 2.5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="6.3" cy="9" r="1.1" fill="currentColor"/><circle cx="9" cy="6" r="1.1" fill="currentColor"/><circle cx="12.8" cy="6.6" r="1.1" fill="currentColor"/></svg>
+              <span data-i18n="look.title">Appearance</span>
+            </summary>
+            <div class="menu look-menu">
+          <div class="field">
+            <span data-i18n="look.palette">Colour presets</span>
+            <div class="palettes">
+              <button type="button" class="palette" data-palette="light" data-i18n-title="palette.hint">
+                <span class="swatches"><i style="background:#f4f0e6"></i><i style="background:#2b3a4a"></i><i style="background:#e8d3b0"></i></span>
+                <span data-i18n="palette.light">Light</span>
+              </button>
+              <button type="button" class="palette" data-palette="dark" data-i18n-title="palette.hint">
+                <span class="swatches"><i style="background:#111821"></i><i style="background:#d8c08c"></i><i style="background:#e4cfae"></i></span>
+                <span data-i18n="palette.dark">Dark</span>
+              </button>
+            </div>
+          </div>
+          <div class="colors">
+            <label class="color-field"><input type="color" id="lineColor" value="#1f2a37" /><span data-i18n="look.lines">Lines</span></label>
+            <label class="color-field"><input type="color" id="shellColor" value="#e7d3b3" /><span data-i18n="look.shell">Shell</span></label>
+            <label class="color-field"><input type="color" id="bgColor" value="#f3f0e8" /><span data-i18n="look.bg">Background</span></label>
+          </div>
+          <label class="field">
+            <span data-i18n="look.quality">Mesh resolution</span>
+            <select id="quality" class="select">
+              <option value="low" data-i18n="look.low">Low</option>
+              <option value="medium" selected data-i18n="look.medium">Medium</option>
+              <option value="high" data-i18n="look.high">High</option>
+            </select>
+          </label>
+          <div id="vis-params"></div>
+          <div class="toggles">
+            <label class="toggle"><input type="checkbox" id="hideHidden" checked /><span data-i18n="look.hideHidden">Hide back lines</span></label>
+            <label class="toggle"><input type="checkbox" id="bands" checked /><span data-i18n="look.bands">Growth bands (solid)</span></label>
+            <label class="toggle"><input type="checkbox" id="showAxis" /><span data-i18n="look.axis">Show coiling axis</span></label>
+            <div id="axis-params" class="sub-params" hidden></div>
+            <label class="toggle"><input type="checkbox" id="autoRotate" /><span data-i18n="look.autoRotate">Auto-rotate</span></label>
+          </div>
+            </div>
+          </details>
           <details class="chip-menu" id="graphsMenu">
             <summary class="chip" data-i18n-title="tb.graphs.hint">
               <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3v14h14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 13.5c2-6 3.5-8 5-3s3 4 6-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -355,9 +432,20 @@
           <button type="button" data-view="apical" data-i18n="view.apical" data-i18n-title="view.apical.hint">Apical</button>
           <button type="button" data-view="umbilical" data-i18n="view.umbilical" data-i18n-title="view.umbilical.hint">Umbilical</button>
           <button type="button" data-view="profile" data-i18n="view.profile" data-i18n-title="view.profile.hint">Profile</button>
+          <span class="views-sep" aria-hidden="true"></span>
+          <span class="orient" role="group" data-i18n-title="orient.label">
+            <button type="button" data-orient="vertical" data-i18n-title="orient.vertical" aria-pressed="true">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2v16M7 5l3-3 3 3M7 15l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button type="button" data-orient="horizontal" data-i18n-title="orient.horizontal" aria-pressed="false">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 10h16M5 7l-3 3 3 3M15 7l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button type="button" data-orient="free" data-i18n-title="orient.free" aria-pressed="false">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><ellipse cx="10" cy="10" rx="7" ry="2.6" fill="none" stroke="currentColor" stroke-width="1.3"/><ellipse cx="10" cy="10" rx="2.6" ry="7" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>
+            </button>
+          </span>
         </div>
 
-        <div class="hint" data-i18n="hint.controls">Drag: rotate · Wheel: zoom · Right-click: pan</div>
         <div class="loading" id="loading" data-i18n="loading">Loading Three.js…</div>
       </div>
     </main>
@@ -373,11 +461,15 @@
     <div class="info-tabs" role="tablist" data-i18n-title="info.pages">
       <button type="button" role="tab" data-page="raup" aria-selected="true" data-i18n="info.page.raup">Raup · shape</button>
       <button type="button" role="tab" data-page="meinhardt" aria-selected="false" tabindex="-1" data-i18n="info.page.meinhardt">Meinhardt · pigment</button>
+      <button type="button" role="tab" data-page="ornament" aria-selected="false" tabindex="-1" data-i18n="info.page.ornament">Ornament · mechanics</button>
+      <button type="button" role="tab" data-page="controls" aria-selected="false" tabindex="-1" data-i18n="info.page.controls">Controls</button>
       <button type="button" role="tab" data-page="app" aria-selected="false" tabindex="-1" data-i18n="info.page.app">Credits</button>
     </div>
     <div class="info-body" id="infoBody">
       <div class="info-page" data-page="raup" role="tabpanel" data-i18n-html="info.raup"></div>
       <div class="info-page" data-page="meinhardt" role="tabpanel" data-i18n-html="info.meinhardt" hidden></div>
+      <div class="info-page" data-page="ornament" role="tabpanel" data-i18n-html="info.ornament" hidden></div>
+      <div class="info-page" data-page="controls" role="tabpanel" data-i18n-html="info.controls" hidden></div>
       <div class="info-page" data-page="app" role="tabpanel" data-i18n-html="info.app" hidden></div>
     </div>
   </dialog>
@@ -556,12 +648,101 @@
           <li><strong data-i18n="wel.s2.t">View</strong> <span data-i18n="wel.s2"></span></li>
           <li><strong data-i18n="wel.s3.t">Colour</strong> <span data-i18n="wel.s3"></span></li>
           <li><strong data-i18n="wel.s4.t">Learn and export</strong> <span data-i18n="wel.s4"></span></li>
+          <li><strong data-i18n="wel.s5.t">Create your own shell.</strong> <span data-i18n="wel.s5"></span></li>
         </ol>
       </div>
       <div class="welcome-actions">
         <p class="welcome-author" data-i18n="wel.author">Alberto González Casarrubios · Universidad Complutense de Madrid</p>
         <button type="button" class="btn" id="welcomeTheory" data-i18n="wel.theory">Read the theory</button>
         <button type="button" class="btn primary" id="welcomeStart" data-i18n="wel.start">Start exploring</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="info wizard" id="wizard" aria-labelledby="wizardTitle">
+    <div class="info-head">
+      <h2 id="wizardTitle" data-i18n="wz.title">Create your own shell</h2>
+      <button type="button" class="icon-btn" id="closeWizard" data-i18n-title="info.close">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="wizard-body">
+      <div class="wizard-view" id="wizView"></div>
+      <div class="wizard-side">
+        <ol class="wizard-steps" id="wizSteps">
+          <li><button type="button" data-step="0" data-i18n="wz.s.shape">Shape</button></li>
+          <li><button type="button" data-step="1" data-i18n="wz.s.ornament">Ornament</button></li>
+          <li><button type="button" data-step="2" data-i18n="wz.s.colour">Colour</button></li>
+          <li><button type="button" data-step="3" data-i18n="wz.s.look">Look</button></li>
+          <li><button type="button" data-step="4" data-i18n="wz.s.export">Export</button></li>
+        </ol>
+        <div class="wizard-panels">
+          <section class="wizard-panel" data-step="0">
+            <p class="note" data-i18n="wz.shape.intro"></p>
+            <label class="field"><span data-i18n="wz.start">Start from</span><select id="wzPreset" class="select"></select></label>
+            <div id="wz-shape"></div>
+            <div class="segmented two" id="wzHand" role="radiogroup" data-i18n-title="geo.hand">
+              <button type="button" data-hand="1" data-i18n="geo.dextral">Dextral</button>
+              <button type="button" data-hand="-1" data-i18n="geo.sinistral">Sinistral</button>
+            </div>
+          </section>
+          <section class="wizard-panel" data-step="1" hidden>
+            <p class="note" data-i18n="wz.orn.intro"></p>
+            <label class="field"><span data-i18n="wz.example">Example</span><select id="wzOrn" class="select"></select></label>
+            <div id="wz-orn"></div>
+            <label class="toggle"><input type="checkbox" id="wzNodules" /><span data-i18n="orn.nodules">Nodules where ribs and cords cross</span></label>
+          </section>
+          <section class="wizard-panel" data-step="2" hidden>
+            <p class="note" data-i18n="wz.colour.intro"></p>
+            <div class="wz-choices" id="wzPatterns" role="radiogroup"></div>
+            <div id="wz-pig" class="wz-pig"></div>
+            <button type="button" class="btn btn-wide wz-pig" id="wzSeed" data-i18n="wz.seed">Another variant of this pattern</button>
+            <div class="colors">
+              <label class="color-field"><input type="color" id="wzBase" /><span data-i18n="pig.base">Shell</span></label>
+              <label class="color-field"><input type="color" id="wzPigment" /><span data-i18n="pig.pigment">Pigment</span></label>
+            </div>
+          </section>
+          <section class="wizard-panel" data-step="3" hidden>
+            <p class="note" data-i18n="wz.look.intro"></p>
+            <div class="segmented" id="wzMode" role="radiogroup" data-i18n-title="mode.label">
+              <button type="button" data-mode="lines" data-i18n="mode.lines">Lines</button>
+              <button type="button" data-mode="solid" data-i18n="mode.solid">Solid</button>
+              <button type="button" data-mode="both" data-i18n="mode.both">Both</button>
+            </div>
+            <div class="wz-choices two" id="wzPalettes">
+              <button type="button" data-palette="light" data-i18n="palette.light">Light</button>
+              <button type="button" data-palette="dark" data-i18n="palette.dark">Dark</button>
+            </div>
+            <div class="colors">
+              <label class="color-field"><input type="color" id="wzBg" /><span data-i18n="look.bg">Background</span></label>
+              <label class="color-field"><input type="color" id="wzShell" /><span data-i18n="look.shell">Shell</span></label>
+              <label class="color-field"><input type="color" id="wzLine" /><span data-i18n="look.lines">Lines</span></label>
+            </div>
+            <label class="field"><span data-i18n="look.quality">Mesh resolution</span>
+              <select id="wzQuality" class="select">
+                <option value="low" data-i18n="look.low">Low</option>
+                <option value="medium" data-i18n="look.medium">Medium</option>
+                <option value="high" data-i18n="look.high">High</option>
+              </select>
+            </label>
+            <label class="toggle"><input type="checkbox" id="wzAxis" /><span data-i18n="look.axis">Show coiling axis</span></label>
+          </section>
+          <section class="wizard-panel" data-step="4" hidden>
+            <p class="note" data-i18n="wz.export.intro"></p>
+            <label class="field"><span data-i18n="ex.name">Name of your shell</span><input type="text" id="wzName" class="text" maxlength="60" autocomplete="off" /></label>
+            <button type="button" class="btn primary btn-wide" id="wzWallpaper" data-i18n="wz.wallpaper">Wallpaper for this screen (PNG)</button>
+            <button type="button" class="btn btn-wide" id="wzPdf" data-i18n="wz.pdf">PDF sheet</button>
+            <button type="button" class="btn btn-wide" id="wzMore" data-i18n="wz.more">More export options…</button>
+          </section>
+        </div>
+        <div class="wizard-nav">
+          <button type="button" class="btn icon-btn-text" id="wzUndo" data-i18n-title="tb.undo" disabled>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 5.5 4 9l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 9h7a4.5 4.5 0 0 1 0 9H9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span data-i18n="wz.undo">Undo</span>
+          </button>
+          <button type="button" class="btn" id="wzBack" data-i18n="wz.back">Back</button>
+          <button type="button" class="btn primary" id="wzNext" data-i18n="wz.next">Next</button>
+        </div>
       </div>
     </div>
   </dialog>
