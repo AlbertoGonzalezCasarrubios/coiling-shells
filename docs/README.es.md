@@ -13,22 +13,27 @@
 
 [English](../README.md) · **Español** · [Introducción divulgativa](introduccion-divulgativa.md)
 
-Un explorador 3D interactivo de la **morfología teórica de las conchas enrolladas**. La forma procede del modelo de enrollamiento de conchas de David M. Raup (1962, 1966) y, de forma opcional, el patrón de color procede de los modelos de reacción-difusión de Hans Meinhardt para la pigmentación de las conchas. Funciona por completo en el navegador, sin instalación, en inglés y en español.
+Un explorador 3D interactivo de la **morfología teórica de las conchas enrolladas**. La forma procede del modelo de enrollamiento de conchas de David M. Raup (1962, 1966); sobre su superficie se pueden añadir costillas, cordones y espinas como relieve; y el patrón de color procede de los modelos de reacción-difusión de Hans Meinhardt para la pigmentación de las conchas. Funciona por completo en el navegador, sin instalación, en inglés y en español.
 
 **▶ Abrir la app: https://albertogonzalezcasarrubios.github.io/coiling-shells/**
 
-En la primera visita, una guía breve muestra las partes de una concha enrollada, costillas y espinas incluidas, sobre un modelo 3D interactivo y explica cómo funciona la app; *Crea tu propia concha* construye después una paso a paso (forma, ornamento, color, aspecto y exportación); el botón *Guía* la vuelve a abrir, y añadir `?guide` a la dirección la muestra siempre. La app se abre en inglés; el español se elige en la guía o con el botón EN / ES, y la elección se recuerda.
+En la primera visita, una guía breve muestra las partes de una concha enrollada, costillas, cordones y espinas incluidos, sobre un modelo 3D interactivo, y explica en cinco pasos cómo funciona la app. El botón *Guía* la vuelve a abrir, y añadir `?guide` a la dirección la muestra siempre. La app se abre en inglés; el español se elige en la guía o con el botón EN / ES, y la elección se recuerda.
 
-![La guía de bienvenida: un caracol de jardín generado con el modelo, con sus partes señaladas, y cuatro pasos breves sobre cómo usar la simulación](images/guide-es.png)
+![La guía de bienvenida: un caracol generado con el modelo, con costillas, cordones y espinas añadidos y sus partes señaladas, y cinco pasos breves sobre cómo usar la simulación](images/guide-es.png)
 
 Al cerrar la guía, la app muestra un caracol de jardín dibujado con líneas, listo para explorar:
 
 ![La app tras la guía: una concha de caracol de jardín dibujada con líneas, con los parámetros de Raup en la barra lateral](images/app.png)
 
+**Crea tu propia concha**, el botón de arriba de la barra lateral, abre una ventana que recorre cinco pasos con controles simplificados: forma, ornamento, color, aspecto y exportación. Es la propia app, no una copia: la vista 3D se traslada a la ventana, así que deshacer, la dirección de la página y todas las exportaciones funcionan como siempre, y el último paso descarga un fondo de pantalla del tamaño de tu pantalla o la ficha en PDF.
+
+![El creador de conchas en su paso de ornamento: un ammonites con costillas y espinas a la izquierda y los deslizadores simplificados a la derecha](images/wizard.png)
+
 ## Para qué sirve
 
 - **Explorar el modelo de Raup:** cambia W, D, T y S y la concha se reconstruye al instante, con la ecuación en forma general y con los valores actuales.
 - **Explorar el morfoespacio:** sitúa la concha en el morfoespacio de Raup y mira qué regiones ocupan las conchas reales y cuáles quedan vacías.
+- **Añadir ornamentación:** costillas, cordones, nódulos, una quilla y espinas, sobre cualquier forma o partiendo de conchas ornamentadas reales, con un modelo mecánico que explica el número de cordones.
 - **Hacer crecer un patrón de pigmentación:** aplica uno de los modelos de Meinhardt a la concha y observa el activador y el inhibidor (o el sustrato) que lo producen.
 - **Sacar el resultado de la pantalla:** exporta imágenes, una lámina con las vistas estándar de la malacología, un informe en PDF con todos los valores y ecuaciones, modelos 3D o un sólido cerrado listo para una impresora 3D.
 - **Enseñar:** el diálogo *About* explica los dos modelos en detalle. La app está pensada para asignaturas de paleontología, biología evolutiva y formación de patrones, y para cualquiera que tenga curiosidad por saber por qué las conchas tienen el aspecto que tienen.
@@ -56,7 +61,32 @@ r_c = (1 + D)/2,   a = (1 − D)/2,   b = S·a,   θ ∈ [−2πN, 0],   φ ∈ 
 
 El número de vueltas N y el sentido de enrollamiento (dextral, ε = −1, o sinistral, ε = +1) completan la concha. Una valva especular convierte una sola valva en un bivalvo equivalvo. Los presets cubren formas reales: caracol de jardín, *Turritella*, *Trochus*, *Planorbis*, *Physa*, *Peringia*, *Nautilus*, un ammonite evoluto y una almeja. La concha se puede dibujar con líneas, como sólido o de las dos formas, verse desde las seis vistas estándar de la malacología y animarse mientras crece. El visor puede mantener vertical el eje de enrollamiento, tumbarlo para ver de frente las conchas planispirales o dejarte girar la concha libremente.
 
-Una pestaña de *Ornamento* añade relieve a la superficie: costillas axiales y várices, cordones espirales, un dibujo reticulado, nódulos, una quilla y espinas, con ejemplos que cargan a la vez la forma y el relieve de conchas reales. El relieve es descriptivo, en la línea de Fowler, Meinhardt y Prusinkiewicz (1992) y Cortie (1993). El espaciado de los cordones espirales tiene además un modelo mecánico, según Moulton, Goriely y Chirat (2012): el borde del manto se pandea en ondas cuando crece más deprisa que la concha, y la app muestra qué número de ondas aparece primero y lo hace crecer en la concha.
+### Ornamentación: costillas, cordones y espinas
+
+La ornamentación se construye en el borde de la apertura, como el resto de la concha. La pestaña *Ornamento* la añade como relieve: la curva generatriz se desplaza hacia fuera a lo largo de su normal **n**(φ), en una cantidad proporcional al tamaño de la apertura, así que el relieve crece con la concha:
+
+```
+P*(θ, φ) = P(θ, φ) + W^(θ/2π) · a · δ(θ, φ) · n(φ)
+
+δ = f(s) · [ h_r·R(θ) + h_c·C(u) + h_k·K(u) + h_s·Σ(θ, u) ]
+```
+
+- Las **costillas axiales** R cruzan las vueltas, paralelas a las líneas de crecimiento; una asimetría las hace abruptas hacia la apertura, como las **várices** que dejan los labios antiguos.
+- Los **cordones espirales** C recorren las vueltas (en los bivalvos, las costillas radiales). Junto con las costillas forman un dibujo **reticulado**, o **nódulos** donde ambos se multiplican.
+- Una **quilla** K es un solo cordón fuerte, y las **espinas** Σ son conos en una o dos filas.
+- f(s) permite que el relieve **se desvanezca o aparezca** a medida que crece la concha.
+
+![Cuatro conchas ornamentadas generadas con la app: un ammonites con costillas (Dactylioceras), un Cerithium con filas de nódulos y color en bandas, un ammonites con costillas y espinas dibujado con líneas, y un Epitonium con costillas laminares y rayas en llama](images/ornament.png)
+
+Los ejemplos cargan la forma y el relieve de conchas reales: *Epitonium clathrus*, *Turritella*, *Calliostoma*, *Cancellaria*, *Cerithium*, la concha sol *Astraea*, un ammonites con costillas (*Dactylioceras*) y otro con espinas, y un berberecho. Las conchas cuya forma no puede dibujar el modelo de Raup, como *Murex* con su largo canal sifonal, quedan fuera. Con ornamentación, el dibujo de líneas sigue el relieve, como una ilustración científica: líneas de crecimiento en las crestas de las costillas, líneas espirales en las crestas de los cordones y cada espina perfilada como un cono. El relieve aparece también en la ecuación, en la ficha PDF y en los archivos 3D.
+
+Esta parte es **descriptiva**, como el modelo de Raup (Fowler, Meinhardt y Prusinkiewicz, 1992; Cortie, 1993). Para los cordones espirales la app ofrece además una **explicación mecánica**, según Moulton, Goriely y Chirat (2012): el borde del manto es una varilla elástica unida a la concha que acaba de construir (una base de Winkler). Si crece más deprisa que el borde, se pandea en ondas, y cada onda deja un cordón. La carga necesaria para pandearse en n ondas es
+
+```
+P(n) / P_c = ½ · [ (n/n*)² + (n*/n)² ],    n* = Λ^(1/4) / 2π,    Λ = k·L₀⁴ / B
+```
+
+así que la primera onda que aparece, y el número de cordones, los fija la razón entre la rigidez de la unión k y la rigidez a flexión del borde del manto B. Un panel interactivo dibuja esta curva y hace crecer en la concha los cordones predichos. La ventana *Info* explica los dos modelos y cómo surgen las costillas y las espinas desde el mismo punto de vista mecánico (Moulton y cols., 2015; Chirat y cols., 2013).
 
 ### Morfoespacio
 
@@ -91,7 +121,7 @@ El botón **Export…** de la parte inferior de la barra lateral abre una ventan
 |---|---|---|
 | Vista actual | PNG, JPG, TIFF | Exactamente lo que muestra la vista 3D, a una, dos o cuatro veces la resolución de la pantalla, o a un tamaño fijo como 16:9 4K, 21:9 o la pantalla de un móvil, para fondos de pantalla. Con otras proporciones, el encuadre se ensancha o se estrecha para que la concha nunca quede cortada |
 | Lámina de vistas estándar | PNG, JPG, TIFF | Vistas apertural, dorsal, apical, umbilical, de perfil y 3/4, en proyección ortográfica, rotuladas, sobre fondo blanco o el fondo actual. También a los mismos tamaños fijos que la vista actual: las vistas se colocan en 3 × 2, 2 × 3 o en una sola fila o columna para llenar el formato |
-| Informe | PDF (A4) | Lámina, valores de los parámetros, posición en el morfoespacio y un enlace que vuelve a abrir la misma concha, sobre blanco, con las imágenes de la concha sobre el color de fondo actual o con toda la ficha en ese color. Con un patrón, una página con el registro espacio-tiempo, el perfil del borde y las constantes del modelo. De forma opcional, una página con las ecuaciones completas en forma general y con los valores actuales |
+| Informe | PDF (A4) | Lámina, valores de los parámetros y de la ornamentación, posición en el morfoespacio y un enlace que vuelve a abrir la misma concha, sobre blanco, con las imágenes de la concha sobre el color de fondo actual o con toda la ficha en ese color. Con un patrón, una página con el registro espacio-tiempo, el perfil del borde y las constantes del modelo. De forma opcional, una página con las ecuaciones completas en forma general y con los valores actuales |
 | Impresión 3D | STL, 3MF | Un sólido cerrado y estanco con una pared de grosor real, en milímetros, con el ápice hacia arriba y la base sobre la cama de impresión. Tú eliges el tamaño y el grosor de la pared |
 | Modelo 3D | GLB (glTF) | La superficie con su color y su patrón, para visores 3D, Blender o realidad aumentada |
 | Patrón | PNG, JPG, TIFF | El registro espacio-tiempo de la pigmentación |
@@ -123,7 +153,7 @@ python3 -m http.server 8000      # o bien: npm run serve
 
 Three.js, MathJax y jsPDF se cargan desde un CDN, así que hace falta conexión a internet.
 
-**Teclado:** `F` pantalla completa · `H` ocultar o mostrar todos los paneles · `Esc` salir de la pantalla completa o volver a mostrar los paneles.
+**Teclado:** `Ctrl`/`⌘` `Z` deshacer · `F` pantalla completa · `H` ocultar o mostrar todos los paneles · `Esc` salir de la pantalla completa o volver a mostrar los paneles. La ventana *Info* tiene una página *Controles* con todos los controles de ratón, táctiles y de teclado.
 
 ## Tests
 
@@ -137,7 +167,10 @@ Los tests comprueban, entre otras cosas, que:
 - las células del patrón quedan igual de espaciadas a lo largo de las aperturas elípticas;
 - cada preset de pigmentación forma un patrón, y la misma semilla da siempre el mismo patrón;
 - cada preset de forma cae en la región del morfoespacio de su grupo;
-- el sólido imprimible está cerrado, mira hacia fuera y tiene exactamente el tamaño pedido. Se comprueba con cada preset y con parámetros extremos;
+- el sólido imprimible está cerrado, mira hacia fuera y tiene exactamente el tamaño pedido. Se comprueba con cada preset, cada ejemplo ornamentado y parámetros extremos;
+- costillas, cordones, nódulos, quilla y espinas aparecen exactamente donde deben, y las espinas nunca abren el labio de la apertura;
+- el modelo mecánico se pandea primero en el número de ondas del mínimo de su curva de carga, y queda liso por debajo del umbral;
+- las imágenes TIFF se decodifican en los mismos píxeles, y la lámina de vistas se adapta a cualquier formato;
 - los archivos STL y 3MF están bien formados;
 - los textos en inglés y en español están completos.
 
@@ -147,7 +180,8 @@ Se ejecutan en cada subida mediante GitHub Actions. [ARCHITECTURE.md](../ARCHITE
 
 Son modelos mínimos:
 
-- **El modelo de Raup** supone que la apertura conserva la misma forma y orientación durante toda la vida (sin alometría), y no incluye ornamentación, estructuras internas ni charnela.
+- **El modelo de Raup** supone que la apertura conserva la misma forma y orientación durante toda la vida (sin alometría), y no incluye estructuras internas ni charnela.
+- **La ornamentación** es descriptiva: sus perfiles se eligen, no crecen. Las espinas apuntan según la normal de la superficie, y las conchas con canal sifonal no se pueden dibujar. El modelo mecánico solo cubre los cordones espirales, y solo el comienzo del pandeo.
 - **Las regiones del morfoespacio** son contornos aproximados, no ajustes a datos medidos.
 - **Los modelos de Meinhardt** tratan el borde como un anillo cerrado de células equivalentes, y las moléculas implicadas no se han identificado en ningún molusco.
 - **Los presets** reproducen el tipo de forma o de patrón de cada especie, no ejemplares concretos.
@@ -170,11 +204,15 @@ Alberto González Casarrubios, Universidad Complutense de Madrid · [albert23@uc
 
 ## Referencias
 
+- Chirat, R., Moulton, D. E., & Goriely, A. (2013). Mechanical basis of morphogenesis and convergent evolution of spiny seashells. *Proceedings of the National Academy of Sciences*, 110, 6015–6020.
+- Cortie, M. B. (1993). Digital seashells. *Computers & Graphics*, 17, 79–84.
 - Ermentrout, B., Campbell, J., & Oster, G. (1986). A model for shell patterns based on neural activity. *The Veliger*, 28, 369–388.
 - Fowler, D. R., Meinhardt, H., & Prusinkiewicz, P. (1992). Modeling seashells. *Computer Graphics (SIGGRAPH '92)*, 26(2), 379–387.
 - Gierer, A., & Meinhardt, H. (1972). A theory of biological pattern formation. *Kybernetik*, 12, 30–39.
 - Meinhardt, H. (2009). *The Algorithmic Beauty of Sea Shells* (4.ª ed.). Springer.
 - Meinhardt, H., & Klingler, M. (1987). A model for pattern formation on the shells of molluscs. *Journal of Theoretical Biology*, 126, 63–89.
+- Moulton, D. E., Goriely, A., & Chirat, R. (2012). Mechanical growth and morphogenesis of seashells. *Journal of Theoretical Biology*, 311, 69–79.
+- Moulton, D. E., Goriely, A., & Chirat, R. (2015). The morpho-mechanical basis of ammonite form. *Journal of Theoretical Biology*, 364, 220–230.
 - Raup, D. M. (1961). The geometry of coiling in gastropods. *Proceedings of the National Academy of Sciences*, 47, 602–609.
 - Raup, D. M. (1962). Computer as aid in describing form in gastropod shells. *Science*, 138, 150–152.
 - Raup, D. M. (1966). Geometric analysis of shell coiling: general problems. *Journal of Paleontology*, 40, 1178–1190.
