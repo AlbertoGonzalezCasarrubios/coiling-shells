@@ -191,7 +191,13 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
   const off = [(min[0] + max[0]) / 2, (min[1] + max[1]) / 2, min[2]];
   for (let k = 0; k < pos.length; k += 3) for (let a = 0; a < 3; a++) pos[k + a] = (pos[k + a] - off[a]) * fit;
 
-  return { positions: pos, indices: new Uint32Array(tris), dims: [0, 1, 2].map((a) => (max[a] - min[a]) * fit) };
+  return {
+    positions: pos,
+    indices: new Uint32Array(tris),
+    dims: [0, 1, 2].map((a) => (max[a] - min[a]) * fit),
+    // Largest spine in millimetres (to warn when spines are too thin to print)
+    spine: shell.spine && { height: shell.spine.height * fit, base: shell.spine.base * fit },
+  };
 }
 
 /**

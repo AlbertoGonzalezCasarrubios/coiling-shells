@@ -122,11 +122,11 @@ El botón **Export…** de la parte inferior de la barra lateral abre una ventan
 | Vista actual | PNG, JPG, TIFF | Exactamente lo que muestra la vista 3D, a una, dos o cuatro veces la resolución de la pantalla, o a un tamaño fijo como 16:9 4K, 21:9 o la pantalla de un móvil, para fondos de pantalla. Con otras proporciones, el encuadre se ensancha o se estrecha para que la concha nunca quede cortada |
 | Lámina de vistas estándar | PNG, JPG, TIFF | Vistas apertural, dorsal, apical, umbilical, de perfil y 3/4, en proyección ortográfica, rotuladas, sobre fondo blanco o el fondo actual. También a los mismos tamaños fijos que la vista actual: las vistas se colocan en 3 × 2, 2 × 3 o en una sola fila o columna para llenar el formato |
 | Informe | PDF (A4) | Lámina, valores de los parámetros y de la ornamentación, posición en el morfoespacio y un enlace que vuelve a abrir la misma concha, sobre blanco, con las imágenes de la concha sobre el color de fondo actual o con toda la ficha en ese color. Con un patrón, una página con el registro espacio-tiempo, el perfil del borde y las constantes del modelo. De forma opcional, una página con las ecuaciones completas en forma general y con los valores actuales |
-| Impresión 3D | STL, 3MF | Un sólido cerrado y estanco con una pared de grosor real, en milímetros, con el ápice hacia arriba y la base sobre la cama de impresión. Tú eliges el tamaño y el grosor de la pared |
+| Impresión 3D | STL, 3MF | Un sólido cerrado y estanco con una pared de grosor real, en milímetros, con el ápice hacia arriba y la base sobre la cama de impresión. Tú eliges el tamaño y el grosor de la pared. Con espinas, un aviso indica cuándo las más grandes quedarían demasiado finas para imprimirse bien |
 | Modelo 3D | GLB (glTF) | La superficie con su color y su patrón, para visores 3D, Blender o realidad aumentada |
 | Patrón | PNG, JPG, TIFF | El registro espacio-tiempo de la pigmentación |
 
-La dirección de la página también guarda la concha y el patrón actuales, así que al copiar el enlace se comparte exactamente lo que se ve en pantalla.
+La dirección de la página también guarda la concha, el patrón y el aspecto actuales (colores, resolución de la malla, bandas de crecimiento y eje), así que al copiar el enlace se comparte exactamente lo que se ve en pantalla. Los colores pasan a la dirección en cuanto los eliges; hasta entonces, cada visitante ve la paleta de su propio tema claro u oscuro.
 
 **Informe de ejemplo** (caracol de jardín con el patrón de *Cepaea nemoralis*, tres páginas):
 
@@ -174,7 +174,7 @@ Los tests comprueban, entre otras cosas, que:
 - las imágenes TIFF se decodifican en los mismos píxeles, y la lámina de vistas se adapta a cualquier formato;
 - los archivos STL y 3MF están bien formados;
 - los textos en inglés y en español están completos;
-- toda la interfaz funciona en un navegador real: una prueba abre la app en Chrome sin ventana y recorre la guía, las pestañas, los modos de dibujo, las orientaciones, las ecuaciones, deshacer, el creador de conchas, las páginas de Info y las exportaciones, y falla ante cualquier error en la página. Necesita Chrome y Node.js ≥ 22, y se omite sin ellos.
+- toda la interfaz funciona en un navegador real: una prueba abre la app en Chrome sin ventana y recorre la guía, las pestañas, los modos de dibujo, las orientaciones, las ecuaciones, el patrón siguiendo a un deslizador mientras se arrastra, el aspecto en la dirección, deshacer, el creador de conchas, las páginas de Info y las exportaciones, y falla ante cualquier error en la página. Necesita Chrome y Node.js ≥ 22, y se omite sin ellos.
 
 Se ejecutan en cada subida mediante GitHub Actions. [ARCHITECTURE.md](../ARCHITECTURE.md), en inglés, describe cómo está organizado el programa y qué cubre cada test.
 

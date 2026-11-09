@@ -120,11 +120,11 @@ The **Export…** button at the bottom of the sidebar opens a dialog with every 
 | Current view | PNG, JPG, TIFF | Exactly what the 3D view shows, at one, two or four times the screen resolution, or at a fixed size such as 16:9 4K, 21:9 or a phone screen, for wallpapers. At another aspect ratio the framing widens or narrows so the shell is never cut |
 | Plate of standard views | PNG, JPG, TIFF | Apertural, dorsal, apical, umbilical, profile and 3/4 views, in orthographic projection, labelled, on a white or the current background. Also at the same fixed sizes as the current view: the views are arranged in 3 × 2, 2 × 3 or a single row or column to fill the format |
 | Report | PDF (A4) | Plate, parameter and ornament values, position in the morphospace and a link that reopens the same shell, on white, with the shell images on the current background colour, or with the whole sheet in that colour. With a pattern, a page with the space–time record, the margin profile and the model constants. Optionally, a page with the full equations in general form and with the current values |
-| 3D printing | STL, 3MF | A closed, watertight solid with a real wall thickness, in millimetres, with the apex up and the base on the print bed. You choose the size and the wall thickness |
+| 3D printing | STL, 3MF | A closed, watertight solid with a real wall thickness, in millimetres, with the apex up and the base on the print bed. You choose the size and the wall thickness. With spines, a warning appears when the largest ones would be too thin to print well |
 | 3D model | GLB (glTF) | The surface with its colour and pattern, for 3D viewers, Blender or augmented reality |
 | Pattern | PNG, JPG, TIFF | The space–time record of the pigmentation |
 
-The page address also stores the current shell and pattern, so copying the link shares exactly what is on screen.
+The page address also stores the current shell, the pattern and the look (colours, mesh resolution, growth bands and axis), so copying the link shares exactly what is on screen. The colours enter the address once you choose them; until then each visitor sees the palette of their own light or dark theme.
 
 **Example report** (garden snail with the *Cepaea nemoralis* pattern, three pages):
 
@@ -172,7 +172,7 @@ The tests check, among other things, that:
 - TIFF images decode to the same pixels, and the plate of views fits every format;
 - STL and 3MF files are well formed;
 - the English and Spanish texts are complete;
-- the whole interface works in a real browser: a test opens the app in headless Chrome and walks through the guide, the tabs, the render modes, the orientations, the equations, undo, the shell creator, the About pages and the exports, and fails on any error in the page. It needs Chrome and Node.js ≥ 22, and is skipped without them.
+- the whole interface works in a real browser: a test opens the app in headless Chrome and walks through the guide, the tabs, the render modes, the orientations, the equations, the pattern following a dragged slider, the look in the address, undo, the shell creator, the About pages and the exports, and fails on any error in the page. It needs Chrome and Node.js ≥ 22, and is skipped without them.
 
 They run on every push through GitHub Actions. [ARCHITECTURE.md](ARCHITECTURE.md) describes how the program is organised and what each test covers.
 

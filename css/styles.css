@@ -201,6 +201,9 @@ input[type='range']::-moz-range-thumb {
 .btn svg { width: 15px; height: 15px; }
 .btn:hover { border-color: var(--accent); color: var(--accent); }
 .btn-wide { width: 100%; }
+.save-row { display: flex; gap: 8px; }
+.save-row .btn { flex: 1; }
+.save-row .select { width: auto; flex: 0 0 auto; }
 .toggle-btn { height: 100%; }
 .toggle-btn[aria-pressed='true'] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 #grow[aria-pressed='true'] { background: var(--accent); border-color: var(--accent); color: var(--surface); }

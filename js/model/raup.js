@@ -30,7 +30,7 @@
  * generating curve, which grows with the shell (see ornament.js).
  */
 
-import { makeOrnament } from './ornament.js';
+import { growthFactor, makeOrnament } from './ornament.js';
 export { bump, hasOrnament } from './ornament.js';
 
 /**
@@ -284,5 +284,19 @@ export function buildShell(p) {
     // To average the seam normals (columns 0 and segPhi)
     grid: { rows, cols, copies, count },
     stats: { vertices: count * copies, triangles: indices.length / 3 },
+    // Largest spine (the youngest one, next to the aperture), in output units:
+    // its height and the diameter of its base. Null without spines.
+    spine: largestSpine(p, orn.crests, { a, rc, logW, scale }),
+  };
+}
+
+function largestSpine(p, { spines, halfTheta }, { a, rc, logW, scale }) {
+  if (!spines?.length) return null;
+  const { theta } = spines[0];
+  const g = Math.exp((theta / (2 * Math.PI)) * logW);
+  const s = 1 + theta / (2 * Math.PI * p.turns); // fraction of growth
+  return {
+    height: g * a * p.spineH * growthFactor(p.ornGrowth ?? 0, s) * scale,
+    base: 2 * g * halfTheta * (rc + a) * scale,
   };
 }

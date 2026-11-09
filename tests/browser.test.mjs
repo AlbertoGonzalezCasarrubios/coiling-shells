@@ -1,7 +1,8 @@
 // End-to-end test of the interface in a real browser (headless Chrome).
 //
 // It serves the app, opens it, and walks through every part of the interface:
-// guide, tabs, render modes, orientations, equations, undo, the shell creator,
+// guide, tabs, render modes, orientations, equations, the pattern following a
+// dragged slider, appearance in the address, undo, the shell creator,
 // the About pages and the exports (image, plate, PDF, STL). It fails if the page
 // throws any error or if an export does not produce a file.
 //
@@ -115,6 +116,31 @@ const TOUR = String.raw`(async () => {
   $('toggleFormula').click(); await sl(2500); $('toggleFormula').click();
   $('tabbtn-pigment').click(); document.querySelectorAll('#patternGallery button')[1].click(); await sl(3000);
   log.patternOn = /pg=1/.test(location.hash);
+  // Dragging a pattern slider: the pattern follows it before the drag ends
+  // (each result hides the "computing" note, even if the next one shows it again at once)
+  let shown = 0;
+  const seen = new MutationObserver((rs) => { shown += rs.filter((r) => r.oldValue === null).length; });
+  seen.observe($('patternStatus'), { attributes: true, attributeFilter: ['hidden'], attributeOldValue: true });
+  const drag = $('p-pnoise');
+  for (let i = 0; i < 60; i++) {
+    drag.value = (0.5 * (i % 30)) / 30;
+    drag.dispatchEvent(new Event('input'));
+    await sl(50);
+  }
+  log.liveUpdates = shown;
+  seen.disconnect();
+  await sl(2500);
+  // The pattern button saves in the chosen format, shared with the export window
+  $('savePatternFormat').value = 'tiff'; $('savePatternFormat').dispatchEvent(new Event('change'));
+  log.formatShared = $('exPatternFormat').value === 'tiff';
+  $('savePattern').click(); await sl(1500);
+  log.patternTiff = files.some((f) => /^meinhardt_.*\.tif$/.test(f.name));
+  // An appearance is part of the address and the last step of the history
+  const bg0 = $('bgColor').value;
+  document.querySelector('[data-palette=dark]').click(); await sl(900);
+  log.lookHash = /bg=111821/.test(location.hash);
+  $('undo').click(); await sl(900);
+  log.lookUndone = $('bgColor').value === bg0;
   await sl(600); $('undo').click(); await sl(1500);
   log.undone = /pg=0/.test(location.hash);
   $('openWizard').click(); await sl(500);
@@ -131,6 +157,11 @@ const TOUR = String.raw`(async () => {
   $('infoDialog')?.close?.();
   document.querySelectorAll('dialog[open]').forEach((d) => d.close());
   $('openExport').click(); await sl(1200);
+  // Spines (the spiny ammonite) printed very small: the warning appears
+  log.spineOk = $('exSpineWarn').hidden;
+  $('exSize').value = 20; $('exSize').dispatchEvent(new Event('input')); await sl(1500);
+  log.spineWarn = !$('exSpineWarn').hidden;
+  $('exSize').value = 80; $('exSize').dispatchEvent(new Event('input')); await sl(1500);
   $('exFormat').value = 'jpg'; $('exPng').click(); await sl(3000);
   $('exPlateFormat').value = 'tiff'; $('exPlate').click(); await sl(5000);
   $('exStl').click(); await sl(4000);
@@ -156,7 +187,14 @@ test('the whole interface works in a real browser', { skip, timeout: 240_000 }, 
     assert.equal(log.guideOpen, true, 'the guide opens');
     assert.equal(log.ornHash, true, 'an ornament preset reaches the URL');
     assert.equal(log.patternOn, true, 'a pattern can be applied');
+    assert.ok(log.liveUpdates >= 2, `the pattern follows a dragged slider (${log.liveUpdates} updates)`);
+    assert.equal(log.formatShared, true, 'the pattern format is shared with the export window');
+    assert.equal(log.patternTiff, true, 'the pattern button saves a TIFF');
+    assert.equal(log.lookHash, true, 'the colours reach the address');
+    assert.equal(log.lookUndone, true, 'undo restores the previous colours');
     assert.equal(log.undone, true, 'undo removes it again');
+    assert.equal(log.spineOk, true, 'no spine warning at 80 mm');
+    assert.equal(log.spineWarn, true, 'spine warning at 20 mm');
     assert.equal(log.wizardClosed, true, 'the shell creator gives the canvas back');
     assert.equal(log.raupTheory, true, 'the Theory link of the shape tab opens Raup\'s page');
     assert.equal(log.mathErrors, 0, 'every About page typesets');

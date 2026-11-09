@@ -38,7 +38,7 @@ import { setLang, getLang, t, tPreset, applyStatic } from './i18n/i18n.js';
 // Language: English by default; the visitor's choice is remembered for later visits
 setLang(storage.get(LANG_KEY) ?? 'en');
 
-setHashHooks({ patternHash: (q) => patternHash(q), noteChange: () => noteChange() });
+setHashHooks({ patternHash: (q) => patternHash(q), lookHash: (q) => lookHash(q), noteChange: () => noteChange() });
 
 // ---------------------------------------------------------------------------
 // Mesh construction
@@ -207,7 +207,7 @@ $('mirror').addEventListener('click', () => {
 
 $('quality').addEventListener('change', (e) => {
   state.quality = e.target.value;
-  dirty = true;
+  dirty = true; // the rebuild rewrites the address
 });
 
 document.querySelectorAll('#mode button').forEach((btn) =>
@@ -218,23 +218,94 @@ document.querySelectorAll('#mode button').forEach((btn) =>
   })
 );
 
-$('lineColor').addEventListener('input', (e) => lineMat.color.set(e.target.value));
-$('shellColor').addEventListener('input', applyShellMaterial);
-$('bgColor').addEventListener('input', (e) => scene.background.set(e.target.value));
+// Appearance: colours, mesh resolution, growth bands and axis. It travels in the
+// address and each change is a step of the undo history. The colours enter the
+// address once they have been chosen (or came in a link); until then each
+// visitor sees the palette of their own light or dark theme.
+let lookChosen = ['lc', 'sc', 'bg'].some((k) => fromHash.has(k));
+function readLook() {
+  return {
+    line: $('lineColor').value, shell: $('shellColor').value, bg: $('bgColor').value,
+    quality: state.quality, bands: $('bands').checked, axis: $('showAxis').checked,
+  };
+}
+function applyColours({ line, shell, bg }) {
+  setPaletteInputs({ line, shell, bg });
+  lineMat.color.set(line);
+  applyShellMaterial();
+  scene.background.set(bg);
+}
+function setAxisVisible(on) {
+  $('showAxis').checked = on;
+  axis.visible = on;
+  $('axis-params').hidden = !on; // the width control only appears when the axis is visible
+}
+/** Restores an appearance (undo, links). */
+function applyLook(l) {
+  const now = readLook();
+  if (l.line !== now.line || l.shell !== now.shell || l.bg !== now.bg) {
+    lookChosen = true;
+    applyColours(l);
+  }
+  if (l.bands !== now.bands) {
+    $('bands').checked = l.bands;
+    applyShellMaterial();
+  }
+  if (l.axis !== now.axis) setAxisVisible(l.axis);
+  if (l.quality !== now.quality) {
+    state.quality = l.quality;
+    $('quality').value = l.quality;
+    dirty = true;
+  }
+}
+function lookHash(q) {
+  if (lookChosen) for (const [k, id] of [['lc', 'lineColor'], ['sc', 'shellColor'], ['bg', 'bgColor']]) q.set(k, $(id).value.slice(1));
+  if (state.quality !== 'medium') q.set('q', state.quality[0]);
+  if (!$('bands').checked) q.set('bd', '0');
+  if ($('showAxis').checked) q.set('ax', '1');
+}
+/** The appearance carried by a link, applied on load. */
+function lookFromHash() {
+  const l = readLook();
+  const hex = (k) => (/^[0-9a-f]{6}$/i.test(fromHash.get(k) ?? '') ? `#${fromHash.get(k).toLowerCase()}` : null);
+  l.line = hex('lc') ?? l.line;
+  l.shell = hex('sc') ?? l.shell;
+  l.bg = hex('bg') ?? l.bg;
+  l.quality = { l: 'low', m: 'medium', h: 'high' }[fromHash.get('q')] ?? l.quality;
+  if (fromHash.has('bd')) l.bands = fromHash.get('bd') !== '0';
+  if (fromHash.has('ax')) l.axis = fromHash.get('ax') === '1';
+  applyLook(l);
+}
+const colourChosen = () => {
+  lookChosen = true;
+  writeHash();
+};
+$('lineColor').addEventListener('input', (e) => {
+  lineMat.color.set(e.target.value);
+  colourChosen();
+});
+$('shellColor').addEventListener('input', () => {
+  applyShellMaterial();
+  colourChosen();
+});
+$('bgColor').addEventListener('input', (e) => {
+  scene.background.set(e.target.value);
+  colourChosen();
+});
 $('hideHidden').addEventListener('change', applyMode);
 document.querySelectorAll('[data-palette]').forEach((b) =>
   b.addEventListener('click', () => {
-    const p = PALETTES[b.dataset.palette];
-    setPaletteInputs(p);
-    lineMat.color.set(p.line);
-    applyShellMaterial();
-    scene.background.set(p.bg);
+    applyColours(PALETTES[b.dataset.palette]);
+    colourChosen();
   })
 );
-$('bands').addEventListener('change', applyShellMaterial);
+$('bands').addEventListener('change', () => {
+  applyShellMaterial();
+  writeHash();
+});
 $('showAxis').addEventListener('change', (e) => {
-  axis.visible = e.target.checked;
-  $('axis-params').hidden = !e.target.checked; // the width control only appears when the axis is visible
+  setAxisVisible(e.target.checked);
+  writeHash();
 });
 createParam({ key: 'axisWidth', min: 0.5, max: 6, step: 0.5, digits: 1 }, $('axis-params'), {
   compact: true,
@@ -530,12 +601,14 @@ initWizard({
 
 // Undo (ui/undo.js)
 initUndo({
+  applyLook,
   applyMode,
   computePattern,
   controlsByKey,
   markDirty,
   pattern,
   presetSel,
+  readLook,
   setMirror,
   setPatternOn,
   syncOrnamentControls,
@@ -586,6 +659,7 @@ function renderFrame() {
 }
 
 applyLanguage(getLang());
+lookFromHash();
 applyMode();
 setOrient(state.orient, { animate: false });
 startUndo(); // undo history starts from the state the page opened with

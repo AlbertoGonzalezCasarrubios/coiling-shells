@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [semantic versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- The page address also stores the look: line, shell and background colours (once chosen), mesh resolution, growth bands and axis, so a shared link opens with the same appearance.
+- Undo includes the look: a change of colour, palette, resolution, bands or axis is a step like any other.
+- The 3D printing section warns, only when the shell has spines, if the largest ones would be too thin or slender to print well at the chosen size and wall.
+
+### Changed
+- The pattern follows a dragged slider: a new simulation starts as soon as the previous one ends, with the latest values, instead of waiting until the slider is released.
+- The *Save pattern* button of the pigment tab offers PNG, JPG or TIFF, the same choice as in the export window.
+
 ## [1.1.0] - 2026-11-09
 
 ### Added

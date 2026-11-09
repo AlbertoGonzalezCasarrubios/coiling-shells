@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import { t, tPattern } from '../i18n/i18n.js';
 import { PROFILE_WIDTH, simulatePattern } from '../model/meinhardt.js';
 import { DEFAULT_PATTERN, MODEL_DEFAULTS, PATTERN_PRESETS } from '../model/presets.js';
-import { download } from './export-dialog.js';
+import { downloadImage } from './export-dialog.js';
 import { formulaView, openInfo, scheduleFormula } from './formulas.js';
 import { innerMat, renderer, solidMat } from './scene.js';
 import { fromHash, state, writeHash } from './state.js';
@@ -326,8 +326,8 @@ export function applyShellMaterial() {
 }
 
 // Computed in a Web Worker, or on the main thread if workers are unavailable.
-// If a new computation arrives while another is running, the busy worker is
-// discarded instead of waiting: when dragging a slider only the last value matters.
+// A slider waits for the running computation and then asks for the latest values
+// (schedulePattern); any other change (a preset, a seed) discards the busy worker.
 let patternWorker = null;
 let workerBusy = false;
 let workerFailed = false;
@@ -339,6 +339,11 @@ function startWorker() {
     patternWorker.onmessage = (e) => {
       workerBusy = false;
       onPatternResult(e.data);
+      // A slider moved while this one was computed: compute the latest values now
+      if (patternPending) {
+        patternPending = false;
+        computePattern();
+      }
     };
     patternWorker.onerror = () => {
       patternWorker = null;
@@ -363,6 +368,7 @@ function simParams(p) {
 
 export function computePattern() {
   const id = ++patternJob;
+  patternPending = false;
   const p = simParams(pattern);
   // The pattern size is the number of margin cells (fewer cells, larger elements)
   const g = { W: state.W, turns: state.turns, rows: PATTERN_ROWS, width: PATTERN_WIDTH, nMax: Math.round(PATTERN_CELLS / pattern.size) };
@@ -392,9 +398,18 @@ function onPatternResult({ id, v, second, state: simState }) {
   paintPattern();
 }
 
+// While a slider is dragged the pattern follows it: a new computation starts
+// as soon as the previous one finishes, always with the latest values
+let patternPending = false;
+function requestPattern() {
+  patternTimer = 0;
+  if (!pattern.on) return;
+  if (workerBusy && patternWorker) patternPending = true;
+  else computePattern();
+}
+
 export function schedulePattern() {
-  clearTimeout(patternTimer);
-  if (pattern.on) patternTimer = setTimeout(computePattern, 80);
+  if (pattern.on && !patternTimer) patternTimer = setTimeout(requestPattern, 40);
   writeHash();
   if (formulaView === 'meinhardt') scheduleFormula();
 }
@@ -671,7 +686,10 @@ export function initPigment(ctx) {
   $('pigClear').addEventListener('click', () => setPatternOn(false));
 
   $('savePattern').addEventListener('click', () => {
-    if (patternValues) download(patternCanvas.toDataURL('image/png'), `meinhardt_${pattern.preset}_seed${pattern.seed}.png`);
+    if (patternValues) downloadImage(patternCanvas, `meinhardt_${pattern.preset}_seed${pattern.seed}`, $('savePatternFormat').value);
   });
+  // The same format choice here and in the export window
+  const formats = [$('savePatternFormat'), $('exPatternFormat')];
+  formats.forEach((el) => el.addEventListener('change', () => formats.forEach((o) => (o.value = el.value))));
 
 }

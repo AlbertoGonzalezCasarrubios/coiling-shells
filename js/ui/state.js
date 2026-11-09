@@ -1,8 +1,9 @@
 /**
  * State of the shell and of its view: Raup's parameters, the ornament, the
  * render settings and the orientation, the definitions of their controls, and
- * the shareable address (#W=2.4&D=0.08…) that is read on load and rewritten on
- * every change. Also the small wrapper around localStorage.
+ * the shareable address (#W=2.4&D=0.08…, with the pattern and the appearance)
+ * that is read on load and rewritten on every change. Also the small wrapper
+ * around localStorage.
  */
 import { PRESETS, DEFAULT_PRESET } from '../model/presets.js';
 import { hasOrnament, ORNAMENT_DEFAULTS } from '../model/ornament.js';
@@ -125,8 +126,8 @@ export const WELCOME_KEY = 'coiling-shells.welcome';
 
 
 let hashTimer = 0;
-// Other parts add to the address (the pattern) or listen to every change (undo)
-const hooks = { patternHash: () => {}, noteChange: () => {} };
+// Other parts add to the address (the pattern, the appearance) or listen to every change (undo)
+const hooks = { patternHash: () => {}, lookHash: () => {}, noteChange: () => {} };
 export function setHashHooks(h) {
   Object.assign(hooks, h);
 }
@@ -153,5 +154,6 @@ export function writeHashNow() {
   }
   if (state.orient !== 'vertical') q.set('o', state.orient[0]);
   hooks.patternHash(q);
+  hooks.lookHash(q);
   history.replaceState(null, '', `#${q}`);
 }

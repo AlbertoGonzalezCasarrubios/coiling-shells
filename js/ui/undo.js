@@ -1,6 +1,6 @@
 /**
- * Undo: each step is a snapshot of the shape, the ornament, the render mode and
- * the pattern. Every change reaches noteChange() through writeHash(); a step is
+ * Undo: each step is a snapshot of the shape, the ornament, the render mode,
+ * the pattern and the appearance (colours, resolution, bands, axis). Every change reaches noteChange() through writeHash(); a step is
  * closed when changes stop for a moment, so dragging a slider makes one step.
  * The view (camera, orientation) is not a step.
  */
@@ -10,11 +10,8 @@ import { $ } from './util.js';
 import { syncWizard } from './wizard.js';
 
 // Provided by main.js through init()
-let applyMode, computePattern, controlsByKey, markDirty, pattern, presetSel, setMirror, setPatternOn, syncOrnamentControls, syncPatternControls;
+let applyLook, applyMode, computePattern, controlsByKey, markDirty, pattern, presetSel, readLook, setMirror, setPatternOn, syncOrnamentControls, syncPatternControls;
 
-// Undo: each step is a snapshot of the shape, the ornament, the render mode and
-// the pattern. Changes that follow one another quickly (dragging a slider) make
-// a single step. The view (camera, orientation) is not a step.
 // ---------------------------------------------------------------------------
 
 const undoStack = [];
@@ -33,6 +30,7 @@ function takeSnapshot() {
     orn: pickOrnament(state),
     mode: state.mode,
     pattern: { ...pattern },
+    look: readLook(),
   });
 }
 
@@ -62,7 +60,7 @@ export function undo() {
   restoreSnapshot(JSON.parse(prev));
 }
 
-function restoreSnapshot({ shape, orn, mode, pattern: pat }) {
+function restoreSnapshot({ shape, orn, mode, pattern: pat, look }) {
   for (const k of ['W', 'D', 'T', 'S', 'turns']) controlsByKey[k].set(shape[k], { fitScale: true });
   state.hand = shape.hand;
   $('hand').value = String(shape.hand);
@@ -79,6 +77,7 @@ function restoreSnapshot({ shape, orn, mode, pattern: pat }) {
     if (pattern.on) computePattern();
     setPatternOn(pattern.on);
   }
+  applyLook(look);
   markDirty();
 }
 
@@ -91,7 +90,7 @@ function setUndoEnabled(on) {
 
 /** Connects this part of the interface to the rest of the app. */
 export function initUndo(ctx) {
-  ({ applyMode, computePattern, controlsByKey, markDirty, pattern, presetSel, setMirror, setPatternOn, syncOrnamentControls, syncPatternControls } = ctx);
+  ({ applyLook, applyMode, computePattern, controlsByKey, markDirty, pattern, presetSel, readLook, setMirror, setPatternOn, syncOrnamentControls, syncPatternControls } = ctx);
   $('undo').addEventListener('click', undo);
   $('wzUndo').addEventListener('click', () => {
     undo();

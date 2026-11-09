@@ -348,8 +348,14 @@ let dimsTimer = 0;
 function updatePrintDims() {
   clearTimeout(dimsTimer);
   dimsTimer = setTimeout(() => {
-    const [x, y, z] = printMesh().dims.map((d) => d.toFixed(0));
+    const { dims, spine } = printMesh();
+    const [x, y, z] = dims.map((d) => d.toFixed(0));
     $('exDims').textContent = t('ex.dims', x, y, z);
+    // Only with spines: warn when the largest ones are narrow or slender
+    const { wall } = printOptions();
+    const thin = spine && spine.height > 0 && (spine.base < Math.max(2, 2 * wall) || spine.height > 2.5 * spine.base);
+    $('exSpineWarn').hidden = !thin;
+    if (thin) $('exSpineWarn').textContent = t('ex.spineWarn', spine.height.toFixed(1), spine.base.toFixed(1));
   }, 120);
 }
 

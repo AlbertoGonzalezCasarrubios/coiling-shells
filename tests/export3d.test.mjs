@@ -102,3 +102,20 @@ test('3MF is a valid ZIP package with the model in millimetres', async () => {
   assert.equal((model.match(/<vertex /g) || []).length, mesh.positions.length / 3);
   assert.equal((model.match(/<triangle /g) || []).length, mesh.indices.length / 3);
 });
+
+test('the largest spine is measured in millimetres, only when there are spines', () => {
+  assert.equal(buildPrintMesh(base, { size: 80 }).spine, null);
+  const p = ORNAMENT_PRESETS.spinyAmmonite;
+  const shape = { ...base, ...p.shape, ...p.orn };
+  const small = buildPrintMesh(shape, { size: 40 }).spine;
+  const large = buildPrintMesh(shape, { size: 80 }).spine;
+  assert.ok(small.height > 0 && small.base > 0);
+  // Twice the size, twice the spine
+  assert.ok(Math.abs(large.height / small.height - 2) < 0.02);
+  assert.ok(Math.abs(large.base / small.base - 2) < 0.02);
+  // Longer spines are taller, not wider (the base only shrinks a little, because
+  // the spines widen the outline and the whole shell is scaled down to fit)
+  const tall = buildPrintMesh({ ...shape, spineH: 2 * shape.spineH }, { size: 80 }).spine;
+  assert.ok(tall.height > 1.5 * large.height);
+  assert.ok(tall.base <= large.base && tall.base > 0.9 * large.base);
+});
