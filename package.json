@@ -1,6 +1,6 @@
 {
   "name": "coiling-shells",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Interactive 3D explorer of Raup's shell-coiling model and Meinhardt's reaction–diffusion pigmentation models.",
   "type": "module",
   "private": true,

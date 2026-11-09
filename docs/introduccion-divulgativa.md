@@ -192,7 +192,7 @@ Para cualquier duda o comentario: **Alberto González Casarrubios** (Universidad
 
 Si usas la app en un trabajo, una clase o una publicación, puedes citarla así:
 
-> González Casarrubios, A. (2026). *Theoretical Shells: Form and Colour* (versión 1.0.0) [Software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells
+> González Casarrubios, A. (2026). *Theoretical Shells: Form and Colour* (versión 1.1.0) [Software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells
 
 Los datos de cita también están en [CITATION.cff](../CITATION.cff).
 

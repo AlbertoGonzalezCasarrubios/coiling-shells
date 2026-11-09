@@ -71,22 +71,82 @@ The interface lives in `js/ui/`, one module per part; the science lives in `js/m
 ```mermaid
 flowchart LR
   html["index.html<br/>import map · MathJax config"] --> main["main.js<br/>coordinator · mesh rebuild · render loop"]
-  main --> raup["raup.js<br/>shell geometry"]
-  main --> morpho["morphospace.js<br/>contact curve · regions"]
-  main --> exp["export3d.js<br/>printable solid · STL · 3MF"]
-  main --> img["imagefile.js<br/>sizes · framing · TIFF"]
-  main --> mech["mechanics.js<br/>buckling of the mantle edge"]
-  raup --> orn["ornament.js<br/>ribs · cords · spines"]
-  main --> presets["presets.js"]
-  main --> i18n["i18n/<br/>EN / ES strings · theory pages"]
-  main --> ui["ui/<br/>state · scene · controls · views · tabs · export · pdf · guide · wizard · undo"]
-  main -. "postMessage" .-> worker["pigment-worker.js"]
-  worker --> mein["meinhardt.js<br/>reaction–diffusion"]
-  main -. "fallback without workers" .-> mein
+
+  subgraph UI["js/ui/ · interface"]
+    direction TB
+    base["state · scene · controls · views · util<br/><i>shared by every module below</i>"]
+    tabs["ornament-tab · pigment<br/>morphospace-chart · formulas"]
+    win["export-dialog · pdf<br/>guide · wizard · undo"]
+  end
+
+  subgraph MODEL["js/model/ · science, pure and tested"]
+    direction TB
+    raup["raup.js<br/>shell geometry"]
+    orn["ornament.js<br/>ribs · cords · spines"]
+    mech["mechanics.js<br/>buckling of the mantle edge"]
+    mein["meinhardt.js<br/>reaction–diffusion"]
+    morpho["morphospace.js<br/>contact curve · regions"]
+    presets["presets.js<br/>shape · ornament · pattern"]
+  end
+
+  subgraph EXPORT["js/export/ · file formats, pure"]
+    direction TB
+    exp["export3d.js<br/>printable solid · STL · 3MF"]
+    img["imagefile.js<br/>sizes · framing · TIFF"]
+  end
+
+  i18n["js/i18n/<br/>EN / ES strings · theory pages · TeX"]
+  worker["js/workers/<br/>pigment-worker.js"]
+  three[("Three.js")]
+  ondemand[("jsPDF · MathJax SVG<br/>GLTFExporter")]
+
+  main --> UI
+  main --> raup
+  raup --> orn
+  tabs --> mech
+  tabs --> morpho
+  win --> raup
+  win --> exp
+  win --> img
   exp --> raup
-  main --> three[("Three.js · CDN")]
-  main -. "on demand" .-> cdn[("MathJax SVG · jsPDF · GLTFExporter")]
+  UI --> presets
+  UI --> i18n
+  tabs -. "postMessage" .-> worker
+  worker --> mein
+  tabs -. "fallback without workers" .-> mein
+  base --> three
+  win -. "loaded on demand" .-> ondemand
+
+  classDef entry fill:#e7e5e4,stroke:#57534e,color:#1c1917
+  classDef ui fill:#dbeafe,stroke:#1d4ed8,color:#172554
+  classDef model fill:#dcfce7,stroke:#15803d,color:#14532d
+  classDef export fill:#fef3c7,stroke:#b45309,color:#451a03
+  classDef text fill:#f3e8ff,stroke:#7e22ce,color:#3b0764
+  classDef worker fill:#ccfbf1,stroke:#0f766e,color:#134e4a
+  classDef external fill:#ffffff,stroke:#6b7280,color:#1f2937,stroke-dasharray:4 3
+  class html,main entry
+  class base,tabs,win ui
+  class raup,orn,mech,mein,morpho,presets model
+  class exp,img export
+  class i18n text
+  class worker worker
+  class three,ondemand external
+  style UI fill:#eff6ff,stroke:#1d4ed8
+  style MODEL fill:#f0fdf4,stroke:#15803d
+  style EXPORT fill:#fffbeb,stroke:#b45309
 ```
+
+| Colour | Role |
+|---|---|
+| Grey | Entry point and coordination: the page and `main.js` |
+| Blue | Interface (`js/ui/`): DOM, Three.js scene, controls and windows |
+| Green | The science (`js/model/`): pure functions, no DOM, covered by the tests |
+| Amber | File formats (`js/export/`): pure, covered by the tests |
+| Purple | Texts (`js/i18n/`) |
+| Teal | Web Worker: the pigmentation model off the main thread |
+| White, dashed | External libraries from a CDN |
+
+Solid arrows are imports; dashed arrows are messages to the worker or libraries loaded only when needed. Within `js/ui/`, the blue base modules are imported by all the others.
 
 ### Data flow
 
@@ -100,7 +160,7 @@ flowchart TB
   end
   shapeCtl --> state[("state")]
   patCtl --> pattern[("pattern")]
-  state -- "dirty flag, next frame" --> build["buildShell()"]
+  state -- "dirty flag, next frame" --> build["buildShell()<br/>with ornament"]
   build --> mesh["positions · uvs · indices · lines"]
   mesh --> scene["Three.js scene<br/>surface · inner nacre · lines · axis"]
   pattern -- "parameters changed" --> sim["simulatePattern()<br/>in the Web Worker"]
@@ -111,9 +171,24 @@ flowchart TB
   colorize --> st["space–time canvas<br/>in time · unrolled"]
   sim --> profile["margin profile<br/>activator · inhibitor / substrate"]
   state & pattern --> hash["URL hash<br/>shareable link"]
-  scene --> exports["Export dialog<br/>PNG · plate · PDF · GLB"]
+  state & pattern --> undo["undo history"]
+  scene --> exports["Export dialog<br/>images · plate · PDF · GLB"]
   state --> print["buildPrintMesh()<br/>STL · 3MF"]
+
+  classDef ctl fill:#dbeafe,stroke:#1d4ed8,color:#172554
+  classDef store fill:#e7e5e4,stroke:#57534e,color:#1c1917
+  classDef calc fill:#dcfce7,stroke:#15803d,color:#14532d
+  classDef data fill:#f8fafc,stroke:#94a3b8,color:#1f2937
+  classDef out fill:#fef3c7,stroke:#b45309,color:#451a03
+  class shapeCtl,patCtl ctl
+  class state,pattern store
+  class build,sim,colorize calc
+  class mesh,values,tex data
+  class scene,st,profile,hash,undo,exports,print out
+  style controls fill:#eff6ff,stroke:#1d4ed8
 ```
+
+Blue: what the user moves. Grey: the two state objects. Green: computation. Light grey: intermediate data. Amber: what the user sees or takes away.
 
 ## Geometry (`js/model/raup.js`)
 
@@ -125,7 +200,7 @@ flowchart TB
 4. **Triangles.** Each grid cell is split into two triangles, with front faces pointing out of the tube: both the dextral sense and the mirror reflection reverse the winding, and `raup.js` compensates for both.
 5. **Lines.** Spiral lines have constant φ; growth lines have constant θ (successive positions of the aperture). Rings are counted from the aperture towards the apex so that the final aperture always has one.
 6. **Vertex colours** for the growth bands of the solid mode.
-7. **Texture coordinates.** u is the **arc length** along the elliptical aperture (not the angle φ), so the cells of the pigmentation model are evenly spaced along the real margin, also when S ≠ 1. v is uniform in θ (0 at the apex, 1 at the aperture). The column φ = 2π repeats φ = 0 so the texture does not wrap inside the last triangle; `main.js` then averages the normals of that seam so it is invisible under lighting.
+7. **Texture coordinates.** u is the **arc length** along the elliptical aperture (not the angle φ), so the cells of the pigmentation model are evenly spaced along the real margin, also when S ≠ 1. v is uniform in θ (0 at the apex, 1 at the aperture). The column φ = 2π repeats φ = 0 so the texture does not wrap inside the last triangle; the viewer then averages the normals of that seam (`fixSeamNormals`) so it is invisible under lighting.
 
 It returns `positions`, `colors`, `uvs`, `indices`, `lineIndices`, the position of the coiling axis, the derived values (r_c, a, b), the grid layout and statistics.
 

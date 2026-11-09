@@ -188,7 +188,7 @@ These are minimal models:
 
 ## Citation
 
-> González Casarrubios, A. (2026). *Theoretical Shells: Form and Colour* (version 1.0.0) [Computer software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells
+> González Casarrubios, A. (2026). *Theoretical Shells: Form and Colour* (version 1.1.0) [Computer software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells
 
 Citation metadata are in [CITATION.cff](CITATION.cff); GitHub shows them under *Cite this repository*.
 
