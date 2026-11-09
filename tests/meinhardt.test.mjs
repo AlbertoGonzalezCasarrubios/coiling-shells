@@ -1,8 +1,8 @@
 // Tests for Meinhardt's pigmentation models (js/meinhardt.js).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { simulatePattern, PROFILE_WIDTH, rng32 } from '../js/meinhardt.js';
-import { PATTERN_PRESETS, MODEL_DEFAULTS } from '../js/presets.js';
+import { simulatePattern, PROFILE_WIDTH, rng32 } from '../js/model/meinhardt.js';
+import { PATTERN_PRESETS, MODEL_DEFAULTS } from '../js/model/presets.js';
 
 const g = { W: 2.4, turns: 4.5, rows: 256, width: 256, nMax: 256 };
 const preset = (k, extra = {}) => ({ ...PATTERN_PRESETS[k], seed: 7, ...extra });

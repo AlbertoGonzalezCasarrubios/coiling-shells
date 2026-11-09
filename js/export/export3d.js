@@ -11,8 +11,8 @@
  *
  * Pure module (no Three.js): it can be tested in Node.
  */
-import { buildShell } from './raup.js';
-import { ornamentResolution } from './ornament.js';
+import { buildShell } from '../model/raup.js';
+import { ornamentResolution } from '../model/ornament.js';
 
 // Print resolution: fine but bounded (about 350,000 triangles at most)
 const PRINT_QUALITY = { segPerTurn: 160, segPhi: 96, maxRows: 900 };

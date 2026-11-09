@@ -1,7 +1,7 @@
 // Tests for Raup's coiling model (js/raup.js).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildShell } from '../js/raup.js';
+import { buildShell } from '../js/model/raup.js';
 
 const base = {
   W: 2.4, D: 0.08, T: 1.6, S: 1, turns: 4.5, hand: 1, mirror: false, grow: 1,
@@ -121,7 +121,7 @@ test('growth animation shows a fraction of the triangles', () => {
 });
 
 test('ornament: bumps, relief along the normal and no relief when off', async () => {
-  const { bump, hasOrnament } = await import('../js/raup.js');
+  const { bump, hasOrnament } = await import('../js/model/raup.js');
   assert.equal(bump(0, 0.5), 1);
   assert.equal(bump(3, 0.2), 1);
   assert.equal(bump(0.3, 0.5), 0);          // outside the bump
