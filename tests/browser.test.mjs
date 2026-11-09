@@ -79,8 +79,12 @@ async function launch() {
   const send = (method, params = {}) => new Promise((r) => { const i = ++id; pending.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
   await send('Runtime.enable');
   await send('Page.enable');
-  const evaluate = async (expression) => {
-    const r = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+  // A page that stops answering (a crashed renderer) fails the test instead of hanging it
+  const evaluate = async (expression, ms = 300_000) => {
+    const r = await Promise.race([
+      send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }),
+      sleep(ms).then(() => { throw new Error(`the page did not answer within ${ms / 1000} s`); }),
+    ]);
     if (r.result?.exceptionDetails) throw new Error(r.result.exceptionDetails.exception?.description ?? 'evaluation failed');
     return r.result?.result?.value;
   };
@@ -89,6 +93,7 @@ async function launch() {
     const exited = new Promise((r) => proc.once('exit', r));
     proc.kill();
     await Promise.race([exited, sleep(5000)]);
+    if (proc.exitCode === null && proc.signalCode === null) proc.kill('SIGKILL');
     try { rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch { /* temporary folder */ }
   };
   return { send, evaluate, errors, close };
@@ -181,14 +186,16 @@ const TOUR = String.raw`(async () => {
   return log;
 })()`;
 
-test('the whole interface works in a real browser', { skip, timeout: 420_000 }, async () => {
+test('the whole interface works in a real browser', { skip, timeout: 400_000 }, async () => {
   const server = await serve();
   const { port } = server.address();
   const b = await launch();
+  let progress = '';
   try {
     await b.send('Page.navigate', { url: `http://127.0.0.1:${port}/?guide` });
     await sleep(5000);
     const log = await b.evaluate(TOUR);
+    progress = JSON.stringify(log);
     assert.equal(log.guideOpen, true, 'the guide opens');
     assert.equal(log.ornHash, true, 'an ornament preset reaches the URL');
     assert.equal(log.patternOn, true, 'a pattern can be applied');
@@ -208,6 +215,10 @@ test('the whole interface works in a real browser', { skip, timeout: 420_000 }, 
     for (const f of log.files) assert.ok(+f.split(':')[1] > 1000, `non-empty file ${f}`);
     assert.equal(log.lang, 'es');
     assert.deepEqual(b.errors, [], 'no errors in the page');
+  } catch (err) {
+    // On GitHub Actions the reason shows as an annotation of the run, without opening the log
+    if (process.env.CI) console.log(`::error title=Browser test::${String(err.message).replace(/\n/g, ' ')} | log ${progress} | page errors ${JSON.stringify(b.errors)}`);
+    throw err;
   } finally {
     await b.close();
     server.closeAllConnections();
