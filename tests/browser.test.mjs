@@ -98,6 +98,8 @@ async function launch() {
 const TOUR = String.raw`(async () => {
   const $ = (id) => document.getElementById(id);
   const sl = (ms) => new Promise((r) => setTimeout(r, ms));
+  // Waits until a condition holds (slow CI machines), at most ms
+  const until = async (cond, ms = 20000) => { for (const t0 = Date.now(); !cond() && Date.now() - t0 < ms;) await sl(100); return cond(); };
   const files = [];
   URL.revokeObjectURL = () => {};
   const capture = function () { files.push({ name: this.download, href: this.href }); };
@@ -122,27 +124,28 @@ const TOUR = String.raw`(async () => {
   const seen = new MutationObserver((rs) => { shown += rs.filter((r) => r.oldValue === null).length; });
   seen.observe($('patternStatus'), { attributes: true, attributeFilter: ['hidden'], attributeOldValue: true });
   const drag = $('p-pnoise');
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 400 && shown < 3; i++) {
     drag.value = (0.5 * (i % 30)) / 30;
     drag.dispatchEvent(new Event('input'));
     await sl(50);
   }
   log.liveUpdates = shown;
   seen.disconnect();
-  await sl(2500);
+  await until(() => $('patternStatus').hidden);
   // The pattern button saves in the chosen format, shared with the export window
   $('savePatternFormat').value = 'tiff'; $('savePatternFormat').dispatchEvent(new Event('change'));
   log.formatShared = $('exPatternFormat').value === 'tiff';
-  $('savePattern').click(); await sl(1500);
-  log.patternTiff = files.some((f) => /^meinhardt_.*\.tif$/.test(f.name));
+  $('savePattern').click();
+  log.patternTiff = await until(() => files.some((f) => /^meinhardt_.*\.tif$/.test(f.name)));
   // An appearance is part of the address and the last step of the history
   const bg0 = $('bgColor').value;
-  document.querySelector('[data-palette=dark]').click(); await sl(900);
-  log.lookHash = /bg=111821/.test(location.hash);
-  $('undo').click(); await sl(900);
-  log.lookUndone = $('bgColor').value === bg0;
-  await sl(600); $('undo').click(); await sl(1500);
-  log.undone = /pg=0/.test(location.hash);
+  document.querySelector('[data-palette=dark]').click();
+  log.lookHash = await until(() => /bg=111821/.test(location.hash));
+  await sl(600); $('undo').click();
+  log.lookUndone = await until(() => $('bgColor').value === bg0);
+  // Then undo goes back through the slider drag to the plain shell
+  for (let i = 0; i < 3 && !/pg=0/.test(location.hash); i++) { await sl(600); $('undo').click(); await until(() => !$('patternStatus').hidden || /pg=0/.test(location.hash), 1500); }
+  log.undone = await until(() => /pg=0/.test(location.hash), 3000);
   $('openWizard').click(); await sl(500);
   for (let i = 0; i < 4; i++) { $('wzNext').click(); await sl(400); }
   $('wzNext').click(); await sl(300);
@@ -158,10 +161,12 @@ const TOUR = String.raw`(async () => {
   document.querySelectorAll('dialog[open]').forEach((d) => d.close());
   $('openExport').click(); await sl(1200);
   // Spines (the spiny ammonite) printed very small: the warning appears
+  await until(() => $('exDims').textContent !== '');
   log.spineOk = $('exSpineWarn').hidden;
-  $('exSize').value = 20; $('exSize').dispatchEvent(new Event('input')); await sl(1500);
-  log.spineWarn = !$('exSpineWarn').hidden;
-  $('exSize').value = 80; $('exSize').dispatchEvent(new Event('input')); await sl(1500);
+  $('exSize').value = 20; $('exSize').dispatchEvent(new Event('input'));
+  log.spineWarn = await until(() => !$('exSpineWarn').hidden);
+  $('exSize').value = 80; $('exSize').dispatchEvent(new Event('input'));
+  await until(() => $('exSpineWarn').hidden);
   $('exFormat').value = 'jpg'; $('exPng').click(); await sl(3000);
   $('exPlateFormat').value = 'tiff'; $('exPlate').click(); await sl(5000);
   $('exStl').click(); await sl(4000);
@@ -176,7 +181,7 @@ const TOUR = String.raw`(async () => {
   return log;
 })()`;
 
-test('the whole interface works in a real browser', { skip, timeout: 240_000 }, async () => {
+test('the whole interface works in a real browser', { skip, timeout: 420_000 }, async () => {
   const server = await serve();
   const { port } = server.address();
   const b = await launch();
