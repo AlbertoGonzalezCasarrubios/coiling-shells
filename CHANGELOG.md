@@ -26,6 +26,8 @@ All notable changes to this project are documented in this file. The format is b
 - The PNG export at four times the screen resolution was cropped on high-density screens, because the browser granted a smaller drawing buffer than requested. Images of the current view are now drawn in tiles, so their size no longer depends on the drawing buffer.
 
 ### Changed
+- The code is organised in folders by role: `js/model/` (the science, pure and tested), `js/export/` (file formats), `js/ui/` (one module per part of the interface, connected by `main.js`), `js/i18n/` (interface strings, About pages and formulas in separate files) and `js/workers/`. `main.js` went from about 3 800 to 600 lines. Nothing changes for the user.
+- A test drives the whole interface in headless Chrome (guide, tabs, modes, orientations, equations, undo, shell creator, About pages and exports) and fails on any error in the page; `npm run test:fast` skips it.
 - The ornament tab sits between the shape and pigment tabs, and has simple controls (number and height of ribs, cords and spines) and advanced ones (widths, asymmetry, positions, keel, change with growth and the mechanical model). Spines are drawn whole: never across the lip of the aperture, where they would open it into a funnel, nor on the first whorls.
 - *Appearance* (colours, background, resolution, lines, axis) moved from the shape tab to a menu in the viewer toolbar, because it affects every tab.
 - The app remembers the visitor's choice of language (it still opens in English the first time).

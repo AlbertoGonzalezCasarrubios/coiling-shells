@@ -4,7 +4,7 @@
  * pigmentation page and, optionally, the equations typeset by MathJax.
  *
  * jsPDF and the SVG build of MathJax are loaded only when a sheet is made. The
- * sheet reads the app through a context object (see pdfContext in main.js).
+ * sheet reads the app through a context object (see pdfContext in export-dialog.js).
  */
 import { $, formatW, f, sig, hexRgb, luminance } from './util.js';
 import { t, tParam, tPattern, getLang } from '../i18n/i18n.js';

@@ -18,8 +18,8 @@ The app is a static web page: HTML, CSS and JavaScript ES modules, with no build
 index.html            Page, Three.js import map and MathJax configuration
 favicon.svg           Icon (an ammonite drawn with a logarithmic spiral)
 css/styles.css        Styles: automatic light/dark theme, responsive layout
-js/main.js            Bootstrap and the interface still to split: scene, controls, URL state, views,
-                      morphospace chart, formulas, image export, pigment tab, creator, undo
+js/main.js            Coordinator: rebuilds the mesh, shape presets, tabs, language, render loop,
+                      and connects the modules below (their init functions)
 js/model/             The science, pure modules without DOM or Three.js (tested in Node)
   raup.js             Geometry: parametric mesh, UVs, lines, mirror valve, normalisation
   ornament.js         Ornament: ribs, cords, keel, spines and change with growth
@@ -30,10 +30,21 @@ js/model/             The science, pure modules without DOM or Three.js (tested 
 js/export/            File formats, pure
   export3d.js         3D printing: closed solid with a real wall, binary STL and 3MF
   imagefile.js        Image export: fixed sizes, reframing, plate layout, file names, TIFF encoder
-js/ui/                Interface modules split out of main.js
+js/ui/                The interface, one module per part
   util.js             Small shared helpers ($, number formats, colours, seam normals)
+  state.js            State of the shell and view, control definitions, page address, storage
+  scene.js            Renderer, camera, lights, materials, meshes, display group, axes gizmo
+  controls.js         Slider controls (createParam) and the shape, geometry and line sliders
+  views.js            Standard views, display orientation, free rotation, ground
+  formulas.js         Equation panel and About window
+  morphospace-chart.js  W–D chart in the sidebar, over the 3D view and in the PDF
+  ornament-tab.js     Ornament tab and the panel of the mechanical model
+  pigment.js          Pigment tab: simulation in a worker, space–time record, profile, gallery
+  export-dialog.js    Export window: images at any size, plate, PNG/JPEG/TIFF, STL, 3MF, GLB
   pdf.js              PDF sheet (jsPDF and MathJax SVG loaded on demand)
   guide.js            Welcome guide with its own small 3D scene
+  wizard.js           Create your own shell: the step-by-step window
+  undo.js             Undo history
 js/workers/
   pigment-worker.js   Web Worker that runs meinhardt.js off the main thread
 js/i18n/
@@ -53,7 +64,9 @@ The modules marked *pure* do not depend on Three.js or the DOM, so they run unch
 
 ### Modules
 
-`main.js` is the only module that touches the DOM and Three.js. The scientific code lives in pure modules that it imports. The pattern simulation runs in a Web Worker so that dragging a slider never freezes the interface. The tests import the pure modules directly.
+The interface lives in `js/ui/`, one module per part; the science lives in `js/model/` and the file formats in `js/export/`, as pure modules that the tests import directly. The pattern simulation runs in a Web Worker so that dragging a slider never freezes the interface.
+
+**How the interface modules are connected.** Shared values that never change identity (the `state` object, the scene, the meshes and materials) are imported directly from `state.js` and `scene.js`. A value that a module reassigns, such as the computed pattern in `pigment.js` or the viewport in `scene.js`, is exported as a live binding and changed only by its own module (`setViewport`). Each module that needs functions from other parts exports an `init…(ctx)` function: `main.js` calls it once, at the wiring point near the end of the file, passing those functions (and getters such as `live.lastBuild()` for values that `main.js` reassigns). Event listeners and the controls of each part are created inside its `init`, so nothing runs before everything it depends on exists. `main.js` keeps the mesh rebuild and the render loop, the shape presets, the tabs and the language switch.
 
 ```mermaid
 flowchart LR
@@ -66,7 +79,7 @@ flowchart LR
   raup --> orn["ornament.js<br/>ribs · cords · spines"]
   main --> presets["presets.js"]
   main --> i18n["i18n/<br/>EN / ES strings · theory pages"]
-  main --> ui["ui/<br/>pdf · guide · util"]
+  main --> ui["ui/<br/>state · scene · controls · views · tabs · export · pdf · guide · wizard · undo"]
   main -. "postMessage" .-> worker["pigment-worker.js"]
   worker --> mein["meinhardt.js<br/>reaction–diffusion"]
   main -. "fallback without workers" .-> mein

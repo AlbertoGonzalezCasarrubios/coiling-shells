@@ -159,6 +159,7 @@ Three.js, MathJax y jsPDF se cargan desde un CDN, así que hace falta conexión 
 
 ```bash
 npm test          # Node.js ≥ 20, sin dependencias
+npm run test:fast # sin la prueba en el navegador
 ```
 
 Los tests comprueban, entre otras cosas, que:
@@ -172,7 +173,8 @@ Los tests comprueban, entre otras cosas, que:
 - el modelo mecánico se pandea primero en el número de ondas del mínimo de su curva de carga, y queda liso por debajo del umbral;
 - las imágenes TIFF se decodifican en los mismos píxeles, y la lámina de vistas se adapta a cualquier formato;
 - los archivos STL y 3MF están bien formados;
-- los textos en inglés y en español están completos.
+- los textos en inglés y en español están completos;
+- toda la interfaz funciona en un navegador real: una prueba abre la app en Chrome sin ventana y recorre la guía, las pestañas, los modos de dibujo, las orientaciones, las ecuaciones, deshacer, el creador de conchas, las páginas de Info y las exportaciones, y falla ante cualquier error en la página. Necesita Chrome y Node.js ≥ 22, y se omite sin ellos.
 
 Se ejecutan en cada subida mediante GitHub Actions. [ARCHITECTURE.md](../ARCHITECTURE.md), en inglés, describe cómo está organizado el programa y qué cubre cada test.
 

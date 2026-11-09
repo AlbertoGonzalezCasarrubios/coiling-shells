@@ -1,41 +1,39 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
-import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
-import { Line2 } from 'three/addons/lines/Line2.js';
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 import { buildShell } from './model/raup.js';
-import { $, formatW, f, sig, hexRgb, luminance, fixSeamNormals } from './ui/util.js';
+import { $, f, fixSeamNormals } from './ui/util.js';
 import {
-  GEO_PARAMS, HASH_KEYS, LANG_KEY, MODES, ORIENT_HASH, ORN_BOOLS, ORN_HASH, ORN_KEYS, ORN_PARAMS, QUALITY, RAUP_PARAMS, SHAPE_KEYS, SHELL_SIZE, VIS_PARAMS, WELCOME_KEY, fromHash, hasHashShape, pickOrnament, pickShape, setHashHooks, state, storage, writeHash, writeHashNow,
+  LANG_KEY, QUALITY, SHAPE_KEYS, SHELL_SIZE, WELCOME_KEY, fromHash, hasHashShape, pickShape, setHashHooks, state, storage, writeHash,
 } from './ui/state.js';
 import {
-  viewport, setViewport, CAMERA_HOME, PALETTES, axis, axisMat, camera, controls, fill, gizmo, gizmoAxes, ground, inner, innerMat, lineMat, lines, makeLabel, occluder, occluderMat, renderer, scene, setPaletteInputs, shellGroup, solid, solidMat, sun,
+  viewport, setViewport, PALETTES, axis, axisMat, camera, controls, gizmo, gizmoAxes, ground, inner, lineMat, lines, occluder, renderer, scene, setPaletteInputs, shellGroup, solid,
 } from './ui/scene.js';
 import { initGuide, openWelcome, updateWelcomeText, welcomeDlg } from './ui/guide.js';
-import { exportPDF as makePDF } from './ui/pdf.js';
-import { capturePointer, controlsByKey, createParam, markCustom, onShapeChange, setFill, initControls } from './ui/controls.js';
-import { VIEWS, orientTween, setOrient, stepOrient, stepTween, tween, updateGround, initViews } from './ui/views.js';
-import { PATTERN_CELLS, PATTERN_ROWS, PIG_SIMPLE, applyShellMaterial, buildGallery, computePattern, computeThumbs, drawProfile, drawProfileOn, drawSpacetime, ensureSurfaceMode, markPatternCustom, onGeometryForPattern, paintPattern, pattern, patternCanvas, patternHash, patternValues, pickPattern, pigControls, profileRow, schedulePattern, selectPattern, setPatternOn, setSecondLabel, stView, syncPatternControls, updateGalleryLabels, updatePatternMessage, initPigment } from './ui/pigment.js';
-import { busy, chosenSize, defaultShellName, download, downloadImage, exportPDF, fileStem, openExport, renderViewImage, initExport } from './ui/export-dialog.js';
-import { buildOrnPresetOptions, drawMech, onOrnamentChange, ornPresetKey, ornPresetSel, syncOrnamentControls, initOrnamentTab } from './ui/ornament-tab.js';
+import {
+  capturePointer, controlsByKey, createParam, markCustom, onShapeChange, setFill, initControls,
+} from './ui/controls.js';
+import {
+  VIEWS, orientTween, setOrient, stepOrient, stepTween, tween, updateGround, initViews,
+} from './ui/views.js';
+import {
+  PATTERN_CELLS, PATTERN_ROWS, PIG_SIMPLE, applyShellMaterial, buildGallery, computePattern, computeThumbs, drawProfile, drawProfileOn, drawSpacetime, ensureSurfaceMode, markPatternCustom, onGeometryForPattern, paintPattern, pattern, patternCanvas, patternHash, patternValues, pickPattern, pigControls, profileRow, schedulePattern, selectPattern, setPatternOn, setSecondLabel, stView, syncPatternControls, updateGalleryLabels, updatePatternMessage, initPigment,
+} from './ui/pigment.js';
+import {
+  busy, chosenSize, defaultShellName, downloadImage, exportPDF, fileStem, openExport, renderViewImage, initExport,
+} from './ui/export-dialog.js';
+import {
+  buildOrnPresetOptions, drawMech, onOrnamentChange, ornPresetKey, ornPresetSel, syncOrnamentControls, initOrnamentTab,
+} from './ui/ornament-tab.js';
 import { drawMorpho, drawMorphoOn, morphoOv, initMorphospace } from './ui/morphospace-chart.js';
-import { formulaPanel, formulaView, generalTeX, infoBody, infoDialog, liveTeX, openInfo, scheduleFormula, setFormulaOpen, setFormulaView, showInfoPage, initFormulas } from './ui/formulas.js';
+import {
+  formulaPanel, infoBody, infoDialog, openInfo, scheduleFormula, setFormulaOpen, setFormulaView, showInfoPage, initFormulas,
+} from './ui/formulas.js';
 import { noteChange, startUndo, undo, initUndo } from './ui/undo.js';
 import { syncWizard, wizardDlg, initWizard } from './ui/wizard.js';
-import { hasOrnament, ornamentResolution, ORNAMENT_DEFAULTS } from './model/ornament.js';
-import { criticalWaves, lambdaForWaves, loadRatio, firstMode, unstableBand, mechanicalCords } from './model/mechanics.js';
-import { buildPrintMesh, toSTL, to3MF } from './export/export3d.js';
-import { MORPHO_REGIONS } from './model/morphospace.js';
-import { encodeTIFF, fitFrame, slugify, plateLayout, FIXED_SIZES, MAX_SIDE } from './export/imagefile.js';
-import { PRESETS, DEFAULT_PRESET, PATTERN_PRESETS, DEFAULT_PATTERN, MODEL_DEFAULTS, ORNAMENT_PRESETS } from './model/presets.js';
-import { simulatePattern, PROFILE_WIDTH } from './model/meinhardt.js';
-import {
-  setLang, getLang, t, tParam, tPreset, tPattern, applyStatic,
-  GENERAL_TEX, DEFS_TEX, MIRROR_TEX, AI_TEX, AS_TEX, GLOBAL_TEX,
-} from './i18n/i18n.js';
+import { ornamentResolution } from './model/ornament.js';
+import { PRESETS, DEFAULT_PRESET } from './model/presets.js';
+import { setLang, getLang, t, tPreset, applyStatic } from './i18n/i18n.js';
 
 // Language: English by default; the visitor's choice is remembered for later visits
 setLang(storage.get(LANG_KEY) ?? 'en');
@@ -361,8 +359,8 @@ initPigment({
   setFill
 });
 
-// Shape | Pigment tabs. Entering Pigment switches the shell to solid, in a plain
-// colour: the user picks the pattern in the gallery.
+// Shape | Ornament | Pigment tabs. Entering Ornament or Pigment switches the shell
+// to solid (relief and colour are read on the surface); the pattern is chosen in the gallery.
 function showTab(name) {
   document.querySelectorAll('.tabs [data-tab]').forEach((b) => {
     const on = b.dataset.tab === name;

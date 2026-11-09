@@ -17,6 +17,7 @@
   },
   "scripts": {
     "test": "node --test",
+    "test:fast": "SKIP_BROWSER=1 node --test",
     "serve": "python3 -m http.server 8000"
   },
   "keywords": ["theoretical morphology", "Raup", "Meinhardt", "reaction-diffusion", "mollusc shells", "morphospace", "three.js"]

@@ -6,7 +6,8 @@
 // throws any error or if an export does not produce a file.
 //
 // It needs Chrome or Chromium and Node.js with a global WebSocket (Node ≥ 22).
-// Without them it is skipped. CHROME=/path/to/chrome chooses the browser.
+// Without them it is skipped, and SKIP_BROWSER=1 skips it on purpose (npm run
+// test:fast). CHROME=/path/to/chrome chooses the browser.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
@@ -24,7 +25,8 @@ const CANDIDATES = [
   '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium', '/usr/bin/chromium-browser',
 ].filter(Boolean);
 const CHROME = CANDIDATES.find((p) => existsSync(p));
-const skip = !CHROME ? 'Chrome not found' : typeof WebSocket === 'undefined' ? 'needs Node.js ≥ 22' : false;
+const skip = process.env.SKIP_BROWSER ? 'SKIP_BROWSER is set'
+  : !CHROME ? 'Chrome not found' : typeof WebSocket === 'undefined' ? 'needs Node.js ≥ 22' : false;
 
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json' };
 
