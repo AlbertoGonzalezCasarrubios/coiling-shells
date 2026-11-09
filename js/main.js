@@ -16,6 +16,10 @@ import {
 } from './ui/scene.js';
 import { initGuide, openWelcome, updateWelcomeText, welcomeDlg } from './ui/guide.js';
 import { exportPDF as makePDF } from './ui/pdf.js';
+import { drawMorpho, drawMorphoOn, morphoOv, initMorphospace } from './ui/morphospace-chart.js';
+import { formulaPanel, formulaView, generalTeX, infoBody, infoDialog, liveTeX, openInfo, scheduleFormula, setFormulaOpen, setFormulaView, showInfoPage, initFormulas } from './ui/formulas.js';
+import { noteChange, startUndo, undo, initUndo } from './ui/undo.js';
+import { syncWizard, wizardDlg, initWizard } from './ui/wizard.js';
 import { hasOrnament, ornamentResolution, ORNAMENT_DEFAULTS } from './model/ornament.js';
 import { criticalWaves, lambdaForWaves, loadRatio, firstMode, unstableBand, mechanicalCords } from './model/mechanics.js';
 import { buildPrintMesh, toSTL, to3MF } from './export/export3d.js';
@@ -31,11 +35,6 @@ import {
 // Language: English by default; the visitor's choice is remembered for later visits
 setLang(storage.get(LANG_KEY) ?? 'en');
 
-// Undo history (see "Undo" below); declared early because writeHash records the steps
-const undoStack = [];
-const UNDO_LIMIT = 50;
-let committed = null;
-let undoTimer = 0;
 setHashHooks({ patternHash: (q) => patternHash(q), noteChange: () => noteChange() });
 
 // ---------------------------------------------------------------------------
@@ -117,190 +116,16 @@ function applyMode() {
   document.querySelectorAll('#mode button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
 }
 
-// ---------------------------------------------------------------------------
-// Formulas (MathJax). They are typeset only when their panel is visible.
-// ---------------------------------------------------------------------------
 
-const formulaPanel = $('formula');
-const formulaGeneral = $('formulaGeneral');
-const formulaLive = $('formulaLive');
-const infoDialog = $('info');
-const infoBody = $('infoBody');
-
-const mathJaxReady = new Promise((resolve) => {
-  const check = () => {
-    const s = window.MathJax && window.MathJax.startup;
-    if (s && s.promise) s.promise.then(resolve);
-    else setTimeout(check, 100);
-  };
-  check();
-});
-let mathQueue = mathJaxReady;
-
-/** Queues typesetting of `el`; `html` (a function) is evaluated just before, with the latest state. */
-function typeset(el, html) {
-  mathQueue = mathQueue
-    .then(() => {
-      const MJ = window.MathJax;
-      MJ.typesetClear([el]);
-      if (html) el.innerHTML = html();
-      return MJ.typesetPromise([el]);
-    })
-    .catch((err) => console.warn('MathJax:', err));
-}
-
-/** Two significant figures: for constants spanning several orders of magnitude. */
-
-let formulaView = 'raup';
-
-const SOURCE_TEX = String.raw`\[ s_i = r_a\,(1 + \sigma\,\xi_i),\quad \xi_i \in [-1,\,1],\quad x = 1,\dots,N \]`;
-
-function generalTeX(view = formulaView) {
-  if (view === 'meinhardt') {
-    const isAS = pattern.model === 'AS';
-    return (isAS ? AS_TEX : AI_TEX) + (isAS && pattern.globalCtl > 0 ? GLOBAL_TEX : '') + SOURCE_TEX;
-  }
-  return GENERAL_TEX + DEFS_TEX + (state.mirror ? MIRROR_TEX : '') + (hasOrnament(state) ? ORNAMENT_TEX : '');
-}
-
-/** Relief added along the outward normal of the aperture (descriptive model of ornament). */
-const ORNAMENT_TEX = String.raw`\[
-  \mathbf{P}^{*} = \mathbf{P} + W^{\theta/2\pi}\,a\,\delta(\theta,\varphi)\,\mathbf{n}(\varphi)
-\]
-\[
-  \delta = f(s)\,\bigl[\,h_r R(\theta) + h_c C(u) + h_k K(u) + h_s \Sigma(\theta,u)\,\bigr],\qquad
-  f(s) = 1 + c\,(2s - 1)
-\]
-\[
-  R = \beta\!\left(\tfrac{n_r\theta}{2\pi},\,w_r,\,k\right),\quad
-  C = \beta(n_c u,\,w_c),\quad
-  K = \beta(u - u_k,\,w_k),\quad
-  \beta(t,w) = \cos^2\!\left(\tfrac{\pi d}{w}\right)\ (d < \tfrac{w}{2}),\quad d = \left|t - \operatorname{round}(t)\right|
-\]`;
-
-/** Values of the ornament terms in use (terms that are off are left out). */
-function ornamentLiveTeX() {
-  const s = state, parts = [];
-  if (s.ribN > 0 && s.ribH > 0) parts.push(String.raw`n_r = ${s.ribN},\; h_r = ${f(s.ribH, 2)},\; w_r = ${f(s.ribW, 2)}${s.ribSkew ? String.raw`,\; k = ${f(s.ribSkew, 2)}` : ''}`);
-  if (s.cordN > 0 && s.cordH > 0) parts.push(String.raw`n_c = ${s.cordN},\; h_c = ${f(s.cordH, 2)},\; w_c = ${f(s.cordW, 2)}`);
-  if (s.nodules) parts.push(String.raw`h_r R + h_c C \;\to\; (h_r + h_c)\,R\,C`);
-  if (s.keelH > 0) parts.push(String.raw`h_k = ${f(s.keelH, 2)},\; w_k = ${f(s.keelW, 2)},\; u_k = ${f(s.keelPos, 2)}`);
-  if (s.spineN > 0 && s.spineH > 0) parts.push(String.raw`n_s = ${s.spineN},\; h_s = ${f(s.spineH, 2)},\; w_s = ${f(s.spineW, 2)},\; u_s = ${s.spineBoth ? '\\pm' : ''}${f(s.spinePos, 2)}`);
-  if (s.ornGrowth) parts.push(String.raw`c = ${f(s.ornGrowth, 2)}`);
-  return parts.map((p) => String.raw`\[ ${p} \]`).join('');
-}
-
-function meinhardtLiveTeX() {
-  const { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl, T } = pattern;
-  // Optional terms: omitted when their coefficient is 0
-  const term = (sign, c, tex) => (c > 0 ? ` ${sign} ${sig(c)}${tex ? String.raw`\,${tex}` : ''}` : '');
-  const lap = (v) => String.raw`\frac{\partial^2 ${v}}{\partial x^2}`;
-  const sat = kappa > 0 ? String.raw`(1+${sig(kappa)}\,a^2)` : '';
-  const basal = term('+', ba, '');
-  let eqs;
-  if (model === 'AS') {
-    const prod = String.raw`s\,b\left(\frac{a^2}{${sat || '1'}}${basal}\right)`;
-    eqs = String.raw`\begin{aligned}
-      \frac{\partial a}{\partial t} &= ${prod} - ${sig(ra)}\,a${term('+', Da, lap('a'))} \\
-      \frac{\partial b}{\partial t} &= ${sig(b2)} - ${prod}${term('-', r2, 'b')}${term('+', D2, lap('b'))}
-    \end{aligned}`;
-  } else {
-    eqs = String.raw`\begin{aligned}
-      \frac{\partial a}{\partial t} &= s\left(\frac{a^2}{h${sat ? String.raw`\,${sat}` : ''}}${basal}\right) - ${sig(ra)}\,a${term('+', Da, lap('a'))} \\
-      \frac{\partial h}{\partial t} &= s\,a^2 - ${sig(r2)}\,h${term('+', D2, lap('h'))}${term('+', b2, '')}
-    \end{aligned}`;
-  }
-  const global = model === 'AS' && globalCtl > 0 ? String.raw`\[ b_a^{\mathrm{ef}} = ${sig(ba)} + \frac{${sig(globalCtl)}}{1 + 40\,c} \]` : '';
-  const cells = Math.round(PATTERN_CELLS / pattern.size);
-  return String.raw`\[ ${eqs} \]` + global +
-    String.raw`\[ s_i = ${sig(ra)}\,(1 \pm ${sig(noise)}),\quad N = ${cells},\quad T = ${Math.round(T)} \]`;
-}
-
-function liveTeX(view = formulaView) {
-  if (view === 'meinhardt') return meinhardtLiveTeX();
-  const { W, D, T, S, hand, turns } = state;
-  const { rc, a, b } = lastBuild.derived;
-  const R = `(${f(rc, 3)} + ${f(a, 3)}\\cos\\varphi)`;
-  const zc = T * rc;
-  const zTerm = zc === 0 ? `${f(b, 3)}\\sin\\varphi` : `-${f(zc, 3)} + ${f(b, 3)}\\sin\\varphi`;
-  const ySign = hand > 0 ? '-' : ''; // ε = −1 dextral
-  return (
-    `\\[ W = ${formatW(W)},\\; D = ${f(D, 3)},\\; T = ${f(T, 2)},\\; S = ${f(S, 2)},\\; N = ${f(turns, 2)} \\]` +
-    `\\[ r_c = ${f(rc, 3)},\\; a = ${f(a, 3)},\\; b = ${f(b, 3)},\\; \\varepsilon = ${hand > 0 ? '-1' : '+1'} \\]` +
-    `\\[ \\mathbf{P}(\\theta,\\varphi) = ${formatW(W)}^{\\theta/2\\pi}` +
-    `\\begin{pmatrix} ${R}\\cos\\theta \\\\ ${ySign}${R}\\sin\\theta \\\\ ${zTerm} \\end{pmatrix} \\]` +
-    (state.mirror ? `\\[ \\mathbf{P}' = (x,\\,-y,\\,z) \\]` : '') +
-    (hasOrnament(state) ? ornamentLiveTeX() : '')
-  );
-}
-
-let formulaTimer = 0;
-let lastGeneral = '';
-function scheduleFormula() {
-  if (formulaPanel.hidden || !lastBuild) return;
-  clearTimeout(formulaTimer);
-  formulaTimer = setTimeout(() => {
-    if (generalTeX() !== lastGeneral) {
-      lastGeneral = generalTeX();
-      typeset(formulaGeneral, generalTeX);
-    }
-    typeset(formulaLive, liveTeX);
-  }, 80);
-}
-
-function setFormulaView(view) {
-  formulaView = view;
-  document.querySelectorAll('#eqView [data-eq]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.eq === view)));
-  const note = $('eqNote');
-  note.dataset.i18n = view === 'meinhardt' ? 'eq.mein.note' : 'eq.chirality';
-  note.textContent = t(note.dataset.i18n);
-  if (!formulaPanel.hidden) {
-    typeset(note);
-    lastGeneral = '';
-    scheduleFormula();
-  }
-}
-
-function setFormulaOpen(open) {
-  formulaPanel.hidden = !open;
-  $('toggleFormula').setAttribute('aria-pressed', String(open));
-  if (open) {
-    // From the pigment tab, Meinhardt's equations open directly
-    setFormulaView($('tab-pigment').hidden ? formulaView : 'meinhardt');
-  }
-}
-
-let infoPage = 'raup';
-
-function showInfoPage(page) {
-  infoPage = page;
-  document.querySelectorAll('.info-tabs [data-page]').forEach((b) => {
-    const on = b.dataset.page === page;
-    b.setAttribute('aria-selected', String(on));
-    b.tabIndex = on ? 0 : -1;
-  });
-  infoBody.querySelectorAll('.info-page').forEach((el) => {
-    el.hidden = el.dataset.page !== page;
-    // Each page is typeset with MathJax the first time it is shown
-    if (!el.hidden && !el.dataset.typeset) {
-      el.dataset.typeset = '1';
-      typeset(el);
-    }
-  });
-  infoBody.scrollTop = 0;
-}
-
-function openInfo(page = infoPage) {
-  showInfoPage(page);
-  if (!infoDialog.open) infoDialog.showModal();
-}
-
-// ---------------------------------------------------------------------------
 // Sidebar controls
 // ---------------------------------------------------------------------------
 
 const controlsByKey = {};
 let dirty = true;
+/** Asks for the mesh to be rebuilt on the next frame (for the modules of js/ui/). */
+function markDirty() {
+  dirty = true;
+}
 
 /** Captures the pointer if it is still active (a cancelled touch cannot be captured). */
 function capturePointer(el, e) {
@@ -997,207 +822,7 @@ controls.addEventListener('start', () => {
   document.querySelectorAll('.views [data-view].active').forEach((b) => b.classList.remove('active'));
 });
 
-// ---------------------------------------------------------------------------
-// W – D morphospace (a section of Raup's cube)
-// ---------------------------------------------------------------------------
 
-const morpho = $('morpho');
-const morphoOv = $('morphoOv');
-const morphoDrawer = $('morphoDrawer');
-const MORPHO = { l: 34, r: 10, t: 10, b: 26, logMax: 4 };
-// W axis range: 1–10⁴ (all groups) or 1–10 (snails and cephalopods in more detail)
-const MORPHO_TICKS = {
-  4: [[0, '1'], [1, '10'], [2, '10²'], [3, '10³'], [4, '10⁴']],
-  1: [[0, '1'], [Math.log10(2), '2'], [Math.log10(3), '3'], [Math.log10(5), '5'], [1, '10']],
-};
-// On the 3D view the height adapts to the panel width (narrower on mobile)
-const morphoHeight = (canvas) => (canvas === morpho ? 210 : Math.round(THREE.MathUtils.clamp(canvas.clientWidth * 0.68, 130, 200)));
-
-function morphoScales(canvas, size) {
-  const w = size ? size.width : canvas.clientWidth;
-  const h = size ? size.height : morphoHeight(canvas);
-  const { l, r, t: top, b, logMax } = MORPHO;
-  return {
-    w,
-    x: (lw) => l + (lw / logMax) * (w - l - r),
-    y: (d) => top + (1 - d) * (h - top - b),
-    inv: (px, py) => ({
-      lw: ((px - l) / (w - l - r)) * logMax,
-      d: 1 - (py - top) / (h - top - b),
-    }),
-  };
-}
-
-/** Draws the morphospace in the sidebar and on the 3D view, where visible. */
-function drawMorpho() {
-  if (morphoDrawer.open) drawMorphoOn(morpho);
-  if (!$('ovMorpho').hidden) drawMorphoOn(morphoOv);
-}
-
-/**
- * @param {HTMLCanvasElement} canvas
- * @param {object} [off] for off-screen drawing (PDF): { width, height, scale, colors }
- */
-function drawMorphoOn(canvas, off) {
-  const dpr = off ? off.scale : Math.min(window.devicePixelRatio, 2);
-  const h = off ? off.height : morphoHeight(canvas);
-  if (!off) canvas.style.height = `${h}px`;
-  const { w, x, y } = morphoScales(canvas, off);
-  if (!w) return;
-  canvas.width = w * dpr;
-  canvas.height = h * dpr;
-  const ctx = canvas.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-  const css = getComputedStyle(document.documentElement);
-  const v = (name) => off?.colors?.[name] ?? css.getPropertyValue(name).trim();
-  const muted = v('--muted');
-  const accent = v('--accent');
-
-  ctx.fillStyle = v('--surface-2');
-  const X1 = MORPHO.logMax;
-  ctx.fillRect(x(0), y(1), x(X1) - x(0), y(0) - y(1));
-
-  // Region above D = 1/W: whorls do not touch (for T = 0)
-  ctx.beginPath();
-  ctx.moveTo(x(0), y(1));
-  for (let lw = 0; lw <= X1 + 1e-4; lw += X1 / 200) ctx.lineTo(x(lw), y(10 ** -lw));
-  ctx.lineTo(x(X1), y(1));
-  ctx.closePath();
-  ctx.fillStyle = muted;
-  ctx.globalAlpha = 0.08;
-  ctx.fill();
-  ctx.globalAlpha = 1;
-
-  // Occupied regions (approximate), clipped to the frame. Regions of groups that
-  // do not exist at the current T are faded and drawn with a dashed outline.
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(x(0), y(1), x(X1) - x(0), y(0) - y(1));
-  ctx.clip();
-  for (const r of MORPHO_REGIONS) {
-    const ok = r.tOk(state.T);
-    ctx.beginPath();
-    r.poly.forEach(([lw, d], i) => ctx[i ? 'lineTo' : 'moveTo'](x(lw), y(d)));
-    ctx.closePath();
-    ctx.fillStyle = r.color;
-    ctx.globalAlpha = ok ? 0.2 : 0.05;
-    ctx.fill();
-    ctx.globalAlpha = ok ? 0.75 : 0.35;
-    ctx.setLineDash(ok ? [] : [3, 3]);
-    ctx.strokeStyle = r.color;
-    ctx.lineWidth = 1;
-    ctx.stroke();
-  }
-  ctx.restore();
-  ctx.setLineDash([]);
-  // Group names: they can be clicked to load a typical shell
-  ctx.font = '600 10.5px Inter, system-ui, sans-serif';
-  ctx.textBaseline = 'middle';
-  canvas.labelBoxes = [];
-  for (const r of MORPHO_REGIONS) {
-    const pos = MORPHO.logMax === 4 ? r.label : r.labelNear;
-    if (!pos) continue;
-    const [lw, d, align] = pos;
-    const text = t(`morpho.${r.key}`);
-    const tw = ctx.measureText(text).width;
-    const x0 = align === 'center' ? x(lw) - tw / 2 : align === 'right' ? x(lw) - tw : x(lw);
-    ctx.textAlign = 'left';
-    ctx.fillStyle = r.tOk(state.T) ? v('--text') : v('--muted');
-    ctx.fillText(text, x0, y(d));
-    ctx.fillRect(x0, y(d) + 7, tw, 1); // underline: it is a link
-    canvas.labelBoxes.push({ x0: x0 - 3, x1: x0 + tw + 3, y0: y(d) - 9, y1: y(d) + 10, preset: r.preset });
-  }
-  ctx.textBaseline = 'alphabetic';
-
-  // Curve D = 1/W
-  ctx.beginPath();
-  for (let lw = 0; lw <= X1 + 1e-4; lw += X1 / 200) ctx[lw ? 'lineTo' : 'moveTo'](x(lw), y(10 ** -lw));
-  ctx.setLineDash([4, 3]);
-  ctx.strokeStyle = muted;
-  ctx.lineWidth = 1.2;
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle = muted;
-  ctx.font = 'italic 11px "Times New Roman", serif';
-  ctx.fillText(t('morpho.touch'), x(0.16), y(0.78));
-  ctx.font = '10.5px Inter, system-ui, sans-serif';
-  ctx.textAlign = 'right';
-  ctx.fillText(t('morpho.open'), x(X1 * 0.9875), y(0.9));
-  // The plane is a section of Raup's cube at the current T
-  ctx.fillStyle = accent;
-  ctx.font = '600 10.5px Inter, system-ui, sans-serif';
-  ctx.fillText(t('morpho.section', f(state.T, 2)), x(X1 * 0.9875), y(0.78));
-
-  // Axes
-  ctx.strokeStyle = v('--border');
-  ctx.lineWidth = 1;
-  ctx.strokeRect(x(0) + 0.5, y(1) + 0.5, x(X1) - x(0), y(0) - y(1));
-  ctx.fillStyle = muted;
-  ctx.font = '10px "JetBrains Mono", monospace';
-  ctx.textAlign = 'center';
-  MORPHO_TICKS[X1].forEach(([lw, lab]) => ctx.fillText(lab, x(lw), y(0) + 14));
-  ctx.textAlign = 'right';
-  [0, 0.5, 1].forEach((d) => ctx.fillText(String(d), x(0) - 5, y(d) + 3));
-  ctx.font = 'italic 13px "Times New Roman", serif';
-  ctx.fillStyle = accent;
-  ctx.fillText('W', x(X1), y(0) + 24);
-  ctx.textAlign = 'left';
-  ctx.fillText('D', 4, y(1) + 10);
-
-  // Current shell
-  ctx.beginPath();
-  ctx.arc(x(Math.min(X1, Math.log10(Math.max(1, state.W)))), y(state.D), 5.5, 0, Math.PI * 2);
-  ctx.fillStyle = accent;
-  ctx.fill();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = v('--surface');
-  ctx.stroke();
-}
-
-/** Group name under the pointer, if any. */
-function morphoLabelAt(canvas, e) {
-  const rect = canvas.getBoundingClientRect();
-  const px = e.clientX - rect.left, py = e.clientY - rect.top;
-  return (canvas.labelBoxes || []).find((b) => px >= b.x0 && px <= b.x1 && py >= b.y0 && py <= b.y1);
-}
-
-function pickMorpho(e) {
-  const canvas = e.currentTarget;
-  const rect = canvas.getBoundingClientRect();
-  const { lw, d } = morphoScales(canvas).inv(e.clientX - rect.left, e.clientY - rect.top);
-  controlsByKey.W.set(10 ** THREE.MathUtils.clamp(lw, 0, MORPHO.logMax));
-  controlsByKey.D.set(d);
-  onShapeChange();
-}
-for (const canvas of [morpho, morphoOv]) {
-  canvas.addEventListener('pointerdown', (e) => {
-    // Clicking a group name loads a typical shell (W, D, T, S and N at once)
-    const label = morphoLabelAt(canvas, e);
-    if (label) {
-      presetSel.value = label.preset;
-      presetSel.dispatchEvent(new Event('change'));
-      return;
-    }
-    capturePointer(canvas, e);
-    pickMorpho(e);
-  });
-  canvas.addEventListener('pointermove', (e) => {
-    if (canvas.hasPointerCapture(e.pointerId)) pickMorpho(e);
-    else canvas.style.cursor = morphoLabelAt(canvas, e) ? 'pointer' : 'crosshair';
-  });
-}
-morphoDrawer.addEventListener('toggle', drawMorpho);
-
-// W axis range (shared by the sidebar panel and the overlaid chart)
-function setMorphoScale(logMax) {
-  MORPHO.logMax = logMax;
-  document.querySelectorAll('[data-wscale]').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.wscale) === logMax)));
-  drawMorpho();
-}
-document.querySelectorAll('[data-wscale]').forEach((b) => b.addEventListener('click', () => setMorphoScale(Number(b.dataset.wscale))));
-
-// ---------------------------------------------------------------------------
 // Export: dialog with image, plate of views, PDF, 3D printing and GLB
 // ---------------------------------------------------------------------------
 
@@ -2391,6 +2016,21 @@ new ResizeObserver(() => {
   if (!$('ovProfile').hidden) drawProfile();
 }).observe($('overlays'));
 
+// Equations and About window (ui/formulas.js)
+initFormulas({
+  PATTERN_CELLS,
+  pattern,
+  live: { lastBuild: () => lastBuild },
+});
+
+// Morphospace chart (ui/morphospace-chart.js)
+initMorphospace({
+  capturePointer,
+  controlsByKey,
+  onShapeChange,
+  presetSel
+});
+
 // Welcome guide (js/ui/guide.js)
 initGuide({ openInfo, markSeen: () => storage.set(WELCOME_KEY, '1') });
 
@@ -2426,285 +2066,51 @@ document.querySelectorAll('.lang button').forEach((b) => b.addEventListener('cli
   storage.set(LANG_KEY, b.dataset.lang);
 }));
 
-// ---------------------------------------------------------------------------
-// Shell creator: a window that walks through shape → ornament → colour → look
-// → export with simplified controls. It is not a separate program: the 3D
-// canvas of the app moves into the window, and every control acts on the same
-// state, so undo, the URL and every export keep working.
-// ---------------------------------------------------------------------------
-
-const wizardDlg = $('wizard');
-const WZ_STEPS = 5;
-let wzStep = 0;
-
-// Plain-language names for the creator (wzW, wzD…), the symbols stay in brackets
-const WZ_SHAPE = ['W', 'D', 'T', 'S', 'turns'].map((k) => ({ ...[...RAUP_PARAMS, ...GEO_PARAMS].find((d) => d.key === k), id: `wz-${k}`, i18n: `wz${k}` }));
-const WZ_ORN = ['ribN', 'ribH', 'cordN', 'cordH', 'spineN', 'spineH'].map((k) => ({ ...ORN_PARAMS.find((d) => d.key === k), id: `wz-${k}`, i18n: k }));
-
-WZ_SHAPE.forEach((d) => createParam(d, $('wz-shape'), {
-  compact: true,
-  onChange: (key) => {
-    controlsByKey[key].set(state[key]);
-    onShapeChange();
-    $('wzPreset').value = 'custom';
-  },
-}));
-WZ_ORN.forEach((d) => createParam(d, $('wz-orn'), {
-  compact: true,
-  onChange: (key) => {
-    controlsByKey[key].set(state[key]);
-    onOrnamentChange();
-    $('wzOrn').value = ornPresetSel.value;
-  },
-}));
-
-/** Copies the options of a sidebar menu (already translated) into a wizard menu. */
-function copyOptions(from, to, { showHidden = [] } = {}) {
-  to.innerHTML = from.innerHTML;
-  for (const o of to.querySelectorAll('option')) if (showHidden.includes(o.value)) o.hidden = false;
-  to.value = from.value;
-}
-
-// Colour step: solid colour, the pattern presets and the travelling waves of the
-// activator–substrate model (its default constants), plus the simple sliders
-const WZ_PIG = PIG_SIMPLE.map((d) => ({ ...d, id: `wz-${d.id}` }));
-WZ_PIG.forEach((d) => createParam(d, $('wz-pig'), {
-  compact: true,
-  target: pattern,
-  onChange: (key) => {
-    pigControls[d.id.slice(3)].set(pattern[key]);
-    if (key === 'amount') {
-      paintPattern();
-      writeHash();
-      return;
-    }
-    markPatternCustom();
-    schedulePattern();
-    syncWizard();
-  },
-}));
-
-function buildWzPatterns() {
-  const box = $('wzPatterns');
-  box.innerHTML = '';
-  for (const key of ['none', ...Object.keys(PATTERN_PRESETS), 'waves']) {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.dataset.key = key;
-    b.textContent = key === 'none' ? t('pig.none') : key === 'waves' ? t('wz.p.waves') : tPattern(key);
-    b.addEventListener('click', () => {
-      if (key === 'waves') {
-        Object.assign(pattern, pickPattern(MODEL_DEFAULTS.AS));
-        pattern.preset = 'custom';
-        syncPatternControls();
-        setPatternOn(true);
-        computePattern();
-      } else {
-        selectPattern(key);
-      }
-      syncWizard();
-    });
-    box.append(b);
-  }
-}
-
-/** Brings the wizard controls in line with the state (the sidebar may have changed it). */
-function syncWizard() {
-  copyOptions(presetSel, $('wzPreset'));
-  copyOptions(ornPresetSel, $('wzOrn'), { showHidden: ['smooth'] });
-  for (const d of [...WZ_SHAPE, ...WZ_ORN]) controlsByKey[d.id].set(state[d.key]);
-  $('wzNodules').checked = state.nodules;
-  document.querySelectorAll('#wzHand [data-hand]').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.hand === state.hand)));
-  const sel = !pattern.on ? 'none' : PATTERN_PRESETS[pattern.preset] ? pattern.preset : pattern.model === 'AS' ? 'waves' : '';
-  $('wzPatterns').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.key === sel)));
-  for (const d of WZ_PIG) controlsByKey[d.id].set(pattern[d.key]);
-  document.querySelectorAll('.wz-pig').forEach((el) => (el.hidden = !pattern.on));
-  $('wzBase').value = pattern.base;
-  $('wzPigment').value = pattern.pigment;
-  $('wzBase').disabled = $('wzPigment').disabled = !pattern.on;
-  document.querySelectorAll('#wzMode [data-mode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === state.mode)));
-  $('wzBg').value = $('bgColor').value;
-  $('wzShell').value = $('shellColor').value;
-  $('wzLine').value = $('lineColor').value;
-  $('wzQuality').value = state.quality;
-  $('wzAxis').checked = $('showAxis').checked;
-  $('wzName').value = $('exName').value;
-  $('wzName').placeholder = defaultShellName();
-}
-
-function showWizardStep(i) {
-  wzStep = Math.max(0, Math.min(WZ_STEPS - 1, i));
-  document.querySelectorAll('.wizard-panel').forEach((p) => (p.hidden = +p.dataset.step !== wzStep));
-  document.querySelectorAll('#wizSteps [data-step]').forEach((b) => {
-    const k = +b.dataset.step;
-    b.setAttribute('aria-current', k === wzStep ? 'step' : 'false');
-    b.classList.toggle('done', k < wzStep);
-  });
-  $('wzBack').disabled = wzStep === 0;
-  $('wzNext').textContent = t(wzStep === WZ_STEPS - 1 ? 'wz.finish' : 'wz.next');
-  // Relief and colour are read on the surface
-  if ((wzStep === 1 || wzStep === 2) && state.mode === 'lines') {
-    state.mode = 'solid';
-    applyMode();
-    writeHash();
-  }
-  syncWizard();
-}
-
-function openWizard() {
-  if (welcomeDlg.open) welcomeDlg.close();
-  buildWzPatterns();
-  wizardDlg.showModal();
-  // The app's own 3D canvas moves into the window
-  setViewport($('wizView'));
-  resize();
-  showWizardStep(0);
-}
-
-function closeWizardView() {
-  setViewport($('viewport'));
-  resize();
-}
-
-$('openWizard').addEventListener('click', openWizard);
-$('closeWizard').addEventListener('click', () => wizardDlg.close());
-wizardDlg.addEventListener('close', closeWizardView);
-$('wzBack').addEventListener('click', () => showWizardStep(wzStep - 1));
-$('wzNext').addEventListener('click', () => (wzStep === WZ_STEPS - 1 ? wizardDlg.close() : showWizardStep(wzStep + 1)));
-document.querySelectorAll('#wizSteps [data-step]').forEach((b) => b.addEventListener('click', () => showWizardStep(+b.dataset.step)));
-
-$('wzPreset').addEventListener('change', (e) => {
-  if (!PRESETS[e.target.value]) return;
-  presetSel.value = e.target.value;
-  presetSel.dispatchEvent(new Event('change'));
-  syncWizard();
-});
-document.querySelectorAll('#wzHand [data-hand]').forEach((b) => b.addEventListener('click', () => {
-  $('hand').value = b.dataset.hand;
-  $('hand').dispatchEvent(new Event('change'));
-  syncWizard();
-}));
-$('wzOrn').addEventListener('change', (e) => {
-  if (e.target.value === 'smooth') {
-    $('ornClear').click();
-  } else if (ORNAMENT_PRESETS[e.target.value]) {
-    ornPresetSel.value = e.target.value;
-    ornPresetSel.dispatchEvent(new Event('change'));
-  }
-  syncWizard();
-});
-$('wzNodules').addEventListener('change', (e) => {
-  $('nodules').checked = e.target.checked;
-  $('nodules').dispatchEvent(new Event('change'));
-});
-// Colours and appearance: the wizard sets the sidebar inputs and lets their own handlers act
-const relay = (fromId, toId, type = 'input') => $(fromId).addEventListener(type, (e) => {
-  $(toId).value = e.target.value;
-  $(toId).dispatchEvent(new Event(type));
-});
-relay('wzBase', 'pigBase');
-relay('wzPigment', 'pigColor');
-relay('wzBg', 'bgColor');
-relay('wzShell', 'shellColor');
-relay('wzLine', 'lineColor');
-relay('wzQuality', 'quality', 'change');
-$('wzAxis').addEventListener('change', (e) => {
-  $('showAxis').checked = e.target.checked;
-  $('showAxis').dispatchEvent(new Event('change'));
-});
-document.querySelectorAll('#wzMode [data-mode]').forEach((b) => b.addEventListener('click', () => {
-  document.querySelector(`#mode [data-mode="${b.dataset.mode}"]`).click();
-  syncWizard();
-}));
-// The palette buttons share the sidebar handler (they carry data-palette); then resync
-document.querySelectorAll('#wzPalettes [data-palette]').forEach((b) => b.addEventListener('click', syncWizard));
-$('wzName').addEventListener('input', (e) => ($('exName').value = e.target.value));
-$('wzSeed').addEventListener('click', () => $('newSeed').click());
-
-// Export: the same functions as the export window
-$('wzWallpaper').addEventListener('click', (e) => busy(e.currentTarget, async () => {
-  const { W, H } = chosenSize('screen');
-  await downloadImage(renderViewImage(W, H), `${fileStem()}_${W}x${H}`, 'png');
-}));
-$('wzPdf').addEventListener('click', (e) => busy(e.currentTarget, exportPDF));
-$('wzMore').addEventListener('click', () => {
-  wizardDlg.close();
-  openExport();
+// Shell creator (ui/wizard.js)
+initWizard({
+  PIG_SIMPLE,
+  applyMode,
+  busy,
+  chosenSize,
+  computePattern,
+  controlsByKey,
+  createParam,
+  defaultShellName,
+  downloadImage,
+  exportPDF,
+  fileStem,
+  markPatternCustom,
+  onOrnamentChange,
+  onShapeChange,
+  openExport,
+  ornPresetSel,
+  paintPattern,
+  pattern,
+  pickPattern,
+  pigControls,
+  presetSel,
+  renderViewImage,
+  resize,
+  schedulePattern,
+  selectPattern,
+  setPatternOn,
+  syncPatternControls
 });
 
-// ---------------------------------------------------------------------------
-// Undo: each step is a snapshot of the shape, the ornament, the render mode and
-// the pattern. Changes that follow one another quickly (dragging a slider) make
-// a single step. The view (camera, orientation) is not a step.
-// ---------------------------------------------------------------------------
-
-function takeSnapshot() {
-  return JSON.stringify({
-    shape: pickShape(state),
-    orn: pickOrnament(state),
-    mode: state.mode,
-    pattern: { ...pattern },
-  });
-}
-
-/** Called on every change (through writeHash): closes the step once changes stop. */
-function noteChange() {
-  if (committed === null) return; // not started yet
-  clearTimeout(undoTimer);
-  undoTimer = setTimeout(commitStep, 450);
-}
-
-function commitStep() {
-  clearTimeout(undoTimer);
-  const now = takeSnapshot();
-  if (now === committed) return;
-  undoStack.push(committed);
-  if (undoStack.length > UNDO_LIMIT) undoStack.shift();
-  committed = now;
-  setUndoEnabled(true);
-}
-
-function undo() {
-  commitStep(); // a change still in progress becomes a step of its own
-  const prev = undoStack.pop();
-  setUndoEnabled(undoStack.length > 0);
-  if (!prev) return;
-  committed = prev;
-  restoreSnapshot(JSON.parse(prev));
-}
-
-function restoreSnapshot({ shape, orn, mode, pattern: pat }) {
-  for (const k of ['W', 'D', 'T', 'S', 'turns']) controlsByKey[k].set(shape[k], { fitScale: true });
-  state.hand = shape.hand;
-  $('hand').value = String(shape.hand);
-  setMirror(shape.mirror);
-  presetSel.value = Object.keys(PRESETS).find((k) => SHAPE_KEYS.every((key) => pickShape(PRESETS[k])[key] === shape[key])) ?? 'custom';
-  Object.assign(state, orn);
-  syncOrnamentControls();
-  state.mode = mode;
-  applyMode();
-  const patternChanged = JSON.stringify({ ...pattern }) !== JSON.stringify(pat);
-  if (patternChanged) {
-    Object.assign(pattern, pat);
-    syncPatternControls();
-    if (pattern.on) computePattern();
-    setPatternOn(pattern.on);
-  }
-  dirty = true;
-}
-
-function setUndoEnabled(on) {
-  $('undo').disabled = !on;
-  $('wzUndo').disabled = !on;
-}
-
-$('undo').addEventListener('click', undo);
-$('wzUndo').addEventListener('click', () => {
-  undo();
-  syncWizard();
+// Undo (ui/undo.js)
+initUndo({
+  applyMode,
+  computePattern,
+  controlsByKey,
+  markDirty,
+  pattern,
+  presetSel,
+  setMirror,
+  setPatternOn,
+  syncOrnamentControls,
+  syncPatternControls
 });
 
-// ---------------------------------------------------------------------------
 // Render loop
 // ---------------------------------------------------------------------------
 
@@ -2751,7 +2157,7 @@ function renderFrame() {
 applyLanguage(getLang());
 applyMode();
 setOrient(state.orient, { animate: false });
-committed = takeSnapshot(); // undo history starts from the state the page opened with
+startUndo(); // undo history starts from the state the page opened with
 
 renderer.setAnimationLoop((now) => {
   if (welcomeDlg.open) return; // the guide covers the viewer: no need to draw it
