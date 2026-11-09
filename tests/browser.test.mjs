@@ -121,6 +121,9 @@ const TOUR = String.raw`(async () => {
   for (let i = 0; i < 4; i++) { $('wzNext').click(); await sl(400); }
   $('wzNext').click(); await sl(300);
   log.wizardClosed = !$('wizard').open && !!document.querySelector('#viewport canvas');
+  $('tabbtn-shape').click(); $('raupTheory').click(); await sl(800);
+  log.raupTheory = !!document.querySelector('dialog[open] .info-tabs [data-page=raup][aria-selected=true]');
+  document.querySelectorAll('dialog[open]').forEach((d) => d.close());
   $('openInfo').click();
   for (const p of ['raup', 'meinhardt', 'ornament', 'controls', 'app']) { document.querySelector('.info-tabs [data-page=' + p + ']').click(); await sl(1200); }
   log.mathErrors = document.querySelectorAll('[data-mjx-error]').length;
@@ -155,6 +158,7 @@ test('the whole interface works in a real browser', { skip, timeout: 240_000 }, 
     assert.equal(log.patternOn, true, 'a pattern can be applied');
     assert.equal(log.undone, true, 'undo removes it again');
     assert.equal(log.wizardClosed, true, 'the shell creator gives the canvas back');
+    assert.equal(log.raupTheory, true, 'the Theory link of the shape tab opens Raup\'s page');
     assert.equal(log.mathErrors, 0, 'every About page typesets');
     const kinds = log.files.map((f) => f.split(':')[0]);
     for (const k of ['jpg', 'tif', 'stl', 'pdf']) assert.ok(kinds.includes(k), `export ${k} (${log.files})`);

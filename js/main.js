@@ -359,6 +359,9 @@ initPigment({
   setFill
 });
 
+// The theory of the shape tab: Raup's page of the About window
+$('raupTheory').addEventListener('click', () => openInfo('raup'));
+
 // Shape | Ornament | Pigment tabs. Entering Ornament or Pigment switches the shell
 // to solid (relief and colour are read on the surface); the pattern is chosen in the gallery.
 function showTab(name) {

@@ -239,7 +239,7 @@ export default {
   'orient.horizontal': 'Coiling axis horizontal: planispiral shells seen face-on',
   'orient.free': 'Free rotation: drag to turn the shell in any direction (a standard view sets it upright again)',
   'tab.label': 'Sections',
-  'pig.theory': 'Theory →',
+  'tab.theory': 'Theory →',
   'pig.none': 'Solid colour',
   'pig.mode': 'Controls',
   'pig.mode.simple': 'Simple',

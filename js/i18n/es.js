@@ -239,7 +239,7 @@ export default {
   'orient.horizontal': 'Eje de enrollamiento horizontal: conchas planispirales vistas de frente',
   'orient.free': 'Giro libre: arrastra para girar la concha en cualquier dirección (una vista estándar la vuelve a enderezar)',
   'tab.label': 'Secciones',
-  'pig.theory': 'Teoría →',
+  'tab.theory': 'Teoría →',
   'pig.none': 'Color sólido',
   'pig.mode': 'Controles',
   'pig.mode.simple': 'Simple',

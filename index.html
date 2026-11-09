@@ -66,7 +66,10 @@
       </section>
 
       <section class="panel">
-        <h2 class="panel-title" data-i18n="raup.title">Raup parameters</h2>
+        <div class="panel-row">
+          <h2 class="panel-title" data-i18n="raup.title">Raup parameters</h2>
+          <button type="button" class="link-btn" id="raupTheory" data-i18n="tab.theory">Theory →</button>
+        </div>
         <div id="raup-params"></div>
       </section>
 
@@ -113,7 +116,7 @@
         <section class="panel">
           <div class="panel-row">
             <label class="panel-title" for="ornPreset" data-i18n="orn.preset">Ornamented shells</label>
-            <button type="button" class="link-btn" id="ornTheory" data-i18n="pig.theory">Theory →</button>
+            <button type="button" class="link-btn" id="ornTheory" data-i18n="tab.theory">Theory →</button>
           </div>
           <select id="ornPreset" class="select"></select>
           <p class="note" data-i18n="orn.note"></p>
@@ -177,7 +180,7 @@
         <section class="panel">
           <div class="panel-row">
             <h2 class="panel-title" data-i18n="pig.preset">Pattern</h2>
-            <button type="button" class="link-btn" id="pigTheory" data-i18n="pig.theory">Theory →</button>
+            <button type="button" class="link-btn" id="pigTheory" data-i18n="tab.theory">Theory →</button>
           </div>
           <div class="pattern-gallery" id="patternGallery" role="radiogroup" data-i18n-title="pig.preset"></div>
           <button type="button" class="btn btn-wide" id="pigClear" data-i18n="pig.clear">Remove colour</button>
