@@ -8,6 +8,12 @@ import { Line2 } from 'three/addons/lines/Line2.js';
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 import { buildShell } from './model/raup.js';
 import { $, formatW, f, sig, hexRgb, luminance, fixSeamNormals } from './ui/util.js';
+import {
+  GEO_PARAMS, HASH_KEYS, LANG_KEY, MODES, ORIENT_HASH, ORN_BOOLS, ORN_HASH, ORN_KEYS, ORN_PARAMS, QUALITY, RAUP_PARAMS, SHAPE_KEYS, SHELL_SIZE, VIS_PARAMS, WELCOME_KEY, fromHash, hasHashShape, pickOrnament, pickShape, setHashHooks, state, storage, writeHash, writeHashNow,
+} from './ui/state.js';
+import {
+  viewport, setViewport, CAMERA_HOME, PALETTES, axis, axisMat, camera, controls, fill, gizmo, gizmoAxes, ground, inner, innerMat, lineMat, lines, makeLabel, occluder, occluderMat, renderer, scene, setPaletteInputs, shellGroup, solid, solidMat, sun,
+} from './ui/scene.js';
 import { initGuide, openWelcome, updateWelcomeText, welcomeDlg } from './ui/guide.js';
 import { exportPDF as makePDF } from './ui/pdf.js';
 import { hasOrnament, ornamentResolution, ORNAMENT_DEFAULTS } from './model/ornament.js';
@@ -22,339 +28,15 @@ import {
   GENERAL_TEX, DEFS_TEX, MIRROR_TEX, AI_TEX, AS_TEX, GLOBAL_TEX,
 } from './i18n/i18n.js';
 
-// ---------------------------------------------------------------------------
-// Control definitions (the texts live in i18n.js)
-// ---------------------------------------------------------------------------
-
-
-const RAUP_PARAMS = [
-  // Linear scale 1–10 (gastropods, cephalopods) or logarithmic 1–10⁴ (bivalves)
-  { key: 'W', sym: 'W', min: 1, max: 10000, linMax: 10, step: 0.01, logToggle: true, format: formatW },
-  { key: 'D', sym: 'D', min: 0, max: 0.9, step: 0.005, digits: 3 },
-  { key: 'T', sym: 'T', min: 0, max: 10, step: 0.05, digits: 2 },
-  { key: 'S', sym: 'S', min: 0.5, max: 2, step: 0.01, digits: 2 },
-];
-
-const GEO_PARAMS = [
-  { key: 'turns', sym: 'N', min: 0.25, max: 20, step: 0.25, digits: 2 },
-];
-
-const VIS_PARAMS = [
-  { key: 'spiralLines', min: 0, max: 48, step: 1, digits: 0 },
-  { key: 'ringsPerTurn', min: 0, max: 72, step: 1, digits: 0 },
-  { key: 'lineWidth', min: 0.5, max: 4, step: 0.1, digits: 1 },
-  { key: 'lineOpacity', min: 0.1, max: 1, step: 0.05, digits: 2 },
-];
-
-// Ornament (relief): axial ribs along the growth direction, spiral cords around
-// the margin, a keel, spines, and a change of strength with growth (ornament.js)
-const ORN_PARAMS = [
-  { key: 'ribN', min: 0, max: 60, step: 1, digits: 0, box: 'rib' },
-  { key: 'ribH', min: 0, max: 0.4, step: 0.01, digits: 2, box: 'rib' },
-  { key: 'ribW', min: 0.05, max: 1, step: 0.01, digits: 2, box: 'ribAdv' },
-  { key: 'ribSkew', min: -0.8, max: 0.8, step: 0.05, digits: 2, box: 'ribAdv' },
-  { key: 'cordN', min: 0, max: 48, step: 1, digits: 0, box: 'cord' },
-  { key: 'cordH', min: 0, max: 0.4, step: 0.01, digits: 2, box: 'cord' },
-  { key: 'cordW', min: 0.05, max: 1, step: 0.01, digits: 2, box: 'cordAdv' },
-  { key: 'keelH', min: 0, max: 0.4, step: 0.01, digits: 2, box: 'keel' },
-  { key: 'keelW', min: 0.02, max: 0.3, step: 0.01, digits: 2, box: 'keel' },
-  { key: 'keelPos', min: -0.5, max: 0.5, step: 0.01, digits: 2, box: 'keel' },
-  { key: 'spineN', min: 0, max: 40, step: 1, digits: 0, box: 'spine' },
-  { key: 'spineH', min: 0, max: 1.5, step: 0.01, digits: 2, box: 'spine' },
-  { key: 'spineW', min: 0.1, max: 1, step: 0.01, digits: 2, box: 'spineAdv' },
-  { key: 'spinePos', min: -0.5, max: 0.5, step: 0.01, digits: 2, box: 'spineAdv' },
-  { key: 'ornGrowth', min: -1, max: 1, step: 0.05, digits: 2, box: 'growth' },
-];
-const ORN_KEYS = Object.keys(ORNAMENT_DEFAULTS);
-const ORN_BOOLS = ['nodules', 'spineBoth'];
-const pickOrnament = (p) => Object.fromEntries(ORN_KEYS.map((k) => [k, p[k]]));
-
-// Display orientation of the shell (presentation only: geometry and 3D files keep the model frame)
-const ORIENTS = ['vertical', 'horizontal', 'free'];
-
-const QUALITY = {
-  low: { segPerTurn: 48, segPhi: 24 },
-  medium: { segPerTurn: 96, segPhi: 48 },
-  high: { segPerTurn: 160, segPhi: 72 },
-};
-
-const SHAPE_KEYS = ['W', 'D', 'T', 'S', 'turns', 'hand', 'mirror'];
-const SHELL_SIZE = 4;
-const MODES = ['lines', 'solid', 'both'];
-
-const state = {
-  ...pickShape(PRESETS[DEFAULT_PRESET]),
-  grow: 1,
-  quality: 'medium',
-  mode: 'lines',
-  spiralLines: 16,
-  ringsPerTurn: 24,
-  lineWidth: 1.2,
-  lineOpacity: 0.9,
-  axisWidth: 1,
-  ...ORNAMENT_DEFAULTS,
-  orient: 'vertical',
-};
-
-function pickShape(p) {
-  return Object.fromEntries(SHAPE_KEYS.map((k) => [k, p[k]]));
-}
-
-// ---------------------------------------------------------------------------
-// Shareable state in the URL: #W=2.4&D=0.08&T=1.6&S=1&N=4.5&h=1&v=0&m=lines
-// ---------------------------------------------------------------------------
-
-const HASH_KEYS = { W: 'W', D: 'D', T: 'T', S: 'S', N: 'turns', h: 'hand' };
-
-const fromHash = new URLSearchParams(location.hash.slice(1));
-const hasHashShape = [...fromHash.keys()].some((k) => k in HASH_KEYS);
-for (const [short, key] of Object.entries(HASH_KEYS)) {
-  const v = parseFloat(fromHash.get(short));
-  if (Number.isFinite(v)) state[key] = key === 'hand' ? Math.sign(v) || 1 : v;
-}
-if (fromHash.has('v')) state.mirror = fromHash.get('v') === '1';
-if (MODES.includes(fromHash.get('m'))) state.mode = fromHash.get('m');
-const ORN_HASH = {
-  rn: 'ribN', rh: 'ribH', rw: 'ribW', rk: 'ribSkew', cn: 'cordN', ch: 'cordH', cw: 'cordW',
-  kh: 'keelH', kw: 'keelW', kp: 'keelPos', sn: 'spineN', sh: 'spineH', sw: 'spineW', sp: 'spinePos', og: 'ornGrowth',
-};
-for (const [short, key] of Object.entries(ORN_HASH)) {
-  const v = parseFloat(fromHash.get(short));
-  if (Number.isFinite(v)) state[key] = v;
-}
-if (fromHash.has('nd')) state.nodules = fromHash.get('nd') === '1';
-if (fromHash.has('sb')) state.spineBoth = fromHash.get('sb') === '1';
-const ORIENT_HASH = { v: 'vertical', h: 'horizontal', f: 'free' };
-if (ORIENT_HASH[fromHash.get('o')]) state.orient = ORIENT_HASH[fromHash.get('o')];
-
-// Small wrapper around localStorage: it can be unavailable (private mode, blocked
-// site data), and then the app simply does not remember anything
-const storage = {
-  get(key) {
-    try { return localStorage.getItem(key); } catch { return null; }
-  },
-  set(key, value) {
-    try { localStorage.setItem(key, value); } catch { /* not remembered */ }
-  },
-};
-const LANG_KEY = 'coiling-shells.lang';
-const WELCOME_KEY = 'coiling-shells.welcome';
-
 // Language: English by default; the visitor's choice is remembered for later visits
 setLang(storage.get(LANG_KEY) ?? 'en');
 
-let hashTimer = 0;
 // Undo history (see "Undo" below); declared early because writeHash records the steps
 const undoStack = [];
 const UNDO_LIMIT = 50;
 let committed = null;
 let undoTimer = 0;
-function writeHash() {
-  noteChange();
-  clearTimeout(hashTimer);
-  hashTimer = setTimeout(writeHashNow, 250);
-}
-
-function writeHashNow() {
-  clearTimeout(hashTimer);
-  const q = new URLSearchParams();
-  for (const [short, key] of Object.entries(HASH_KEYS)) q.set(short, String(+Number(state[key]).toFixed(3)));
-  q.set('v', state.mirror ? '1' : '0');
-  q.set('m', state.mode);
-  if (hasOrnament(state)) {
-    for (const [short, key] of Object.entries(ORN_HASH)) {
-      if (state[key] !== ORNAMENT_DEFAULTS[key]) q.set(short, String(+Number(state[key]).toFixed(3)));
-    }
-    if (state.nodules) q.set('nd', '1');
-    if (state.spineBoth) q.set('sb', '1');
-  }
-  if (state.orient !== 'vertical') q.set('o', state.orient[0]);
-  patternHash(q);
-  history.replaceState(null, '', `#${q}`);
-}
-
-// ---------------------------------------------------------------------------
-// Scene
-// ---------------------------------------------------------------------------
-
-// The 3D view; while the shell creator is open its canvas (and this variable) move into it
-let viewport = $('viewport');
-
-const PALETTES = {
-  light: { line: '#2b3a4a', shell: '#e8d3b0', bg: '#f4f0e6' }, // ink on paper
-  dark: { line: '#d8c08c', shell: '#e4cfae', bg: '#111821' },  // old gold on night blue
-};
-
-function setPaletteInputs({ line, shell, bg }) {
-  $('lineColor').value = line;
-  $('shellColor').value = shell;
-  $('bgColor').value = bg;
-}
-setPaletteInputs(PALETTES[window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light']);
-
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.autoClear = false;
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-viewport.prepend(renderer.domElement);
-
-const scene = new THREE.Scene();
-scene.background = new THREE.Color($('bgColor').value);
-
-const pmrem = new THREE.PMREMGenerator(renderer);
-scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
-
-const camera = new THREE.PerspectiveCamera(35, 1, 0.05, 200);
-const CAMERA_HOME = new THREE.Vector3(6.2, 3.6, 7.4);
-camera.position.copy(CAMERA_HOME);
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.08;
-controls.minDistance = 1.5;
-controls.maxDistance = 40;
-controls.autoRotateSpeed = 1.2;
-
-scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7f70, 0.55));
-const sun = new THREE.DirectionalLight(0xffffff, 2.2);
-sun.position.set(4, 8, 5);
-sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
-Object.assign(sun.shadow.camera, { left: -4, right: 4, top: 4, bottom: -4, near: 0.5, far: 25 });
-sun.shadow.bias = -0.0004;
-sun.shadow.normalBias = 0.03;
-scene.add(sun);
-const fill = new THREE.DirectionalLight(0xdfe8ff, 0.5);
-fill.position.set(-5, 2, -4);
-scene.add(fill);
-
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.ShadowMaterial({ opacity: 0.18 }));
-ground.rotation.x = -Math.PI / 2;
-ground.receiveShadow = true;
-scene.add(ground);
-
-// Materials
-const solidMat = new THREE.MeshStandardMaterial({
-  color: $('shellColor').value,
-  roughness: 0.42,
-  metalness: 0.0,
-  envMapIntensity: 0.6,
-  side: THREE.DoubleSide,
-  vertexColors: true,
-  // push the surface back so the lines stay on top
-  polygonOffset: true,
-  polygonOffsetFactor: 1,
-  polygonOffsetUnits: 1,
-});
-
-// Invisible occluder: writes depth but no colour → hidden-line removal
-const occluderMat = new THREE.MeshBasicMaterial({
-  colorWrite: false,
-  side: THREE.DoubleSide,
-  polygonOffset: true,
-  polygonOffsetFactor: 1,
-  polygonOffsetUnits: 1,
-});
-
-// Lines with a width in pixels (native WebGL lines are always 1 px wide)
-const lineMat = new LineMaterial({
-  color: $('lineColor').value,
-  linewidth: state.lineWidth,
-  transparent: true,
-  opacity: state.lineOpacity,
-});
-
-// Dashed axis with a width in pixels (1 px by default, like a plain WebGL line)
-const axisMat = new LineMaterial({ color: 0x2a9d8f, linewidth: state.axisWidth, dashed: true, dashSize: 0.12, gapSize: 0.08 });
-
-solidMat.side = THREE.FrontSide; // exterior (front faces point outwards)
-
-// Inside of the shell: unpigmented, with a light pearly sheen
-const innerMat = new THREE.MeshPhysicalMaterial({
-  color: '#f3eee6',
-  roughness: 0.28,
-  metalness: 0,
-  envMapIntensity: 0.8,
-  iridescence: 0.35,
-  iridescenceIOR: 1.3,
-  iridescenceThicknessRange: [250, 500],
-  side: THREE.BackSide,
-  polygonOffset: true,
-  polygonOffsetFactor: 1,
-  polygonOffsetUnits: 1,
-});
-
-const solid = new THREE.Mesh(new THREE.BufferGeometry(), solidMat);
-solid.castShadow = true;
-solid.receiveShadow = true;
-const inner = new THREE.Mesh(solid.geometry, innerMat);
-inner.receiveShadow = true;
-const occluder = new THREE.Mesh(solid.geometry, occluderMat);
-occluder.renderOrder = 0;
-const lines = new LineSegments2(new LineSegmentsGeometry(), lineMat);
-lines.renderOrder = 1;
-const axis = new Line2(new LineGeometry(), axisMat);
-axis.visible = false;
-// The shell lives in a group whose rotation is only a display orientation:
-// the geometry, the equation and the 3D files keep the model frame (z = coiling axis)
-const shellGroup = new THREE.Group();
-shellGroup.add(solid, inner, occluder, lines, axis);
-scene.add(shellGroup);
-
-// ---------------------------------------------------------------------------
-// x, y, z axes gizmo (frame of the equation: z = coiling axis)
-// ---------------------------------------------------------------------------
-
-const gizmo = {
-  scene: new THREE.Scene(),
-  camera: new THREE.OrthographicCamera(-1.7, 1.7, 1.7, -1.7, 0.1, 10),
-  size: 120,
-  visible: true,
-};
-
-function makeLabel(text, color) {
-  const c = document.createElement('canvas');
-  c.width = c.height = 64;
-  const ctx = c.getContext('2d');
-  ctx.font = 'italic 600 46px "Times New Roman", serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = color;
-  ctx.fillText(text, 32, 34);
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, toneMapped: false, depthTest: false }));
-  sprite.scale.setScalar(0.5);
-  return sprite;
-}
-
-// The axes turn with the shell's display orientation
-const gizmoAxes = new THREE.Group();
-gizmo.scene.add(gizmoAxes);
-
-// Three.js: X = x, Y = z, Z = −y
-for (const { label, dir, color } of [
-  { label: 'x', dir: [1, 0, 0], color: '#e5534b' },
-  { label: 'y', dir: [0, 0, -1], color: '#3fb950' },
-  { label: 'z', dir: [0, 1, 0], color: '#4c8dff' },
-]) {
-  const v = new THREE.Vector3(...dir);
-  const mat = new THREE.MeshBasicMaterial({ color, toneMapped: false });
-  const arrow = new THREE.Group();
-  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.78, 12), mat);
-  shaft.position.y = 0.39;
-  const head = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.28, 16), mat);
-  head.position.y = 0.92;
-  arrow.add(shaft, head);
-  arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v);
-  gizmoAxes.add(arrow);
-  const sprite = makeLabel(label, color);
-  sprite.position.copy(v).multiplyScalar(1.34);
-  gizmoAxes.add(sprite);
-}
-gizmo.scene.add(new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 12), new THREE.MeshBasicMaterial({ color: 0x8a8f98, toneMapped: false })));
+setHashHooks({ patternHash: (q) => patternHash(q), noteChange: () => noteChange() });
 
 // ---------------------------------------------------------------------------
 // Mesh construction
@@ -2874,15 +2556,13 @@ function openWizard() {
   buildWzPatterns();
   wizardDlg.showModal();
   // The app's own 3D canvas moves into the window
-  viewport = $('wizView');
-  viewport.prepend(renderer.domElement);
+  setViewport($('wizView'));
   resize();
   showWizardStep(0);
 }
 
 function closeWizardView() {
-  viewport = $('viewport');
-  viewport.prepend(renderer.domElement);
+  setViewport($('viewport'));
   resize();
 }
 
