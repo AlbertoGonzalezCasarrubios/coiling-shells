@@ -56,6 +56,10 @@ tests/*.test.mjs      Automated tests (node:test); browser.test.mjs drives the r
 docs/README.es.md     Spanish translation of the README
 docs/introduccion-divulgativa.md  Non-technical introduction in Spanish
 docs/images/          Images used by the documentation
+package.json          Scripts (test, lint, format) and development dependencies (npm ci)
+eslint.config.js · .prettierrc.json · .prettierignore   Linter and formatter settings
+.git-blame-ignore-revs  Formatting-only commits that git blame skips
+.github/workflows/    Continuous integration: lint, then tests on Node 20, 22 and 24
 ```
 
 The modules marked *pure* do not depend on Three.js or the DOM, so they run unchanged in the browser, in the Web Worker and in Node (tests).
