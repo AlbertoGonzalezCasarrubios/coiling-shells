@@ -331,7 +331,7 @@ export function applyShellMaterial() {
 let patternWorker = null;
 let workerBusy = false;
 let workerFailed = false;
-const workerUrl = new URL('./workers/pigment-worker.js', import.meta.url);
+const workerUrl = new URL('../workers/pigment-worker.js', import.meta.url);
 
 function startWorker() {
   try {
@@ -497,6 +497,7 @@ export function computeThumbs() {
     colorize(values, job.preset.base, job.preset.pigment, job.preset.amount, img.data);
     canvas.getContext('2d').putImageData(img, 0, 0);
   };
+  const onMainThread = () => jobs.forEach(({ id, p, g }) => setTimeout(() => draw(id, simulatePattern(p, g).values)));
   try {
     const w = new Worker(workerUrl, { type: 'module' });
     let left = jobs.length;
@@ -504,9 +505,14 @@ export function computeThumbs() {
       draw(e.data.id, e.data.v);
       if (--left === 0) w.terminate();
     };
+    // A worker that cannot load (or fails) does not leave the gallery blank
+    w.onerror = () => {
+      w.terminate();
+      onMainThread();
+    };
     jobs.forEach(({ id, p, g }) => w.postMessage({ id, p, g }));
   } catch {
-    jobs.forEach(({ id, p, g }) => setTimeout(() => draw(id, simulatePattern(p, g).values)));
+    onMainThread();
   }
 }
 

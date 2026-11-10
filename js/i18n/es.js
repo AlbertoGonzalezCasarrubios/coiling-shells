@@ -375,6 +375,7 @@ export default {
   patterns: {
     nautilus: 'Nautilus — rayas en llama',
     cepaea: 'Cepaea nemoralis — bandas espirales',
+    naticarius: 'Naticarius — puntos en filas espirales',
   },
   presets: {
     'Gasterópodos': 'Gasterópodos',

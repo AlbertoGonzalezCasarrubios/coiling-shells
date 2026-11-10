@@ -57,8 +57,15 @@ svg { flex: none; }
   display: flex;
   flex-direction: column;
   gap: 18px;
+  /* A thin bar in the theme colours, shown only while the pointer is over the panel */
   scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
 }
+.sidebar:hover { scrollbar-color: var(--border) transparent; }
+.sidebar::-webkit-scrollbar { width: 8px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: transparent; border: 2px solid transparent; border-radius: 8px; background-clip: content-box; }
+.sidebar:hover::-webkit-scrollbar-thumb { background-color: var(--border); }
 
 .brand { display: flex; gap: 12px; align-items: center; }
 .brand-mark { width: 38px; height: 38px; color: var(--accent); }

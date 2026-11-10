@@ -123,6 +123,10 @@ const TOUR = String.raw`(async () => {
   $('toggleFormula').click(); await sl(2500); $('toggleFormula').click();
   $('tabbtn-pigment').click(); document.querySelectorAll('#patternGallery button')[1].click(); await sl(3000);
   log.patternOn = /pg=1/.test(location.hash);
+  // The gallery thumbnails are drawn, and the simulation runs in its Web Worker
+  const painted = (c) => c.getContext('2d').getImageData(0, 0, c.width, c.height).data.some((v, i) => i % 4 === 3 && v > 0);
+  log.thumbs = await until(() => [...document.querySelectorAll('#patternGallery canvas')].every(painted));
+  log.worker = performance.getEntriesByType('resource').some((e) => e.name.endsWith('/js/workers/pigment-worker.js') && (e.responseStatus ?? 200) === 200);
   // Dragging a pattern slider: the pattern follows it before the drag ends
   // (each result hides the "computing" note, even if the next one shows it again at once)
   let shown = 0;
@@ -199,6 +203,8 @@ test('the whole interface works in a real browser', { skip, timeout: 400_000 }, 
     assert.equal(log.guideOpen, true, 'the guide opens');
     assert.equal(log.ornHash, true, 'an ornament preset reaches the URL');
     assert.equal(log.patternOn, true, 'a pattern can be applied');
+    assert.equal(log.thumbs, true, 'the gallery thumbnails are drawn');
+    assert.equal(log.worker, true, 'the pattern worker loads');
     assert.ok(log.liveUpdates >= 2, `the pattern follows a dragged slider (${log.liveUpdates} updates)`);
     assert.equal(log.formatShared, true, 'the pattern format is shared with the export window');
     assert.equal(log.patternTiff, true, 'the pattern button saves a TIFF');

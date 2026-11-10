@@ -91,3 +91,39 @@ test('the activator–substrate defaults draw travelling waves (oblique lines)',
   assert.ok(rowsWithPeaks > 20);
   assert.ok(shifted / rowsWithPeaks > 0.3, `${shifted} / ${rowsWithPeaks}`);
 });
+
+test('the Naticarius preset draws many separate spots, not stripes or bands', () => {
+  // Pigmented patches in the second half of the record (the last whorls), at the preset's threshold
+  const patches = (key) => {
+    const p = preset(key);
+    const G = { W: 2.6, turns: 5, rows: 512, width: 256, nMax: Math.round(256 / (p.size ?? 1)) };
+    const v = simulatePattern(p, G).values;
+    const r0 = G.rows / 2, H = G.rows - r0, Wd = G.width;
+    const on = new Uint8Array(H * Wd);
+    for (let i = 0; i < on.length; i++) on[i] = v[r0 * Wd + i] > 1 - (p.amount ?? 0.5);
+    const seen = new Uint8Array(on.length);
+    const sizes = [];
+    for (let s = 0; s < on.length; s++) {
+      if (!on[s] || seen[s]) continue;
+      let n = 0;
+      const stack = [s];
+      seen[s] = 1;
+      while (stack.length) {
+        const q = stack.pop();
+        n++;
+        const i = Math.floor(q / Wd), k = q % Wd;
+        for (const [ii, kk] of [[i + 1, k], [i - 1, k], [i, (k + 1) % Wd], [i, (k + Wd - 1) % Wd]]) {
+          const t = ii * Wd + kk;
+          if (ii >= 0 && ii < H && on[t] && !seen[t]) { seen[t] = 1; stack.push(t); }
+        }
+      }
+      sizes.push(n);
+    }
+    return { count: sizes.length, largest: Math.max(0, ...sizes) / on.length };
+  };
+  const spots = patches('naticarius');
+  assert.ok(spots.count > 60, `spots: ${spots.count}`);
+  assert.ok(spots.largest < 0.005, `largest spot ${spots.largest}`);
+  // Bands and flames are long connected patches
+  for (const key of ['cepaea', 'nautilus']) assert.ok(patches(key).largest > 5 * spots.largest, key);
+});

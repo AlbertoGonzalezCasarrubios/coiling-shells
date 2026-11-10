@@ -1,7 +1,8 @@
 /**
  * The ornament tab: ornamented examples (shape and relief together), the
  * simple and advanced controls of ribs, cords, keel, spines and change with
- * growth, and the panel of the mechanical model of the cords.
+ * growth (folded sections, opened when the shell has that relief), and the
+ * panel of the mechanical model of the cords.
  */
 import { t } from '../i18n/i18n.js';
 import { criticalWaves, firstMode, lambdaForWaves, loadRatio, mechanicalCords, unstableBand } from '../model/mechanics.js';
@@ -45,6 +46,21 @@ export function syncOrnamentControls() {
   for (const d of ORN_PARAMS) controlsByKey[d.key].set(state[d.key]);
   for (const k of ORN_BOOLS) $(k).checked = !!state[k];
   ornPresetSel.value = ornPresetKey();
+  openActiveDrawers();
+}
+
+/**
+ * Ribs, cords, spines, keel and change with growth are folded sections of equal
+ * rank; when the relief is replaced (an example, undo, removing it) the ones the
+ * shell has are opened and the rest folded. Moving a slider never folds a section.
+ */
+function openActiveDrawers() {
+  const s = state;
+  $('ribDrawer').open = s.ribN > 0 && s.ribH > 0;
+  $('cordDrawer').open = (s.cordN > 0 && s.cordH > 0) || !!s.nodules;
+  $('spineDrawer').open = s.spineN > 0 && s.spineH > 0;
+  $('keelDrawer').open = s.keelH > 0;
+  $('growthDrawer').open = s.ornGrowth !== 0 && hasOrnament(s);
 }
 
 export function onOrnamentChange() {
@@ -181,6 +197,7 @@ export function initOrnamentTab(ctx) {
     onOrnamentChange();
   });
   buildOrnPresetOptions();
+  openActiveDrawers();
   $('ornTheory').addEventListener('click', () => openInfo('ornament'));
   $('ornClear').addEventListener('click', () => {
     Object.assign(state, ORNAMENT_DEFAULTS);

@@ -375,6 +375,7 @@ export default {
   patterns: {
     nautilus: 'Nautilus — flame stripes',
     cepaea: 'Cepaea nemoralis — spiral bands',
+    naticarius: 'Naticarius — spots in spiral rows',
   },
   presets: {
     'Gasterópodos': 'Gastropods',

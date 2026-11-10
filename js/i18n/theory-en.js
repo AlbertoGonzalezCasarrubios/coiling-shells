@@ -139,6 +139,7 @@ export default {
     <ul>
       <li><strong>Bands along the spiral</strong>, as in the banded snail <i>Cepaea nemoralis</i>: stable activator peaks (activator–inhibitor with a far-reaching inhibitor).</li>
       <li><strong>Stripes parallel to the growth lines</strong>, like the flames of <i>Nautilus</i>: oscillations synchronised between neighbouring cells (activator–inhibitor with a long-lived inhibitor). Their irregular, branching outline comes from the differences between cells.</li>
+      <li><strong>Spots in spiral rows</strong>, as in the moon snails <i>Naticarius</i>: both at once. The inhibitor keeps the peaks apart along the margin, as in the bands, and outlives the activator, so each peak switches on and off in place, as in the flames.</li>
       <li><strong>Oblique lines, zigzags and triangles</strong>, as in <i>Oliva</i> and many cone shells: travelling waves, their annihilation and branching and, for the triangles, global control (activator–substrate).</li>
     </ul>
     <p>A small change in a single constant can turn one type into another. The same mechanism, with slightly different rates, explains very different shells.</p>

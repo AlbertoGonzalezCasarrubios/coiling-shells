@@ -140,6 +140,7 @@ export default {
     <ul>
       <li><strong>Bandas a lo largo de la espiral</strong>, como en el caracol <i>Cepaea nemoralis</i>: picos de activador estables (activador-inhibidor con un inhibidor de largo alcance).</li>
       <li><strong>Rayas paralelas a las líneas de crecimiento</strong>, como las llamas del <i>Nautilus</i>: oscilaciones sincronizadas entre células vecinas (activador-inhibidor con un inhibidor de vida larga). Su contorno irregular y ramificado se debe a las diferencias entre células.</li>
+      <li><strong>Puntos en filas espirales</strong>, como en los <i>Naticarius</i>: las dos cosas a la vez. El inhibidor mantiene separados los picos a lo largo del borde, como en las bandas, y dura más que el activador, así que cada pico se enciende y se apaga en su sitio, como en las llamas.</li>
       <li><strong>Líneas oblicuas, zigzags y triángulos</strong>, como en <i>Oliva</i> y en muchos conos: ondas viajeras, sus choques y ramificaciones y, en el caso de los triángulos, el control global (activador-sustrato).</li>
     </ul>
     <p>Un pequeño cambio en una sola constante puede convertir un tipo de patrón en otro. El mismo mecanismo, con ritmos algo distintos, explica conchas muy diferentes.</p>

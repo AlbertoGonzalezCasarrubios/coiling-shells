@@ -73,30 +73,32 @@
         <div id="raup-params"></div>
       </section>
 
-      <section class="panel">
-        <h2 class="panel-title" data-i18n="geo.title">Geometry</h2>
-        <div id="geo-params"></div>
-        <div class="row-2">
-          <label class="field">
-            <span data-i18n="geo.hand">Coiling</span>
-            <select id="hand" class="select">
-              <option value="1" data-i18n="geo.dextral">Dextral</option>
-              <option value="-1" data-i18n="geo.sinistral">Sinistral</option>
-            </select>
-          </label>
-          <div class="field">
-            <span>&nbsp;</span>
-            <button type="button" class="btn toggle-btn" id="mirror" aria-pressed="false" data-i18n-title="geo.mirror.hint">
-              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2v16M7 5 3 10l4 5M13 5l4 5-4 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <span data-i18n="geo.mirror">Mirror valve</span>
-            </button>
+      <details class="drawer" id="geoDrawer">
+        <summary><span data-i18n="geo.title">Geometry</span></summary>
+        <div class="drawer-body">
+          <div id="geo-params"></div>
+          <div class="row-2">
+            <label class="field">
+              <span data-i18n="geo.hand">Coiling</span>
+              <select id="hand" class="select">
+                <option value="1" data-i18n="geo.dextral">Dextral</option>
+                <option value="-1" data-i18n="geo.sinistral">Sinistral</option>
+              </select>
+            </label>
+            <div class="field">
+              <span>&nbsp;</span>
+              <button type="button" class="btn toggle-btn" id="mirror" aria-pressed="false" data-i18n-title="geo.mirror.hint">
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2v16M7 5 3 10l4 5M13 5l4 5-4 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span data-i18n="geo.mirror">Mirror valve</span>
+              </button>
+            </div>
           </div>
+          <button type="button" class="btn btn-wide" id="grow">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path id="growIcon" d="M6 4l10 6-10 6z" fill="currentColor"/></svg>
+            <span id="growLabel" data-i18n="geo.grow">Animate growth</span>
+          </button>
         </div>
-        <button type="button" class="btn btn-wide" id="grow">
-          <svg viewBox="0 0 20 20" aria-hidden="true"><path id="growIcon" d="M6 4l10 6-10 6z" fill="currentColor"/></svg>
-          <span id="growLabel" data-i18n="geo.grow">Animate growth</span>
-        </button>
-      </section>
+      </details>
 
 
       <details class="drawer" id="morphoDrawer">
@@ -130,38 +132,48 @@
           </div>
         </section>
 
-        <section class="panel">
-          <h2 class="panel-title" data-i18n="orn.ribs">Axial ribs</h2>
-          <p class="note" data-i18n="orn.ribs.desc"></p>
-          <div id="rib-params"></div>
-          <div id="ribAdv-params" class="adv-only"></div>
-        </section>
-        <section class="panel">
-          <h2 class="panel-title" data-i18n="orn.cords">Spiral cords</h2>
-          <p class="note" data-i18n="orn.cords.desc"></p>
-          <div id="cord-params"></div>
-          <div id="cordAdv-params" class="adv-only"></div>
-          <label class="toggle"><input type="checkbox" id="nodules" /><span data-i18n="orn.nodules">Nodules where ribs and cords cross</span></label>
-        </section>
-        <section class="panel">
-          <h2 class="panel-title" data-i18n="orn.spines">Spines</h2>
-          <p class="note" data-i18n="orn.spines.desc"></p>
-          <div id="spine-params"></div>
-          <div class="adv-only">
-            <div id="spineAdv-params"></div>
-            <label class="toggle"><input type="checkbox" id="spineBoth" /><span data-i18n="orn.spineBoth">Two rows, symmetric about the periphery</span></label>
+        <details class="drawer" id="ribDrawer">
+          <summary><span data-i18n="orn.ribs">Axial ribs</span></summary>
+          <div class="drawer-body">
+            <p class="note" data-i18n="orn.ribs.desc"></p>
+            <div id="rib-params"></div>
+            <div id="ribAdv-params" class="adv-only"></div>
           </div>
-        </section>
-        <section class="panel adv-only">
-          <h2 class="panel-title" data-i18n="orn.keel">Keel</h2>
-          <p class="note" data-i18n="orn.keel.desc"></p>
-          <div id="keel-params"></div>
-        </section>
-        <section class="panel adv-only">
-          <h2 class="panel-title" data-i18n="orn.growth">Change with growth</h2>
-          <p class="note" data-i18n="orn.growth.desc"></p>
-          <div id="growth-params"></div>
-        </section>
+        </details>
+        <details class="drawer" id="cordDrawer">
+          <summary><span data-i18n="orn.cords">Spiral cords</span></summary>
+          <div class="drawer-body">
+            <p class="note" data-i18n="orn.cords.desc"></p>
+            <div id="cord-params"></div>
+            <div id="cordAdv-params" class="adv-only"></div>
+            <label class="toggle"><input type="checkbox" id="nodules" /><span data-i18n="orn.nodules">Nodules where ribs and cords cross</span></label>
+          </div>
+        </details>
+        <details class="drawer" id="spineDrawer">
+          <summary><span data-i18n="orn.spines">Spines</span></summary>
+          <div class="drawer-body">
+            <p class="note" data-i18n="orn.spines.desc"></p>
+            <div id="spine-params"></div>
+            <div class="adv-only">
+              <div id="spineAdv-params"></div>
+              <label class="toggle"><input type="checkbox" id="spineBoth" /><span data-i18n="orn.spineBoth">Two rows, symmetric about the periphery</span></label>
+            </div>
+          </div>
+        </details>
+        <details class="drawer adv-only" id="keelDrawer">
+          <summary><span data-i18n="orn.keel">Keel</span></summary>
+          <div class="drawer-body">
+            <p class="note" data-i18n="orn.keel.desc"></p>
+            <div id="keel-params"></div>
+          </div>
+        </details>
+        <details class="drawer adv-only" id="growthDrawer">
+          <summary><span data-i18n="orn.growth">Change with growth</span></summary>
+          <div class="drawer-body">
+            <p class="note" data-i18n="orn.growth.desc"></p>
+            <div id="growth-params"></div>
+          </div>
+        </details>
         <details class="drawer adv-only" id="mechDrawer">
           <summary><span data-i18n="mech.title">Why this number of cords?</span></summary>
           <div class="drawer-body">
@@ -256,13 +268,15 @@
             </div>
           </section>
 
-          <section class="panel">
-            <h2 class="panel-title" data-i18n="pig.colors">Pigment colours</h2>
-            <div class="colors two">
-              <label class="color-field"><input type="color" id="pigBase" value="#f1e7d6" /><span data-i18n="pig.base">Background</span></label>
-              <label class="color-field"><input type="color" id="pigColor" value="#9c4a1f" /><span data-i18n="pig.pigment">Pigment</span></label>
+          <details class="drawer" id="pigColorsDrawer">
+            <summary><span data-i18n="pig.colors">Pigment colours</span></summary>
+            <div class="drawer-body">
+              <div class="colors two">
+                <label class="color-field"><input type="color" id="pigBase" value="#f1e7d6" /><span data-i18n="pig.base">Background</span></label>
+                <label class="color-field"><input type="color" id="pigColor" value="#9c4a1f" /><span data-i18n="pig.pigment">Pigment</span></label>
+              </div>
             </div>
-          </section>
+          </details>
 
           <div class="save-row">
             <button type="button" class="btn" id="savePattern" data-i18n="pig.save">Save pattern</button>

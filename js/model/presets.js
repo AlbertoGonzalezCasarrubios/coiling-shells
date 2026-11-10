@@ -64,6 +64,16 @@ export const PATTERN_PRESETS = {
     model: 'AI', Da: 0.02, D2: 12, ra: 0.01, r2: 0.015, kappa: 0.4, ba: 0.005, b2: 0,
     noise: 0.05, globalCtl: 0, T: 3000, insertion: false, base: '#ecc95a', pigment: '#3a2216',
   },
+  naticarius: {
+    // Both mechanisms at once: an inhibitor of medium range keeps the peaks apart
+    // along the margin, as in the bands, and outlives the activator, so each peak
+    // switches on and off, as in the flames. Every peak blinks in place and leaves
+    // a spiral row of spots, like the moon snails Naticarius (N. onca). The spots
+    // are short in time because, near the aperture, one unit of time covers a long
+    // stretch of shell: on the shell they come out round.
+    model: 'AI', Da: 0.05, D2: 4, ra: 0.2, r2: 0.1, kappa: 0, ba: 0.05, b2: 0,
+    noise: 0.1, globalCtl: 0, T: 3000, insertion: true, size: 1.6, amount: 0.65, base: '#f4ead8', pigment: '#8b4a24',
+  },
 };
 
 export const DEFAULT_PATTERN = 'nautilus';

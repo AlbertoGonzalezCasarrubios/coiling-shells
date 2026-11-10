@@ -7,11 +7,17 @@ All notable changes to this project are documented in this file. The format is b
 ### Added
 - The page address also stores the look: line, shell and background colours (once chosen), mesh resolution, growth bands and axis, so a shared link opens with the same appearance.
 - Undo includes the look: a change of colour, palette, resolution, bands or axis is a step like any other.
+- *Naticarius* pattern preset: spots in spiral rows. A medium-range inhibitor keeps the activator peaks apart, as in the bands, and outlives the activator, as in the flames, so each peak switches on and off in place.
 - The 3D printing section warns, only when the shell has spines, if the largest ones would be too thin or slender to print well at the chosen size and wall.
 
 ### Changed
 - The pattern follows a dragged slider: a new simulation starts as soon as the previous one ends, with the latest values, instead of waiting until the slider is released.
 - The *Save pattern* button of the pigment tab offers PNG, JPG or TIFF, the same choice as in the export window.
+- Secondary sections of the sidebar fold: geometry, the pigment colours and, in the ornament tab, ribs, cords, spines, keel and change with growth, which now have equal rank. The ornament sections the shell has open by themselves when an example is loaded, and the rest stay folded.
+- The sidebar's scrollbar is thin, in the theme colours, and only visible while the pointer is over the panel.
+
+### Fixed
+- Since the code was organised in folders (1.1.0) the pattern worker was looked for in the wrong folder: patterns were computed on the main thread, which froze the interface for a moment on every change, and the thumbnails of the pattern gallery stayed blank. The browser test now checks both.
 
 ## [1.1.0] - 2026-11-09
 
