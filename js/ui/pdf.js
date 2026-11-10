@@ -81,6 +81,7 @@ function pdfSafe(text) {
     .replace(/[–—−]/g, '-').replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/…/g, '...')
     .replace(/←/g, '<-').replace(/→/g, '->').replace(/σ/g, 'sigma').replace(/κ/g, 'kappa')
     .replace(/θ/g, 'theta').replace(/φ/g, 'phi').replace(/≈/g, '~')
+    // eslint-disable-next-line no-control-regex -- keeps exactly the Latin-1 range of the standard PDF fonts
     .replace(/[^\x00-\xff]/g, '');
 }
 
@@ -362,7 +363,7 @@ function loadSvgMath() {
     const frame = document.createElement('iframe');
     frame.setAttribute('aria-hidden', 'true');
     frame.style.cssText = 'position:fixed;left:-9999px;width:10px;height:10px;border:0;visibility:hidden';
-    frame.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><script>window.MathJax={svg:{fontCache:'none'},startup:{typeset:false}};<\/script><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"><\/script></head><body></body></html>`;
+    frame.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><script>window.MathJax={svg:{fontCache:'none'},startup:{typeset:false}};</script><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script></head><body></body></html>`;
     const t0 = performance.now();
     const wait = () => {
       const MJ = frame.contentWindow?.MathJax;

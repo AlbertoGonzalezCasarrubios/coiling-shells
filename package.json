@@ -18,7 +18,23 @@
   "scripts": {
     "test": "node --test",
     "test:fast": "SKIP_BROWSER=1 node --test",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
     "serve": "python3 -m http.server 8000"
   },
-  "keywords": ["theoretical morphology", "Raup", "Meinhardt", "reaction-diffusion", "mollusc shells", "morphospace", "three.js"]
+  "keywords": [
+    "theoretical morphology",
+    "Raup",
+    "Meinhardt",
+    "reaction-diffusion",
+    "mollusc shells",
+    "morphospace",
+    "three.js"
+  ],
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.14.0",
+    "globals": "17.14.0",
+    "prettier": "3.9.10"
+  }
 }

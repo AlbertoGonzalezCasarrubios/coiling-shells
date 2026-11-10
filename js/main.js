@@ -2,12 +2,12 @@ import * as THREE from 'three';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 import { buildShell } from './model/raup.js';
-import { $, f, fixSeamNormals } from './ui/util.js';
+import { $, fixSeamNormals } from './ui/util.js';
 import {
   LANG_KEY, QUALITY, SHAPE_KEYS, SHELL_SIZE, WELCOME_KEY, fromHash, hasHashShape, pickShape, setHashHooks, state, storage, writeHash,
 } from './ui/state.js';
 import {
-  viewport, setViewport, PALETTES, axis, axisMat, camera, controls, gizmo, gizmoAxes, ground, inner, lineMat, lines, occluder, renderer, scene, setPaletteInputs, shellGroup, solid,
+  viewport, PALETTES, axis, axisMat, camera, controls, gizmo, gizmoAxes, ground, inner, lineMat, lines, occluder, renderer, scene, setPaletteInputs, shellGroup, solid,
 } from './ui/scene.js';
 import { initGuide, openWelcome, updateWelcomeText, welcomeDlg } from './ui/guide.js';
 import {

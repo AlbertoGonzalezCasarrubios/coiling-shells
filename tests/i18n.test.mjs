@@ -30,6 +30,7 @@ test('every key used in the HTML and in main.js exists', () => {
 test('strings contain no control characters (e.g. from broken TeX escapes)', () => {
   for (const lang of ['en', 'es']) {
     for (const [key, value] of Object.entries(STRINGS[lang])) {
+      // eslint-disable-next-line no-control-regex -- the test looks precisely for control characters
       if (typeof value === 'string') assert.ok(!/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(value), `${lang}.${key}`);
     }
   }

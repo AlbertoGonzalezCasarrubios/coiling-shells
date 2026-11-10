@@ -12,7 +12,7 @@ import { PRESETS } from '../model/presets.js';
 import { generalTeX, liveTeX } from './formulas.js';
 import { drawMorphoOn } from './morphospace-chart.js';
 import { exportPDF as makePDF } from './pdf.js';
-import { axis, axisMat, camera, ground, lineMat, lines, renderer, scene, shellGroup, solid, solidMat, sun, viewport } from './scene.js';
+import { axis, axisMat, camera, ground, lineMat, renderer, scene, shellGroup, solid, solidMat, sun, viewport } from './scene.js';
 import { pickOrnament, pickShape, state, writeHashNow } from './state.js';
 import { $, f, formatW, luminance } from './util.js';
 
@@ -171,7 +171,7 @@ export function renderViewImage(W, H) {
 }
 
 function renderViewImageRaw(W, H) {
-  const { clientWidth: w, clientHeight: h } = viewport;
+  const { clientHeight: h } = viewport;
   const frame = fitFrame(camera.fov, camera.aspect, W / H);
   const cam = camera.clone();
   cam.aspect = W / H;

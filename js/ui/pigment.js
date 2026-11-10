@@ -13,7 +13,7 @@ import { downloadImage } from './export-dialog.js';
 import { formulaView, openInfo, scheduleFormula } from './formulas.js';
 import { innerMat, renderer, solidMat } from './scene.js';
 import { fromHash, state, writeHash } from './state.js';
-import { $, f, hexRgb, sig } from './util.js';
+import { $, hexRgb, sig } from './util.js';
 
 // Provided by main.js through init()
 let applyMode, capturePointer, controlsByKey, createParam, setFill;
