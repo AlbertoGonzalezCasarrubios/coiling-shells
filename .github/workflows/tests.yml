@@ -9,6 +9,18 @@ permissions:
   contents: read
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run lint
+
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -20,6 +32,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
+          cache: npm
+      # Development tools and local copies of the CDN libraries for the browser test
+      - run: npm ci --ignore-scripts
       - run: npm run test:fast
       # Run directly (not through node --test) so its error lines reach the run as annotations
       - name: Browser test

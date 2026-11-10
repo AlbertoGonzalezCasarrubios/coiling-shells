@@ -33,11 +33,22 @@
 
 /** Neutral values: a smooth shell. */
 export const ORNAMENT_DEFAULTS = {
-  ribN: 0, ribH: 0.12, ribW: 0.35, ribSkew: 0,
-  cordN: 0, cordH: 0.08, cordW: 0.45,
+  ribN: 0,
+  ribH: 0.12,
+  ribW: 0.35,
+  ribSkew: 0,
+  cordN: 0,
+  cordH: 0.08,
+  cordW: 0.45,
   nodules: false,
-  keelH: 0, keelW: 0.06, keelPos: 0,
-  spineN: 0, spineH: 0.5, spineW: 0.35, spinePos: 0.12, spineBoth: false,
+  keelH: 0,
+  keelW: 0.06,
+  keelPos: 0,
+  spineN: 0,
+  spineH: 0.5,
+  spineW: 0.35,
+  spinePos: 0.12,
+  spineBoth: false,
   ornGrowth: 0,
 };
 
@@ -65,8 +76,7 @@ export const growthFactor = (c, s) => Math.min(2, Math.max(0, 1 + c * (2 * s - 1
 
 /** True when the parameters ask for some relief. */
 export function hasOrnament(p) {
-  return (p.ribN > 0 && p.ribH > 0) || (p.cordN > 0 && p.cordH > 0) ||
-    p.keelH > 0 || (p.spineN > 0 && p.spineH > 0);
+  return (p.ribN > 0 && p.ribH > 0) || (p.cordN > 0 && p.cordH > 0) || p.keelH > 0 || (p.spineN > 0 && p.spineH > 0);
 }
 
 /** Wrapped distance between two positions on a circle of period 1. */
@@ -86,7 +96,8 @@ const circDist = (u, v) => {
 export function makeOrnament(p, { a, b, rc, cols, cosPhi, sinPhi, arcU, perimeter }) {
   const o = { ...ORNAMENT_DEFAULTS, ...p };
   const active = hasOrnament(o);
-  const nR = new Float64Array(cols), nZ = new Float64Array(cols);
+  const nR = new Float64Array(cols),
+    nZ = new Float64Array(cols);
   if (!active) return { active, nR, nZ, delta: () => 0, crests: { ribs: [], cords: [], spines: [] } };
 
   const ribH = o.ribN > 0 ? o.ribH : 0;
@@ -95,10 +106,12 @@ export function makeOrnament(p, { a, b, rc, cols, cosPhi, sinPhi, arcU, perimete
   const spineH = o.spineN > 0 ? o.spineH : 0;
 
   // Column profiles: cords, keel and the distance to the spine rows
-  const cord = new Float64Array(cols), keel = new Float64Array(cols), spineU = new Float64Array(cols);
+  const cord = new Float64Array(cols),
+    keel = new Float64Array(cols),
+    spineU = new Float64Array(cols);
   // Spines are round: their half-width around the margin (in u) matches their
   // half-width along the spiral, measured at the outer edge of the whorl
-  const halfTheta = o.spineN > 0 ? (o.spineW / 2) * (2 * Math.PI / o.spineN) : 0;
+  const halfTheta = o.spineN > 0 ? (o.spineW / 2) * ((2 * Math.PI) / o.spineN) : 0;
   const halfU = Math.max(1e-3, (halfTheta * (rc + a)) / (perimeter * a));
   // The centre of each row is moved to the nearest column, so the tip of every spine is a vertex
   const snap = (u) => {
@@ -140,9 +153,10 @@ export function makeOrnament(p, { a, b, rc, cols, cosPhi, sinPhi, arcU, perimete
   // Where the relief is, for the line drawing: crests of ribs (angles θ), of
   // cords and keel (positions u), and the spines that are drawn (centre θ,
   // row u and half-widths of the base)
-  const ribCrests = [], spines = [];
+  const ribCrests = [],
+    spines = [];
   if (ribH > 0) {
-    for (let k = 0; -2 * Math.PI * k / o.ribN >= -2 * Math.PI * nTurns; k++) ribCrests.push((-2 * Math.PI * k) / o.ribN);
+    for (let k = 0; (-2 * Math.PI * k) / o.ribN >= -2 * Math.PI * nTurns; k++) ribCrests.push((-2 * Math.PI * k) / o.ribN);
   }
   const uCrests = [];
   if (cordH > 0) for (let k = 0; k < o.cordN; k++) uCrests.push(k / o.cordN);
@@ -163,7 +177,8 @@ export function ornamentResolution(p) {
   const o = { ...ORNAMENT_DEFAULTS, ...p };
   if (!hasOrnament(o)) return { perTurn: 0, phi: 0 };
   const K = 6;
-  let perTurn = 0, phi = 0;
+  let perTurn = 0,
+    phi = 0;
   if (o.ribN > 0 && o.ribH > 0) perTurn = Math.max(perTurn, (K * o.ribN) / Math.max(o.ribW * (1 - Math.abs(o.ribSkew)), 0.15));
   if (o.spineN > 0 && o.spineH > 0) {
     perTurn = Math.max(perTurn, (K * o.spineN) / Math.max(o.spineW, 0.1));

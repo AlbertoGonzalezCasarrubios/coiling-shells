@@ -31,7 +31,9 @@ export function fixSeamNormals(n, { rows, cols, copies, count }) {
     for (let r = 0; r < rows; r++) {
       const i0 = (c * count + r * cols) * 3;
       const i1 = i0 + (cols - 1) * 3;
-      const x = n[i0] + n[i1], y = n[i0 + 1] + n[i1 + 1], z = n[i0 + 2] + n[i1 + 2];
+      const x = n[i0] + n[i1],
+        y = n[i0 + 1] + n[i1 + 1],
+        z = n[i0 + 2] + n[i1 + 2];
       const len = Math.hypot(x, y, z) || 1;
       n[i0] = n[i1] = x / len;
       n[i0 + 1] = n[i1 + 1] = y / len;

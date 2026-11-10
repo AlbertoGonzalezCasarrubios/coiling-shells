@@ -2,32 +2,107 @@ import * as THREE from 'three';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 import { buildShell } from './model/raup.js';
-import { $, f, fixSeamNormals } from './ui/util.js';
+import { $, fixSeamNormals } from './ui/util.js';
 import {
-  LANG_KEY, QUALITY, SHAPE_KEYS, SHELL_SIZE, WELCOME_KEY, fromHash, hasHashShape, pickShape, setHashHooks, state, storage, writeHash,
+  LANG_KEY,
+  QUALITY,
+  SHAPE_KEYS,
+  SHELL_SIZE,
+  WELCOME_KEY,
+  fromHash,
+  hasHashShape,
+  pickShape,
+  setHashHooks,
+  state,
+  storage,
+  writeHash,
 } from './ui/state.js';
 import {
-  viewport, setViewport, PALETTES, axis, axisMat, camera, controls, gizmo, gizmoAxes, ground, inner, lineMat, lines, occluder, renderer, scene, setPaletteInputs, shellGroup, solid,
+  viewport,
+  PALETTES,
+  axis,
+  axisMat,
+  camera,
+  controls,
+  gizmo,
+  gizmoAxes,
+  ground,
+  inner,
+  lineMat,
+  lines,
+  occluder,
+  renderer,
+  scene,
+  setPaletteInputs,
+  shellGroup,
+  solid,
 } from './ui/scene.js';
 import { initGuide, openWelcome, updateWelcomeText, welcomeDlg } from './ui/guide.js';
+import { capturePointer, controlsByKey, createParam, markCustom, onShapeChange, setFill, initControls } from './ui/controls.js';
+import { VIEWS, orientTween, setOrient, stepOrient, stepTween, tween, updateGround, initViews } from './ui/views.js';
 import {
-  capturePointer, controlsByKey, createParam, markCustom, onShapeChange, setFill, initControls,
-} from './ui/controls.js';
-import {
-  VIEWS, orientTween, setOrient, stepOrient, stepTween, tween, updateGround, initViews,
-} from './ui/views.js';
-import {
-  PATTERN_CELLS, PATTERN_ROWS, PIG_SIMPLE, applyShellMaterial, buildGallery, computePattern, computeThumbs, drawProfile, drawProfileOn, drawSpacetime, ensureSurfaceMode, markPatternCustom, onGeometryForPattern, paintPattern, pattern, patternCanvas, patternHash, patternValues, pickPattern, pigControls, profileRow, schedulePattern, selectPattern, setPatternOn, setSecondLabel, stView, syncPatternControls, updateGalleryLabels, updatePatternMessage, initPigment,
+  PATTERN_CELLS,
+  PATTERN_ROWS,
+  PIG_SIMPLE,
+  applyShellMaterial,
+  buildGallery,
+  computePattern,
+  computeThumbs,
+  drawProfile,
+  drawProfileOn,
+  drawSpacetime,
+  ensureSurfaceMode,
+  markPatternCustom,
+  onGeometryForPattern,
+  paintPattern,
+  pattern,
+  patternCanvas,
+  patternHash,
+  patternValues,
+  pickPattern,
+  pigControls,
+  profileRow,
+  schedulePattern,
+  selectPattern,
+  setPatternOn,
+  setSecondLabel,
+  stView,
+  syncPatternControls,
+  updateGalleryLabels,
+  updatePatternMessage,
+  initPigment,
 } from './ui/pigment.js';
 import {
-  busy, chosenSize, defaultShellName, downloadImage, exportPDF, fileStem, openExport, renderViewImage, initExport,
+  busy,
+  chosenSize,
+  defaultShellName,
+  downloadImage,
+  exportPDF,
+  fileStem,
+  openExport,
+  renderViewImage,
+  initExport,
 } from './ui/export-dialog.js';
 import {
-  buildOrnPresetOptions, drawMech, onOrnamentChange, ornPresetKey, ornPresetSel, syncOrnamentControls, initOrnamentTab,
+  buildOrnPresetOptions,
+  drawMech,
+  onOrnamentChange,
+  ornPresetKey,
+  ornPresetSel,
+  syncOrnamentControls,
+  initOrnamentTab,
 } from './ui/ornament-tab.js';
 import { drawMorpho, drawMorphoOn, morphoOv, initMorphospace } from './ui/morphospace-chart.js';
 import {
-  formulaPanel, infoBody, infoDialog, openInfo, scheduleFormula, setFormulaOpen, setFormulaView, showInfoPage, initFormulas,
+  formulaPanel,
+  infoBody,
+  infoDialog,
+  openInfo,
+  scheduleFormula,
+  setFormulaOpen,
+  setFormulaView,
+  showInfoPage,
+  initFormulas,
 } from './ui/formulas.js';
 import { noteChange, startUndo, undo, initUndo } from './ui/undo.js';
 import { syncWizard, wizardDlg, initWizard } from './ui/wizard.js';
@@ -125,10 +200,9 @@ function applyMode() {
   document.querySelectorAll('#mode button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
 }
 
-
 // Sidebar controls (ui/controls.js)
 initControls({
-  markDirty
+  markDirty,
 });
 
 // Ornament tab (ui/ornament-tab.js)
@@ -137,7 +211,7 @@ initOrnamentTab({
   applyShape,
   controlsByKey,
   createParam,
-  markDirty
+  markDirty,
 });
 
 // Grouped presets
@@ -160,9 +234,7 @@ function buildPresetOptions() {
 buildPresetOptions();
 
 const matchingPreset = Object.keys(PRESETS).find((k) =>
-  Object.entries(pickShape(PRESETS[k])).every(([key, v]) =>
-    typeof v === 'boolean' ? state[key] === v : Math.abs(state[key] - v) < 1e-6
-  )
+  Object.entries(pickShape(PRESETS[k])).every(([key, v]) => (typeof v === 'boolean' ? state[key] === v : Math.abs(state[key] - v) < 1e-6)),
 );
 presetSel.value = matchingPreset || (hasHashShape ? 'custom' : DEFAULT_PRESET);
 
@@ -215,7 +287,7 @@ document.querySelectorAll('#mode button').forEach((btn) =>
     state.mode = btn.dataset.mode;
     applyMode();
     writeHash();
-  })
+  }),
 );
 
 // Appearance: colours, mesh resolution, growth bands and axis. It travels in the
@@ -225,8 +297,12 @@ document.querySelectorAll('#mode button').forEach((btn) =>
 let lookChosen = ['lc', 'sc', 'bg'].some((k) => fromHash.has(k));
 function readLook() {
   return {
-    line: $('lineColor').value, shell: $('shellColor').value, bg: $('bgColor').value,
-    quality: state.quality, bands: $('bands').checked, axis: $('showAxis').checked,
+    line: $('lineColor').value,
+    shell: $('shellColor').value,
+    bg: $('bgColor').value,
+    quality: state.quality,
+    bands: $('bands').checked,
+    axis: $('showAxis').checked,
   };
 }
 function applyColours({ line, shell, bg }) {
@@ -259,7 +335,13 @@ function applyLook(l) {
   }
 }
 function lookHash(q) {
-  if (lookChosen) for (const [k, id] of [['lc', 'lineColor'], ['sc', 'shellColor'], ['bg', 'bgColor']]) q.set(k, $(id).value.slice(1));
+  if (lookChosen)
+    for (const [k, id] of [
+      ['lc', 'lineColor'],
+      ['sc', 'shellColor'],
+      ['bg', 'bgColor'],
+    ])
+      q.set(k, $(id).value.slice(1));
   if (state.quality !== 'medium') q.set('q', state.quality[0]);
   if (!$('bands').checked) q.set('bd', '0');
   if ($('showAxis').checked) q.set('ax', '1');
@@ -297,7 +379,7 @@ document.querySelectorAll('[data-palette]').forEach((b) =>
   b.addEventListener('click', () => {
     applyColours(PALETTES[b.dataset.palette]);
     colourChosen();
-  })
+  }),
 );
 $('bands').addEventListener('change', () => {
   applyShellMaterial();
@@ -358,8 +440,13 @@ $('showInfo').addEventListener('click', () => setClean(false));
 window.addEventListener('keydown', (e) => {
   if (infoDialog.open || $('welcome').open || $('exportDlg').open) return;
   // Ctrl+Z / ⌘Z undoes the last step (outside text boxes, which have their own undo)
-  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'z'
-      && !(e.target instanceof Element && e.target.closest('input[type=text], input[type=number], textarea'))) {
+  if (
+    (e.ctrlKey || e.metaKey) &&
+    !e.shiftKey &&
+    !e.altKey &&
+    e.key.toLowerCase() === 'z' &&
+    !(e.target instanceof Element && e.target.closest('input[type=text], input[type=number], textarea'))
+  ) {
     e.preventDefault();
     undo();
     if ($('wizard').open) syncWizard();
@@ -427,7 +514,7 @@ initPigment({
   capturePointer,
   controlsByKey,
   createParam,
-  setFill
+  setFill,
 });
 
 // The theory of the shape tab: Raup's page of the About window
@@ -517,7 +604,7 @@ initMorphospace({
   capturePointer,
   controlsByKey,
   onShapeChange,
-  presetSel
+  presetSel,
 });
 
 // Export (ui/export-dialog.js)
@@ -563,10 +650,12 @@ function applyLanguage(lang) {
   if ($('mechDrawer').open) drawMech();
 }
 
-document.querySelectorAll('.lang button').forEach((b) => b.addEventListener('click', () => {
-  applyLanguage(b.dataset.lang);
-  storage.set(LANG_KEY, b.dataset.lang);
-}));
+document.querySelectorAll('.lang button').forEach((b) =>
+  b.addEventListener('click', () => {
+    applyLanguage(b.dataset.lang);
+    storage.set(LANG_KEY, b.dataset.lang);
+  }),
+);
 
 // Shell creator (ui/wizard.js)
 initWizard({
@@ -596,7 +685,7 @@ initWizard({
   schedulePattern,
   selectPattern,
   setPatternOn,
-  syncPatternControls
+  syncPatternControls,
 });
 
 // Undo (ui/undo.js)
@@ -612,7 +701,7 @@ initUndo({
   setMirror,
   setPatternOn,
   syncOrnamentControls,
-  syncPatternControls
+  syncPatternControls,
 });
 
 // Render loop

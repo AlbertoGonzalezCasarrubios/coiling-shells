@@ -46,12 +46,21 @@ test('ornamented shells (ribs, cords, nodules, varices, spines, keel) give valid
 
 test('extreme parameters, walls and sizes still give valid solids', () => {
   const cases = [
-    { W: 1.01, turns: 20 }, { W: 10000, turns: 0.5 }, { D: 0.9 }, { T: 10 },
-    { S: 0.5 }, { S: 2 }, { turns: 0.25 }, { W: 1000, D: 0, T: 0.35, turns: 1, mirror: true },
+    { W: 1.01, turns: 20 },
+    { W: 10000, turns: 0.5 },
+    { D: 0.9 },
+    { T: 10 },
+    { S: 0.5 },
+    { S: 2 },
+    { turns: 0.25 },
+    { W: 1000, D: 0, T: 0.35, turns: 1, mirror: true },
     { hand: -1, mirror: true },
   ];
   for (const c of cases) {
-    for (const [wall, size] of [[0.4, 30], [6, 250]]) {
+    for (const [wall, size] of [
+      [0.4, 30],
+      [6, 250],
+    ]) {
       assertPrintable(buildPrintMesh({ ...base, ...c }, { size, wall }), size, JSON.stringify({ ...c, wall, size }));
     }
   }

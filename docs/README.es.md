@@ -158,9 +158,13 @@ Three.js, MathJax y jsPDF se cargan desde un CDN, así que hace falta conexión 
 ## Tests
 
 ```bash
-npm test          # Node.js ≥ 20, sin dependencias
+npm ci            # herramientas de desarrollo y copias locales de las librerías del CDN (opcional)
+npm test          # Node.js ≥ 20
 npm run test:fast # sin la prueba en el navegador
+npm run lint      # ESLint y Prettier
 ```
+
+Los tests en sí no necesitan dependencias. `npm ci` instala ESLint y Prettier, y copias de Three.js, MathJax y jsPDF en las mismas versiones que la app carga del CDN; con ellas, la prueba en el navegador no depende del CDN.
 
 Los tests comprueban, entre otras cosas, que:
 
@@ -174,7 +178,8 @@ Los tests comprueban, entre otras cosas, que:
 - las imágenes TIFF se decodifican en los mismos píxeles, y la lámina de vistas se adapta a cualquier formato;
 - los archivos STL y 3MF están bien formados;
 - los textos en inglés y en español están completos;
-- toda la interfaz funciona en un navegador real: una prueba abre la app en Chrome sin ventana y recorre la guía, las pestañas, los modos de dibujo, las orientaciones, las ecuaciones, el patrón siguiendo a un deslizador mientras se arrastra, el aspecto en la dirección, deshacer, el creador de conchas, las páginas de Info y las exportaciones, y falla ante cualquier error en la página. Necesita Chrome y Node.js ≥ 22, y se omite sin ellos.
+- toda la interfaz funciona en un navegador real: una prueba abre la app en Chrome sin ventana y recorre la guía, las pestañas, los modos de dibujo, las orientaciones, las ecuaciones, el patrón siguiendo a un deslizador mientras se arrastra, el aspecto en la dirección, deshacer, el creador de conchas, las páginas de Info y las exportaciones, y falla ante cualquier error en la página. Necesita Chrome y Node.js ≥ 22, y se omite sin ellos;
+- las librerías que se cargan del CDN tienen las mismas versiones que las copias locales.
 
 Se ejecutan en cada subida mediante GitHub Actions. [ARCHITECTURE.md](../ARCHITECTURE.md), en inglés, describe cómo está organizado el programa y qué cubre cada test.
 

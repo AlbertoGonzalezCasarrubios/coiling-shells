@@ -6,7 +6,12 @@ import { STRINGS } from '../js/i18n/i18n.js';
 
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 // All the interface code (main.js and the modules of js/ui/), read as one text
-const UI_FILES = ['../js/main.js', ...readdirSync(new URL('../js/ui/', import.meta.url)).filter((f) => f.endsWith('.js')).map((f) => `../js/ui/${f}`)];
+const UI_FILES = [
+  '../js/main.js',
+  ...readdirSync(new URL('../js/ui/', import.meta.url))
+    .filter((f) => f.endsWith('.js'))
+    .map((f) => `../js/ui/${f}`),
+];
 const main = UI_FILES.map((f) => readFileSync(new URL(f, import.meta.url), 'utf8')).join('\n');
 
 test('English and Spanish have the same keys', () => {
@@ -30,6 +35,7 @@ test('every key used in the HTML and in main.js exists', () => {
 test('strings contain no control characters (e.g. from broken TeX escapes)', () => {
   for (const lang of ['en', 'es']) {
     for (const [key, value] of Object.entries(STRINGS[lang])) {
+      // eslint-disable-next-line no-control-regex -- the test looks precisely for control characters
       if (typeof value === 'string') assert.ok(!/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(value), `${lang}.${key}`);
     }
   }

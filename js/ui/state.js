@@ -13,7 +13,6 @@ import { formatW } from './util.js';
 // Control definitions (the texts live in i18n/)
 // ---------------------------------------------------------------------------
 
-
 export const RAUP_PARAMS = [
   // Linear scale 1–10 (gastropods, cephalopods) or logarithmic 1–10⁴ (bivalves)
   { key: 'W', sym: 'W', min: 1, max: 10000, linMax: 10, step: 0.01, logToggle: true, format: formatW },
@@ -22,9 +21,7 @@ export const RAUP_PARAMS = [
   { key: 'S', sym: 'S', min: 0.5, max: 2, step: 0.01, digits: 2 },
 ];
 
-export const GEO_PARAMS = [
-  { key: 'turns', sym: 'N', min: 0.25, max: 20, step: 0.25, digits: 2 },
-];
+export const GEO_PARAMS = [{ key: 'turns', sym: 'N', min: 0.25, max: 20, step: 0.25, digits: 2 }];
 
 export const VIS_PARAMS = [
   { key: 'spiralLines', min: 0, max: 48, step: 1, digits: 0 },
@@ -99,8 +96,21 @@ for (const [short, key] of Object.entries(HASH_KEYS)) {
 if (fromHash.has('v')) state.mirror = fromHash.get('v') === '1';
 if (MODES.includes(fromHash.get('m'))) state.mode = fromHash.get('m');
 export const ORN_HASH = {
-  rn: 'ribN', rh: 'ribH', rw: 'ribW', rk: 'ribSkew', cn: 'cordN', ch: 'cordH', cw: 'cordW',
-  kh: 'keelH', kw: 'keelW', kp: 'keelPos', sn: 'spineN', sh: 'spineH', sw: 'spineW', sp: 'spinePos', og: 'ornGrowth',
+  rn: 'ribN',
+  rh: 'ribH',
+  rw: 'ribW',
+  rk: 'ribSkew',
+  cn: 'cordN',
+  ch: 'cordH',
+  cw: 'cordW',
+  kh: 'keelH',
+  kw: 'keelW',
+  kp: 'keelPos',
+  sn: 'spineN',
+  sh: 'spineH',
+  sw: 'spineW',
+  sp: 'spinePos',
+  og: 'ornGrowth',
 };
 for (const [short, key] of Object.entries(ORN_HASH)) {
   const v = parseFloat(fromHash.get(short));
@@ -115,15 +125,22 @@ if (ORIENT_HASH[fromHash.get('o')]) state.orient = ORIENT_HASH[fromHash.get('o')
 // site data), and then the app simply does not remember anything
 export const storage = {
   get(key) {
-    try { return localStorage.getItem(key); } catch { return null; }
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
   },
   set(key, value) {
-    try { localStorage.setItem(key, value); } catch { /* not remembered */ }
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      /* not remembered */
+    }
   },
 };
 export const LANG_KEY = 'coiling-shells.lang';
 export const WELCOME_KEY = 'coiling-shells.welcome';
-
 
 let hashTimer = 0;
 // Other parts add to the address (the pattern, the appearance) or listen to every change (undo)

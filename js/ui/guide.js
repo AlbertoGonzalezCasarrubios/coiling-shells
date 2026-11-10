@@ -32,7 +32,18 @@ function gridPoint(shell, row, col) {
  */
 // Shell of the guide: a garden snail with a taller spire, a reticulate relief and a row of spines
 const GUIDE_SHAPE = { W: 2.2, D: 0.06, T: 2.4, S: 1.05, turns: 5, hand: 1, mirror: false };
-const GUIDE_ORNAMENT = { ribN: 26, ribH: 0.07, ribW: 0.45, cordN: 16, cordH: 0.07, cordW: 0.5, spineN: 8, spineH: 0.45, spineW: 0.35, spinePos: 0.12 };
+const GUIDE_ORNAMENT = {
+  ribN: 26,
+  ribH: 0.07,
+  ribW: 0.45,
+  cordN: 16,
+  cordH: 0.07,
+  cordW: 0.5,
+  spineN: 8,
+  spineH: 0.45,
+  spineW: 0.35,
+  spinePos: 0.12,
+};
 
 /** Angles θ = −2πk/n (ribs or spines counted from the aperture) between two limits. */
 function ornamentAngles(n, from, to) {
@@ -61,29 +72,38 @@ function shellAnchors(shell, turns, orn = {}) {
   const inside = (poly, [px, py]) => {
     let c = false;
     for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-      const [xi, yi] = poly[i], [xj, yj] = poly[j];
-      if ((yi > py) !== (yj > py) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) c = !c;
+      const [xi, yi] = poly[i],
+        [xj, yj] = poly[j];
+      if (yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) c = !c;
     }
     return c;
   };
   const sutureAt = (theta) => {
-    const a = rowAt(theta), b = rowAt(theta - TAU);
+    const a = rowAt(theta),
+      b = rowAt(theta - TAU);
     const ringA = Array.from({ length: seg }, (_, j) => gridPoint(shell, a, j));
     const polyB = Array.from({ length: seg }, (_, j) => toPlane(gridPoint(shell, b, j)));
-    let best = null, bestR = -Infinity;
+    let best = null,
+      bestR = -Infinity;
     for (let j = 0; j < seg; j++) {
-      const p = ringA[j], q = ringA[(j + 1) % seg];
+      const p = ringA[j],
+        q = ringA[(j + 1) % seg];
       const inP = inside(polyB, toPlane(p));
       if (inP === inside(polyB, toPlane(q))) continue;
       // Bisection along the segment to the crossing point
-      let lo = 0, hi = 1;
+      let lo = 0,
+        hi = 1;
       for (let k = 0; k < 20; k++) {
         const mid = (lo + hi) / 2;
-        if (inside(polyB, toPlane(p.clone().lerp(q, mid))) === inP) lo = mid; else hi = mid;
+        if (inside(polyB, toPlane(p.clone().lerp(q, mid))) === inP) lo = mid;
+        else hi = mid;
       }
       const c = p.clone().lerp(q, (lo + hi) / 2);
       const r = toPlane(c)[0];
-      if (r > bestR) { bestR = r; best = c; }
+      if (r > bestR) {
+        bestR = r;
+        best = c;
+      }
     }
     return best;
   };
@@ -104,9 +124,28 @@ function shellAnchors(shell, turns, orn = {}) {
     // Ornament: the crest of a rib and of a cord on the last whorl, and the tip of
     // a spine (its row is snapped to a mesh column, so the tip is a vertex). In a
     // circular aperture the arc-length coordinate u is φ / 2π.
-    ...(orn.ribN ? [{ key: 'wel.rib', cands: ornamentAngles(orn.ribN, -TAU * 0.8, -TAU * 0.2).map((t) => gridPoint(shell, rowAt(t), colAt(-0.6))) }] : []),
-    ...(orn.cordN ? [{ key: 'wel.cord', cands: ornamentAngles(orn.ribN || 1, -TAU * 0.8, -TAU * 0.2).map((t) => gridPoint(shell, rowAt(t + Math.PI / (orn.ribN || 1)), colAt(TAU / orn.cordN))) }] : []),
-    ...(orn.spineN ? [{ key: 'wel.spine', cands: ornamentAngles(orn.spineN, -TAU * 0.85, -TAU * 0.12).map((t) => gridPoint(shell, rowAt(t), colAt(TAU * orn.spinePos))), profile: true }] : []),
+    ...(orn.ribN
+      ? [{ key: 'wel.rib', cands: ornamentAngles(orn.ribN, -TAU * 0.8, -TAU * 0.2).map((t) => gridPoint(shell, rowAt(t), colAt(-0.6))) }]
+      : []),
+    ...(orn.cordN
+      ? [
+          {
+            key: 'wel.cord',
+            cands: ornamentAngles(orn.ribN || 1, -TAU * 0.8, -TAU * 0.2).map((t) =>
+              gridPoint(shell, rowAt(t + Math.PI / (orn.ribN || 1)), colAt(TAU / orn.cordN)),
+            ),
+          },
+        ]
+      : []),
+    ...(orn.spineN
+      ? [
+          {
+            key: 'wel.spine',
+            cands: ornamentAngles(orn.spineN, -TAU * 0.85, -TAU * 0.12).map((t) => gridPoint(shell, rowAt(t), colAt(TAU * orn.spinePos))),
+            profile: true,
+          },
+        ]
+      : []),
   ];
 }
 
@@ -137,15 +176,31 @@ function buildWelcome() {
   const shape = GUIDE_SHAPE;
   const orn = { ...ORNAMENT_DEFAULTS, ...GUIDE_ORNAMENT };
   const res = ornamentResolution({ ...shape, ...orn });
-  const shell = buildShell({ ...shape, ...orn, grow: 1, segPerTurn: res.perTurn, segPhi: Math.min(256, res.phi), spiralLines: 0, ringsPerTurn: 0, size: 4 });
+  const shell = buildShell({
+    ...shape,
+    ...orn,
+    grow: 1,
+    segPerTurn: res.perTurn,
+    segPhi: Math.min(256, res.phi),
+    spiralLines: 0,
+    ringsPerTurn: 0,
+    size: 4,
+  });
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(shell.positions, 3));
   geo.setIndex(new THREE.BufferAttribute(shell.indices, 1));
   geo.computeVertexNormals();
   fixSeamNormals(geo.attributes.normal.array, shell.grid);
-  const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
-    color: '#d9b37c', roughness: 0.42, metalness: 0, envMapIntensity: 0.55, side: THREE.DoubleSide,
-  }));
+  const mesh = new THREE.Mesh(
+    geo,
+    new THREE.MeshStandardMaterial({
+      color: '#d9b37c',
+      roughness: 0.42,
+      metalness: 0,
+      envMapIntensity: 0.55,
+      side: THREE.DoubleSide,
+    }),
+  );
   sc.add(mesh);
   // Coarse copy of the same shell, only for the visibility tests of the labels
   const coarse = buildShell({ ...shape, grow: 1, segPerTurn: 40, segPhi: 24, spiralLines: 0, ringsPerTurn: 0, size: 4 });
@@ -157,7 +212,7 @@ function buildWelcome() {
   const { x, z, yTop, yBottom } = shell.axis;
   const axisLine = new THREE.Line(
     new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x, yBottom - 0.3, z), new THREE.Vector3(x, yTop + 0.3, z)]),
-    new THREE.LineDashedMaterial({ color: 0x2a9d8f, dashSize: 0.12, gapSize: 0.08 })
+    new THREE.LineDashedMaterial({ color: 0x2a9d8f, dashSize: 0.12, gapSize: 0.08 }),
   );
   axisLine.computeLineDistances();
   sc.add(axisLine);
@@ -179,7 +234,8 @@ function buildWelcome() {
   }
 
   const resizeView = () => {
-    const w = view.clientWidth, h = view.clientHeight;
+    const w = view.clientWidth,
+      h = view.clientHeight;
     if (!w || !h) return;
     r.setSize(w, h, false);
     cam.aspect = w / h;
@@ -193,9 +249,13 @@ function buildWelcome() {
   const tmp = new THREE.Vector3();
   let frame = 0;
   const placeLabels = () => {
-    const w = view.clientWidth, h = view.clientHeight;
+    const w = view.clientWidth,
+      h = view.clientHeight;
     const recheck = frame++ % 4 === 0; // visibility is re-evaluated every few frames
-    const toScreen = (v) => { tmp.copy(v).project(cam); return [(tmp.x + 1) * w / 2, (1 - tmp.y) * h / 2]; };
+    const toScreen = (v) => {
+      tmp.copy(v).project(cam);
+      return [((tmp.x + 1) * w) / 2, ((1 - tmp.y) * h) / 2];
+    };
     const [cx, cy] = toScreen(centre.set(0, 0, 0));
     const placed = [];
     for (const a of anchors) {
@@ -211,10 +271,13 @@ function buildWelcome() {
       if (recheck || !a.point) {
         // Usually the candidate closest to the camera; for spines, the one seen most
         // in profile (farthest from the centre on screen), so it is not foreshortened
-        const far = (v) => { const [x, y] = toScreen(v); return -Math.hypot(x - cx, y - cy); };
-        const byDistance = a.cands.slice().sort(a.profile
-          ? (u, v) => far(u) - far(v)
-          : (u, v) => u.distanceToSquared(cam.position) - v.distanceToSquared(cam.position));
+        const far = (v) => {
+          const [x, y] = toScreen(v);
+          return -Math.hypot(x - cx, y - cy);
+        };
+        const byDistance = a.cands
+          .slice()
+          .sort(a.profile ? (u, v) => far(u) - far(v) : (u, v) => u.distanceToSquared(cam.position) - v.distanceToSquared(cam.position));
         const chosen = byDistance.find(visible);
         a.hidden = !chosen; // hidden parts are faded, not removed
         a.point = chosen ?? byDistance[0];
@@ -228,7 +291,8 @@ function buildWelcome() {
     // Balance the two sides: when one side has too many labels, the points
     // closest to the centre move theirs to the other side
     for (let guard = 0; guard < placed.length; guard++) {
-      const left = placed.filter((q) => q.side < 0), right = placed.filter((q) => q.side > 0);
+      const left = placed.filter((q) => q.side < 0),
+        right = placed.filter((q) => q.side > 0);
       if (Math.abs(left.length - right.length) <= 2) break;
       const [from, sign] = left.length > right.length ? [left, 1] : [right, -1];
       const q = from.reduce((m, v) => (Math.abs(v.px - cx) < Math.abs(m.px - cx) ? v : m));
@@ -254,10 +318,13 @@ function buildWelcome() {
       a.el.style.top = `${ly}px`;
       a.el.style.transform = `translate(${side < 0 ? '-100%' : '0'}, -50%)`;
       a.el.classList.toggle('behind', hidden);
-      a.line.setAttribute('x1', px); a.line.setAttribute('y1', py);
-      a.line.setAttribute('x2', x); a.line.setAttribute('y2', ly);
+      a.line.setAttribute('x1', px);
+      a.line.setAttribute('y1', py);
+      a.line.setAttribute('x2', x);
+      a.line.setAttribute('y2', ly);
       a.line.classList.toggle('behind', hidden);
-      a.dot.setAttribute('cx', px); a.dot.setAttribute('cy', py);
+      a.dot.setAttribute('cx', px);
+      a.dot.setAttribute('cy', py);
       a.dot.classList.toggle('behind', hidden);
     }
   };
@@ -270,7 +337,8 @@ function buildWelcome() {
 export function updateWelcomeText() {
   if (welcome) for (const a of welcome.anchors) a.el.textContent = t(a.key);
   $('welcomeParts').innerHTML = ['wel.apex', 'wel.spire', 'wel.suture', 'wel.body', 'wel.aperture', 'wel.axis']
-    .map((k) => `<li>${t(k)}</li>`).join('');
+    .map((k) => `<li>${t(k)}</li>`)
+    .join('');
 }
 
 function welcomeLoop() {

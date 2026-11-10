@@ -12,7 +12,7 @@ import { PRESETS } from '../model/presets.js';
 import { generalTeX, liveTeX } from './formulas.js';
 import { drawMorphoOn } from './morphospace-chart.js';
 import { exportPDF as makePDF } from './pdf.js';
-import { axis, axisMat, camera, ground, lineMat, lines, renderer, scene, shellGroup, solid, solidMat, sun, viewport } from './scene.js';
+import { axis, axisMat, camera, ground, lineMat, renderer, scene, shellGroup, solid, solidMat, sun, viewport } from './scene.js';
 import { pickOrnament, pickShape, state, writeHashNow } from './state.js';
 import { $, f, formatW, luminance } from './util.js';
 
@@ -76,7 +76,8 @@ export async function downloadImage(canvas, stem, fmt = 'png') {
   }
   const type = fmt === 'jpg' ? 'image/jpeg' : 'image/png';
   const blob = await new Promise((resolve, reject) =>
-    src.toBlob((b) => (b ? resolve(b) : reject(new Error('encoding failed'))), type, 0.95));
+    src.toBlob((b) => (b ? resolve(b) : reject(new Error('encoding failed'))), type, 0.95),
+  );
   downloadBlob(blob, type, `${stem}.${fmt}`);
 }
 
@@ -143,8 +144,8 @@ export function chosenSize(value, customW, customH) {
 const viewImageSize = () => chosenSize($('exRes').value, $('exW').value, $('exH').value);
 
 /** Size of the plate of views, or null for the standard 3 × 2 plate. */
-const plateImageSize = () => ($('exPlateRes').value === 'std'
-  ? null : chosenSize($('exPlateRes').value, $('exPlateW').value, $('exPlateH').value));
+const plateImageSize = () =>
+  $('exPlateRes').value === 'std' ? null : chosenSize($('exPlateRes').value, $('exPlateW').value, $('exPlateH').value);
 
 const PLATE_TILE = 900; // view size of the standard plate
 
@@ -171,7 +172,7 @@ export function renderViewImage(W, H) {
 }
 
 function renderViewImageRaw(W, H) {
-  const { clientWidth: w, clientHeight: h } = viewport;
+  const { clientHeight: h } = viewport;
   const frame = fitFrame(camera.fov, camera.aspect, W / H);
   const cam = camera.clone();
   cam.aspect = W / H;
@@ -191,7 +192,8 @@ function renderViewImageRaw(W, H) {
   try {
     for (let y = 0; y < H; y += tile) {
       for (let x = 0; x < W; x += tile) {
-        const tw = Math.min(tile, W - x), th = Math.min(tile, H - y);
+        const tw = Math.min(tile, W - x),
+          th = Math.min(tile, H - y);
         renderer.setSize(tw, th, false);
         renderer.setViewport(0, 0, tw, th);
         cam.setViewOffset(W, H, x, y, tw, th);
@@ -216,9 +218,10 @@ const PLATE_VIEWS = ['apertural', 'dorsal', 'apical', 'umbilical', 'profile', 'i
 /** Orthographic camera framed on the shell for one standard view. */
 function plateCamera(name) {
   const dir = VIEWS[name]().normalize();
-  const up = name === 'apical' || name === 'umbilical'
-    ? new THREE.Vector3(0, 0, -state.hand) // the aperture ends up at the bottom
-    : new THREE.Vector3(0, 1, 0);           // the apex ends up at the top
+  const up =
+    name === 'apical' || name === 'umbilical'
+      ? new THREE.Vector3(0, 0, -state.hand) // the aperture ends up at the bottom
+      : new THREE.Vector3(0, 1, 0); // the apex ends up at the top
   const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
   cam.up.copy(up);
   cam.position.copy(dir).multiplyScalar(30);
@@ -227,15 +230,21 @@ function plateCamera(name) {
   // Tight framing: vertices are projected onto the camera plane
   const P = solid.geometry.attributes.position.array;
   const inv = cam.matrixWorldInverse.elements;
-  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  let x0 = Infinity,
+    x1 = -Infinity,
+    y0 = Infinity,
+    y1 = -Infinity;
   for (let k = 0; k < P.length; k += 3) {
     const x = inv[0] * P[k] + inv[4] * P[k + 1] + inv[8] * P[k + 2] + inv[12];
     const y = inv[1] * P[k] + inv[5] * P[k + 1] + inv[9] * P[k + 2] + inv[13];
-    if (x < x0) x0 = x; if (x > x1) x1 = x;
-    if (y < y0) y0 = y; if (y > y1) y1 = y;
+    if (x < x0) x0 = x;
+    if (x > x1) x1 = x;
+    if (y < y0) y0 = y;
+    if (y > y1) y1 = y;
   }
   const half = (Math.max(x1 - x0, y1 - y0) / 2) * 1.08;
-  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  const cx = (x0 + x1) / 2,
+    cy = (y0 + y1) / 2;
   Object.assign(cam, { left: cx - half, right: cx + half, top: cy + half, bottom: cy - half });
   cam.updateProjectionMatrix();
   return { cam, dir, up };
@@ -253,7 +262,10 @@ function renderPlateRaw({ tile = 640, background = '#ffffff', labels = true, wid
   const n = PLATE_VIEWS.length;
   // Standard plate: 3 × 2 views (or one row). At a given size, the grid that
   // gives the largest views, centred on the background.
-  let cols = Math.min(3, n), rowsN = Math.ceil(n / cols), x0 = 0, y0 = 0;
+  let cols = Math.min(3, n),
+    rowsN = Math.ceil(n / cols),
+    x0 = 0,
+    y0 = 0;
   if (width && height && n === 6) {
     ({ cols, rows: rowsN, tile, x0, y0 } = plateLayout(width, height, labels ? 0.1 : 0));
   }
@@ -320,8 +332,13 @@ const plateBackground = () => ($('exBg').value === 'current' ? $('bgColor').valu
 function updatePlatePreview() {
   const size = plateImageSize();
   const k = size ? 660 / Math.max(size.W, size.H) : 0;
-  const c = renderPlate({ tile: 220, background: plateBackground(), labels: $('exLabels').checked,
-    width: size ? Math.round(size.W * k) : 0, height: size ? Math.round(size.H * k) : 0 });
+  const c = renderPlate({
+    tile: 220,
+    background: plateBackground(),
+    labels: $('exLabels').checked,
+    width: size ? Math.round(size.W * k) : 0,
+    height: size ? Math.round(size.H * k) : 0,
+  });
   const img = $('exPlatePreview');
   img.src = c.toDataURL('image/png');
 }
@@ -427,7 +444,8 @@ export function openExport() {
 /** Fixed sizes in the size menus (after "Your screen", which depends on the device). */
 function fillFixedSizes() {
   const dpr = window.devicePixelRatio || 1;
-  const sw = Math.round(screen.width * dpr), sh = Math.round(screen.height * dpr);
+  const sw = Math.round(screen.width * dpr),
+    sh = Math.round(screen.height * dpr);
   for (const group of [$('exResFixed'), $('exPlateFixed')]) {
     group.querySelector('[value="screen"]').textContent = `${t('ex.res.screen')} · ${sw} × ${sh}`;
     if (group.children.length > 1) continue;
@@ -449,9 +467,23 @@ export function initExport(ctx) {
   // --- PDF (js/ui/pdf.js) ------------------------------------------------------
   // The sheet reads the app through this context, built when the PDF is made
   pdfContext = () => ({
-    state, pattern, lastBuild: live.lastBuild(), patternCanvas, profileRow: live.profileRow(), PATTERN_CELLS, PATTERN_ROWS,
-    colourShown, drawMorphoOn, drawProfileOn, fileStem, generalTeX, liveTeX, renderPlate,
-    renderPlateSubset, shellName, writeHashNow,
+    state,
+    pattern,
+    lastBuild: live.lastBuild(),
+    patternCanvas,
+    profileRow: live.profileRow(),
+    PATTERN_CELLS,
+    PATTERN_ROWS,
+    colourShown,
+    drawMorphoOn,
+    drawProfileOn,
+    fileStem,
+    generalTeX,
+    liveTeX,
+    renderPlate,
+    renderPlateSubset,
+    shellName,
+    writeHashNow,
   });
   $('openExport').addEventListener('click', openExport);
   $('closeExport').addEventListener('click', () => exportDlg.close());
@@ -460,34 +492,59 @@ export function initExport(ctx) {
   });
   $('exBg').addEventListener('change', updatePlatePreview);
   $('exAxis').addEventListener('change', updatePlatePreview);
-  $('exLabels').addEventListener('change', () => { updateViewImageSize(); updatePlatePreview(); });
+  $('exLabels').addEventListener('change', () => {
+    updateViewImageSize();
+    updatePlatePreview();
+  });
   for (const id of ['exSize', 'exWall']) $(id).addEventListener('input', updatePrintDims);
 
   $('exRes').addEventListener('change', updateViewImageSize);
   for (const id of ['exW', 'exH']) $(id).addEventListener('input', updateViewImageSize);
-  $('exPlateRes').addEventListener('change', () => { updateViewImageSize(); updatePlatePreview(); });
-  for (const id of ['exPlateW', 'exPlateH']) $(id).addEventListener('change', () => { updateViewImageSize(); updatePlatePreview(); });
-  $('exPng').addEventListener('click', (e) => busy(e.currentTarget, async () => {
-    const { W, H } = viewImageSize();
-    await downloadImage(renderViewImage(W, H), `${fileStem()}_${W}x${H}`, $('exFormat').value);
-  }));
-  $('exPlate').addEventListener('click', (e) => busy(e.currentTarget, async () => {
-    const size = plateImageSize();
-    const c = renderPlate({ tile: PLATE_TILE, background: plateBackground(), labels: $('exLabels').checked, width: size?.W, height: size?.H });
-    await downloadImage(c, `${fileStem()}_views${size ? `_${size.W}x${size.H}` : ''}`, $('exPlateFormat').value);
-  }));
+  $('exPlateRes').addEventListener('change', () => {
+    updateViewImageSize();
+    updatePlatePreview();
+  });
+  for (const id of ['exPlateW', 'exPlateH'])
+    $(id).addEventListener('change', () => {
+      updateViewImageSize();
+      updatePlatePreview();
+    });
+  $('exPng').addEventListener('click', (e) =>
+    busy(e.currentTarget, async () => {
+      const { W, H } = viewImageSize();
+      await downloadImage(renderViewImage(W, H), `${fileStem()}_${W}x${H}`, $('exFormat').value);
+    }),
+  );
+  $('exPlate').addEventListener('click', (e) =>
+    busy(e.currentTarget, async () => {
+      const size = plateImageSize();
+      const c = renderPlate({
+        tile: PLATE_TILE,
+        background: plateBackground(),
+        labels: $('exLabels').checked,
+        width: size?.W,
+        height: size?.H,
+      });
+      await downloadImage(c, `${fileStem()}_views${size ? `_${size.W}x${size.H}` : ''}`, $('exPlateFormat').value);
+    }),
+  );
   $('exPdf').addEventListener('click', (e) => busy(e.currentTarget, exportPDF));
-  $('exStl').addEventListener('click', (e) => busy(e.currentTarget, () => {
-    downloadBlob(toSTL(printMesh(), shellName()), 'model/stl', `${fileStem()}_${printOptions().size}mm.stl`);
-  }));
-  $('ex3mf').addEventListener('click', (e) => busy(e.currentTarget, async () => {
-    downloadBlob(await to3MF(printMesh(), shellName()), 'model/3mf', `${fileStem()}_${printOptions().size}mm.3mf`);
-  }));
+  $('exStl').addEventListener('click', (e) =>
+    busy(e.currentTarget, () => {
+      downloadBlob(toSTL(printMesh(), shellName()), 'model/stl', `${fileStem()}_${printOptions().size}mm.stl`);
+    }),
+  );
+  $('ex3mf').addEventListener('click', (e) =>
+    busy(e.currentTarget, async () => {
+      downloadBlob(await to3MF(printMesh(), shellName()), 'model/3mf', `${fileStem()}_${printOptions().size}mm.3mf`);
+    }),
+  );
   $('exGlb').addEventListener('click', (e) => busy(e.currentTarget, exportGLB));
   $('exPattern').addEventListener('click', (e) => {
     if (!live.patternValues()) return;
     const own = slugify(customName());
-    busy(e.currentTarget, () => downloadImage(patternCanvas, own ? `${own}_pattern` : `meinhardt_${pattern.preset}_seed${pattern.seed}`, $('exPatternFormat').value));
+    busy(e.currentTarget, () =>
+      downloadImage(patternCanvas, own ? `${own}_pattern` : `meinhardt_${pattern.preset}_seed${pattern.seed}`, $('exPatternFormat').value),
+    );
   });
-
 }

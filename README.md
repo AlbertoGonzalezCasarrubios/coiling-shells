@@ -156,9 +156,13 @@ Three.js, MathJax and jsPDF are loaded from a CDN, so an internet connection is 
 ## Tests
 
 ```bash
-npm test          # Node.js ≥ 20, no dependencies
+npm ci            # development tools and local copies of the CDN libraries (optional)
+npm test          # Node.js ≥ 20
 npm run test:fast # without the browser test
+npm run lint      # ESLint and Prettier
 ```
+
+The tests themselves need no dependencies. `npm ci` installs ESLint and Prettier, and copies of Three.js, MathJax and jsPDF at the same versions the app loads from the CDN; with them, the browser test runs without depending on the CDN.
 
 The tests check, among other things, that:
 
@@ -172,7 +176,8 @@ The tests check, among other things, that:
 - TIFF images decode to the same pixels, and the plate of views fits every format;
 - STL and 3MF files are well formed;
 - the English and Spanish texts are complete;
-- the whole interface works in a real browser: a test opens the app in headless Chrome and walks through the guide, the tabs, the render modes, the orientations, the equations, the pattern following a dragged slider, the look in the address, undo, the shell creator, the About pages and the exports, and fails on any error in the page. It needs Chrome and Node.js ≥ 22, and is skipped without them.
+- the whole interface works in a real browser: a test opens the app in headless Chrome and walks through the guide, the tabs, the render modes, the orientations, the equations, the pattern following a dragged slider, the look in the address, undo, the shell creator, the About pages and the exports, and fails on any error in the page. It needs Chrome and Node.js ≥ 22, and is skipped without them;
+- the libraries loaded from the CDN have the same versions as the local copies.
 
 They run on every push through GitHub Actions. [ARCHITECTURE.md](ARCHITECTURE.md) describes how the program is organised and what each test covers.
 

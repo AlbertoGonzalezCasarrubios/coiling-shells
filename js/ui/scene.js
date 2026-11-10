@@ -25,7 +25,7 @@ export function setViewport(el) {
 
 export const PALETTES = {
   light: { line: '#2b3a4a', shell: '#e8d3b0', bg: '#f4f0e6' }, // ink on paper
-  dark: { line: '#d8c08c', shell: '#e4cfae', bg: '#111821' },  // old gold on night blue
+  dark: { line: '#d8c08c', shell: '#e4cfae', bg: '#111821' }, // old gold on night blue
 };
 
 export function setPaletteInputs({ line, shell, bg }) {
@@ -197,4 +197,6 @@ for (const { label, dir, color } of [
   sprite.position.copy(v).multiplyScalar(1.34);
   gizmoAxes.add(sprite);
 }
-gizmo.scene.add(new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 12), new THREE.MeshBasicMaterial({ color: 0x8a8f98, toneMapped: false })));
+gizmo.scene.add(
+  new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 12), new THREE.MeshBasicMaterial({ color: 0x8a8f98, toneMapped: false })),
+);

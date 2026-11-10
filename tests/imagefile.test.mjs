@@ -15,16 +15,24 @@ function readTIFF(bytes) {
   let last = 0;
   for (let k = 0; k < n; k++) {
     const p = ifd + 2 + 12 * k;
-    const tag = v.getUint16(p, true), type = v.getUint16(p + 2, true), count = v.getUint32(p + 4, true);
+    const tag = v.getUint16(p, true),
+      type = v.getUint16(p + 2, true),
+      count = v.getUint32(p + 4, true);
     assert.ok(tag > last, 'tags in ascending order');
     last = tag;
     const value = type === 3 && count === 1 ? v.getUint16(p + 8, true) : v.getUint32(p + 8, true);
     const many = (at) => Array.from({ length: count }, (_, i) => v.getUint32(at + 4 * i, true));
-    tags[tag] = count > 1 && type === 4 ? many(value) : count > 1 && type === 3
-      ? Array.from({ length: count }, (_, i) => v.getUint16(value + 2 * i, true)) : value;
+    tags[tag] =
+      count > 1 && type === 4
+        ? many(value)
+        : count > 1 && type === 3
+          ? Array.from({ length: count }, (_, i) => v.getUint16(value + 2 * i, true))
+          : value;
   }
-  const width = tags[256], height = tags[257];
-  const offsets = [].concat(tags[273]), counts = [].concat(tags[279]);
+  const width = tags[256],
+    height = tags[257];
+  const offsets = [].concat(tags[273]),
+    counts = [].concat(tags[279]);
   assert.deepEqual(tags[258], [8, 8, 8]);
   assert.equal(tags[259], 8);
   assert.equal(tags[317], 2);
@@ -43,7 +51,12 @@ function readTIFF(bytes) {
 }
 
 test('TIFF round trip: flat areas, noise and several strips', async () => {
-  for (const [w, h] of [[1, 1], [7, 3], [300, 5], [400, 700]]) {
+  for (const [w, h] of [
+    [1, 1],
+    [7, 3],
+    [300, 5],
+    [400, 700],
+  ]) {
     const rgba = new Uint8Array(w * h * 4);
     for (let i = 0; i < w * h; i++) {
       const flat = i % w < w / 2;
@@ -62,7 +75,8 @@ test('TIFF round trip: flat areas, noise and several strips', async () => {
 });
 
 test('TIFF compresses a flat coloured background', async () => {
-  const w = 1000, h = 50;
+  const w = 1000,
+    h = 50;
   const rgba = new Uint8Array(w * h * 4);
   for (let i = 0; i < w * h; i++) rgba.set([244, 240, 230, 255], 4 * i);
   assert.ok((await encodeTIFF(w, h, rgba)).length < (w * h * 3) / 50);
@@ -86,7 +100,13 @@ test('the plate of views fits any format', () => {
   assert.equal(plateLayout(1080, 1920).cols, 2);
   assert.equal(plateLayout(6000, 900).cols, 6);
   assert.equal(plateLayout(500, 5000).cols, 1);
-  for (const [W, H] of [[3840, 2160], [1080, 1920], [2048, 2048], [3440, 1440], [1290, 2796]]) {
+  for (const [W, H] of [
+    [3840, 2160],
+    [1080, 1920],
+    [2048, 2048],
+    [3440, 1440],
+    [1290, 2796],
+  ]) {
     const { cols, rows, tile, x0, y0 } = plateLayout(W, H);
     const gridH = rows * (tile + Math.round(tile * 0.1));
     assert.ok(x0 >= 0 && y0 >= 0, `${W}x${H}`);
