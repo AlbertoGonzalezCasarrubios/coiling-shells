@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [semantic versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- Accessibility: secondary text meets WCAG AA contrast (4.5:1) in both themes, the format selector of the pattern has a label, the About text can be scrolled with the keyboard, and *reduce motion* in the system settings makes transitions and camera animations instantaneous.
+- The stylesheet is split by area (`base`, `sidebar`, `viewer`, `dialogs`), loaded in cascade order; the computed style of every element is unchanged.
+- Development: type check of the JavaScript with TypeScript and JSDoc (`npm run typecheck`), with the JSDoc corrected where it no longer described the code; coverage with thresholds (`npm run coverage`), both in CI; new tests for the line drawing with relief, the translation helpers and the 3MF without compression; the browser test covers the advanced controls, the mechanical model, the morphospace chart, the growth animation and every export, audits accessibility with axe-core, and can no longer hang.
+
 ## [1.2.0] - 2026-11-10
 
 ### Added

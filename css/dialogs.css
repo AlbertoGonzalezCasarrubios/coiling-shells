@@ -1,0 +1,200 @@
+/*
+ * Dialogs: About (and its controls table), export, welcome guide and
+ * the shell creator.
+ * Loaded in this order: base, sidebar, viewer, dialogs (see index.html).
+ */
+
+/* ---------- Info dialog ---------- */
+.info {
+  width: min(760px, calc(100vw - 32px));
+  max-height: min(86vh, 900px);
+  padding: 0;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+}
+.info::backdrop { background: rgba(10, 14, 20, 0.45); backdrop-filter: blur(2px); }
+.info[open] { display: flex; flex-direction: column; }
+.info-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 22px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.info-head h2 { margin: 0; font-size: 17px; font-weight: 600; }
+.info-body { overflow-y: auto; padding: 6px 22px 22px; line-height: 1.6; font-size: 14px; }
+.info-body h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin: 22px 0 6px; }
+.info-body p { margin: 0 0 10px; }
+.info-body ul { margin: 0 0 10px; padding-left: 20px; }
+.info-body li { margin-bottom: 6px; }
+.info-body mjx-container[display='true'] { overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+.refs-list { font-size: 12.5px; color: var(--muted); }
+.quote {
+  margin: 18px 0 4px;
+  padding: 4px 0 4px 18px;
+  border-left: 3px solid var(--accent);
+  font-family: Georgia, 'Times New Roman', serif;
+}
+.quote p { margin: 0 0 8px; font-size: 16px; font-style: italic; line-height: 1.55; }
+.quote .translation { margin: 12px 0 0; font-size: 14px; color: var(--muted); }
+.quote cite { display: block; font: 12.5px var(--font); color: var(--muted); font-style: normal; }
+
+/* The About text scrolls: it takes the focus so it can be scrolled with the keyboard */
+.info-body:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.tab-panel { display: flex; flex-direction: column; gap: 18px; }
+
+/* ---------- About dialog pages ---------- */
+.info-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 22px 0;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.info-tabs button {
+  font: 500 13px var(--font);
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 8px 10px 9px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.info-tabs button:hover { color: var(--text); }
+.info-tabs button[aria-selected='true'] { color: var(--accent); border-bottom-color: var(--accent); }
+.info-head { border-bottom: 0; }
+/* In the dialog's flex column, the header and tabs must not shrink */
+.info-head, .info-tabs { flex: none; }
+
+/* ---------- Export dialog ---------- */
+.info.export { width: min(920px, calc(100vw - 32px)); }
+.export-body { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding-top: 14px; }
+.ex-card {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2);
+}
+.ex-card.wide { grid-column: 1 / -1; }
+.ex-card h3 { margin: 0; }
+.ex-card .note { font-size: 12.5px; line-height: 1.5; }
+.ex-card .btn.primary { align-self: flex-start; }
+.ex-card.disabled .btn.primary { opacity: 0.5; cursor: not-allowed; }
+.ex-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 16px; }
+.ex-row .field { min-width: 120px; }
+.ex-row .num { width: 90px; }
+.ex-row .ex-name { flex: 1 1 260px; }
+.ex-row .field.ex-format { min-width: 92px; }
+.text {
+  font: inherit; font-size: 13px; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px;
+}
+.text::placeholder { color: var(--muted); opacity: 0.8; }
+.ex-row .status { align-self: center; }
+.ex-preview { width: 100%; aspect-ratio: 3 / 2.17; object-fit: contain; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.btn.primary:hover { color: var(--surface); filter: brightness(1.08); }
+.btn:disabled { opacity: 0.6; cursor: progress; }
+.note.warn { color: var(--text); background: var(--accent-soft); border-radius: 6px; padding: 6px 8px; }
+@media (max-width: 700px) {
+  .export-body { grid-template-columns: 1fr; }
+}
+
+.ex-options { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; padding: 0 2px; }
+/* ---------- Welcome guide ---------- */
+.info.welcome { width: min(1000px, calc(100vw - 32px)); }
+.welcome .info-head { gap: 12px; }
+.welcome .info-head h2 { margin-right: auto; }
+.welcome-lang button { padding: 4px 10px; }
+.welcome-body { padding-top: 14px; }
+.welcome-intro { font-size: 15px; margin: 0 0 14px; }
+.welcome-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 22px; align-items: start; }
+.welcome-figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.welcome-view {
+  position: relative; height: 400px; overflow: hidden; touch-action: none; cursor: grab;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2);
+}
+.welcome-view:active { cursor: grabbing; }
+.welcome-view canvas, #welcomeLines { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#welcomeLines { pointer-events: none; overflow: visible; }
+#welcomeLines line { stroke: var(--muted); stroke-width: 1; }
+#welcomeLines circle { fill: var(--accent); stroke: var(--surface); stroke-width: 1.5; }
+#welcomeLines .behind { opacity: 0.3; }
+#welcomeLabels { position: absolute; inset: 0; pointer-events: none; }
+.wlabel {
+  position: absolute; white-space: nowrap; font: 600 12px var(--font); color: var(--text);
+  background: color-mix(in srgb, var(--surface) 88%, transparent); border: 1px solid var(--border);
+  border-radius: 6px; padding: 2px 7px; transition: opacity 0.2s;
+}
+.wlabel.behind { opacity: 0.4; }
+.welcome-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 12px; font-size: 14px; line-height: 1.5; }
+.welcome-steps strong { color: var(--accent); }
+.welcome-actions { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+.welcome-actions .welcome-author { margin: 0 auto 0 0; font-size: 11.5px; color: var(--muted); }
+@media (max-width: 760px) {
+  .welcome .info-head { flex-wrap: wrap; row-gap: 8px; }
+  .welcome .info-head h2 { flex: 1 1 calc(100% - 48px); font-size: 16px; }
+  .welcome-lang { order: 3; }
+  .welcome-grid { grid-template-columns: 1fr; gap: 14px; }
+  .welcome-view { height: 280px; }
+  .welcome-intro { font-size: 14px; }
+}
+
+.keys { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 6px 0 14px; }
+.keys td { padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.keys td:first-child { font-family: var(--mono); font-size: 12.5px; color: var(--text); width: 36%; }
+kbd { font-family: var(--mono); font-size: 12px; padding: 1px 5px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; background: var(--surface-2); }
+
+/* ---------- Shell creator ---------- */
+.create-btn { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px; }
+.create-btn svg { width: 17px; height: 17px; }
+.info.wizard { width: min(1180px, calc(100vw - 32px)); height: min(760px, calc(100vh - 32px)); max-height: none; display: none; }
+.info.wizard[open] { display: flex; flex-direction: column; }
+.wizard-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.45fr 1fr; }
+.wizard-view { position: relative; min-height: 0; overflow: hidden; border-top: 1px solid var(--border); border-right: 1px solid var(--border); }
+.wizard-view canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; touch-action: none; }
+.wizard-side { display: flex; flex-direction: column; min-height: 0; border-top: 1px solid var(--border); }
+.wizard-steps { list-style: none; margin: 0; padding: 12px 12px 6px; display: flex; gap: 2px; counter-reset: wz; justify-content: space-between; }
+.wizard-steps li { counter-increment: wz; }
+.wizard-steps button {
+  font: 500 12.5px var(--font); color: var(--muted); background: none; border: 1px solid transparent;
+  border-radius: 999px; padding: 4px 8px 4px 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+}
+.wizard-steps button::before {
+  content: counter(wz); display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+  font-size: 11px; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted);
+}
+.wizard-steps button.done::before { content: '✓'; background: color-mix(in srgb, var(--accent) 18%, var(--surface)); color: var(--accent); }
+.wizard-steps button[aria-current='step'] { color: var(--text); border-color: var(--border); background: var(--surface-2); }
+.wizard-steps button[aria-current='step']::before { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.wizard-panels { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 16px 12px; }
+.wizard-panel { display: flex; flex-direction: column; gap: 12px; }
+.wizard-panel[hidden] { display: none; }
+.wizard-panel > .note { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--text); }
+.wizard-panel .segmented { width: 100%; }
+.wz-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.wz-choices button {
+  font: 500 13px var(--font); color: var(--text); background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 9px 10px; cursor: pointer; text-align: left;
+}
+.wz-choices button[aria-pressed='true'] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); color: var(--accent); }
+.wizard-nav { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); }
+.wizard-nav #wzUndo { margin-right: auto; display: inline-flex; align-items: center; gap: 6px; }
+.wizard-nav #wzUndo svg { width: 16px; height: 16px; }
+.wizard-nav .btn:disabled { opacity: 0.45; cursor: default; }
+@media (max-width: 760px) {
+  .wizard-steps button { font-size: 0; gap: 0; padding: 3px; }
+  .wizard-steps button[aria-current='step'] { font-size: 12px; gap: 5px; padding-right: 8px; }
+  .info.wizard { height: calc(100vh - 24px); width: calc(100vw - 16px); }
+  .wizard-body { grid-template-columns: 1fr; grid-template-rows: 38vh 1fr; }
+  .wizard-view { border-right: 0; }
+}
+.wz-pig[hidden] { display: none !important; }
+
+/* Boxes of tips, in the pigment tab and in the export window. Last, so that inside a
+   dialog their list wins over the general list style of .info-body */
+.recipes { font-size: 11.5px; color: var(--muted); line-height: 1.45; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+.recipes strong { color: var(--text); font-weight: 600; }
+.recipes ul { margin: 4px 0 0; padding-left: 16px; }
+.recipes li + li { margin-top: 3px; }

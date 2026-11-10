@@ -17,7 +17,11 @@ The app is a static web page: HTML, CSS and JavaScript ES modules, with no build
 ```
 index.html            Page, Three.js import map and MathJax configuration
 favicon.svg           Icon (an ammonite drawn with a logarithmic spiral)
-css/styles.css        Styles: automatic light/dark theme, responsive layout
+css/                  Styles, loaded in cascade order by index.html:
+  base.css            Colour tokens (automatic light/dark theme), base rules, page layout, reduced motion
+  sidebar.css         Sidebar: parameter controls, collapsible sections, tabs, pigment tab and gallery
+  viewer.css          3D view: toolbar, views bar, equation panel, overlaid charts, responsive layout
+  dialogs.css         About, export, welcome guide and shell creator
 js/main.js            Coordinator: rebuilds the mesh, shape presets, tabs, language, render loop,
                       and connects the modules below (their init functions)
 js/model/             The science, pure modules without DOM or Three.js (tested in Node)
@@ -315,8 +319,10 @@ Everything happens in a dialog (`#exportDlg`) in the browser, with no server.
 ```bash
 npm ci          # optional: lint tools and local copies of the CDN libraries
 npm test        # node --test, Node.js ≥ 20
-npm run lint    # eslint . && prettier --check .
-npm run format  # prettier --write .
+npm run lint      # eslint . && prettier --check . && tsc (type check)
+npm run typecheck # only the type check
+npm run coverage  # node tests with coverage (at least 98 % of lines and 90 % of branches)
+npm run format    # prettier --write .
 ```
 
 | File | What it checks |
@@ -328,12 +334,16 @@ npm run format  # prettier --write .
 | `tests/ornament.test.mjs` | Bumps (width, asymmetry), cones and growth factor; no relief when every term is off; spines only at their positions and in symmetric rows; nodules only at crossings; keel at its position; buckling: minimum load at n*, first whole mode, unstable band, threshold and amplitude; ornamented presets use complete shapes inside the morphospace |
 | `tests/imagefile.test.mjs` | TIFF round trip (decoded with zlib, predictor undone) for several sizes and strips; compression of a flat background; reframing at wider and taller aspect ratios; layout of the plate in landscape, portrait and strip formats; file names from free text; fixed sizes within the limit |
 | `tests/cdn.test.mjs` | Every library loaded from jsDelivr (in `index.html` and `js/`) is loaded at a single version, equal to its exact version in the `devDependencies` of `package.json` |
-| `tests/browser.test.mjs` | Drives the whole interface in headless Chrome over the DevTools protocol (see its header). With `node_modules` installed, requests to jsDelivr are answered from the local copies (CDP `Fetch` domain) and web fonts are answered empty, and the test checks that nothing went to the network |
-| `tests/i18n.test.mjs` | English and Spanish have the same keys; every key and element id used in the HTML, `main.js` and the modules of `js/ui/` exists; no control characters in the strings |
+| `tests/browser.test.mjs` | Drives the whole interface in headless Chrome over the DevTools protocol (see its header). With `node_modules` installed, requests to jsDelivr are answered from the local copies (CDP `Fetch` domain) and web fonts are answered empty, and the test checks that nothing went to the network | With `axe-core` installed it audits the accessibility of the guide, the tabs, the shell creator and the dialogs and fails on any serious or critical problem. Every command to Chrome has a time limit, the tour reports its stages (`console.info('stage …')`), and a watchdog ends the process after nine minutes, so a hang fails with the stage where it happened instead of blocking CI
+| `tests/i18n.test.mjs` | Translation helpers (language, fallbacks, function strings) and `applyStatic`; English and Spanish have the same keys; every key and element id used in the HTML, `main.js` and the modules of `js/ui/` exists; no control characters in the strings |
 
-The tests run on every push and pull request through GitHub Actions (`.github/workflows/tests.yml`): one job runs the linter, and another runs the tests on Node 20, 22 and 24 after `npm ci --ignore-scripts`; the browser test runs as a separate step, outside `node --test`, so that its error lines reach the run as annotations.
+The tests run on every push and pull request through GitHub Actions (`.github/workflows/tests.yml`): one job runs the linter, the type check and the coverage thresholds, and another runs the tests on Node 20, 22 and 24 after `npm ci --ignore-scripts`; the browser test runs as a separate step, outside `node --test`, so that its error lines reach the run as annotations.
 
-**Code style.** ESLint (`eslint.config.js`: the recommended rules, browser, worker and Node globals) and Prettier (`.prettierrc.json`: single quotes, lines of 140 characters) cover the JavaScript; `.prettierignore` leaves the other files alone. The commit that formatted the code is listed in `.git-blame-ignore-revs`, so `git blame` skips it (GitHub reads that file automatically; locally, `git config blame.ignoreRevsFile .git-blame-ignore-revs`).
+**Code style.** ESLint (`eslint.config.js`: the recommended rules, browser, worker and Node globals) and Prettier (`.prettierrc.json`: single quotes, lines of 140 characters) cover the JavaScript; `.prettierignore` leaves the other files alone. **Types.** `jsconfig.json` makes TypeScript check the JavaScript as it is (`checkJs`, no build): JSDoc types describe the data (`ShellShape`, `ShellParams` and `Shell` in raup.js; `OrnamentParams`, `ApertureGeometry`, `Crests` and `Ornament` in ornament.js; `PatternParams` in pigment.js; the `state` object in state.js), Three.js is checked against `@types/three` at the same version, and `js/globals.d.ts` declares the libraries loaded with `<script>` (MathJax, jsPDF). Strict mode is off, and `$`/`qsa` (util.js) return loosely typed elements, so the check is about the data rather than about each DOM control.
+
+**Accessibility.** Text meets WCAG AA contrast (4.5:1) in both themes; every control has an accessible name; dialogs are native `<dialog>` elements; the About text can be scrolled with the keyboard; with *reduce motion* in the system settings, transitions and camera animations are instantaneous (`motion()` in views.js). The browser test audits this with axe-core.
+
+The commit that formatted the code is listed in `.git-blame-ignore-revs`, so `git blame` skips it (GitHub reads that file automatically; locally, `git config blame.ignoreRevsFile .git-blame-ignore-revs`).
 
 ## Running locally
 
