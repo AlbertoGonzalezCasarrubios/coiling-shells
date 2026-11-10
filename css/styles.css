@@ -4,7 +4,7 @@
   --surface-2: #f1eee6;
   --border: #e3ddd0;
   --text: #1c2430;
-  --muted: #6b7280;
+  --muted: #5f6672; /* 5:1 on the panels (WCAG AA) */
   --accent: #115e59;
   --accent-soft: #d6ebe8;
   --track: #ddd6c7;
@@ -492,10 +492,12 @@ body.clean .main { height: 100vh; height: 100dvh; }
   align-items: center;
   line-height: 1.2;
 }
-.tabs button small { font-size: 10.5px; font-weight: 400; opacity: 0.8; }
+.tabs button small { font-size: 10.5px; font-weight: 400; }
 .tabs button:hover { color: var(--text); }
 .tabs button[aria-selected='true'] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14); }
 .tabs button:focus-visible, .info-tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* The About text scrolls: it takes the focus so it can be scrolled with the keyboard */
+.info-body:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .tab-panel { display: flex; flex-direction: column; gap: 18px; }
 
 /* ---------- Pigmentation ---------- */
@@ -789,3 +791,14 @@ kbd { font-family: var(--mono); font-size: 12px; padding: 1px 5px; border: 1px s
   .wizard-view { border-right: 0; }
 }
 .wz-pig[hidden] { display: none !important; }
+
+/* "Reduce motion" in the system settings: no transitions (the 3D view does the same, see views.js) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

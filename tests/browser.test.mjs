@@ -5,8 +5,10 @@
 // dragged slider, appearance in the address, undo, the shell creator, the
 // advanced controls and the mechanical model, the morphospace chart, the growth
 // animation, the About pages and every export (image, plate, PDF with its
-// pattern and equations pages, STL, 3MF, GLB). It fails if the page
-// throws any error or if an export does not produce a file.
+// pattern and equations pages, STL, 3MF, GLB). With axe-core installed it also
+// audits the accessibility of the guide, the tabs, the shell creator and the
+// dialogs. It fails if the page throws any error or if an export does not
+// produce a file.
 //
 // The libraries the app loads from jsDelivr (Three.js, MathJax, jsPDF) are served
 // from node_modules when they are installed (npm ci), at the same versions, so the
@@ -239,10 +241,26 @@ const TOUR = String.raw`(async () => {
   const dispatch = HTMLAnchorElement.prototype.dispatchEvent;
   HTMLAnchorElement.prototype.dispatchEvent = function (e) { if (this.download) { capture.call(this); return true; } return dispatch.call(this, e); };
   const log = {};
+  // Accessibility audit with axe-core, when it is installed (npm ci): serious and critical problems
+  log.a11y = [];
+  log.a11yRan = await new Promise((resolve) => {
+    const sc = document.createElement('script');
+    sc.src = '/node_modules/axe-core/axe.min.js';
+    sc.onload = () => resolve(true);
+    sc.onerror = () => resolve(false);
+    document.head.append(sc);
+  });
+  const audit = async (name, context = document) => {
+    if (!log.a11yRan) return;
+    const r = await axe.run(context, { resultTypes: ['violations'] });
+    for (const v of r.violations) if (v.impact === 'serious' || v.impact === 'critical') log.a11y.push(name + ': ' + v.id + ' (' + v.nodes.map((n) => n.target.join(' ')).slice(0, 3).join(', ') + ')');
+  };
   console.info('stage guide');
   log.guideOpen = $('welcome').open;
-  $('welcomeStart').click();
-  for (const t of ['ornament', 'pigment', 'shape']) { $('tabbtn-' + t).click(); await sl(300); }
+  await audit('guide', $('welcome'));
+  $('welcomeStart').click(); await sl(500);
+  await audit('shape tab');
+  for (const t of ['ornament', 'pigment', 'shape']) { $('tabbtn-' + t).click(); await sl(300); await audit(t + ' tab'); }
   $('ornPreset').value = 'spinyAmmonite'; $('ornPreset').dispatchEvent(new Event('change')); await sl(1200);
   console.info('stage advanced controls');
   // Advanced ornament controls and the mechanical model of the cords
@@ -319,6 +337,7 @@ const TOUR = String.raw`(async () => {
   log.undone = await until(() => /pg=0/.test(location.hash), 3000);
   console.info('stage shell creator');
   $('openWizard').click(); await sl(500);
+  await audit('shell creator', $('wizard'));
   for (let i = 0; i < 4; i++) { $('wzNext').click(); await sl(400); }
   $('wzNext').click(); await sl(300);
   log.wizardClosed = !$('wizard').open && !!document.querySelector('#viewport canvas');
@@ -329,6 +348,7 @@ const TOUR = String.raw`(async () => {
   $('openInfo').click();
   for (const p of ['raup', 'meinhardt', 'ornament', 'controls', 'app']) { document.querySelector('.info-tabs [data-page=' + p + ']').click(); await sl(1200); }
   log.mathErrors = document.querySelectorAll('[data-mjx-error]').length;
+  await audit('About window', document.querySelector('dialog[open]'));
   document.querySelector('#info .icon-btn, #closeInfo')?.click();
   $('infoDialog')?.close?.();
   document.querySelectorAll('dialog[open]').forEach((d) => d.close());
@@ -339,6 +359,7 @@ const TOUR = String.raw`(async () => {
   $('openExport').click(); await sl(1200);
   // Spines (the spiny ammonite) printed very small: the warning appears
   await until(() => $('exDims').textContent !== '');
+  await audit('export window', document.querySelector('dialog[open]'));
   log.spineOk = $('exSpineWarn').hidden;
   $('exSize').value = 20; $('exSize').dispatchEvent(new Event('input'));
   log.spineWarn = await until(() => !$('exSpineWarn').hidden);
@@ -391,6 +412,8 @@ test('the whole interface works in a real browser', { skip, timeout: 400_000 }, 
     assert.equal(log.wizardClosed, true, 'the shell creator gives the canvas back');
     assert.equal(log.raupTheory, true, "the Theory link of the shape tab opens Raup's page");
     assert.equal(log.mathErrors, 0, 'every About page typesets');
+    if (LOCAL_LIBS) assert.equal(log.a11yRan, true, 'axe-core loads');
+    assert.deepEqual(log.a11y, [], 'no serious or critical accessibility problems (axe-core)');
     const kinds = log.files.map((f) => f.split(':')[0]);
     for (const k of ['jpg', 'tif', 'stl', '3mf', 'glb', 'pdf']) assert.ok(kinds.includes(k), `export ${k} (${log.files})`);
     assert.equal(log.mechCords, true, 'the mechanical model grows cords on the shell');

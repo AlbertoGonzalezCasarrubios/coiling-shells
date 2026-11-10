@@ -24,6 +24,11 @@ const ORIENT_BASE = {
     .setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(CAMERA_HOME.x, CAMERA_HOME.z))
     .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2)),
 };
+// With "reduce motion" in the system settings, camera and orientation changes are instantaneous
+const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+/** Duration of an animation in ms (1 ms, i.e. instantaneous, under reduced motion). */
+const motion = (ms) => (reducedMotion?.matches ? 1 : ms);
+
 export let orientTween = null;
 
 /** The ground (shadow) touches the lowest point of the shell in its current orientation. */
@@ -45,7 +50,7 @@ export function setOrient(mode, { animate = true } = {}) {
   qsa('.orient [data-orient]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.orient === mode)));
   if (mode !== 'free') {
     const to = ORIENT_BASE[mode];
-    if (animate) orientTween = { t0: performance.now(), dur: 600, from: shellGroup.quaternion.clone(), to };
+    if (animate) orientTween = { t0: performance.now(), dur: motion(600), from: shellGroup.quaternion.clone(), to };
     else {
       orientTween = null;
       shellGroup.quaternion.copy(to);
@@ -89,14 +94,14 @@ function flyTo(name) {
   // Standard views are defined on the shell: they follow its display orientation.
   // In free rotation the shell is first set upright again.
   if (state.orient === 'free')
-    orientTween = { t0: performance.now(), dur: 700, from: shellGroup.quaternion.clone(), to: ORIENT_BASE.vertical };
+    orientTween = { t0: performance.now(), dur: motion(700), from: shellGroup.quaternion.clone(), to: ORIENT_BASE.vertical };
   const base = ORIENT_BASE[state.orient] ?? ORIENT_BASE.vertical;
   const dir = name === 'iso' ? VIEWS.iso() : VIEWS[name]().applyQuaternion(base);
   const to = new THREE.Spherical().setFromVector3(dir.normalize().multiplyScalar(dist));
   // Azimuth along the shortest path
   let dTheta = to.theta - from.theta;
   dTheta = Math.atan2(Math.sin(dTheta), Math.cos(dTheta));
-  tween = { t0: performance.now(), dur: 700, from, dTheta, to, fromTarget: controls.target.clone() };
+  tween = { t0: performance.now(), dur: motion(700), from, dTheta, to, fromTarget: controls.target.clone() };
   qsa('.views [data-view]').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
 }
 
