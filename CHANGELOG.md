@@ -2,18 +2,19 @@
 
 All notable changes to this project are documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [semantic versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.2.0] - 2026-11-10
 
 ### Added
 - The page address also stores the look: line, shell and background colours (once chosen), mesh resolution, growth bands and axis, so a shared link opens with the same appearance.
 - Undo includes the look: a change of colour, palette, resolution, bands or axis is a step like any other.
+- Spines on bivalves. Spines used to be left out of the first whorl, so a bivalve, with a single whorl, could never have them; now they start after the first whorls or, if that comes earlier, where the shell reaches 20 % of its final size. Coiled shells are unchanged. New example: the spiny venus *Pitar lupanaria*.
 - *Naticarius* pattern preset: spots in spiral rows. A medium-range inhibitor keeps the activator peaks apart, as in the bands, and outlives the activator, as in the flames, so each peak switches on and off in place.
 - The 3D printing section warns, only when the shell has spines, if the largest ones would be too thin or slender to print well at the chosen size and wall.
 
 ### Changed
 - The pattern follows a dragged slider: a new simulation starts as soon as the previous one ends, with the latest values, instead of waiting until the slider is released.
 - The *Save pattern* button of the pigment tab offers PNG, JPG or TIFF, the same choice as in the export window.
-- Secondary sections of the sidebar fold: geometry, the pigment colours and, in the ornament tab, ribs, cords, spines, keel and change with growth, which now have equal rank. The ornament sections the shell has open by themselves when an example is loaded, and the rest stay folded.
+- Secondary sections of the sidebar fold: the pigment colours and, in the ornament tab, ribs, cords, spines, keel and change with growth, which now have equal rank. The ornament sections the shell has open by themselves when an example is loaded, and the rest stay folded.
 - The sidebar's scrollbar is thin, in the theme colours, and only visible while the pointer is over the panel.
 
 - jsPDF updated from 2.5.1 to 4.2.1. Version 2.5.1 has published security advisories; the app was not exposed to them in practice, because it only writes its own images and text into the PDF, but the update removes them.
@@ -86,5 +87,6 @@ First release in its own repository. The app was previously published as `shells
 - Automated test suite (`npm test`) with continuous integration.
 - Licences: MIT for the code and CC BY 4.0 for texts and images.
 
+[1.2.0]: https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/releases/tag/v1.2.0
 [1.1.0]: https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/releases/tag/v1.1.0
 [1.0.0]: https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/releases/tag/v1.0.0

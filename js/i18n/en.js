@@ -230,6 +230,7 @@ export default {
   'orn.p.dactylioceras': 'Ribbed ammonite (Dactylioceras)',
   'orn.p.spinyAmmonite': 'Ammonite with ribs and spines',
   'orn.p.cerastoderma': 'Cockle (Cerastoderma): radial ribs',
+  'orn.p.pitar': 'Spiny venus (Pitar lupanaria): concentric ribs and spines',
   'orn.p.custom': 'Custom',
   'orn.note': 'Each example loads the shape of a real shell and its relief. Start from one, or add relief to any shape.',
   'orn.ribs': 'Axial ribs',

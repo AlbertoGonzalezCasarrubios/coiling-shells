@@ -70,7 +70,7 @@ Muchas conchas no son lisas. Igual que el color, el relieve se construye en el b
 - Los **cordones** recorren las vueltas, paralelos a la sutura: cada uno es un punto del borde que siempre segrega más. En los bivalvos son las costillas radiales del berberecho.
 - Costillas y cordones juntos forman una **retícula**, y donde se cruzan pueden levantarse **nódulos**. Una **quilla** es un solo cordón muy marcado, y las **espinas** son puntas que sobresalen.
 
-La pestaña **Ornamento** añade este relieve a la superficie de Raup, empujando la curva generatriz hacia fuera en proporción al tamaño de la apertura, así que el relieve crece con la concha. Sus ejemplos cargan la forma y el relieve de conchas reales: escalaria (*Epitonium clathrus*), *Turritella*, *Calliostoma*, *Cancellaria*, *Cerithium*, la concha sol *Astraea*, dos ammonites (uno con costillas y otro con espinas) y un berberecho. *Murex* no está: su largo canal sifonal no es un tubo enrollado y el modelo de Raup no lo puede dibujar.
+La pestaña **Ornamento** añade este relieve a la superficie de Raup, empujando la curva generatriz hacia fuera en proporción al tamaño de la apertura, así que el relieve crece con la concha. Sus ejemplos cargan la forma y el relieve de conchas reales: escalaria (*Epitonium clathrus*), *Turritella*, *Calliostoma*, *Cancellaria*, *Cerithium*, la concha sol *Astraea*, dos ammonites (uno con costillas y otro con espinas), un berberecho y una almeja espinosa (*Pitar lupanaria*). *Murex* no está: su largo canal sifonal no es un tubo enrollado y el modelo de Raup no lo puede dibujar.
 
 Esta parte describe la ornamentación, pero no la explica. Para los cordones hay además una explicación mecánica (Moulton, Goriely y Chirat, 2012): el borde del manto es una tira elástica pegada a la concha que acaba de fabricar. Si crece un poco más deprisa que la concha, se arruga en ondas, como una alfombra empujada contra la pared, y cada onda deja un cordón. Doblar la tira cuesta (prefiere pocas ondas anchas) y despegarla también (prefiere muchas estrechas): el equilibrio fija cuántos cordones salen. En el modo avanzado de la pestaña hay un panel que lo muestra, y la ventana *Info* lo explica con detalle.
 
@@ -193,7 +193,7 @@ Para cualquier duda o comentario: **Alberto González Casarrubios** (Universidad
 
 Si usas la app en un trabajo, una clase o una publicación, puedes citarla así:
 
-> González Casarrubios, A. (2026). *Theoretical Shells: Form and Colour* (versión 1.1.0) [Software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells
+> González Casarrubios, A. (2026). *Theoretical Shells: Form and Colour* (versión 1.2.0) [Software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells
 
 Los datos de cita también están en [CITATION.cff](../CITATION.cff).
 

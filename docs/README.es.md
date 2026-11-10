@@ -78,7 +78,7 @@ P*(θ, φ) = P(θ, φ) + W^(θ/2π) · a · δ(θ, φ) · n(φ)
 
 ![Cuatro conchas ornamentadas generadas con la app: un ammonites con costillas (Dactylioceras), un caracol con cordones espirales y los puntos del patrón Naticarius, un ammonites con costillas y espinas dibujado con líneas, y un bivalvo de dos valvas con una retícula de costillas radiales y concéntricas y nódulos espinosos donde se cruzan](images/ornament.png)
 
-Los ejemplos cargan la forma y el relieve de conchas reales: *Epitonium clathrus*, *Turritella*, *Calliostoma*, *Cancellaria*, *Cerithium*, la concha sol *Astraea*, un ammonites con costillas (*Dactylioceras*) y otro con espinas, y un berberecho. Las conchas cuya forma no puede dibujar el modelo de Raup, como *Murex* con su largo canal sifonal, quedan fuera. Con ornamentación, el dibujo de líneas sigue el relieve, como una ilustración científica: líneas de crecimiento en las crestas de las costillas, líneas espirales en las crestas de los cordones y cada espina perfilada como un cono. El relieve aparece también en la ecuación, en la ficha PDF y en los archivos 3D. En la pestaña, costillas, cordones, espinas, quilla y cambio con el crecimiento son secciones plegables del mismo rango; al cargar un ejemplo se abren solas las que tiene esa concha.
+Los ejemplos cargan la forma y el relieve de conchas reales: *Epitonium clathrus*, *Turritella*, *Calliostoma*, *Cancellaria*, *Cerithium*, la concha sol *Astraea*, un ammonites con costillas (*Dactylioceras*) y otro con espinas, un berberecho y la almeja espinosa *Pitar lupanaria*, un bivalvo con una fila de espinas largas a lo largo de su borde posterior. Las conchas cuya forma no puede dibujar el modelo de Raup, como *Murex* con su largo canal sifonal, quedan fuera. Con ornamentación, el dibujo de líneas sigue el relieve, como una ilustración científica: líneas de crecimiento en las crestas de las costillas, líneas espirales en las crestas de los cordones y cada espina perfilada como un cono. El relieve aparece también en la ecuación, en la ficha PDF y en los archivos 3D. En la pestaña, costillas, cordones, espinas, quilla y cambio con el crecimiento son secciones plegables del mismo rango; al cargar un ejemplo se abren solas las que tiene esa concha.
 
 Esta parte es **descriptiva**, como el modelo de Raup (Fowler, Meinhardt y Prusinkiewicz, 1992; Cortie, 1993). Para los cordones espirales la app ofrece además una **explicación mecánica**, según Moulton, Goriely y Chirat (2012): el borde del manto es una varilla elástica unida a la concha que acaba de construir (una base de Winkler). Si crece más deprisa que el borde, se pandea en ondas, y cada onda deja un cordón. La carga necesaria para pandearse en n ondas es
 
@@ -195,7 +195,7 @@ Son modelos mínimos:
 
 ## Cómo citar
 
-> González Casarrubios, A. (2026). *Theoretical Shells: Form and Colour* (versión 1.1.0) [Software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells
+> González Casarrubios, A. (2026). *Theoretical Shells: Form and Colour* (versión 1.2.0) [Software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells
 
 Los datos de cita están en [CITATION.cff](../CITATION.cff); GitHub los muestra en *Cite this repository*.
 

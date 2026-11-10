@@ -257,4 +257,10 @@ export const ORNAMENT_PRESETS = {
   },
   // Cockle: radial ribs, which run along the growth direction (spiral cords in Raup's terms)
   cerastoderma: { shape: SHAPE('almeja'), orn: { cordN: 24, cordH: 0.07, cordW: 0.7 } },
+  // Spiny venus (Pitar lupanaria): fine concentric ribs and a row of long spines along
+  // the posterior margin. Spines only start once the valve is a fifth of its final size
+  pitar: {
+    shape: SHAPE('almeja'),
+    orn: { ribN: 60, ribH: 0.025, ribW: 0.3, spineN: 36, spineH: 0.7, spineW: 0.45, spinePos: 0.25 },
+  },
 };

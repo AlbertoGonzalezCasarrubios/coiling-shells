@@ -232,6 +232,7 @@ export default {
   'orn.p.dactylioceras': 'Ammonites con costillas (Dactylioceras)',
   'orn.p.spinyAmmonite': 'Ammonites con costillas y espinas',
   'orn.p.cerastoderma': 'Berberecho (Cerastoderma): costillas radiales',
+  'orn.p.pitar': 'Almeja espinosa (Pitar lupanaria): costillas concéntricas y espinas',
   'orn.p.custom': 'Personalizada',
   'orn.note': 'Cada ejemplo carga la forma de una concha real y su relieve. Empieza por uno o añade relieve a cualquier forma.',
   'orn.ribs': 'Costillas axiales',

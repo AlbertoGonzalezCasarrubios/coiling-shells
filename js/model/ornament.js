@@ -17,8 +17,12 @@
  *   Σ   spines: cones on n_s positions per whorl, in one row at u_s or in two
  *       rows at ±u_s; their base covers a fraction w_s of the spacing. A spine
  *       is only drawn when it lies whole on the shell: not across the lip of
- *       the aperture (it would open the lip into a funnel) and not on the
- *       first whorls (one, or 30 % of them), where spines would be specks.
+ *       the aperture (it would open the lip into a funnel) and not where the
+ *       shell is still tiny and spines would be specks. That is the first
+ *       whorls (one, or 30 % of them), or, if it starts earlier, the part of
+ *       the shell below 20 % of its final size: with a very high W (bivalves,
+ *       a single whorl) spines then cover the outer part of the valve, as in
+ *       the spiny venus Pitar lupanaria or the spiny cockle Acanthocardia.
  *   f   change with growth: f(s) = clamp(1 + c (2s − 1), 0, 2), with s the
  *       fraction of growth (0 apex, 1 aperture). c < 0: ornament fades towards
  *       the aperture; c > 0: it appears late.
@@ -32,6 +36,9 @@
  */
 
 /** Neutral values: a smooth shell. */
+/** Smallest size of the shell, relative to its final size, that carries spines. */
+const SPINE_MIN_SIZE = 0.2;
+
 export const ORNAMENT_DEFAULTS = {
   ribN: 0,
   ribH: 0.12,
@@ -122,8 +129,12 @@ export function makeOrnament(p, { a, b, rc, cols, cosPhi, sinPhi, arcU, perimete
   const rows = (o.spineBoth && o.spinePos !== 0 ? [o.spinePos, -o.spinePos] : [o.spinePos]).map((u) => snap(((u % 1) + 1) % 1));
   // Spines centred between these angles are drawn whole (θ = 0 is the final aperture)
   const nTurns = p.turns ?? 1;
-  // The first whorls stay smooth (at least one, or 30 % of the whorls)
-  const spineFirst = -2 * Math.PI * Math.max(0, nTurns - Math.max(1, 0.3 * nTurns));
+  // Spines start after the first whorls (at least one, or 30 % of them) or where the
+  // shell reaches SPINE_MIN_SIZE of its final size, whichever comes first (only the
+  // second matters for bivalves, whose single whorl grows enormously)
+  const byWhorls = -2 * Math.PI * Math.max(0, nTurns - Math.max(1, 0.3 * nTurns));
+  const bySize = p.W > 1 ? Math.max((2 * Math.PI * Math.log(SPINE_MIN_SIZE)) / Math.log(p.W), -2 * Math.PI * nTurns) : 0;
+  const spineFirst = Math.min(byWhorls, bySize);
   const spineLast = -halfTheta;
   for (let j = 0; j < cols; j++) {
     const len = Math.hypot(b * cosPhi[j], a * sinPhi[j]) || 1;

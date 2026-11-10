@@ -75,6 +75,21 @@ test('spines rise at their positions, whole, and not on the lip or the first who
   assert.equal(two.delta(T, 0.5, 0), 0);
 });
 
+test('bivalves carry spines once the valve is a fifth of its final size; coiled shells keep their smooth first whorls', () => {
+  const g = geometry();
+  // A single whorl with W = 1000: the valve reaches 20 % of its size at θ = 2π·ln 0.2 / ln 1000
+  const valve = makeOrnament({ W: 1000, turns: 1, spineN: 36, spineH: 0.7, spineW: 0.45, spinePos: 0 }, g);
+  const start = (2 * Math.PI * Math.log(0.2)) / Math.log(1000);
+  const centres = valve.crests.spines.map((s) => s.theta);
+  assert.ok(centres.length > 0, 'a bivalve has spines');
+  assert.ok(Math.min(...centres) >= start - 1e-9, 'none on the tiny part next to the umbo');
+  assert.ok(Math.min(...centres) < start + (2 * Math.PI) / 36 + 1e-9, 'from where the valve is large enough');
+  // A coiled shell: the first whorl stays smooth, as before (the size rule starts later)
+  const coiled = makeOrnament({ W: 2.3, turns: 5, spineN: 12, spineH: 0.5, spineW: 0.35, spinePos: 0 }, g);
+  const first = Math.min(...coiled.crests.spines.map((s) => s.theta));
+  assert.ok(first >= -2 * Math.PI * 3.5 - 1e-9 && first < -2 * Math.PI * 3.5 + (2 * Math.PI) / 12 + 1e-9);
+});
+
 test('nodules only where ribs and cords cross; keel at its position', () => {
   const g = geometry();
   const o = makeOrnament({ ribN: 4, ribH: 0.1, ribW: 0.3, cordN: 4, cordH: 0.1, cordW: 0.3, nodules: true }, g);
