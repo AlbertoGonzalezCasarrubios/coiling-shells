@@ -48,13 +48,18 @@ export function tPreset(key) {
   return STRINGS[current].presets[key] || key;
 }
 
-/** Applies the translations to static elements with data-i18n* attributes. */
+/**
+ * Applies the translations to static elements with data-i18n* attributes.
+ * @param {ParentNode} [root]
+ */
 export function applyStatic(root = document) {
-  root.querySelectorAll('[data-i18n]').forEach((el) => (el.textContent = t(el.dataset.i18n)));
-  root.querySelectorAll('[data-i18n-html]').forEach((el) => (el.innerHTML = t(el.dataset.i18nHtml)));
-  root.querySelectorAll('[data-i18n-label]').forEach((el) => (el.label = t(el.dataset.i18nLabel)));
-  root.querySelectorAll('[data-i18n-placeholder]').forEach((el) => (el.placeholder = t(el.dataset.i18nPlaceholder)));
-  root.querySelectorAll('[data-i18n-title]').forEach((el) => {
+  /** @type {(sel: string) => NodeListOf<HTMLElement & { label: string, placeholder: string }>} */
+  const all = (sel) => root.querySelectorAll(sel);
+  all('[data-i18n]').forEach((el) => (el.textContent = t(el.dataset.i18n)));
+  all('[data-i18n-html]').forEach((el) => (el.innerHTML = t(el.dataset.i18nHtml)));
+  all('[data-i18n-label]').forEach((el) => (el.label = t(el.dataset.i18nLabel)));
+  all('[data-i18n-placeholder]').forEach((el) => (el.placeholder = t(el.dataset.i18nPlaceholder)));
+  all('[data-i18n-title]').forEach((el) => {
     el.title = t(el.dataset.i18nTitle);
     // groups and buttons without visible text need an accessible name
     if (!el.textContent.trim() || el.getAttribute('role')) el.setAttribute('aria-label', el.title);

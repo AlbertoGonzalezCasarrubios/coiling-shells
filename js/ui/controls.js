@@ -7,7 +7,7 @@ import { t, tParam } from '../i18n/i18n.js';
 import { ornPresetKey, ornPresetSel } from './ornament-tab.js';
 import { lineMat } from './scene.js';
 import { GEO_PARAMS, RAUP_PARAMS, VIS_PARAMS, state } from './state.js';
-import { $, f } from './util.js';
+import { $, f, qsa } from './util.js';
 
 // Provided by main.js through init()
 let markDirty;
@@ -52,11 +52,11 @@ export function createParam(def, container, { compact = false, onChange, target 
   `;
   container.appendChild(el);
 
-  const range = el.querySelector('input[type=range]');
-  const num = el.querySelector('input[type=number]');
+  const range = /** @type {HTMLInputElement} */ (el.querySelector('input[type=range]'));
+  const num = /** @type {HTMLInputElement} */ (el.querySelector('input[type=number]'));
   const nameEl = el.querySelector('strong');
   const descEl = el.querySelector('small');
-  const scaleGroup = el.querySelector('.scale-toggle');
+  const scaleGroup = /** @type {HTMLElement | null} */ (el.querySelector('.scale-toggle'));
   const symEl = el.querySelector('.param-sym');
   const format = def.format || ((v) => f(v, def.digits));
   let logScale = !!def.log;
@@ -70,7 +70,9 @@ export function createParam(def, container, { compact = false, onChange, target 
       el.querySelector('.scale-min').textContent = def.minLabel ?? def.min;
       el.querySelector('.scale-max').textContent = def.maxLabel ?? (logScale ? '10⁴' : max);
     }
-    scaleGroup?.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.scale === 'log') === logScale)));
+    (scaleGroup ? qsa('button', scaleGroup) : []).forEach((b) =>
+      b.setAttribute('aria-pressed', String((b.dataset.scale === 'log') === logScale)),
+    );
   };
 
   const set = (v, { fromNum = false, fitScale = false } = {}) => {
@@ -87,12 +89,12 @@ export function createParam(def, container, { compact = false, onChange, target 
       logScale = true;
       applyScale();
     }
-    range.value = logScale ? Math.log10(Math.max(clamped, def.min)) : clamped;
+    range.value = String(logScale ? Math.log10(Math.max(clamped, def.min)) : clamped);
     setFill(range);
     if (!fromNum) num.value = format(clamped);
   };
 
-  scaleGroup?.querySelectorAll('button').forEach((b) =>
+  (scaleGroup ? qsa('button', scaleGroup) : []).forEach((b) =>
     b.addEventListener('click', () => {
       const wantLog = b.dataset.scale === 'log';
       if (wantLog === logScale) return;

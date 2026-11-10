@@ -35,10 +35,67 @@
  * Pure module (no Three.js): it can be tested in Node.
  */
 
-/** Neutral values: a smooth shell. */
 /** Smallest size of the shell, relative to its final size, that carries spines. */
 const SPINE_MIN_SIZE = 0.2;
 
+/**
+ * Ornament parameters; missing keys take ORNAMENT_DEFAULTS. W and turns, when
+ * given, place the spines (see SPINE_MIN_SIZE).
+ * @typedef {object} OrnamentParams
+ * @property {number} [ribN]  axial ribs per whorl
+ * @property {number} [ribH]  rib height, in units of the aperture radius
+ * @property {number} [ribW]  fraction of the spacing covered by a rib
+ * @property {number} [ribSkew]  asymmetry of the ribs (varices), −1 to 1
+ * @property {number} [cordN]  spiral cords around the margin
+ * @property {number} [cordH]
+ * @property {number} [cordW]
+ * @property {boolean} [nodules]  relief only where ribs and cords cross
+ * @property {number} [keelH]
+ * @property {number} [keelW]
+ * @property {number} [keelPos]  position of the keel along the margin (u)
+ * @property {number} [spineN]  spines per whorl
+ * @property {number} [spineH]  spine length, in units of the aperture radius
+ * @property {number} [spineW]  fraction of the spacing covered by a spine base
+ * @property {number} [spinePos]  position of the spine row along the margin (u)
+ * @property {boolean} [spineBoth]  two rows, at ±spinePos
+ * @property {number} [ornGrowth]  change with growth, −1 to 1
+ * @property {number} [W]  whorl expansion rate
+ * @property {number} [turns]  number of whorls
+ */
+
+/**
+ * Generating curve sampled in columns, for makeOrnament (lengths in units of a).
+ * @typedef {object} ApertureGeometry
+ * @property {number} a  radius of the aperture
+ * @property {number} b  the other semi-axis (S·a)
+ * @property {number} rc  distance of its centre from the axis
+ * @property {number} cols  columns around the aperture
+ * @property {ArrayLike<number>} cosPhi
+ * @property {ArrayLike<number>} sinPhi
+ * @property {ArrayLike<number>} arcU  arc-length position of each column, 0–1
+ * @property {number} perimeter  perimeter of the aperture, in units of a
+ */
+
+/**
+ * Where the relief is, for the line drawing.
+ * @typedef {object} Crests
+ * @property {number[]} ribs  angles θ of the rib crests
+ * @property {number[]} cords  positions u of the cords and the keel
+ * @property {{ theta: number, u: number }[]} spines  centres of the spines that are drawn
+ * @property {number} [halfTheta]  half-width of a spine base along the spiral (θ)
+ * @property {number} [halfU]  half-width of a spine base around the margin (u)
+ */
+
+/**
+ * @typedef {object} Ornament
+ * @property {boolean} active
+ * @property {Float64Array} nR  radial component of the normal, per column
+ * @property {Float64Array} nZ  axial component of the normal, per column
+ * @property {(theta: number, s: number, j: number) => number} delta  relief at θ, growth fraction s, column j
+ * @property {Crests} crests
+ */
+
+/** Neutral values: a smooth shell. */
 export const ORNAMENT_DEFAULTS = {
   ribN: 0,
   ribH: 0.12,
@@ -81,7 +138,10 @@ export const cone = (r) => (r >= 1 ? 0 : 1 - r);
 /** Change of the ornament with growth, s = 0 at the apex and 1 at the aperture. */
 export const growthFactor = (c, s) => Math.min(2, Math.max(0, 1 + c * (2 * s - 1)));
 
-/** True when the parameters ask for some relief. */
+/**
+ * True when the parameters ask for some relief.
+ * @param {OrnamentParams} p
+ */
 export function hasOrnament(p) {
   return (p.ribN > 0 && p.ribH > 0) || (p.cordN > 0 && p.cordH > 0) || p.keelH > 0 || (p.spineN > 0 && p.spineH > 0);
 }
@@ -96,9 +156,9 @@ const circDist = (u, v) => {
  * Prepares the relief of a shell: per-column normals and profiles, so that
  * `delta(theta, s, j)` costs a few operations per vertex.
  *
- * @param {object} p      ornament parameters (missing keys take the defaults)
- * @param {object} g      geometry: a, b, rc (aperture), cols, cosPhi, sinPhi, arcU, perimeter (in units of a)
- * @returns {{active: boolean, nR: Float64Array, nZ: Float64Array, delta: (theta: number, s: number, j: number) => number}}
+ * @param {OrnamentParams} p  ornament parameters (missing keys take the defaults)
+ * @param {ApertureGeometry} g
+ * @returns {Ornament}
  */
 export function makeOrnament(p, { a, b, rc, cols, cosPhi, sinPhi, arcU, perimeter }) {
   const o = { ...ORNAMENT_DEFAULTS, ...p };
@@ -183,7 +243,11 @@ export function makeOrnament(p, { a, b, rc, cols, cosPhi, sinPhi, arcU, perimete
   return { active, nR, nZ, delta, crests };
 }
 
-/** Segments needed to draw the relief: about six across each rib, cord and spine base. */
+/**
+ * Segments needed to draw the relief: about six across each rib, cord and spine base.
+ * @param {OrnamentParams} p
+ * @returns {{ perTurn: number, phi: number }}
+ */
 export function ornamentResolution(p) {
   const o = { ...ORNAMENT_DEFAULTS, ...p };
   if (!hasOrnament(o)) return { perTurn: 0, phi: 0 };

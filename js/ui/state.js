@@ -63,6 +63,13 @@ export const SHAPE_KEYS = ['W', 'D', 'T', 'S', 'turns', 'hand', 'mirror'];
 export const SHELL_SIZE = 4;
 export const MODES = ['lines', 'solid', 'both'];
 
+/**
+ * State of the shell and of its view.
+ * @type {import('../model/raup.js').ShellShape & import('../model/ornament.js').OrnamentParams & {
+ *   grow: number, quality: 'low' | 'medium' | 'high', mode: 'lines' | 'solid' | 'both',
+ *   spiralLines: number, ringsPerTurn: number, lineWidth: number, lineOpacity: number,
+ *   axisWidth: number, orient: 'vertical' | 'horizontal' | 'free' }}
+ */
 export const state = {
   ...pickShape(PRESETS[DEFAULT_PRESET]),
   grow: 1,
@@ -77,8 +84,13 @@ export const state = {
   orient: 'vertical',
 };
 
+/**
+ * Raup's parameters of a preset or a state.
+ * @param {object} p
+ * @returns {import('../model/raup.js').ShellShape}
+ */
 export function pickShape(p) {
-  return Object.fromEntries(SHAPE_KEYS.map((k) => [k, p[k]]));
+  return /** @type {import('../model/raup.js').ShellShape} */ (Object.fromEntries(SHAPE_KEYS.map((k) => [k, p[k]])));
 }
 
 // ---------------------------------------------------------------------------
@@ -94,7 +106,7 @@ for (const [short, key] of Object.entries(HASH_KEYS)) {
   if (Number.isFinite(v)) state[key] = key === 'hand' ? Math.sign(v) || 1 : v;
 }
 if (fromHash.has('v')) state.mirror = fromHash.get('v') === '1';
-if (MODES.includes(fromHash.get('m'))) state.mode = fromHash.get('m');
+if (MODES.includes(fromHash.get('m'))) state.mode = /** @type {'lines' | 'solid' | 'both'} */ (fromHash.get('m'));
 export const ORN_HASH = {
   rn: 'ribN',
   rh: 'ribH',
@@ -144,6 +156,7 @@ export const WELCOME_KEY = 'coiling-shells.welcome';
 
 let hashTimer = 0;
 // Other parts add to the address (the pattern, the appearance) or listen to every change (undo)
+/** @type {{ patternHash: (q: URLSearchParams) => void, lookHash: (q: URLSearchParams) => void, noteChange: () => void }} */
 const hooks = { patternHash: () => {}, lookHash: () => {}, noteChange: () => {} };
 export function setHashHooks(h) {
   Object.assign(hooks, h);

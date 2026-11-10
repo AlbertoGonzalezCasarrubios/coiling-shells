@@ -5,7 +5,7 @@
 import { AI_TEX, AS_TEX, DEFS_TEX, GENERAL_TEX, GLOBAL_TEX, MIRROR_TEX, t } from '../i18n/i18n.js';
 import { hasOrnament } from '../model/ornament.js';
 import { state } from './state.js';
-import { $, f, formatW, sig } from './util.js';
+import { $, f, formatW, sig, qsa } from './util.js';
 
 // Provided by main.js through init()
 let PATTERN_CELLS, pattern;
@@ -150,7 +150,7 @@ export function scheduleFormula() {
 
 export function setFormulaView(view) {
   formulaView = view;
-  document.querySelectorAll('#eqView [data-eq]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.eq === view)));
+  qsa('#eqView [data-eq]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.eq === view)));
   const note = $('eqNote');
   note.dataset.i18n = view === 'meinhardt' ? 'eq.mein.note' : 'eq.chirality';
   note.textContent = t(note.dataset.i18n);
@@ -174,12 +174,12 @@ let infoPage = 'raup';
 
 export function showInfoPage(page) {
   infoPage = page;
-  document.querySelectorAll('.info-tabs [data-page]').forEach((b) => {
+  qsa('.info-tabs [data-page]').forEach((b) => {
     const on = b.dataset.page === page;
     b.setAttribute('aria-selected', String(on));
     b.tabIndex = on ? 0 : -1;
   });
-  infoBody.querySelectorAll('.info-page').forEach((el) => {
+  qsa('.info-page', infoBody).forEach((el) => {
     el.hidden = el.dataset.page !== page;
     // Each page is typeset with MathJax the first time it is shown
     if (!el.hidden && !el.dataset.typeset) {

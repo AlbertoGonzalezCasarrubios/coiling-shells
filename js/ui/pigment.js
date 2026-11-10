@@ -13,7 +13,7 @@ import { downloadImage } from './export-dialog.js';
 import { formulaView, openInfo, scheduleFormula } from './formulas.js';
 import { innerMat, renderer, solidMat } from './scene.js';
 import { fromHash, state, writeHash } from './state.js';
-import { $, hexRgb, sig } from './util.js';
+import { $, hexRgb, sig, qsa } from './util.js';
 
 // Provided by main.js through init()
 let applyMode, capturePointer, controlsByKey, createParam, setFill;
@@ -49,8 +49,32 @@ const PATTERN_KEYS = [
 ];
 const PATTERN_DEFAULTS = { size: 1, amount: 0.5 };
 
-export const pickPattern = (p) => Object.fromEntries(PATTERN_KEYS.map((k) => [k, p[k] ?? PATTERN_DEFAULTS[k]]));
+/**
+ * Pattern parameters: the constants of the model and how it is shown.
+ * @typedef {object} PatternParams
+ * @property {'AI' | 'AS'} model
+ * @property {number} Da
+ * @property {number} D2
+ * @property {number} ra
+ * @property {number} r2
+ * @property {number} kappa
+ * @property {number} ba
+ * @property {number} b2
+ * @property {number} noise
+ * @property {number} globalCtl
+ * @property {number} T
+ * @property {boolean} insertion
+ * @property {string} base  background colour, '#rrggbb'
+ * @property {string} pigment  pigment colour, '#rrggbb'
+ * @property {number} size  pattern size (fewer cells when larger)
+ * @property {number} amount  pigment threshold
+ */
 
+/** @type {(p: object) => PatternParams} */
+export const pickPattern = (p) =>
+  /** @type {PatternParams} */ (Object.fromEntries(PATTERN_KEYS.map((k) => [k, p[k] ?? PATTERN_DEFAULTS[k]])));
+
+/** @type {PatternParams & { on: boolean, preset: string, seed: number }} */
 export const pattern = { on: false, preset: DEFAULT_PATTERN, seed: 7, ...pickPattern(PATTERN_PRESETS[DEFAULT_PATTERN]) };
 let patternState = 'pattern'; // 'pattern' | 'uniform' | 'extinct'
 
@@ -256,7 +280,7 @@ export function drawSpacetime() {
 
 function setStView(view) {
   stView = view;
-  document.querySelectorAll('#stView [data-stview]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.stview === view)));
+  qsa('#stView [data-stview]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.stview === view)));
   for (const [id, base] of [
     ['stCapX', 'pig.axis.x'],
     ['stCapT', 'pig.axis.t'],
@@ -278,8 +302,8 @@ export function drawProfile() {
   const css = getComputedStyle(document.documentElement);
   const accent = css.getPropertyValue('--accent').trim();
   // The activator uses the text colour (readable with any pigment and theme); the pigmented area uses the pigment colour
-  document.querySelectorAll('.lg-a').forEach((el) => el.style.setProperty('--lg', css.getPropertyValue('--text').trim()));
-  document.querySelectorAll('.lg-b').forEach((el) => el.style.setProperty('--lg', accent));
+  qsa('.lg-a').forEach((el) => el.style.setProperty('--lg', css.getPropertyValue('--text').trim()));
+  qsa('.lg-b').forEach((el) => el.style.setProperty('--lg', accent));
   $('profileTime').textContent = label;
   drawProfileOn(profileCanvas, row, css);
 
@@ -294,7 +318,12 @@ export function drawProfile() {
   if (has) drawProfileOn($('profileOv'), row, css);
 }
 
-/** @param {object} [off] for off-screen drawing (PDF): { width, height, scale, colors } */
+/**
+ * @param {HTMLCanvasElement} canvas
+ * @param {number | null} row
+ * @param {CSSStyleDeclaration} css
+ * @param {import('./morphospace-chart.js').OffscreenStyle} [off] for off-screen drawing (PDF)
+ */
 export function drawProfileOn(canvas, row, css, off) {
   const w = off ? off.width : canvas.clientWidth;
   const h = off ? off.height : canvas.clientHeight;
@@ -370,7 +399,7 @@ export function applyShellMaterial() {
   solidMat.needsUpdate = true;
   // The inside, lighter than the background colour of the outside
   innerMat.color.set(withPattern ? pattern.base : $('shellColor').value).lerp(new THREE.Color('#ffffff'), 0.55);
-  const swatch = document.querySelector('.pattern-card[data-pattern="none"] .swatch');
+  const swatch = /** @type {HTMLElement | null} */ (document.querySelector('.pattern-card[data-pattern="none"] .swatch'));
   if (swatch) swatch.style.background = $('shellColor').value;
 }
 
@@ -549,7 +578,7 @@ export function buildGallery() {
 }
 
 export function updateGalleryLabels() {
-  gallery.querySelectorAll('.pattern-card').forEach((card) => {
+  qsa('.pattern-card', gallery).forEach((card) => {
     const key = card.dataset.pattern;
     card.querySelector('span').textContent = key === 'none' ? t('pig.none') : tPattern(key);
   });
@@ -557,7 +586,7 @@ export function updateGalleryLabels() {
 
 function updateGallerySelection() {
   const selected = pattern.on ? pattern.preset : 'none';
-  gallery.querySelectorAll('.pattern-card').forEach((card) => card.setAttribute('aria-checked', String(card.dataset.pattern === selected)));
+  qsa('.pattern-card', gallery).forEach((card) => card.setAttribute('aria-checked', String(card.dataset.pattern === selected)));
 }
 
 // Thumbnails: computed once, in their own worker so they do not interfere with the main one
@@ -655,7 +684,7 @@ export function setSecondLabel() {
 // Simple or advanced view: the advanced one also shows the model constants
 function setPigMode(mode) {
   $('tab-pigment').dataset.pmode = mode;
-  document.querySelectorAll('#pigMode [data-pmode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pmode === mode)));
+  qsa('#pigMode [data-pmode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pmode === mode)));
   drawSpacetime(); // the moment marker and the profile only exist in the advanced view
 }
 
@@ -691,7 +720,7 @@ export function initPigment(ctx) {
 
   patternCanvas.width = PATTERN_WIDTH;
   patternCanvas.height = PATTERN_ROWS;
-  document.querySelectorAll('#stView [data-stview]').forEach((b) => b.addEventListener('click', () => setStView(b.dataset.stview)));
+  qsa('#stView [data-stview]').forEach((b) => b.addEventListener('click', () => setStView(b.dataset.stview)));
   new ResizeObserver(drawSpacetime).observe(spacetime);
 
   new ResizeObserver(drawProfile).observe(profileCanvas);
@@ -712,10 +741,10 @@ export function initPigment(ctx) {
 
   startWorker();
 
-  for (const [defs, container] of [
+  for (const [defs, container] of /** @type {[any[], string][]} */ ([
     [PIG_SIMPLE, 'pig-simple'],
     [PIG_ADVANCED, 'pig-params'],
-  ]) {
+  ])) {
     defs.forEach((d) => {
       createParam(d, $(container), {
         compact: true,
@@ -734,7 +763,7 @@ export function initPigment(ctx) {
     });
   }
 
-  document.querySelectorAll('#pigMode [data-pmode]').forEach((b) => b.addEventListener('click', () => setPigMode(b.dataset.pmode)));
+  qsa('#pigMode [data-pmode]').forEach((b) => b.addEventListener('click', () => setPigMode(b.dataset.pmode)));
 
   // Changing the model loads the constants of its reference preset: those of the
   // other model make no sense here (e.g. without substrate production there is no pattern)

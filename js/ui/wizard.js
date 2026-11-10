@@ -10,7 +10,7 @@ import { MODEL_DEFAULTS, ORNAMENT_PRESETS, PATTERN_PRESETS, PRESETS } from '../m
 import { welcomeDlg } from './guide.js';
 import { setViewport } from './scene.js';
 import { GEO_PARAMS, ORN_PARAMS, RAUP_PARAMS, state, writeHash } from './state.js';
-import { $ } from './util.js';
+import { $, qsa } from './util.js';
 
 // Provided by main.js through init()
 let PIG_SIMPLE,
@@ -60,7 +60,7 @@ const WZ_ORN = ['ribN', 'ribH', 'cordN', 'cordH', 'spineN', 'spineH'].map((k) =>
 /** Copies the options of a sidebar menu (already translated) into a wizard menu. */
 function copyOptions(from, to, { showHidden = [] } = {}) {
   to.innerHTML = from.innerHTML;
-  for (const o of to.querySelectorAll('option')) if (showHidden.includes(o.value)) o.hidden = false;
+  for (const o of qsa('option', to)) if (showHidden.includes(o.value)) o.hidden = false;
   to.value = from.value;
 }
 
@@ -95,17 +95,17 @@ export function syncWizard() {
   copyOptions(ornPresetSel, $('wzOrn'), { showHidden: ['smooth'] });
   for (const d of [...WZ_SHAPE, ...WZ_ORN]) controlsByKey[d.id].set(state[d.key]);
   $('wzNodules').checked = state.nodules;
-  document.querySelectorAll('#wzHand [data-hand]').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.hand === state.hand)));
+  qsa('#wzHand [data-hand]').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.hand === state.hand)));
   const sel = !pattern.on ? 'none' : PATTERN_PRESETS[pattern.preset] ? pattern.preset : pattern.model === 'AS' ? 'waves' : '';
   $('wzPatterns')
     .querySelectorAll('button')
     .forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.key === sel)));
   for (const d of WZ_PIG) controlsByKey[d.id].set(pattern[d.key]);
-  document.querySelectorAll('.wz-pig').forEach((el) => (el.hidden = !pattern.on));
+  qsa('.wz-pig').forEach((el) => (el.hidden = !pattern.on));
   $('wzBase').value = pattern.base;
   $('wzPigment').value = pattern.pigment;
   $('wzBase').disabled = $('wzPigment').disabled = !pattern.on;
-  document.querySelectorAll('#wzMode [data-mode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === state.mode)));
+  qsa('#wzMode [data-mode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === state.mode)));
   $('wzBg').value = $('bgColor').value;
   $('wzShell').value = $('shellColor').value;
   $('wzLine').value = $('lineColor').value;
@@ -117,8 +117,8 @@ export function syncWizard() {
 
 function showWizardStep(i) {
   wzStep = Math.max(0, Math.min(WZ_STEPS - 1, i));
-  document.querySelectorAll('.wizard-panel').forEach((p) => (p.hidden = +p.dataset.step !== wzStep));
-  document.querySelectorAll('#wizSteps [data-step]').forEach((b) => {
+  qsa('.wizard-panel').forEach((p) => (p.hidden = +p.dataset.step !== wzStep));
+  qsa('#wizSteps [data-step]').forEach((b) => {
     const k = +b.dataset.step;
     b.setAttribute('aria-current', k === wzStep ? 'step' : 'false');
     b.classList.toggle('done', k < wzStep);
@@ -235,7 +235,7 @@ export function initWizard(ctx) {
   wizardDlg.addEventListener('close', closeWizardView);
   $('wzBack').addEventListener('click', () => showWizardStep(wzStep - 1));
   $('wzNext').addEventListener('click', () => (wzStep === WZ_STEPS - 1 ? wizardDlg.close() : showWizardStep(wzStep + 1)));
-  document.querySelectorAll('#wizSteps [data-step]').forEach((b) => b.addEventListener('click', () => showWizardStep(+b.dataset.step)));
+  qsa('#wizSteps [data-step]').forEach((b) => b.addEventListener('click', () => showWizardStep(+b.dataset.step)));
 
   $('wzPreset').addEventListener('change', (e) => {
     if (!PRESETS[e.target.value]) return;
@@ -243,7 +243,7 @@ export function initWizard(ctx) {
     presetSel.dispatchEvent(new Event('change'));
     syncWizard();
   });
-  document.querySelectorAll('#wzHand [data-hand]').forEach((b) =>
+  qsa('#wzHand [data-hand]').forEach((b) =>
     b.addEventListener('click', () => {
       $('hand').value = b.dataset.hand;
       $('hand').dispatchEvent(new Event('change'));
@@ -273,14 +273,14 @@ export function initWizard(ctx) {
     $('showAxis').checked = e.target.checked;
     $('showAxis').dispatchEvent(new Event('change'));
   });
-  document.querySelectorAll('#wzMode [data-mode]').forEach((b) =>
+  qsa('#wzMode [data-mode]').forEach((b) =>
     b.addEventListener('click', () => {
-      document.querySelector(`#mode [data-mode="${b.dataset.mode}"]`).click();
+      /** @type {HTMLElement} */ (document.querySelector(`#mode [data-mode="${b.dataset.mode}"]`)).click();
       syncWizard();
     }),
   );
   // The palette buttons share the sidebar handler (they carry data-palette); then resync
-  document.querySelectorAll('#wzPalettes [data-palette]').forEach((b) => b.addEventListener('click', syncWizard));
+  qsa('#wzPalettes [data-palette]').forEach((b) => b.addEventListener('click', syncWizard));
   $('wzName').addEventListener('input', (e) => ($('exName').value = e.target.value));
   $('wzSeed').addEventListener('click', () => $('newSeed').click());
 

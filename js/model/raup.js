@@ -34,25 +34,52 @@ import { growthFactor, makeOrnament } from './ornament.js';
 export { bump, hasOrnament } from './ornament.js';
 
 /**
- * @param {object} p
- * @param {number} p.W  whorl expansion rate (> 1)
- * @param {number} p.D  relative distance of the generating curve from the axis [0, 1)
- * @param {number} p.T  translation rate along the axis
- * @param {number} p.S  shape of the generating curve (b / a)
- * @param {number} p.turns        number of whorls
- * @param {number} p.hand         +1 dextral, −1 sinistral
- * @param {boolean} p.mirror      add the mirror valve
- * @param {number} p.grow         fraction of growth shown (0, 1]
- * @param {number} p.segPerTurn   segments in θ per whorl
- * @param {number} p.segPhi       segments in φ around the aperture
- * @param {number} p.spiralLines  number of spiral lines (along θ)
- * @param {number} p.ringsPerTurn number of growth lines per whorl
- * @param {number} [p.ribN] …    ornament parameters (ribs, cords, keel, spines,
- *                                change with growth: see ornament.js)
- * @param {number} p.size         largest dimension after normalisation
- * @returns {{positions: Float32Array, colors: Float32Array, uvs: Float32Array,
- *   indices: Uint32Array, lineIndices: Uint32Array, axis: object,
- *   derived: {rc: number, a: number, b: number}, grid: object, stats: object}}
+ * Raup's parameters of a shell, without the drawing settings.
+ * @typedef {object} ShellShape
+ * @property {number} W  whorl expansion rate (> 1)
+ * @property {number} D  relative distance of the generating curve from the axis [0, 1)
+ * @property {number} T  translation rate along the axis
+ * @property {number} S  shape of the generating curve (b / a)
+ * @property {number} turns  number of whorls
+ * @property {number} hand  +1 dextral, −1 sinistral
+ * @property {boolean} mirror  add the mirror valve
+ */
+
+/**
+ * How the shell is meshed and drawn.
+ * @typedef {object} ShellDrawing
+ * @property {number} [grow]  fraction of growth shown (0, 1]
+ * @property {number} segPerTurn  segments in θ per whorl
+ * @property {number} segPhi  segments in φ around the aperture
+ * @property {number} spiralLines  number of spiral lines (along θ)
+ * @property {number} ringsPerTurn  number of growth lines per whorl
+ * @property {number} size  largest dimension after normalisation
+ */
+
+/**
+ * Everything buildShell needs: the shape, the drawing settings and, optionally,
+ * the ornament (ribs, cords, keel, spines, change with growth: see ornament.js).
+ * @typedef {ShellShape & ShellDrawing & import('./ornament.js').OrnamentParams} ShellParams
+ */
+
+/**
+ * @typedef {object} Shell
+ * @property {Float32Array} positions  vertices (x, y, z), centred and scaled to `size`
+ * @property {Float32Array} colors  growth-band shading per vertex
+ * @property {Float32Array} uvs  (u along the margin, v along growth) for the pattern texture
+ * @property {Uint32Array} indices  triangles
+ * @property {Uint32Array} lineIndices  pairs of vertices of the line drawing
+ * @property {{ x: number, z: number, yTop: number, yBottom: number }} axis  coiling axis, in output units
+ * @property {{ rc: number, a: number, b: number }} derived
+ * @property {{ rows: number, cols: number, copies: number, count: number }} grid
+ * @property {{ vertices: number, triangles: number }} stats
+ * @property {{ height: number, base: number } | null} spine  largest spine, in output units
+ */
+
+/**
+ * Builds the mesh and the line drawing of a shell.
+ * @param {ShellParams} p
+ * @returns {Shell}
  */
 export function buildShell(p) {
   const W = Math.max(p.W, 1.0001);
@@ -316,6 +343,13 @@ export function buildShell(p) {
   };
 }
 
+/**
+ * Height and base diameter of the youngest spine, next to the aperture.
+ * @param {ShellParams} p
+ * @param {import('./ornament.js').Crests} crests
+ * @param {{ a: number, rc: number, logW: number, scale: number }} k
+ * @returns {{ height: number, base: number } | null}
+ */
 function largestSpine(p, { spines, halfTheta }, { a, rc, logW, scale }) {
   if (!spines?.length) return null;
   const { theta } = spines[0];

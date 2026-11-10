@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { t } from '../i18n/i18n.js';
 import { MORPHO_REGIONS } from '../model/morphospace.js';
 import { state } from './state.js';
-import { $, f } from './util.js';
+import { $, f, qsa } from './util.js';
 
 // Provided by main.js through init()
 let capturePointer, controlsByKey, onShapeChange, presetSel;
@@ -58,8 +58,14 @@ export function drawMorpho() {
 }
 
 /**
- * @param {HTMLCanvasElement} canvas
- * @param {object} [off] for off-screen drawing (PDF): { width, height, scale, colors }
+ * Size and colours for drawing a chart off screen (PDF).
+ * @typedef {{ width: number, height: number, scale: number, colors?: Record<string, string> }} OffscreenStyle
+ */
+
+/**
+ * @param {HTMLCanvasElement & { labelBoxes?: { x0: number, x1: number, y0: number, y1: number, preset: string }[] }} canvas
+ *   labelBoxes: where the region labels are, for clicks
+ * @param {OffscreenStyle} [off] for off-screen drawing (PDF)
  */
 export function drawMorphoOn(canvas, off) {
   const dpr = off ? off.scale : Math.min(window.devicePixelRatio, 2);
@@ -197,7 +203,7 @@ function pickMorpho(e) {
 // W axis range (shared by the sidebar panel and the overlaid chart)
 function setMorphoScale(logMax) {
   MORPHO.logMax = logMax;
-  document.querySelectorAll('[data-wscale]').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.wscale) === logMax)));
+  qsa('[data-wscale]').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.wscale) === logMax)));
   drawMorpho();
 }
 // ---------------------------------------------------------------------------
@@ -224,5 +230,5 @@ export function initMorphospace(ctx) {
   }
   morphoDrawer.addEventListener('toggle', drawMorpho);
 
-  document.querySelectorAll('[data-wscale]').forEach((b) => b.addEventListener('click', () => setMorphoScale(Number(b.dataset.wscale))));
+  qsa('[data-wscale]').forEach((b) => b.addEventListener('click', () => setMorphoScale(Number(b.dataset.wscale))));
 }

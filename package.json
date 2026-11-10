@@ -18,7 +18,9 @@
   "scripts": {
     "test": "node --test",
     "test:fast": "SKIP_BROWSER=1 node --test",
-    "lint": "eslint . && prettier --check .",
+    "coverage": "SKIP_BROWSER=1 node --test --experimental-test-coverage --test-coverage-include='js/**' --test-coverage-lines=98 --test-coverage-branches=90",
+    "lint": "eslint . && prettier --check . && tsc -p jsconfig.json",
+    "typecheck": "tsc -p jsconfig.json",
     "format": "prettier --write .",
     "serve": "python3 -m http.server 8000"
   },
@@ -33,11 +35,13 @@
   ],
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@types/three": "0.160.0",
     "eslint": "10.14.0",
     "globals": "17.14.0",
     "jspdf": "4.2.1",
     "mathjax": "3.2.2",
     "prettier": "3.9.10",
-    "three": "0.160.0"
+    "three": "0.160.0",
+    "typescript": "7.0.2"
   }
 }

@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 import { CAMERA_HOME, camera, controls, ground, renderer, shellGroup, solid, viewport } from './scene.js';
 import { state, writeHash } from './state.js';
+import { qsa } from './util.js';
 
 // ---------------------------------------------------------------------------
 // Display orientation: coiling axis vertical (orbit around it), horizontal
@@ -41,7 +42,7 @@ export function updateGround() {
 export function setOrient(mode, { animate = true } = {}) {
   state.orient = mode;
   controls.enableRotate = mode !== 'free';
-  document.querySelectorAll('.orient [data-orient]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.orient === mode)));
+  qsa('.orient [data-orient]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.orient === mode)));
   if (mode !== 'free') {
     const to = ORIENT_BASE[mode];
     if (animate) orientTween = { t0: performance.now(), dur: 600, from: shellGroup.quaternion.clone(), to };
@@ -96,7 +97,7 @@ function flyTo(name) {
   let dTheta = to.theta - from.theta;
   dTheta = Math.atan2(Math.sin(dTheta), Math.cos(dTheta));
   tween = { t0: performance.now(), dur: 700, from, dTheta, to, fromTarget: controls.target.clone() };
-  document.querySelectorAll('.views [data-view]').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
+  qsa('.views [data-view]').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
 }
 
 export function stepTween(now) {
@@ -119,7 +120,7 @@ export function stepTween(now) {
 
 /** Connects this part of the interface to the rest of the app. */
 export function initViews() {
-  document.querySelectorAll('.orient [data-orient]').forEach((b) => b.addEventListener('click', () => setOrient(b.dataset.orient)));
+  qsa('.orient [data-orient]').forEach((b) => b.addEventListener('click', () => setOrient(b.dataset.orient)));
 
   renderer.domElement.addEventListener('pointerdown', (e) => {
     freeDrag.pointers.add(e.pointerId);
@@ -152,14 +153,15 @@ export function initViews() {
   });
   for (const type of ['pointerup', 'pointercancel', 'pointerleave']) {
     renderer.domElement.addEventListener(type, (e) => {
-      freeDrag.pointers.delete(e.pointerId);
-      if (e.pointerId === freeDrag.id) freeDrag.id = null;
+      const { pointerId } = /** @type {PointerEvent} */ (e);
+      freeDrag.pointers.delete(pointerId);
+      if (pointerId === freeDrag.id) freeDrag.id = null;
     });
   }
 
-  document.querySelectorAll('.views [data-view]').forEach((b) => b.addEventListener('click', () => flyTo(b.dataset.view)));
+  qsa('.views [data-view]').forEach((b) => b.addEventListener('click', () => flyTo(b.dataset.view)));
   controls.addEventListener('start', () => {
     tween = null;
-    document.querySelectorAll('.views [data-view].active').forEach((b) => b.classList.remove('active'));
+    qsa('.views [data-view].active').forEach((b) => b.classList.remove('active'));
   });
 }

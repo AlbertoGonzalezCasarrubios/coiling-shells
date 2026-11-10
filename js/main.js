@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 import { buildShell } from './model/raup.js';
-import { $, fixSeamNormals } from './ui/util.js';
+import { $, fixSeamNormals, qsa } from './ui/util.js';
 import {
   LANG_KEY,
   QUALITY,
@@ -197,7 +197,7 @@ function applyMode() {
   lines.visible = m !== 'solid' && lines.geometry.attributes.instanceStart !== undefined;
   occluder.visible = m === 'lines' && $('hideHidden').checked;
   ground.visible = m !== 'lines';
-  document.querySelectorAll('#mode button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
+  qsa('#mode button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
 }
 
 // Sidebar controls (ui/controls.js)
@@ -282,7 +282,7 @@ $('quality').addEventListener('change', (e) => {
   dirty = true; // the rebuild rewrites the address
 });
 
-document.querySelectorAll('#mode button').forEach((btn) =>
+qsa('#mode button').forEach((btn) =>
   btn.addEventListener('click', () => {
     state.mode = btn.dataset.mode;
     applyMode();
@@ -309,7 +309,7 @@ function applyColours({ line, shell, bg }) {
   setPaletteInputs({ line, shell, bg });
   lineMat.color.set(line);
   applyShellMaterial();
-  scene.background.set(bg);
+  /** @type {THREE.Color} */ (scene.background).set(bg);
 }
 function setAxisVisible(on) {
   $('showAxis').checked = on;
@@ -371,11 +371,11 @@ $('shellColor').addEventListener('input', () => {
   colourChosen();
 });
 $('bgColor').addEventListener('input', (e) => {
-  scene.background.set(e.target.value);
+  /** @type {THREE.Color} */ (scene.background).set(e.target.value);
   colourChosen();
 });
 $('hideHidden').addEventListener('change', applyMode);
-document.querySelectorAll('[data-palette]').forEach((b) =>
+qsa('[data-palette]').forEach((b) =>
   b.addEventListener('click', () => {
     applyColours(PALETTES[b.dataset.palette]);
     colourChosen();
@@ -396,10 +396,10 @@ createParam({ key: 'axisWidth', min: 0.5, max: 6, step: 0.5, digits: 1 }, $('axi
 $('autoRotate').addEventListener('change', (e) => (controls.autoRotate = e.target.checked));
 
 $('toggleFormula').addEventListener('click', () => setFormulaOpen(formulaPanel.hidden));
-document.querySelectorAll('#eqView [data-eq]').forEach((b) => b.addEventListener('click', () => setFormulaView(b.dataset.eq)));
+qsa('#eqView [data-eq]').forEach((b) => b.addEventListener('click', () => setFormulaView(b.dataset.eq)));
 $('closeFormula').addEventListener('click', () => setFormulaOpen(false));
 $('openInfo').addEventListener('click', () => openInfo());
-document.querySelectorAll('.info-tabs [data-page]').forEach((b) => b.addEventListener('click', () => showInfoPage(b.dataset.page)));
+qsa('.info-tabs [data-page]').forEach((b) => b.addEventListener('click', () => showInfoPage(b.dataset.page)));
 $('closeInfo').addEventListener('click', () => infoDialog.close());
 infoDialog.addEventListener('click', (e) => {
   if (e.target === infoDialog) infoDialog.close(); // click on the backdrop
@@ -410,10 +410,12 @@ infoDialog.addEventListener('click', (e) => {
 // ---------------------------------------------------------------------------
 
 const fsSupported = !!(viewport.requestFullscreen || viewport.webkitRequestFullscreen);
-const isFullscreen = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+/** @type {any} */
+const prefixed = document; // webkit-prefixed fullscreen API of older Safari
+const isFullscreen = () => !!(document.fullscreenElement || prefixed.webkitFullscreenElement);
 
 function toggleFullscreen() {
-  if (isFullscreen()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  if (isFullscreen()) (document.exitFullscreen || prefixed.webkitExitFullscreen).call(document);
   else (viewport.requestFullscreen || viewport.webkitRequestFullscreen).call(viewport);
 }
 
@@ -523,7 +525,7 @@ $('raupTheory').addEventListener('click', () => openInfo('raup'));
 // Shape | Ornament | Pigment tabs. Entering Ornament or Pigment switches the shell
 // to solid (relief and colour are read on the surface); the pattern is chosen in the gallery.
 function showTab(name) {
-  document.querySelectorAll('.tabs [data-tab]').forEach((b) => {
+  qsa('.tabs [data-tab]').forEach((b) => {
     const on = b.dataset.tab === name;
     b.setAttribute('aria-selected', String(on));
     b.tabIndex = on ? 0 : -1;
@@ -542,7 +544,7 @@ function showTab(name) {
     drawSpacetime();
   }
 }
-document.querySelectorAll('.tabs [data-tab]').forEach((b) => {
+qsa('.tabs [data-tab]').forEach((b) => {
   b.addEventListener('click', () => showTab(b.dataset.tab));
   b.addEventListener('keydown', (e) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
@@ -550,7 +552,7 @@ document.querySelectorAll('.tabs [data-tab]').forEach((b) => {
     const i = order.indexOf(b.dataset.tab);
     const next = order[(i + (e.key === 'ArrowRight' ? 1 : order.length - 1)) % order.length];
     showTab(next);
-    document.querySelector(`.tabs [data-tab="${next}"]`).focus();
+    /** @type {HTMLElement} */ (document.querySelector(`.tabs [data-tab="${next}"]`)).focus();
   });
 });
 
@@ -636,9 +638,9 @@ function applyLanguage(lang) {
   updateGrowButton();
   updateFullscreenButton();
   drawMorpho();
-  document.querySelectorAll('.lang button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === getLang())));
+  qsa('.lang button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === getLang())));
   // applyStatic replaces the HTML with untypeset TeX
-  infoBody.querySelectorAll('.info-page').forEach((el) => delete el.dataset.typeset);
+  qsa('.info-page', infoBody).forEach((el) => delete el.dataset.typeset);
   if (infoDialog.open) openInfo();
   updateGalleryLabels();
   updatePatternMessage();
@@ -650,7 +652,7 @@ function applyLanguage(lang) {
   if ($('mechDrawer').open) drawMech();
 }
 
-document.querySelectorAll('.lang button').forEach((b) =>
+qsa('.lang button').forEach((b) =>
   b.addEventListener('click', () => {
     applyLanguage(b.dataset.lang);
     storage.set(LANG_KEY, b.dataset.lang);

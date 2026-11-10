@@ -14,7 +14,7 @@ import { drawMorphoOn } from './morphospace-chart.js';
 import { exportPDF as makePDF } from './pdf.js';
 import { axis, axisMat, camera, ground, lineMat, renderer, scene, shellGroup, solid, solidMat, sun, viewport } from './scene.js';
 import { pickOrnament, pickShape, state, writeHashNow } from './state.js';
-import { $, f, formatW, luminance } from './util.js';
+import { $, f, formatW, luminance, qsa } from './util.js';
 
 // Provided by main.js through init()
 let PATTERN_CELLS, PATTERN_ROWS, VIEWS, drawProfileOn, pattern, patternCanvas, presetSel, resize;
@@ -157,7 +157,7 @@ function updateViewImageSize() {
   const labelH = $('exLabels').checked ? Math.round(PLATE_TILE * 0.1) : 0;
   const [pw, ph] = p ? [p.W, p.H] : [3 * PLATE_TILE, 2 * (PLATE_TILE + labelH)];
   $('exPlateDims').textContent = `${pw} × ${ph} px`;
-  document.querySelectorAll('[data-plate-custom]').forEach((el) => (el.hidden = $('exPlateRes').value !== 'custom'));
+  qsa('[data-plate-custom]').forEach((el) => (el.hidden = $('exPlateRes').value !== 'custom'));
 }
 
 /**
@@ -280,7 +280,7 @@ function renderPlateRaw({ tile = 640, background = '#ffffff', labels = true, wid
   const prev = {
     orient: shellGroup.quaternion.clone(),
     pr: renderer.getPixelRatio(),
-    bg: scene.background.clone(),
+    bg: /** @type {THREE.Color} */ (scene.background).clone(),
     ground: ground.visible,
     sun: sun.position.clone(),
     res: lineMat.resolution.clone(),
