@@ -10,7 +10,18 @@ import { $ } from './util.js';
 import { syncWizard } from './wizard.js';
 
 // Provided by main.js through init()
-let applyLook, applyMode, computePattern, controlsByKey, markDirty, pattern, presetSel, readLook, setMirror, setPatternOn, syncOrnamentControls, syncPatternControls;
+let applyLook,
+  applyMode,
+  computePattern,
+  controlsByKey,
+  markDirty,
+  pattern,
+  presetSel,
+  readLook,
+  setMirror,
+  setPatternOn,
+  syncOrnamentControls,
+  syncPatternControls;
 
 // ---------------------------------------------------------------------------
 
@@ -90,11 +101,23 @@ function setUndoEnabled(on) {
 
 /** Connects this part of the interface to the rest of the app. */
 export function initUndo(ctx) {
-  ({ applyLook, applyMode, computePattern, controlsByKey, markDirty, pattern, presetSel, readLook, setMirror, setPatternOn, syncOrnamentControls, syncPatternControls } = ctx);
+  ({
+    applyLook,
+    applyMode,
+    computePattern,
+    controlsByKey,
+    markDirty,
+    pattern,
+    presetSel,
+    readLook,
+    setMirror,
+    setPatternOn,
+    syncOrnamentControls,
+    syncPatternControls,
+  } = ctx);
   $('undo').addEventListener('click', undo);
   $('wzUndo').addEventListener('click', () => {
     undo();
     syncWizard();
   });
-
 }

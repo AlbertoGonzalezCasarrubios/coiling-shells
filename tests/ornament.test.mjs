@@ -2,7 +2,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bump, cone, growthFactor, hasOrnament, makeOrnament, ornamentResolution, ORNAMENT_DEFAULTS } from '../js/model/ornament.js';
-import { criticalWaves, lambdaForWaves, loadRatio, firstMode, unstableBand, cordAmplitude, mechanicalCords } from '../js/model/mechanics.js';
+import {
+  criticalWaves,
+  lambdaForWaves,
+  loadRatio,
+  firstMode,
+  unstableBand,
+  cordAmplitude,
+  mechanicalCords,
+} from '../js/model/mechanics.js';
 import { ORNAMENT_PRESETS, PRESETS } from '../js/model/presets.js';
 import { regionsAt } from '../js/model/morphospace.js';
 
@@ -24,7 +32,7 @@ test('cones and change with growth', () => {
   assert.equal(growthFactor(0, 0.3), 1);
   assert.equal(growthFactor(-1, 1), 0); // fades completely at the aperture
   assert.equal(growthFactor(-1, 0), 2);
-  assert.equal(growthFactor(1, 0), 0);  // absent at the apex
+  assert.equal(growthFactor(1, 0), 0); // absent at the apex
 });
 
 test('no relief unless some term is switched on', () => {
@@ -37,10 +45,14 @@ test('no relief unless some term is switched on', () => {
 
 /** Geometry of a circular aperture sampled in `cols` columns. */
 function geometry(cols = 65) {
-  const cosPhi = new Float64Array(cols), sinPhi = new Float64Array(cols), arcU = new Float64Array(cols);
+  const cosPhi = new Float64Array(cols),
+    sinPhi = new Float64Array(cols),
+    arcU = new Float64Array(cols);
   for (let j = 0; j < cols; j++) {
     const phi = (j / (cols - 1)) * 2 * Math.PI;
-    cosPhi[j] = Math.cos(phi); sinPhi[j] = Math.sin(phi); arcU[j] = j / (cols - 1);
+    cosPhi[j] = Math.cos(phi);
+    sinPhi[j] = Math.sin(phi);
+    arcU[j] = j / (cols - 1);
   }
   return { a: 0.45, b: 0.45, rc: 0.55, cols, cosPhi, sinPhi, arcU, perimeter: 2 * Math.PI };
 }
@@ -66,8 +78,8 @@ test('spines rise at their positions, whole, and not on the lip or the first who
 test('nodules only where ribs and cords cross; keel at its position', () => {
   const g = geometry();
   const o = makeOrnament({ ribN: 4, ribH: 0.1, ribW: 0.3, cordN: 4, cordH: 0.1, cordW: 0.3, nodules: true }, g);
-  assert.ok(Math.abs(o.delta(0, 0.5, 0) - 0.2) < 1e-9);       // crossing
-  assert.equal(o.delta(0, 0.5, 8), 0);                         // on a rib, between cords
+  assert.ok(Math.abs(o.delta(0, 0.5, 0) - 0.2) < 1e-9); // crossing
+  assert.equal(o.delta(0, 0.5, 8), 0); // on a rib, between cords
   const k = makeOrnament({ keelH: 0.2, keelW: 0.1, keelPos: 0.25 }, g);
   assert.ok(Math.abs(k.delta(1, 0.5, 16) - 0.2) < 1e-9);
   assert.equal(k.delta(1, 0.5, 0), 0);

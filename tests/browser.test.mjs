@@ -23,13 +23,28 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const CANDIDATES = [
   process.env.CHROME,
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium', '/usr/bin/chromium-browser',
+  '/usr/bin/google-chrome',
+  '/usr/bin/google-chrome-stable',
+  '/usr/bin/chromium',
+  '/usr/bin/chromium-browser',
 ].filter(Boolean);
 const CHROME = CANDIDATES.find((p) => existsSync(p));
-const skip = process.env.SKIP_BROWSER ? 'SKIP_BROWSER is set'
-  : !CHROME ? 'Chrome not found' : typeof WebSocket === 'undefined' ? 'needs Node.js ≥ 22' : false;
+const skip = process.env.SKIP_BROWSER
+  ? 'SKIP_BROWSER is set'
+  : !CHROME
+    ? 'Chrome not found'
+    : typeof WebSocket === 'undefined'
+      ? 'needs Node.js ≥ 22'
+      : false;
 
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json' };
+const TYPES = {
+  '.html': 'text/html',
+  '.js': 'text/javascript',
+  '.css': 'text/css',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.json': 'application/json',
+};
 
 function serve() {
   const server = createServer(async (req, res) => {
@@ -52,31 +67,57 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function launch() {
   const profile = mkdtempSync(join(tmpdir(), 'shells-'));
   const port = 9300 + Math.floor(Math.random() * 500);
-  const proc = spawn(CHROME, [
-    '--headless=new', '--no-first-run', '--no-default-browser-check', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
-    `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, '--window-size=1400,900',
-    ...(process.env.CI ? ['--no-sandbox'] : []), 'about:blank',
-  ], { stdio: 'ignore' });
+  const proc = spawn(
+    CHROME,
+    [
+      '--headless=new',
+      '--no-first-run',
+      '--no-default-browser-check',
+      '--use-angle=swiftshader',
+      '--enable-unsafe-swiftshader',
+      `--remote-debugging-port=${port}`,
+      `--user-data-dir=${profile}`,
+      '--window-size=1400,900',
+      ...(process.env.CI ? ['--no-sandbox'] : []),
+      'about:blank',
+    ],
+    { stdio: 'ignore' },
+  );
   let page;
   for (let i = 0; i < 100 && !page; i++) {
     try {
       page = (await (await fetch(`http://127.0.0.1:${port}/json`)).json()).find((t) => t.type === 'page');
-    } catch { /* not ready */ }
+    } catch {
+      /* not ready */
+    }
     if (!page) await sleep(150);
   }
   if (!page) throw new Error('Chrome did not start');
   const ws = new WebSocket(page.webSocketDebuggerUrl);
-  await new Promise((r, j) => { ws.addEventListener('open', r); ws.addEventListener('error', j); });
+  await new Promise((r, j) => {
+    ws.addEventListener('open', r);
+    ws.addEventListener('error', j);
+  });
   let id = 0;
   const pending = new Map();
   const errors = [];
   ws.addEventListener('message', (e) => {
     const m = JSON.parse(e.data);
-    if (m.id && pending.has(m.id)) { pending.get(m.id)(m); pending.delete(m.id); }
-    if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails.exception?.description ?? m.params.exceptionDetails.text);
-    if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error') errors.push(m.params.args.map((a) => a.value ?? a.description).join(' '));
+    if (m.id && pending.has(m.id)) {
+      pending.get(m.id)(m);
+      pending.delete(m.id);
+    }
+    if (m.method === 'Runtime.exceptionThrown')
+      errors.push(m.params.exceptionDetails.exception?.description ?? m.params.exceptionDetails.text);
+    if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error')
+      errors.push(m.params.args.map((a) => a.value ?? a.description).join(' '));
   });
-  const send = (method, params = {}) => new Promise((r) => { const i = ++id; pending.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
+  const send = (method, params = {}) =>
+    new Promise((r) => {
+      const i = ++id;
+      pending.set(i, r);
+      ws.send(JSON.stringify({ id: i, method, params }));
+    });
   await send('Runtime.enable');
   await send('Page.enable');
   // A page that stops answering (a crashed renderer) fails the test instead of hanging it
@@ -84,7 +125,9 @@ async function launch() {
     let timer;
     const r = await Promise.race([
       send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }),
-      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(`the page did not answer within ${ms / 1000} s`)), ms); }),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`the page did not answer within ${ms / 1000} s`)), ms);
+      }),
     ]).finally(() => clearTimeout(timer)); // a pending timer would keep the process alive
     if (r.result?.exceptionDetails) throw new Error(r.result.exceptionDetails.exception?.description ?? 'evaluation failed');
     return r.result?.result?.value;
@@ -95,7 +138,11 @@ async function launch() {
     proc.kill();
     await Promise.race([exited, sleep(5000)]);
     if (proc.exitCode === null && proc.signalCode === null) proc.kill('SIGKILL');
-    try { rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch { /* temporary folder */ }
+    try {
+      rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    } catch {
+      /* temporary folder */
+    }
   };
   return { send, evaluate, errors, close };
 }
@@ -215,7 +262,7 @@ test('the whole interface works in a real browser', { skip, timeout: 400_000 }, 
     assert.equal(log.spineOk, true, 'no spine warning at 80 mm');
     assert.equal(log.spineWarn, true, 'spine warning at 20 mm');
     assert.equal(log.wizardClosed, true, 'the shell creator gives the canvas back');
-    assert.equal(log.raupTheory, true, 'the Theory link of the shape tab opens Raup\'s page');
+    assert.equal(log.raupTheory, true, "the Theory link of the shape tab opens Raup's page");
     assert.equal(log.mathErrors, 0, 'every About page typesets');
     const kinds = log.files.map((f) => f.split(':')[0]);
     for (const k of ['jpg', 'tif', 'stl', 'pdf']) assert.ok(kinds.includes(k), `export ${k} (${log.files})`);
@@ -224,7 +271,10 @@ test('the whole interface works in a real browser', { skip, timeout: 400_000 }, 
     assert.deepEqual(b.errors, [], 'no errors in the page');
   } catch (err) {
     // On GitHub Actions the reason shows as an annotation of the run, without opening the log
-    if (process.env.CI) console.log(`::error title=Browser test::${String(err.message).replace(/\n/g, ' ')} | log ${progress} | page errors ${JSON.stringify(b.errors)}`);
+    if (process.env.CI)
+      console.log(
+        `::error title=Browser test::${String(err.message).replace(/\n/g, ' ')} | log ${progress} | page errors ${JSON.stringify(b.errors)}`,
+      );
     throw err;
   } finally {
     await b.close();

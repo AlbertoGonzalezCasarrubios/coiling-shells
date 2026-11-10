@@ -34,7 +34,8 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
     segPhi: Math.min(256, Math.max(PRINT_QUALITY.segPhi, res.phi)),
     segPerTurn: Math.min(
       Math.max(Math.round(PRINT_QUALITY.segPerTurn * boost), res.perTurn),
-      Math.floor(PRINT_QUALITY.maxRows * (res.perTurn ? 2 : 1) / Math.max(shape.turns, 0.25))),
+      Math.floor((PRINT_QUALITY.maxRows * (res.perTurn ? 2 : 1)) / Math.max(shape.turns, 0.25)),
+    ),
     spiralLines: 0,
     ringsPerTurn: 0,
     size,
@@ -66,17 +67,23 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
     for (let i = 0; i < rows; i++) {
       const ring = O[i];
       const ctr = [0, 0, 0];
-      for (const p of ring) { ctr[0] += p[0] / U; ctr[1] += p[1] / U; ctr[2] += p[2] / U; }
+      for (const p of ring) {
+        ctr[0] += p[0] / U;
+        ctr[1] += p[1] / U;
+        ctr[2] += p[2] / U;
+      }
       let minR = Infinity;
       for (const p of ring) minR = Math.min(minR, Math.hypot(p[0] - ctr[0], p[1] - ctr[1], p[2] - ctr[2]));
       const t = Math.min(wall, 0.45 * minR);
-      const prev = O[Math.max(0, i - 1)], next = O[Math.min(rows - 1, i + 1)];
+      const prev = O[Math.max(0, i - 1)],
+        next = O[Math.min(rows - 1, i + 1)];
       // Normal of the ring plane (Newell's method), only at the ends
       let planeN = null;
       if (i === 0 || i === rows - 1) {
         const nn = [0, 0, 0];
         for (let j = 0; j < U; j++) {
-          const p = ring[j], q = ring[(j + 1) % U];
+          const p = ring[j],
+            q = ring[(j + 1) % U];
           nn[0] += (p[1] - q[1]) * (p[2] + q[2]);
           nn[1] += (p[2] - q[2]) * (p[0] + q[0]);
           nn[2] += (p[0] - q[0]) * (p[1] + q[1]);
@@ -100,9 +107,14 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
           const inPlane = norm([n[0] - along * planeN[0], n[1] - along * planeN[1], n[2] - along * planeN[2]]);
           if (inPlane[0] || inPlane[1] || inPlane[2]) n = inPlane;
         }
-        const o = outer(c, i, j) * 3, q = inner(c, i, j) * 3;
-        pos[o] = p[0]; pos[o + 1] = p[1]; pos[o + 2] = p[2];
-        pos[q] = p[0] - n[0] * t; pos[q + 1] = p[1] - n[1] * t; pos[q + 2] = p[2] - n[2] * t;
+        const o = outer(c, i, j) * 3,
+          q = inner(c, i, j) * 3;
+        pos[o] = p[0];
+        pos[o + 1] = p[1];
+        pos[o + 2] = p[2];
+        pos[q] = p[0] - n[0] * t;
+        pos[q + 1] = p[1] - n[1] * t;
+        pos[q + 2] = p[2] - n[2] * t;
       }
     }
 
@@ -115,7 +127,8 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
     const newell = (ring) => {
       const nn = [0, 0, 0];
       for (let j = 0; j < U; j++) {
-        const p = ring[j], q = ring[(j + 1) % U];
+        const p = ring[j],
+          q = ring[(j + 1) % U];
         nn[0] += (p[1] - q[1]) * (p[2] + q[2]);
         nn[1] += (p[2] - q[2]) * (p[0] + q[0]);
         nn[2] += (p[0] - q[0]) * (p[1] + q[1]);
@@ -124,7 +137,10 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
     };
     if (rows > 2) {
       const near = Math.min(rows - 1, Math.ceil(END_WINDOW / ((2 * Math.PI * Math.max(shape.turns, 0.01)) / (rows - 1))));
-      for (const [end, inside, from, to] of [[0, 1, 0, near], [rows - 1, rows - 2, rows - 1 - near, rows - 1]]) {
+      for (const [end, inside, from, to] of [
+        [0, 1, 0, near],
+        [rows - 1, rows - 2, rows - 1 - near, rows - 1],
+      ]) {
         const c0 = centroid(O[end]);
         let pn = newell(O[end]);
         if (!pn[0] && !pn[1] && !pn[2]) continue;
@@ -177,7 +193,8 @@ export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
   }
 
   // Base at z = 0, centred in x and y
-  let min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
+  let min = [Infinity, Infinity, Infinity],
+    max = [-Infinity, -Infinity, -Infinity];
   for (let k = 0; k < pos.length; k += 3) {
     for (let a = 0; a < 3; a++) {
       if (pos[k + a] < min[a]) min[a] = pos[k + a];
@@ -209,7 +226,8 @@ export function checkClosed({ indices }) {
   const edges = new Map();
   for (let t = 0; t < indices.length; t += 3) {
     for (let e = 0; e < 3; e++) {
-      const a = indices[t + e], b = indices[t + ((e + 1) % 3)];
+      const a = indices[t + e],
+        b = indices[t + ((e + 1) % 3)];
       const key = `${a},${b}`;
       edges.set(key, (edges.get(key) || 0) + 1);
     }
@@ -226,10 +244,13 @@ export function checkClosed({ indices }) {
 export function signedVolume({ positions: p, indices: ix }) {
   let v = 0;
   for (let t = 0; t < ix.length; t += 3) {
-    const a = ix[t] * 3, b = ix[t + 1] * 3, c = ix[t + 2] * 3;
-    v += p[a] * (p[b + 1] * p[c + 2] - p[b + 2] * p[c + 1])
-       - p[a + 1] * (p[b] * p[c + 2] - p[b + 2] * p[c])
-       + p[a + 2] * (p[b] * p[c + 1] - p[b + 1] * p[c]);
+    const a = ix[t] * 3,
+      b = ix[t + 1] * 3,
+      c = ix[t + 2] * 3;
+    v +=
+      p[a] * (p[b + 1] * p[c + 2] - p[b + 2] * p[c + 1]) -
+      p[a + 1] * (p[b] * p[c + 2] - p[b + 2] * p[c]) +
+      p[a + 2] * (p[b] * p[c + 1] - p[b + 1] * p[c]);
   }
   return v / 6;
 }
@@ -244,13 +265,24 @@ export function toSTL({ positions: p, indices: ix }, name = 'shell') {
   dv.setUint32(80, n, true);
   let o = 84;
   for (let t = 0; t < ix.length; t += 3) {
-    const a = ix[t] * 3, b = ix[t + 1] * 3, c = ix[t + 2] * 3;
-    const nrm = norm(cross(
-      [p[b] - p[a], p[b + 1] - p[a + 1], p[b + 2] - p[a + 2]],
-      [p[c] - p[a], p[c + 1] - p[a + 1], p[c + 2] - p[a + 2]]
-    ));
-    for (const x of [...nrm.map((v) => (Number.isFinite(v) ? v : 0)),
-      p[a], p[a + 1], p[a + 2], p[b], p[b + 1], p[b + 2], p[c], p[c + 1], p[c + 2]]) {
+    const a = ix[t] * 3,
+      b = ix[t + 1] * 3,
+      c = ix[t + 2] * 3;
+    const nrm = norm(
+      cross([p[b] - p[a], p[b + 1] - p[a + 1], p[b + 2] - p[a + 2]], [p[c] - p[a], p[c + 1] - p[a + 1], p[c + 2] - p[a + 2]]),
+    );
+    for (const x of [
+      ...nrm.map((v) => (Number.isFinite(v) ? v : 0)),
+      p[a],
+      p[a + 1],
+      p[a + 2],
+      p[b],
+      p[b + 1],
+      p[b + 2],
+      p[c],
+      p[c + 1],
+      p[c + 2],
+    ]) {
       dv.setFloat32(o, x, true);
       o += 4;
     }
@@ -363,13 +395,25 @@ export async function zip(files) {
   const all = [...parts, ...central, new Uint8Array(end.buffer)];
   const out = new Uint8Array(all.reduce((s, b) => s + b.length, 0));
   let o = 0;
-  for (const b of all) { out.set(b, o); o += b.length; }
+  for (const b of all) {
+    out.set(b, o);
+    o += b.length;
+  }
   return out;
 }
 
 // ---------------------------------------------------------------------------
 
-function sub(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
-function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
-function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
-function norm(a) { const l = Math.hypot(a[0], a[1], a[2]); return l ? [a[0] / l, a[1] / l, a[2] / l] : [0, 0, 0]; }
+function sub(a, b) {
+  return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+}
+function dot(a, b) {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+function cross(a, b) {
+  return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+}
+function norm(a) {
+  const l = Math.hypot(a[0], a[1], a[2]);
+  return l ? [a[0] / l, a[1] / l, a[2] / l] : [0, 0, 0];
+}

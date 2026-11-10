@@ -13,16 +13,49 @@ import { GEO_PARAMS, ORN_PARAMS, RAUP_PARAMS, state, writeHash } from './state.j
 import { $ } from './util.js';
 
 // Provided by main.js through init()
-let PIG_SIMPLE, applyMode, busy, chosenSize, computePattern, controlsByKey, createParam, defaultShellName, downloadImage, exportPDF, fileStem, markPatternCustom, onOrnamentChange, onShapeChange, openExport, ornPresetSel, paintPattern, pattern, pickPattern, pigControls, presetSel, renderViewImage, resize, schedulePattern, selectPattern, setPatternOn, syncPatternControls;
-
+let PIG_SIMPLE,
+  applyMode,
+  busy,
+  chosenSize,
+  computePattern,
+  controlsByKey,
+  createParam,
+  defaultShellName,
+  downloadImage,
+  exportPDF,
+  fileStem,
+  markPatternCustom,
+  onOrnamentChange,
+  onShapeChange,
+  openExport,
+  ornPresetSel,
+  paintPattern,
+  pattern,
+  pickPattern,
+  pigControls,
+  presetSel,
+  renderViewImage,
+  resize,
+  schedulePattern,
+  selectPattern,
+  setPatternOn,
+  syncPatternControls;
 
 export const wizardDlg = $('wizard');
 const WZ_STEPS = 5;
 let wzStep = 0;
 
 // Plain-language names for the creator (wzW, wzD…), the symbols stay in brackets
-const WZ_SHAPE = ['W', 'D', 'T', 'S', 'turns'].map((k) => ({ ...[...RAUP_PARAMS, ...GEO_PARAMS].find((d) => d.key === k), id: `wz-${k}`, i18n: `wz${k}` }));
-const WZ_ORN = ['ribN', 'ribH', 'cordN', 'cordH', 'spineN', 'spineH'].map((k) => ({ ...ORN_PARAMS.find((d) => d.key === k), id: `wz-${k}`, i18n: k }));
+const WZ_SHAPE = ['W', 'D', 'T', 'S', 'turns'].map((k) => ({
+  ...[...RAUP_PARAMS, ...GEO_PARAMS].find((d) => d.key === k),
+  id: `wz-${k}`,
+  i18n: `wz${k}`,
+}));
+const WZ_ORN = ['ribN', 'ribH', 'cordN', 'cordH', 'spineN', 'spineH'].map((k) => ({
+  ...ORN_PARAMS.find((d) => d.key === k),
+  id: `wz-${k}`,
+  i18n: k,
+}));
 
 /** Copies the options of a sidebar menu (already translated) into a wizard menu. */
 function copyOptions(from, to, { showHidden = [] } = {}) {
@@ -64,7 +97,9 @@ export function syncWizard() {
   $('wzNodules').checked = state.nodules;
   document.querySelectorAll('#wzHand [data-hand]').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.hand === state.hand)));
   const sel = !pattern.on ? 'none' : PATTERN_PRESETS[pattern.preset] ? pattern.preset : pattern.model === 'AS' ? 'waves' : '';
-  $('wzPatterns').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.key === sel)));
+  $('wzPatterns')
+    .querySelectorAll('button')
+    .forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.key === sel)));
   for (const d of WZ_PIG) controlsByKey[d.id].set(pattern[d.key]);
   document.querySelectorAll('.wz-pig').forEach((el) => (el.hidden = !pattern.on));
   $('wzBase').value = pattern.base;
@@ -115,50 +150,85 @@ function closeWizardView() {
 }
 
 // Colours and appearance: the wizard sets the sidebar inputs and lets their own handlers act
-const relay = (fromId, toId, type = 'input') => $(fromId).addEventListener(type, (e) => {
-  $(toId).value = e.target.value;
-  $(toId).dispatchEvent(new Event(type));
-});
+const relay = (fromId, toId, type = 'input') =>
+  $(fromId).addEventListener(type, (e) => {
+    $(toId).value = e.target.value;
+    $(toId).dispatchEvent(new Event(type));
+  });
 // ---------------------------------------------------------------------------
 
 /** Connects this part of the interface to the rest of the app. */
 export function initWizard(ctx) {
-  ({ PIG_SIMPLE, applyMode, busy, chosenSize, computePattern, controlsByKey, createParam, defaultShellName, downloadImage, exportPDF, fileStem, markPatternCustom, onOrnamentChange, onShapeChange, openExport, ornPresetSel, paintPattern, pattern, pickPattern, pigControls, presetSel, renderViewImage, resize, schedulePattern, selectPattern, setPatternOn, syncPatternControls } = ctx);
-  WZ_SHAPE.forEach((d) => createParam(d, $('wz-shape'), {
-    compact: true,
-    onChange: (key) => {
-      controlsByKey[key].set(state[key]);
-      onShapeChange();
-      $('wzPreset').value = 'custom';
-    },
-  }));
-  WZ_ORN.forEach((d) => createParam(d, $('wz-orn'), {
-    compact: true,
-    onChange: (key) => {
-      controlsByKey[key].set(state[key]);
-      onOrnamentChange();
-      $('wzOrn').value = ornPresetSel.value;
-    },
-  }));
+  ({
+    PIG_SIMPLE,
+    applyMode,
+    busy,
+    chosenSize,
+    computePattern,
+    controlsByKey,
+    createParam,
+    defaultShellName,
+    downloadImage,
+    exportPDF,
+    fileStem,
+    markPatternCustom,
+    onOrnamentChange,
+    onShapeChange,
+    openExport,
+    ornPresetSel,
+    paintPattern,
+    pattern,
+    pickPattern,
+    pigControls,
+    presetSel,
+    renderViewImage,
+    resize,
+    schedulePattern,
+    selectPattern,
+    setPatternOn,
+    syncPatternControls,
+  } = ctx);
+  WZ_SHAPE.forEach((d) =>
+    createParam(d, $('wz-shape'), {
+      compact: true,
+      onChange: (key) => {
+        controlsByKey[key].set(state[key]);
+        onShapeChange();
+        $('wzPreset').value = 'custom';
+      },
+    }),
+  );
+  WZ_ORN.forEach((d) =>
+    createParam(d, $('wz-orn'), {
+      compact: true,
+      onChange: (key) => {
+        controlsByKey[key].set(state[key]);
+        onOrnamentChange();
+        $('wzOrn').value = ornPresetSel.value;
+      },
+    }),
+  );
 
   // Colour step: solid colour, the pattern presets and the travelling waves of the
   // activator–substrate model (its default constants), plus the simple sliders
   WZ_PIG = PIG_SIMPLE.map((d) => ({ ...d, id: `wz-${d.id}` }));
-  WZ_PIG.forEach((d) => createParam(d, $('wz-pig'), {
-    compact: true,
-    target: pattern,
-    onChange: (key) => {
-      pigControls[d.id.slice(3)].set(pattern[key]);
-      if (key === 'amount') {
-        paintPattern();
-        writeHash();
-        return;
-      }
-      markPatternCustom();
-      schedulePattern();
-      syncWizard();
-    },
-  }));
+  WZ_PIG.forEach((d) =>
+    createParam(d, $('wz-pig'), {
+      compact: true,
+      target: pattern,
+      onChange: (key) => {
+        pigControls[d.id.slice(3)].set(pattern[key]);
+        if (key === 'amount') {
+          paintPattern();
+          writeHash();
+          return;
+        }
+        markPatternCustom();
+        schedulePattern();
+        syncWizard();
+      },
+    }),
+  );
 
   $('openWizard').addEventListener('click', openWizard);
   $('closeWizard').addEventListener('click', () => wizardDlg.close());
@@ -173,11 +243,13 @@ export function initWizard(ctx) {
     presetSel.dispatchEvent(new Event('change'));
     syncWizard();
   });
-  document.querySelectorAll('#wzHand [data-hand]').forEach((b) => b.addEventListener('click', () => {
-    $('hand').value = b.dataset.hand;
-    $('hand').dispatchEvent(new Event('change'));
-    syncWizard();
-  }));
+  document.querySelectorAll('#wzHand [data-hand]').forEach((b) =>
+    b.addEventListener('click', () => {
+      $('hand').value = b.dataset.hand;
+      $('hand').dispatchEvent(new Event('change'));
+      syncWizard();
+    }),
+  );
   $('wzOrn').addEventListener('change', (e) => {
     if (e.target.value === 'smooth') {
       $('ornClear').click();
@@ -201,24 +273,27 @@ export function initWizard(ctx) {
     $('showAxis').checked = e.target.checked;
     $('showAxis').dispatchEvent(new Event('change'));
   });
-  document.querySelectorAll('#wzMode [data-mode]').forEach((b) => b.addEventListener('click', () => {
-    document.querySelector(`#mode [data-mode="${b.dataset.mode}"]`).click();
-    syncWizard();
-  }));
+  document.querySelectorAll('#wzMode [data-mode]').forEach((b) =>
+    b.addEventListener('click', () => {
+      document.querySelector(`#mode [data-mode="${b.dataset.mode}"]`).click();
+      syncWizard();
+    }),
+  );
   // The palette buttons share the sidebar handler (they carry data-palette); then resync
   document.querySelectorAll('#wzPalettes [data-palette]').forEach((b) => b.addEventListener('click', syncWizard));
   $('wzName').addEventListener('input', (e) => ($('exName').value = e.target.value));
   $('wzSeed').addEventListener('click', () => $('newSeed').click());
 
   // Export: the same functions as the export window
-  $('wzWallpaper').addEventListener('click', (e) => busy(e.currentTarget, async () => {
-    const { W, H } = chosenSize('screen');
-    await downloadImage(renderViewImage(W, H), `${fileStem()}_${W}x${H}`, 'png');
-  }));
+  $('wzWallpaper').addEventListener('click', (e) =>
+    busy(e.currentTarget, async () => {
+      const { W, H } = chosenSize('screen');
+      await downloadImage(renderViewImage(W, H), `${fileStem()}_${W}x${H}`, 'png');
+    }),
+  );
   $('wzPdf').addEventListener('click', (e) => busy(e.currentTarget, exportPDF));
   $('wzMore').addEventListener('click', () => {
     wizardDlg.close();
     openExport();
   });
-
 }

@@ -21,15 +21,32 @@ let applyMode, capturePointer, controlsByKey, createParam, setFill;
 // Pigmentation (Meinhardt's reaction–diffusion models)
 // ---------------------------------------------------------------------------
 
-export const PATTERN_ROWS = 2048;   // rows of the space–time record (apex → aperture)
-const PATTERN_WIDTH = 1024;  // texture columns (once around the aperture)
-export const PATTERN_CELLS = 256;   // margin cells at the aperture (size ×1)
+export const PATTERN_ROWS = 2048; // rows of the space–time record (apex → aperture)
+const PATTERN_WIDTH = 1024; // texture columns (once around the aperture)
+export const PATTERN_CELLS = 256; // margin cells at the aperture (size ×1)
 // Half-width of the pigmentation threshold: pigment is laid down where the
 // activator exceeds a threshold, as in Meinhardt's simulations, with sharp edges
 const PIGMENT_EDGE = 0.12;
 const THUMB = { rows: 144, width: 256 }; // one-cell lines must not be lost when downscaling
 
-const PATTERN_KEYS = ['model', 'Da', 'D2', 'ra', 'r2', 'kappa', 'ba', 'b2', 'noise', 'globalCtl', 'T', 'insertion', 'base', 'pigment', 'size', 'amount'];
+const PATTERN_KEYS = [
+  'model',
+  'Da',
+  'D2',
+  'ra',
+  'r2',
+  'kappa',
+  'ba',
+  'b2',
+  'noise',
+  'globalCtl',
+  'T',
+  'insertion',
+  'base',
+  'pigment',
+  'size',
+  'amount',
+];
 const PATTERN_DEFAULTS = { size: 1, amount: 0.5 };
 
 export const pickPattern = (p) => Object.fromEntries(PATTERN_KEYS.map((k) => [k, p[k] ?? PATTERN_DEFAULTS[k]]));
@@ -38,12 +55,28 @@ export const pattern = { on: false, preset: DEFAULT_PATTERN, seed: 7, ...pickPat
 let patternState = 'pattern'; // 'pattern' | 'uniform' | 'extinct'
 
 // Pattern state in the URL: pg=1 and the parameters prefixed with p
-const PATTERN_HASH = { pm: 'model', pDa: 'Da', pD2: 'D2', pra: 'ra', pr2: 'r2', pk: 'kappa', pba: 'ba', pb2: 'b2', pn: 'noise', pgc: 'globalCtl', pT: 'T', ps: 'seed', pz: 'size', pa: 'amount' };
+const PATTERN_HASH = {
+  pm: 'model',
+  pDa: 'Da',
+  pD2: 'D2',
+  pra: 'ra',
+  pr2: 'r2',
+  pk: 'kappa',
+  pba: 'ba',
+  pb2: 'b2',
+  pn: 'noise',
+  pgc: 'globalCtl',
+  pT: 'T',
+  ps: 'seed',
+  pz: 'size',
+  pa: 'amount',
+};
 export function patternHash(q) {
   q.set('pg', pattern.on ? '1' : '0');
   if (!pattern.on) return;
   q.set('pp', pattern.preset);
-  for (const [short, key] of Object.entries(PATTERN_HASH)) q.set(short, key === 'model' ? pattern.model : String(+Number(pattern[key]).toFixed(4)));
+  for (const [short, key] of Object.entries(PATTERN_HASH))
+    q.set(short, key === 'model' ? pattern.model : String(+Number(pattern[key]).toFixed(4)));
   q.set('pi', pattern.insertion ? '1' : '0');
   q.set('pcb', pattern.base.slice(1));
   q.set('pcp', pattern.pigment.slice(1));
@@ -58,7 +91,7 @@ const spacetime = $('spacetime');
 
 export let patternValues = null;
 let patternSecond = null; // inhibitor or substrate (rows × PROFILE_WIDTH), relative to its maximum
-export let profileRow = null;    // moment chosen for the profile (null = the aperture)
+export let profileRow = null; // moment chosen for the profile (null = the aperture)
 const profileCanvas = $('profile');
 
 /**
@@ -93,7 +126,6 @@ export function paintPattern() {
   updatePatternMessage();
 }
 
-
 export let stView = 'time';
 let stRect = { ox: 0, oy: 0, dw: 1, dh: 1 }; // drawn area, in CSS pixels
 let patternVersion = 0;
@@ -101,9 +133,12 @@ let unrolledCache = { key: '', canvas: null };
 
 /** Proportions of the unrolled shell and relative size of the apex (g0). */
 function unrolledGeometry() {
-  const W = Math.max(state.W, 1.0001), N = state.turns;
+  const W = Math.max(state.W, 1.0001),
+    N = state.turns;
   const k = Math.log(W) / (2 * Math.PI);
-  const rc = (1 + state.D) / 2, a = (1 - state.D) / 2, b = state.S * a;
+  const rc = (1 + state.D) / 2,
+    a = (1 - state.D) / 2,
+    b = state.S * a;
   // Aperture perimeter (Ramanujan's approximation) and advance of its centre per radian
   const P = Math.PI * (3 * (a + b) - Math.sqrt((3 * a + b) * (a + 3 * b)));
   const v = rc * Math.sqrt(1 + k * k * (1 + state.T * state.T));
@@ -140,19 +175,28 @@ function unrolledImage(wpx, hpx) {
     const row = Math.min(PATTERN_ROWS - 1, Math.max(0, Math.round((PATTERN_ROWS - 1) * (1 + Math.log(g) / (2 * Math.PI * N * k)))));
     const rw = wpx * g;
     const x0 = (wpx - rw) / 2;
-    const xs = Math.max(0, Math.floor(x0)), xe = Math.min(wpx, Math.ceil(x0 + rw));
+    const xs = Math.max(0, Math.floor(x0)),
+      xe = Math.min(wpx, Math.ceil(x0 + rw));
     for (let x = xs; x < xe; x++) {
-      const u0 = Math.max(0, (x - x0) / rw), u1 = Math.min(1, (x + 1 - x0) / rw);
+      const u0 = Math.max(0, (x - x0) / rw),
+        u1 = Math.min(1, (x + 1 - x0) / rw);
       if (u1 <= u0) continue;
       const c0 = Math.floor(u0 * PATTERN_WIDTH);
       const c1 = Math.max(c0 + 1, Math.min(PATTERN_WIDTH, Math.ceil(u1 * PATTERN_WIDTH)));
-      let r = 0, gg = 0, bb = 0;
+      let r = 0,
+        gg = 0,
+        bb = 0;
       for (let c = c0; c < c1; c++) {
         const si = (row * PATTERN_WIDTH + c) * 4;
-        r += src[si]; gg += src[si + 1]; bb += src[si + 2];
+        r += src[si];
+        gg += src[si + 1];
+        bb += src[si + 2];
       }
-      const n = c1 - c0, di = (y * wpx + x) * 4;
-      out[di] = r / n; out[di + 1] = gg / n; out[di + 2] = bb / n;
+      const n = c1 - c0,
+        di = (y * wpx + x) * 4;
+      out[di] = r / n;
+      out[di + 1] = gg / n;
+      out[di + 2] = bb / n;
       out[di + 3] = 255 * Math.min(1, (u1 - u0) * rw); // anti-aliased fan edge
     }
   }
@@ -184,7 +228,8 @@ export function drawSpacetime() {
   const ctx = spacetime.getContext('2d');
   ctx.imageSmoothingQuality = 'high';
   if (stView === 'shell') {
-    const dw = Math.min(w - 8, (h - 8) / aspect), dh = dw * aspect;
+    const dw = Math.min(w - 8, (h - 8) / aspect),
+      dh = dw * aspect;
     stRect = { ox: (w - dw) / 2, oy: (h - dh) / 2, dw, dh };
   } else {
     stRect = { ox: 0, oy: 0, dw: w, dh: h };
@@ -212,7 +257,11 @@ export function drawSpacetime() {
 function setStView(view) {
   stView = view;
   document.querySelectorAll('#stView [data-stview]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.stview === view)));
-  for (const [id, base] of [['stCapX', 'pig.axis.x'], ['stCapT', 'pig.axis.t'], ['stNote', 'pig.st.note']]) {
+  for (const [id, base] of [
+    ['stCapX', 'pig.axis.x'],
+    ['stCapT', 'pig.axis.t'],
+    ['stNote', 'pig.st.note'],
+  ]) {
     const el = $(id);
     el.dataset.i18n = id === 'stNote' ? `${base}.${view}` : view === 'shell' ? `${base}.shell` : base;
     el.textContent = t(el.dataset.i18n);
@@ -433,12 +482,42 @@ export const PIG_SIMPLE = [
 // Model constants: logarithmic scale, with the leftmost position = 0 where it makes sense
 const PIG_ADVANCED = [
   { key: 'Da', id: 'pDa', sym: sub('D', 'a'), log: true, zero: true, min: 0.0005, max: 0.5, format: sig },
-  { key: 'D2', id: 'pD2', sym: () => sub('D', second()), i18n: () => `D2.${pattern.model}`, log: true, zero: true, min: 0.001, max: 30, format: sig },
+  {
+    key: 'D2',
+    id: 'pD2',
+    sym: () => sub('D', second()),
+    i18n: () => `D2.${pattern.model}`,
+    log: true,
+    zero: true,
+    min: 0.001,
+    max: 30,
+    format: sig,
+  },
   { key: 'ra', id: 'pra', sym: sub('r', 'a'), log: true, min: 0.002, max: 0.3, format: sig },
-  { key: 'r2', id: 'pr2', sym: () => sub('r', second()), i18n: () => `r2.${pattern.model}`, log: true, zero: true, min: 0.0005, max: 0.3, format: sig },
+  {
+    key: 'r2',
+    id: 'pr2',
+    sym: () => sub('r', second()),
+    i18n: () => `r2.${pattern.model}`,
+    log: true,
+    zero: true,
+    min: 0.0005,
+    max: 0.3,
+    format: sig,
+  },
   { key: 'kappa', id: 'pkappa', sym: 'κ', min: 0, max: 2, step: 0.01, digits: 2 },
   { key: 'ba', id: 'pba', sym: sub('b', 'a'), log: true, zero: true, min: 0.0001, max: 0.1, format: sig },
-  { key: 'b2', id: 'pb2', sym: () => sub('b', second()), i18n: () => `b2.${pattern.model}`, log: true, zero: true, min: 0.0005, max: 0.1, format: sig },
+  {
+    key: 'b2',
+    id: 'pb2',
+    sym: () => sub('b', second()),
+    i18n: () => `b2.${pattern.model}`,
+    log: true,
+    zero: true,
+    min: 0.0005,
+    max: 0.1,
+    format: sig,
+  },
   { key: 'globalCtl', id: 'pglobal', sym: 'g', log: true, zero: true, min: 0.0005, max: 0.05, format: sig },
 ];
 const PIG_PARAMS = [...PIG_SIMPLE, ...PIG_ADVANCED];
@@ -594,7 +673,10 @@ export function initPigment(ctx) {
       else if (Number.isFinite(parseFloat(fromHash.get(short)))) pattern[key] = parseFloat(fromHash.get(short));
     }
     if (fromHash.has('pi')) pattern.insertion = fromHash.get('pi') === '1';
-    for (const [short, key] of [['pcb', 'base'], ['pcp', 'pigment']]) {
+    for (const [short, key] of [
+      ['pcb', 'base'],
+      ['pcp', 'pigment'],
+    ]) {
       if (/^[0-9a-f]{6}$/i.test(fromHash.get(short) || '')) pattern[key] = `#${fromHash.get(short)}`;
     }
   }
@@ -630,7 +712,10 @@ export function initPigment(ctx) {
 
   startWorker();
 
-  for (const [defs, container] of [[PIG_SIMPLE, 'pig-simple'], [PIG_ADVANCED, 'pig-params']]) {
+  for (const [defs, container] of [
+    [PIG_SIMPLE, 'pig-simple'],
+    [PIG_ADVANCED, 'pig-params'],
+  ]) {
     defs.forEach((d) => {
       createParam(d, $(container), {
         compact: true,
@@ -680,7 +765,10 @@ export function initPigment(ctx) {
     schedulePattern();
   });
 
-  for (const [id, key] of [['pigBase', 'base'], ['pigColor', 'pigment']]) {
+  for (const [id, key] of [
+    ['pigBase', 'base'],
+    ['pigColor', 'pigment'],
+  ]) {
     $(id).addEventListener('input', (e) => {
       pattern[key] = e.target.value;
       paintPattern(); // changing the colour does not require simulating again
@@ -697,5 +785,4 @@ export function initPigment(ctx) {
   // The same format choice here and in the export window
   const formats = [$('savePatternFormat'), $('exPatternFormat')];
   formats.forEach((el) => el.addEventListener('change', () => formats.forEach((o) => (o.value = el.value))));
-
 }

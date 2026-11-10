@@ -12,15 +12,26 @@ import { $, f } from './util.js';
 // Provided by main.js through init()
 let capturePointer, controlsByKey, onShapeChange, presetSel;
 
-
 const morpho = $('morpho');
 export const morphoOv = $('morphoOv');
 const morphoDrawer = $('morphoDrawer');
 const MORPHO = { l: 34, r: 10, t: 10, b: 26, logMax: 4 };
 // W axis range: 1–10⁴ (all groups) or 1–10 (snails and cephalopods in more detail)
 const MORPHO_TICKS = {
-  4: [[0, '1'], [1, '10'], [2, '10²'], [3, '10³'], [4, '10⁴']],
-  1: [[0, '1'], [Math.log10(2), '2'], [Math.log10(3), '3'], [Math.log10(5), '5'], [1, '10']],
+  4: [
+    [0, '1'],
+    [1, '10'],
+    [2, '10²'],
+    [3, '10³'],
+    [4, '10⁴'],
+  ],
+  1: [
+    [0, '1'],
+    [Math.log10(2), '2'],
+    [Math.log10(3), '3'],
+    [Math.log10(5), '5'],
+    [1, '10'],
+  ],
 };
 // On the 3D view the height adapts to the panel width (narrower on mobile)
 const morphoHeight = (canvas) => (canvas === morpho ? 210 : Math.round(THREE.MathUtils.clamp(canvas.clientWidth * 0.68, 130, 200)));
@@ -170,7 +181,8 @@ export function drawMorphoOn(canvas, off) {
 /** Group name under the pointer, if any. */
 function morphoLabelAt(canvas, e) {
   const rect = canvas.getBoundingClientRect();
-  const px = e.clientX - rect.left, py = e.clientY - rect.top;
+  const px = e.clientX - rect.left,
+    py = e.clientY - rect.top;
   return (canvas.labelBoxes || []).find((b) => px >= b.x0 && px <= b.x1 && py >= b.y0 && py <= b.y1);
 }
 
@@ -213,5 +225,4 @@ export function initMorphospace(ctx) {
   morphoDrawer.addEventListener('toggle', drawMorpho);
 
   document.querySelectorAll('[data-wscale]').forEach((b) => b.addEventListener('click', () => setMorphoScale(Number(b.dataset.wscale))));
-
 }

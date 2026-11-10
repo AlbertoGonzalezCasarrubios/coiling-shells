@@ -110,11 +110,15 @@ export function buildShell(p) {
   const orn = makeOrnament(p, { a, b, rc, cols, cosPhi, sinPhi, arcU, perimeter });
 
   const logW = Math.log(W);
-  let minX = Infinity, minY = Infinity, minZ = Infinity;
-  let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+  let minX = Infinity,
+    minY = Infinity,
+    minZ = Infinity;
+  let maxX = -Infinity,
+    maxY = -Infinity,
+    maxZ = -Infinity;
 
   for (let i = 0; i < rows; i++) {
-    const theta = thetaMin + (i / nTheta) * (-thetaMin);
+    const theta = thetaMin + (i / nTheta) * -thetaMin;
     const g = Math.exp((theta / (2 * Math.PI)) * logW);
     const ct = Math.cos(theta);
     const st = Math.sin(theta) * hand;
@@ -131,11 +135,14 @@ export function buildShell(p) {
       positions[k] = x;
       positions[k + 1] = y;
       positions[k + 2] = z;
-      if (x < minX) minX = x; if (x > maxX) maxX = x;
-      if (y < minY) minY = y; if (y > maxY) maxY = y;
-      if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+      if (z < minZ) minZ = z;
+      if (z > maxZ) maxZ = z;
 
-      const spiral = 0.5 + 0.5 * Math.cos(j / segPhi * Math.PI * 2 * 6);
+      const spiral = 0.5 + 0.5 * Math.cos((j / segPhi) * Math.PI * 2 * 6);
       const shade = 1 - 0.22 * Math.pow(growth, 6) - 0.08 * spiral * growth;
       colors[k] = shade;
       colors[k + 1] = shade * 0.97;
@@ -163,7 +170,9 @@ export function buildShell(p) {
   // Normalise: centre at the origin and scale to a fixed size, so the camera
   // does not need to reframe when the parameters change. The complete shell is
   // always used, so the growth animation does not change scale.
-  const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2, cz = (minZ + maxZ) / 2;
+  const cx = (minX + maxX) / 2,
+    cy = (minY + maxY) / 2,
+    cz = (minZ + maxZ) / 2;
   const extent = Math.max(maxX - minX, maxY - minY, maxZ - minZ) || 1;
   const scale = p.size / extent;
   for (let k = 0; k < positions.length; k += 3) {
@@ -180,17 +189,27 @@ export function buildShell(p) {
     const off = c * count;
     // Front faces must point out of the tube (the pigmented exterior). Both the
     // dextral sense and the reflection of the mirror valve reverse the winding.
-    const flip = (c === 1) !== (hand > 0);
+    const flip = (c === 1) !== hand > 0;
     for (let i = 0; i < cutRow; i++) {
       for (let j = 0; j < segPhi; j++) {
-        const v00 = off + i * cols + j, v01 = v00 + 1;
-        const v10 = off + (i + 1) * cols + j, v11 = v10 + 1;
+        const v00 = off + i * cols + j,
+          v01 = v00 + 1;
+        const v10 = off + (i + 1) * cols + j,
+          v11 = v10 + 1;
         if (flip) {
-          indices[t++] = v00; indices[t++] = v01; indices[t++] = v10;
-          indices[t++] = v01; indices[t++] = v11; indices[t++] = v10;
+          indices[t++] = v00;
+          indices[t++] = v01;
+          indices[t++] = v10;
+          indices[t++] = v01;
+          indices[t++] = v11;
+          indices[t++] = v10;
         } else {
-          indices[t++] = v00; indices[t++] = v10; indices[t++] = v01;
-          indices[t++] = v01; indices[t++] = v10; indices[t++] = v11;
+          indices[t++] = v00;
+          indices[t++] = v10;
+          indices[t++] = v01;
+          indices[t++] = v01;
+          indices[t++] = v10;
+          indices[t++] = v11;
         }
       }
     }
@@ -202,10 +221,14 @@ export function buildShell(p) {
   // cords and keel, and each spine outlined as a cone (its base and two profiles).
   const rowOf = (theta) => Math.round(((theta - thetaMin) / -thetaMin) * nTheta);
   const colOf = (u) => {
-    let best = 0, bd = Infinity;
+    let best = 0,
+      bd = Infinity;
     for (let j = 0; j < segPhi; j++) {
       const d = Math.min(Math.abs(arcU[j] - u), 1 - Math.abs(arcU[j] - u));
-      if (d < bd) { bd = d; best = j; }
+      if (d < bd) {
+        bd = d;
+        best = j;
+      }
     }
     return best;
   };
@@ -235,12 +258,13 @@ export function buildShell(p) {
   // Spine outlines, as index paths on the grid
   const spinePaths = [];
   if ((p.spiralLines > 0 || p.ringsPerTurn > 0) && cr.spines.length) {
-    const dRow = nTheta / -thetaMin;          // rows per radian of θ
+    const dRow = nTheta / -thetaMin; // rows per radian of θ
     const ri = Math.max(1, Math.round(cr.halfTheta * dRow));
     const rj = Math.max(1, Math.round(cr.halfU * segPhi));
     const wrap = (j) => ((j % segPhi) + segPhi) % segPhi;
     for (const { theta, u } of cr.spines) {
-      const ic = rowOf(theta), jc = colOf(u);
+      const ic = rowOf(theta),
+        jc = colOf(u);
       if (ic + ri > cutRow) continue; // not grown yet
       const base = [];
       for (let k = 0; k <= 24; k++) {
@@ -248,7 +272,8 @@ export function buildShell(p) {
         base.push([ic + Math.round(Math.cos(a) * ri), wrap(jc + Math.round(Math.sin(a) * rj))]);
       }
       spinePaths.push(base);
-      const across = [], along = [];
+      const across = [],
+        along = [];
       for (let d = -ri; d <= ri; d++) along.push([ic + d, jc]);
       for (let d = -rj; d <= rj; d++) across.push([ic, wrap(jc + d)]);
       spinePaths.push(along, across);
@@ -264,7 +289,8 @@ export function buildShell(p) {
     }
     for (const path of spinePaths) {
       for (let k = 1; k < path.length; k++) {
-        const [i0, j0] = path[k - 1], [i1, j1] = path[k];
+        const [i0, j0] = path[k - 1],
+          [i1, j1] = path[k];
         if (i0 === i1 && j0 === j1) continue;
         if (Math.min(i0, i1) < 0 || Math.max(i0, i1) > nTheta) continue;
         lineIdx.push(off + i0 * cols + j0, off + i1 * cols + j1);

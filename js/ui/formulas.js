@@ -12,7 +12,6 @@ let PATTERN_CELLS, pattern;
 // Values that main.js reassigns, read through getters
 let live;
 
-
 export const formulaPanel = $('formula');
 const formulaGeneral = $('formulaGeneral');
 const formulaLive = $('formulaLive');
@@ -70,12 +69,19 @@ const ORNAMENT_TEX = String.raw`\[
 
 /** Values of the ornament terms in use (terms that are off are left out). */
 function ornamentLiveTeX() {
-  const s = state, parts = [];
-  if (s.ribN > 0 && s.ribH > 0) parts.push(String.raw`n_r = ${s.ribN},\; h_r = ${f(s.ribH, 2)},\; w_r = ${f(s.ribW, 2)}${s.ribSkew ? String.raw`,\; k = ${f(s.ribSkew, 2)}` : ''}`);
+  const s = state,
+    parts = [];
+  if (s.ribN > 0 && s.ribH > 0)
+    parts.push(
+      String.raw`n_r = ${s.ribN},\; h_r = ${f(s.ribH, 2)},\; w_r = ${f(s.ribW, 2)}${s.ribSkew ? String.raw`,\; k = ${f(s.ribSkew, 2)}` : ''}`,
+    );
   if (s.cordN > 0 && s.cordH > 0) parts.push(String.raw`n_c = ${s.cordN},\; h_c = ${f(s.cordH, 2)},\; w_c = ${f(s.cordW, 2)}`);
   if (s.nodules) parts.push(String.raw`h_r R + h_c C \;\to\; (h_r + h_c)\,R\,C`);
   if (s.keelH > 0) parts.push(String.raw`h_k = ${f(s.keelH, 2)},\; w_k = ${f(s.keelW, 2)},\; u_k = ${f(s.keelPos, 2)}`);
-  if (s.spineN > 0 && s.spineH > 0) parts.push(String.raw`n_s = ${s.spineN},\; h_s = ${f(s.spineH, 2)},\; w_s = ${f(s.spineW, 2)},\; u_s = ${s.spineBoth ? '\\pm' : ''}${f(s.spinePos, 2)}`);
+  if (s.spineN > 0 && s.spineH > 0)
+    parts.push(
+      String.raw`n_s = ${s.spineN},\; h_s = ${f(s.spineH, 2)},\; w_s = ${f(s.spineW, 2)},\; u_s = ${s.spineBoth ? '\\pm' : ''}${f(s.spinePos, 2)}`,
+    );
   if (s.ornGrowth) parts.push(String.raw`c = ${f(s.ornGrowth, 2)}`);
   return parts.map((p) => String.raw`\[ ${p} \]`).join('');
 }
@@ -100,10 +106,14 @@ function meinhardtLiveTeX() {
       \frac{\partial h}{\partial t} &= s\,a^2 - ${sig(r2)}\,h${term('+', D2, lap('h'))}${term('+', b2, '')}
     \end{aligned}`;
   }
-  const global = model === 'AS' && globalCtl > 0 ? String.raw`\[ b_a^{\mathrm{ef}} = ${sig(ba)} + \frac{${sig(globalCtl)}}{1 + 40\,c} \]` : '';
+  const global =
+    model === 'AS' && globalCtl > 0 ? String.raw`\[ b_a^{\mathrm{ef}} = ${sig(ba)} + \frac{${sig(globalCtl)}}{1 + 40\,c} \]` : '';
   const cells = Math.round(PATTERN_CELLS / pattern.size);
-  return String.raw`\[ ${eqs} \]` + global +
-    String.raw`\[ s_i = ${sig(ra)}\,(1 \pm ${sig(noise)}),\quad N = ${cells},\quad T = ${Math.round(T)} \]`;
+  return (
+    String.raw`\[ ${eqs} \]` +
+    global +
+    String.raw`\[ s_i = ${sig(ra)}\,(1 \pm ${sig(noise)}),\quad N = ${cells},\quad T = ${Math.round(T)} \]`
+  );
 }
 
 export function liveTeX(view = formulaView) {

@@ -8,7 +8,8 @@ const g = { W: 2.4, turns: 4.5, rows: 256, width: 256, nMax: 256 };
 const preset = (k, extra = {}) => ({ ...PATTERN_PRESETS[k], seed: 7, ...extra });
 
 test('the random generator is deterministic and uniform in [0, 1)', () => {
-  const a = rng32(42), b = rng32(42);
+  const a = rng32(42),
+    b = rng32(42);
   let sum = 0;
   for (let i = 0; i < 10000; i++) {
     const x = a();
@@ -54,7 +55,8 @@ test('no pattern is reported instead of rescaling tiny differences', () => {
 test('bands are stable in time; oscillations change along time', () => {
   // Column-wise variation over the last half of the record
   const temporalVariation = (values) => {
-    let s = 0, n = 0;
+    let s = 0,
+      n = 0;
     for (let r = g.rows / 2 + 1; r < g.rows; r++) {
       for (let x = 0; x < g.width; x += 4) {
         s += Math.abs(values[r * g.width + x] - values[(r - 1) * g.width + x]);
@@ -79,7 +81,8 @@ test('the activator–substrate defaults draw travelling waves (oblique lines)',
   // A travelling wave shifts sideways from one row to the next: the activator
   // peak of a row is close to, but not at, the peak of a row a little earlier.
   const { values } = simulatePattern({ ...MODEL_DEFAULTS.AS, seed: 7 }, g);
-  let shifted = 0, rowsWithPeaks = 0;
+  let shifted = 0,
+    rowsWithPeaks = 0;
   for (let r = g.rows / 2; r < g.rows; r++) {
     const row = values.subarray(r * g.width, (r + 1) * g.width);
     const prev = values.subarray((r - 2) * g.width, (r - 1) * g.width);
@@ -98,7 +101,9 @@ test('the Naticarius preset draws many separate spots, not stripes or bands', ()
     const p = preset(key);
     const G = { W: 2.6, turns: 5, rows: 512, width: 256, nMax: Math.round(256 / (p.size ?? 1)) };
     const v = simulatePattern(p, G).values;
-    const r0 = G.rows / 2, H = G.rows - r0, Wd = G.width;
+    const r0 = G.rows / 2,
+      H = G.rows - r0,
+      Wd = G.width;
     const on = new Uint8Array(H * Wd);
     for (let i = 0; i < on.length; i++) on[i] = v[r0 * Wd + i] > 1 - (p.amount ?? 0.5);
     const seen = new Uint8Array(on.length);
@@ -111,10 +116,19 @@ test('the Naticarius preset draws many separate spots, not stripes or bands', ()
       while (stack.length) {
         const q = stack.pop();
         n++;
-        const i = Math.floor(q / Wd), k = q % Wd;
-        for (const [ii, kk] of [[i + 1, k], [i - 1, k], [i, (k + 1) % Wd], [i, (k + Wd - 1) % Wd]]) {
+        const i = Math.floor(q / Wd),
+          k = q % Wd;
+        for (const [ii, kk] of [
+          [i + 1, k],
+          [i - 1, k],
+          [i, (k + 1) % Wd],
+          [i, (k + Wd - 1) % Wd],
+        ]) {
           const t = ii * Wd + kk;
-          if (ii >= 0 && ii < H && on[t] && !seen[t]) { seen[t] = 1; stack.push(t); }
+          if (ii >= 0 && ii < H && on[t] && !seen[t]) {
+            seen[t] = 1;
+            stack.push(t);
+          }
         }
       }
       sizes.push(n);

@@ -25,35 +25,49 @@ export const halfEllipse = (cx, rx, ry) =>
   });
 export const MORPHO_REGIONS = [
   {
-    key: 'bivalves', preset: 'almeja', color: '#8a5cb8', tOk: (T) => T <= 1,
-    poly: halfEllipse(2.8, 1.6, 0.3), label: [2.75, 0.13, 'center'],
+    key: 'bivalves',
+    preset: 'almeja',
+    color: '#8a5cb8',
+    tOk: (T) => T <= 1,
+    poly: halfEllipse(2.8, 1.6, 0.3),
+    label: [2.75, 0.13, 'center'],
   },
   {
-    key: 'gastropods', preset: 'caracol', color: '#3f7fbf', tOk: () => true,
-    poly: halfEllipse(0.3, 0.29, 0.42), label: [0.64, 0.4, 'left'], labelNear: [0.98, 0.5, 'right'],
+    key: 'gastropods',
+    preset: 'caracol',
+    color: '#3f7fbf',
+    tOk: () => true,
+    poly: halfEllipse(0.3, 0.29, 0.42),
+    label: [0.64, 0.4, 'left'],
+    labelNear: [0.98, 0.5, 'right'],
   },
   {
     // Ammonoids and nautiloids: whorls in contact or overlapping (below D = 1/W)
-    key: 'ammonoids', preset: 'ammonite', color: '#c77d2e', tOk: (T) => T <= 0.25,
+    key: 'ammonoids',
+    preset: 'ammonite',
+    color: '#c77d2e',
+    tOk: (T) => T <= 0.25,
     poly: (() => {
       const pts = [];
       for (let lw = 0.146; lw <= 0.6021; lw += 0.01) pts.push([lw, Math.min(1, 10 ** -lw + 0.02)]);
       for (let lw = 0.6021; lw >= 0.146; lw -= 0.01) pts.push([lw, Math.max(0, 10 ** -lw - 0.3)]);
       return pts;
     })(),
-    label: [0.36, 0.66, 'left'], labelNear: [0.98, 0.3, 'right'],
+    label: [0.36, 0.66, 'left'],
+    labelNear: [0.98, 0.3, 'right'],
   },
 ];
 
-
 /** Point-in-polygon test (even–odd rule) in (log10 W, D) coordinates. */
 export function inRegion(region, W, D) {
-  const x = Math.log10(W), y = D;
+  const x = Math.log10(W),
+    y = D;
   let inside = false;
   const poly = region.poly;
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const [xi, yi] = poly[i], [xj, yj] = poly[j];
-    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+    const [xi, yi] = poly[i],
+      [xj, yj] = poly[j];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
   }
   return inside;
 }

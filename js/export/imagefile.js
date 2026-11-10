@@ -51,20 +51,27 @@ export function fitFrame(fovDeg, aspect, outAspect) {
  */
 export function plateLayout(W, H, labelFrac = 0.1) {
   let best = null;
-  for (const [cols, rows] of [[3, 2], [2, 3], [6, 1], [1, 6]]) {
+  for (const [cols, rows] of [
+    [3, 2],
+    [2, 3],
+    [6, 1],
+    [1, 6],
+  ]) {
     const m = labelFrac / 2; // margin, in units of the view size
     const tile = Math.floor(Math.min(W / (cols + 2 * m), H / (rows * (1 + labelFrac) + 2 * m)));
     if (!best || tile > best.tile) best = { cols, rows, tile };
   }
   const { cols, rows, tile } = best;
-  const gridW = cols * tile, gridH = rows * (tile + Math.round(tile * labelFrac));
+  const gridW = cols * tile,
+    gridH = rows * (tile + Math.round(tile * labelFrac));
   return { ...best, x0: Math.floor((W - gridW) / 2), y0: Math.floor((H - gridH) / 2) };
 }
 
 /** Safe file name from a free name typed by the user ("" if nothing usable is left). */
 export function slugify(name) {
   return String(name ?? '')
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
     .replace(/[^A-Za-z0-9._-]+/g, '_')
     .replace(/^[_.-]+|[_.-]+$/g, '')
     .slice(0, 80);
@@ -96,16 +103,21 @@ export async function encodeTIFF(width, height, rgba, dpi = 300) {
   const nStrips = Math.ceil(height / perStrip);
   const strips = [];
   for (let s = 0; s < nStrips; s++) {
-    const y0 = s * perStrip, y1 = Math.min(height, y0 + perStrip);
+    const y0 = s * perStrip,
+      y1 = Math.min(height, y0 + perStrip);
     const raw = new Uint8Array((y1 - y0) * rowBytes);
     for (let y = y0, d = 0; y < y1; y++) {
-      let pr = 0, pg = 0, pb = 0;
+      let pr = 0,
+        pg = 0,
+        pb = 0;
       for (let x = 0, k = y * width * 4; x < width; x++, k += 4) {
         // Predictor 2: each sample is stored as the difference from its left neighbour
         raw[d++] = (rgba[k] - pr) & 255;
         raw[d++] = (rgba[k + 1] - pg) & 255;
         raw[d++] = (rgba[k + 2] - pb) & 255;
-        pr = rgba[k]; pg = rgba[k + 1]; pb = rgba[k + 2];
+        pr = rgba[k];
+        pg = rgba[k + 1];
+        pb = rgba[k + 2];
       }
     }
     strips.push(await deflate(raw));
@@ -114,17 +126,18 @@ export async function encodeTIFF(width, height, rgba, dpi = 300) {
   const entries = 14;
   const header = 8;
   const ifdSize = 2 + entries * 12 + 4;
-  const bitsAt = header + ifdSize;   // BitsPerSample: 3 shorts
-  const xResAt = bitsAt + 6;         // two rationals
+  const bitsAt = header + ifdSize; // BitsPerSample: 3 shorts
+  const xResAt = bitsAt + 6; // two rationals
   const yResAt = xResAt + 8;
-  const offAt = yResAt + 8;          // strip offsets and byte counts
+  const offAt = yResAt + 8; // strip offsets and byte counts
   const cntAt = offAt + 4 * nStrips;
   const dataAt = cntAt + 4 * nStrips;
   const total = dataAt + strips.reduce((n, b) => n + b.length, 0);
 
   const out = new Uint8Array(total);
   const v = new DataView(out.buffer);
-  out[0] = 0x49; out[1] = 0x49; // "II": little-endian
+  out[0] = 0x49;
+  out[1] = 0x49; // "II": little-endian
   v.setUint16(2, 42, true);
   v.setUint32(4, header, true);
 
@@ -139,28 +152,32 @@ export async function encodeTIFF(width, height, rgba, dpi = 300) {
     else v.setUint32(p + 8, value, true);
     p += 12;
   };
-  const SHORT = 3, LONG = 4, RATIONAL = 5;
+  const SHORT = 3,
+    LONG = 4,
+    RATIONAL = 5;
   const single = nStrips === 1; // a single value is stored in the entry itself
   // Tags must be in ascending order
-  entry(256, LONG, 1, width);                                   // ImageWidth
-  entry(257, LONG, 1, height);                                  // ImageLength
-  entry(258, SHORT, 3, bitsAt);                                 // BitsPerSample → 8, 8, 8
-  entry(259, SHORT, 1, 8);                                      // Compression: Deflate
-  entry(262, SHORT, 1, 2);                                      // Photometric: RGB
-  entry(273, LONG, nStrips, single ? dataAt : offAt);           // StripOffsets
-  entry(277, SHORT, 1, 3);                                      // SamplesPerPixel
-  entry(278, LONG, 1, perStrip);                                // RowsPerStrip
+  entry(256, LONG, 1, width); // ImageWidth
+  entry(257, LONG, 1, height); // ImageLength
+  entry(258, SHORT, 3, bitsAt); // BitsPerSample → 8, 8, 8
+  entry(259, SHORT, 1, 8); // Compression: Deflate
+  entry(262, SHORT, 1, 2); // Photometric: RGB
+  entry(273, LONG, nStrips, single ? dataAt : offAt); // StripOffsets
+  entry(277, SHORT, 1, 3); // SamplesPerPixel
+  entry(278, LONG, 1, perStrip); // RowsPerStrip
   entry(279, LONG, nStrips, single ? strips[0].length : cntAt); // StripByteCounts
-  entry(282, RATIONAL, 1, xResAt);                              // XResolution
-  entry(283, RATIONAL, 1, yResAt);                              // YResolution
-  entry(284, SHORT, 1, 1);                                      // PlanarConfiguration: chunky
-  entry(296, SHORT, 1, 2);                                      // ResolutionUnit: inch
-  entry(317, SHORT, 1, 2);                                      // Predictor: horizontal
-  v.setUint32(p, 0, true);                                      // no further IFD
+  entry(282, RATIONAL, 1, xResAt); // XResolution
+  entry(283, RATIONAL, 1, yResAt); // YResolution
+  entry(284, SHORT, 1, 1); // PlanarConfiguration: chunky
+  entry(296, SHORT, 1, 2); // ResolutionUnit: inch
+  entry(317, SHORT, 1, 2); // Predictor: horizontal
+  v.setUint32(p, 0, true); // no further IFD
 
   for (let k = 0; k < 3; k++) v.setUint16(bitsAt + 2 * k, 8, true);
-  v.setUint32(xResAt, dpi, true); v.setUint32(xResAt + 4, 1, true);
-  v.setUint32(yResAt, dpi, true); v.setUint32(yResAt + 4, 1, true);
+  v.setUint32(xResAt, dpi, true);
+  v.setUint32(xResAt + 4, 1, true);
+  v.setUint32(yResAt, dpi, true);
+  v.setUint32(yResAt + 4, 1, true);
   let at = dataAt;
   strips.forEach((b, s) => {
     v.setUint32(offAt + 4 * s, at, true);

@@ -70,9 +70,7 @@ export function createParam(def, container, { compact = false, onChange, target 
       el.querySelector('.scale-min').textContent = def.minLabel ?? def.min;
       el.querySelector('.scale-max').textContent = def.maxLabel ?? (logScale ? '10⁴' : max);
     }
-    scaleGroup?.querySelectorAll('button').forEach((b) =>
-      b.setAttribute('aria-pressed', String((b.dataset.scale === 'log') === logScale))
-    );
+    scaleGroup?.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.scale === 'log') === logScale)));
   };
 
   const set = (v, { fromNum = false, fitScale = false } = {}) => {
@@ -106,7 +104,7 @@ export function createParam(def, container, { compact = false, onChange, target 
       } else {
         set(target[def.key]);
       }
-    })
+    }),
   );
 
   range.addEventListener('input', () => {
@@ -130,7 +128,7 @@ export function createParam(def, container, { compact = false, onChange, target 
   // The symbol and name may depend on the model (e.g. D_h or D_b)
   const relabel = () => {
     if (symEl) symEl.innerHTML = typeof def.sym === 'function' ? def.sym() : def.sym;
-    const tr = tParam(typeof def.i18n === 'function' ? def.i18n() : def.i18n ?? def.key);
+    const tr = tParam(typeof def.i18n === 'function' ? def.i18n() : (def.i18n ?? def.key));
     nameEl.textContent = tr.name || def.key;
     descEl.textContent = tr.desc || '';
     descEl.hidden = !tr.desc;
@@ -170,7 +168,6 @@ export function initControls(ctx) {
         else if (key === 'lineWidth') lineMat.linewidth = state.lineWidth;
         else markDirty();
       },
-    })
+    }),
   );
-
 }

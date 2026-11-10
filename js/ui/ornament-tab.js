@@ -34,12 +34,14 @@ export function buildOrnPresetOptions() {
 /** The ornament preset matching the current shape and relief, or "custom". */
 export function ornPresetKey() {
   const same = (a, b) => (typeof a === 'boolean' || typeof b === 'boolean' ? !!a === !!b : Math.abs(a - b) < 1e-9);
-  return Object.keys(ORNAMENT_PRESETS).find((k) => {
-    const p = ORNAMENT_PRESETS[k];
-    const orn = { ...ORNAMENT_DEFAULTS, ...p.orn };
-    if (!ORN_KEYS.every((key) => same(orn[key], state[key]))) return false;
-    return !p.shape || SHAPE_KEYS.every((key) => same(p.shape[key], state[key]));
-  }) ?? 'custom';
+  return (
+    Object.keys(ORNAMENT_PRESETS).find((k) => {
+      const p = ORNAMENT_PRESETS[k];
+      const orn = { ...ORNAMENT_DEFAULTS, ...p.orn };
+      if (!ORN_KEYS.every((key) => same(orn[key], state[key]))) return false;
+      return !p.shape || SHAPE_KEYS.every((key) => same(p.shape[key], state[key]));
+    }) ?? 'custom'
+  );
 }
 
 export function syncOrnamentControls() {
@@ -79,12 +81,24 @@ function setOrnMode(mode) {
 const mech = { lambda: lambdaForWaves(9), eta: 1.6 };
 const MECH_PARAMS = [
   // The number box needs a plain number: scientific notation such as 2.4e+6
-  { key: 'lambda', id: 'mechLambda', i18n: 'mechLambda', min: 1e3, max: 1e10, minLabel: '10³', maxLabel: '10¹⁰', step: 0.01, log: true, format: (v) => v.toExponential(1) },
+  {
+    key: 'lambda',
+    id: 'mechLambda',
+    i18n: 'mechLambda',
+    min: 1e3,
+    max: 1e10,
+    minLabel: '10³',
+    maxLabel: '10¹⁰',
+    step: 0.01,
+    log: true,
+    format: (v) => v.toExponential(1),
+  },
   { key: 'eta', id: 'mechEta', i18n: 'mechEta', min: 0.5, max: 4, step: 0.05, digits: 2 },
 ];
 export function drawMech() {
   const canvas = $('mechCanvas');
-  const w = canvas.clientWidth, h = canvas.clientHeight;
+  const w = canvas.clientWidth,
+    h = canvas.clientHeight;
   if (!w || !h) return;
   const dpr = Math.min(window.devicePixelRatio, 2);
   canvas.width = w * dpr;
@@ -93,7 +107,9 @@ export function drawMech() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const css = getComputedStyle(document.documentElement);
   const col = (n) => css.getPropertyValue(n).trim();
-  const text = col('--text'), muted = col('--muted'), accent = col('--accent');
+  const text = col('--text'),
+    muted = col('--muted'),
+    accent = col('--accent');
   ctx.font = `11px ${col('--font') || 'sans-serif'}`;
 
   const { lambda, eta } = mech;
@@ -102,7 +118,8 @@ export function drawMech() {
   const n1 = firstMode(lambda);
 
   // Left: load needed to buckle into n waves, relative to the critical load
-  const gw = Math.round(w * 0.58), pad = { l: 30, r: 8, t: 10, b: 26 };
+  const gw = Math.round(w * 0.58),
+    pad = { l: 30, r: 8, t: 10, b: 26 };
   const nMax = Math.max(8, Math.ceil(nStar * 2.6));
   const yMax = 4;
   const X = (n) => pad.l + (n / nMax) * (gw - pad.l - pad.r);
@@ -110,7 +127,9 @@ export function drawMech() {
   ctx.strokeStyle = muted;
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, h - pad.b); ctx.lineTo(gw - pad.r, h - pad.b);
+  ctx.moveTo(pad.l, pad.t);
+  ctx.lineTo(pad.l, h - pad.b);
+  ctx.lineTo(gw - pad.r, h - pad.b);
   ctx.stroke();
   // Unstable band: modes whose load is below the applied one
   const band = unstableBand(lambda, eta);
@@ -131,7 +150,8 @@ export function drawMech() {
   ctx.strokeStyle = accent;
   ctx.setLineDash([4, 3]);
   ctx.beginPath();
-  ctx.moveTo(pad.l, Y(Math.min(eta, yMax))); ctx.lineTo(gw - pad.r, Y(Math.min(eta, yMax)));
+  ctx.moveTo(pad.l, Y(Math.min(eta, yMax)));
+  ctx.lineTo(gw - pad.r, Y(Math.min(eta, yMax)));
   ctx.stroke();
   ctx.setLineDash([]);
   // First mode
@@ -151,7 +171,9 @@ export function drawMech() {
   ctx.fillText('η', gw - pad.r - 8, Y(Math.min(eta, yMax)) - 4);
 
   // Right: the margin, smooth (dashed) and buckled into n waves (amplitude exaggerated ×3)
-  const cx = gw + (w - gw) / 2, cy = h / 2 - 4, R = Math.min(w - gw, h) * 0.34;
+  const cx = gw + (w - gw) / 2,
+    cy = h / 2 - 4,
+    R = Math.min(w - gw, h) * 0.34;
   ctx.strokeStyle = muted;
   ctx.setLineDash([3, 3]);
   ctx.beginPath();
@@ -172,9 +194,7 @@ export function drawMech() {
   ctx.textAlign = 'center';
   ctx.fillText(t('mech.ring'), cx, h - 6);
 
-  $('mechOut').textContent = result.cordN
-    ? t('mech.out', f(nStar, 1), result.cordN, f(result.cordH, 2))
-    : t('mech.out.none', f(nStar, 1));
+  $('mechOut').textContent = result.cordN ? t('mech.out', f(nStar, 1), result.cordN, f(result.cordH, 2)) : t('mech.out.none', f(nStar, 1));
 }
 
 /** Connects this part of the interface to the rest of the app. */
@@ -218,5 +238,4 @@ export function initOrnamentTab(ctx) {
     openInfo('ornament');
     requestAnimationFrame(() => document.getElementById('mech-theory')?.scrollIntoView({ block: 'start' }));
   });
-
 }

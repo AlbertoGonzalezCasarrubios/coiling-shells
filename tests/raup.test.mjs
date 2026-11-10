@@ -4,13 +4,25 @@ import assert from 'node:assert/strict';
 import { buildShell } from '../js/model/raup.js';
 
 const base = {
-  W: 2.4, D: 0.08, T: 1.6, S: 1, turns: 4.5, hand: 1, mirror: false, grow: 1,
-  segPhi: 48, segPerTurn: 96, spiralLines: 16, ringsPerTurn: 24, size: 4,
+  W: 2.4,
+  D: 0.08,
+  T: 1.6,
+  S: 1,
+  turns: 4.5,
+  hand: 1,
+  mirror: false,
+  grow: 1,
+  segPhi: 48,
+  segPerTurn: 96,
+  spiralLines: 16,
+  ringsPerTurn: 24,
+  size: 4,
 };
 
 /** Largest extent of a position array along x, y or z. */
 function extent(positions) {
-  const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+  const lo = [Infinity, Infinity, Infinity],
+    hi = [-Infinity, -Infinity, -Infinity];
   for (let k = 0; k < positions.length; k += 3) {
     for (let a = 0; a < 3; a++) {
       lo[a] = Math.min(lo[a], positions[k + a]);
@@ -31,7 +43,7 @@ test('grid sizes, index ranges and derived quantities', () => {
   assert.equal(s.indices.length, (rows - 1) * base.segPhi * 6);
   for (const i of s.indices) assert.ok(i >= 0 && i < count);
   assert.ok(s.positions.every(Number.isFinite));
-  assert.deepEqual(s.derived, { rc: (1 + base.D) / 2, a: (1 - base.D) / 2, b: base.S * (1 - base.D) / 2 });
+  assert.deepEqual(s.derived, { rc: (1 + base.D) / 2, a: (1 - base.D) / 2, b: (base.S * (1 - base.D)) / 2 });
 });
 
 test('the shell is normalised to the requested size', () => {
@@ -49,8 +61,10 @@ test('the mirror valve doubles the mesh and reflects it', () => {
   assert.equal(two.indices.length, 2 * one.indices.length);
   const n = two.grid.count * 3;
   // Z of the copy is the reflection of Z of the original (about the shared centre)
-  const z0 = two.positions[2], z1 = two.positions[n + 2];
-  let zMin = Infinity, zMax = -Infinity;
+  const z0 = two.positions[2],
+    z1 = two.positions[n + 2];
+  let zMin = Infinity,
+    zMax = -Infinity;
   for (let k = 2; k < two.positions.length; k += 3) {
     zMin = Math.min(zMin, two.positions[k]);
     zMax = Math.max(zMax, two.positions[k]);
@@ -87,14 +101,18 @@ test('pattern u follows arc length along the aperture', () => {
 
 /** Smallest distance between the last whorl and the previous one (same meridian plane). */
 function whorlGap(W, D, S, T) {
-  const segPerTurn = 360, segPhi = 180;
+  const segPerTurn = 360,
+    segPhi = 180;
   const s = buildShell({ ...base, W, D, S, T, turns: 2, segPerTurn, segPhi, size: 1 });
   const { cols, rows } = s.grid;
-  const P = s.positions, last = rows - 1, prev = last - segPerTurn;
+  const P = s.positions,
+    last = rows - 1,
+    prev = last - segPerTurn;
   let m = Infinity;
   for (let j = 0; j < segPhi; j++) {
     for (let k = 0; k < segPhi; k++) {
-      const a = (last * cols + j) * 3, b = (prev * cols + k) * 3;
+      const a = (last * cols + j) * 3,
+        b = (prev * cols + k) * 3;
       m = Math.min(m, Math.hypot(P[a] - P[b], P[a + 1] - P[b + 1], P[a + 2] - P[b + 2]));
     }
   }
@@ -102,7 +120,12 @@ function whorlGap(W, D, S, T) {
 }
 
 test('planispiral whorls touch exactly at D = 1/W, for any aperture shape', () => {
-  for (const [W, S] of [[2, 1], [2.5, 1], [3, 0.7], [1.5, 1.6]]) {
+  for (const [W, S] of [
+    [2, 1],
+    [2.5, 1],
+    [3, 0.7],
+    [1.5, 1.6],
+  ]) {
     const c = 1 / W;
     const below = whorlGap(W, c - 0.05, S, 0);
     const at = whorlGap(W, c, S, 0);
@@ -124,12 +147,25 @@ test('ornament: bumps, relief along the normal and no relief when off', async ()
   const { bump, hasOrnament } = await import('../js/model/raup.js');
   assert.equal(bump(0, 0.5), 1);
   assert.equal(bump(3, 0.2), 1);
-  assert.equal(bump(0.3, 0.5), 0);          // outside the bump
+  assert.equal(bump(0.3, 0.5), 0); // outside the bump
   assert.ok(Math.abs(bump(0.5, 1)) < 1e-12); // w = 1: a smooth wave, zero half-way
   assert.ok(!hasOrnament({ ribN: 0, ribH: 0.2, cordN: 0, cordH: 0.2 }));
   assert.ok(hasOrnament({ ribN: 10, ribH: 0.1 }));
 
-  const base = { W: 2, D: 0.1, T: 1.5, S: 1, turns: 3, hand: 1, mirror: false, segPerTurn: 160, segPhi: 64, spiralLines: 0, ringsPerTurn: 0, size: 4 };
+  const base = {
+    W: 2,
+    D: 0.1,
+    T: 1.5,
+    S: 1,
+    turns: 3,
+    hand: 1,
+    mirror: false,
+    segPerTurn: 160,
+    segPhi: 64,
+    spiralLines: 0,
+    ringsPerTurn: 0,
+    size: 4,
+  };
   const plain = buildShell(base);
   const off = buildShell({ ...base, ribN: 0, ribH: 0.3, cordN: 0, cordH: 0.3 });
   assert.deepEqual(off.positions, plain.positions);
@@ -144,7 +180,8 @@ test('ornament: bumps, relief along the normal and no relief when off', async ()
   };
   const ratios = [];
   for (let i = 1; i < plain.grid.rows; i++) ratios.push(outer(ribbed, i) / outer(plain, i));
-  const lo = Math.min(...ratios), hi = Math.max(...ratios);
+  const lo = Math.min(...ratios),
+    hi = Math.max(...ratios);
   assert.ok(hi > lo * 1.05, 'ribs stand out'); // 0.2 · a at the outer edge, about 9 %
   const flat = ratios.filter((r) => r < lo * 1.001).length;
   assert.ok(flat > ratios.length * 0.4 && flat < ratios.length, 'between ribs the surface is unchanged');

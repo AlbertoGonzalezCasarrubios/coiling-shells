@@ -9,7 +9,6 @@ import * as THREE from 'three';
 import { CAMERA_HOME, camera, controls, ground, renderer, shellGroup, solid, viewport } from './scene.js';
 import { state, writeHash } from './state.js';
 
-
 // ---------------------------------------------------------------------------
 // Display orientation: coiling axis vertical (orbit around it), horizontal
 // (planispiral shells seen face-on with a horizontal drag) or free rotation
@@ -88,7 +87,8 @@ function flyTo(name) {
   const from = new THREE.Spherical().setFromVector3(offset);
   // Standard views are defined on the shell: they follow its display orientation.
   // In free rotation the shell is first set upright again.
-  if (state.orient === 'free') orientTween = { t0: performance.now(), dur: 700, from: shellGroup.quaternion.clone(), to: ORIENT_BASE.vertical };
+  if (state.orient === 'free')
+    orientTween = { t0: performance.now(), dur: 700, from: shellGroup.quaternion.clone(), to: ORIENT_BASE.vertical };
   const base = ORIENT_BASE[state.orient] ?? ORIENT_BASE.vertical;
   const dir = name === 'iso' ? VIEWS.iso() : VIEWS[name]().applyQuaternion(base);
   const to = new THREE.Spherical().setFromVector3(dir.normalize().multiplyScalar(dist));
@@ -108,7 +108,7 @@ export function stepTween(now) {
   const sph = new THREE.Spherical(
     THREE.MathUtils.lerp(from.radius, to.radius, e),
     THREE.MathUtils.lerp(from.phi, to.phi, e),
-    from.theta + tween.dTheta * e
+    from.theta + tween.dTheta * e,
   );
   const target = tween.fromTarget.clone().lerp(new THREE.Vector3(), e);
   camera.position.copy(target).add(new THREE.Vector3().setFromSpherical(sph));
@@ -133,9 +133,13 @@ export function initViews() {
   });
   renderer.domElement.addEventListener('pointermove', (e) => {
     if (e.pointerId !== freeDrag.id) return;
-    if (freeDrag.pointers.size > 1) { freeDrag.id = null; return; }
+    if (freeDrag.pointers.size > 1) {
+      freeDrag.id = null;
+      return;
+    }
     const k = Math.PI / Math.max(200, viewport.clientHeight); // half a turn per viewport height
-    const dx = (e.clientX - freeDrag.x) * k, dy = (e.clientY - freeDrag.y) * k;
+    const dx = (e.clientX - freeDrag.x) * k,
+      dy = (e.clientY - freeDrag.y) * k;
     freeDrag.x = e.clientX;
     freeDrag.y = e.clientY;
     const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
@@ -158,5 +162,4 @@ export function initViews() {
     tween = null;
     document.querySelectorAll('.views [data-view].active').forEach((b) => b.classList.remove('active'));
   });
-
 }
