@@ -20,4 +20,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      - run: npm test
+      - run: npm run test:fast
+      # Run directly (not through node --test) so its error lines reach the run as annotations
+      - name: Browser test
+        run: node tests/browser.test.mjs

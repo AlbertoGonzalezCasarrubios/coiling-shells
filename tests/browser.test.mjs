@@ -81,10 +81,11 @@ async function launch() {
   await send('Page.enable');
   // A page that stops answering (a crashed renderer) fails the test instead of hanging it
   const evaluate = async (expression, ms = 300_000) => {
+    let timer;
     const r = await Promise.race([
       send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }),
-      sleep(ms).then(() => { throw new Error(`the page did not answer within ${ms / 1000} s`); }),
-    ]);
+      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(`the page did not answer within ${ms / 1000} s`)), ms); }),
+    ]).finally(() => clearTimeout(timer)); // a pending timer would keep the process alive
     if (r.result?.exceptionDetails) throw new Error(r.result.exceptionDetails.exception?.description ?? 'evaluation failed');
     return r.result?.result?.value;
   };
