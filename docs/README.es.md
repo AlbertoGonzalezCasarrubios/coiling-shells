@@ -27,7 +27,7 @@ Al cerrar la guía, la app muestra un caracol de jardín dibujado con líneas, l
 
 **Crea tu propia concha**, el botón de arriba de la barra lateral, abre una ventana que recorre cinco pasos con controles simplificados: forma, ornamento, color, aspecto y exportación. Es la propia app, no una copia: la vista 3D se traslada a la ventana, así que deshacer, la dirección de la página y todas las exportaciones funcionan como siempre, y el último paso descarga un fondo de pantalla del tamaño de tu pantalla o la ficha en PDF.
 
-![El creador de conchas en su paso de ornamento: un ammonites con costillas y espinas a la izquierda y los deslizadores simplificados a la derecha](images/wizard.png)
+![El creador de conchas en su paso de ornamento: un ammonites con costillas y espinas dibujado con líneas a la izquierda y los deslizadores simplificados a la derecha](images/wizard.png)
 
 ## Para qué sirve
 
@@ -76,7 +76,7 @@ P*(θ, φ) = P(θ, φ) + W^(θ/2π) · a · δ(θ, φ) · n(φ)
 - Una **quilla** K es un solo cordón fuerte, y las **espinas** Σ son conos en una o dos filas.
 - f(s) permite que el relieve **se desvanezca o aparezca** a medida que crece la concha.
 
-![Cuatro conchas ornamentadas generadas con la app: un ammonites con costillas (Dactylioceras), un Cerithium con filas de nódulos y color en bandas, un ammonites con costillas y espinas dibujado con líneas, y un Epitonium con costillas laminares y rayas en llama](images/ornament.png)
+![Cuatro conchas ornamentadas generadas con la app: un ammonites con costillas (Dactylioceras), un caracol con cordones espirales y los puntos del patrón Naticarius, un ammonites con costillas y espinas dibujado con líneas, y un bivalvo de dos valvas con una retícula de costillas radiales y concéntricas y nódulos espinosos donde se cruzan](images/ornament.png)
 
 Los ejemplos cargan la forma y el relieve de conchas reales: *Epitonium clathrus*, *Turritella*, *Calliostoma*, *Cancellaria*, *Cerithium*, la concha sol *Astraea*, un ammonites con costillas (*Dactylioceras*) y otro con espinas, y un berberecho. Las conchas cuya forma no puede dibujar el modelo de Raup, como *Murex* con su largo canal sifonal, quedan fuera. Con ornamentación, el dibujo de líneas sigue el relieve, como una ilustración científica: líneas de crecimiento en las crestas de las costillas, líneas espirales en las crestas de los cordones y cada espina perfilada como un cono. El relieve aparece también en la ecuación, en la ficha PDF y en los archivos 3D. En la pestaña, costillas, cordones, espinas, quilla y cambio con el crecimiento son secciones plegables del mismo rango; al cargar un ejemplo se abren solas las que tiene esa concha.
 
@@ -98,7 +98,7 @@ El plano es un **corte del cubo W–D–T de Raup con el T actual**. Los grupos 
 
 Un molusco solo añade pigmento en el borde que crece, así que un patrón de concha es un **registro en el tiempo de un proceso unidimensional**: el espacio va a lo largo del borde y el tiempo, en la dirección de crecimiento. La app simula el borde con los modelos de reacción-difusión de Meinhardt y envuelve el registro espacio-tiempo resultante sobre la superficie de Raup, como hicieron Fowler, Meinhardt y Prusinkiewicz (1992).
 
-![Un caracol con los puntos en filas espirales del preset Naticarius, con la galería de patrones y el registro espacio-tiempo en la barra lateral y, sobre la vista 3D, el morfoespacio y el perfil del activador y el inhibidor a lo largo del borde en un instante en que los puntos están encendidos](images/pigmentation.png)
+![Un caracol en vista 3/4 con los puntos en filas espirales del preset Naticarius, con la galería de patrones y el registro espacio-tiempo en la barra lateral y, sobre la vista 3D, el morfoespacio y el perfil del activador y el inhibidor a lo largo del borde en un instante en que los puntos están encendidos](images/pigmentation.png)
 
 - **Modelo activador-inhibidor.** Un activador que se refuerza a sí mismo y un inhibidor rápido y de largo alcance dan picos estables, que dibujan bandas a lo largo de la espiral (*Cepaea nemoralis*). Si el inhibidor dura más que el activador, el borde oscila y dibuja rayas paralelas a las líneas de crecimiento (las llamas del *Nautilus*). Con las dos cosas a la vez, un inhibidor de alcance medio que además dura más que el activador, cada pico se queda en su sitio pero se enciende y se apaga, y deja una fila espiral de puntos (los *Naticarius*).
 
