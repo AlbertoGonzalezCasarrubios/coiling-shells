@@ -8,9 +8,9 @@ The app is a static web page: HTML, CSS and JavaScript ES modules, with no build
 
 - **Three.js 0.160** (WebGL), loaded from jsDelivr through an *import map* in `index.html`. Add-ons used: `OrbitControls`, `RoomEnvironment`, `LineSegments2` / `LineMaterial`, `Line2` / `LineGeometry`, and `GLTFExporter` (imported on demand).
 - **MathJax 3** for the formulas, also from jsDelivr.
-- **jsPDF 2.5.1**, loaded from jsDelivr only when a PDF is exported.
+- **jsPDF 4.2.1**, loaded from jsDelivr only when a PDF is exported.
 - Inter and JetBrains Mono fonts from Google Fonts.
-- **Node.js ≥ 20** only for the test suite (`npm test`), which uses the built-in `node:test` runner and has no dependencies.
+- **Node.js ≥ 20** only for development. The test suite (`npm test`) uses the built-in `node:test` runner and needs no dependencies. `npm ci` installs the development dependencies of `package.json`: ESLint and Prettier (`npm run lint`), and Three.js, MathJax and jsPDF at exactly the versions loaded from the CDN, which the browser test serves locally.
 
 ## Layout
 
@@ -309,7 +309,10 @@ Everything happens in a dialog (`#exportDlg`) in the browser, with no server.
 ## Tests
 
 ```bash
-npm test        # node --test, Node.js ≥ 20, no dependencies
+npm ci          # optional: lint tools and local copies of the CDN libraries
+npm test        # node --test, Node.js ≥ 20
+npm run lint    # eslint . && prettier --check .
+npm run format  # prettier --write .
 ```
 
 | File | What it checks |
@@ -320,9 +323,13 @@ npm test        # node --test, Node.js ≥ 20, no dependencies
 | `tests/export3d.test.mjs` | Every preset and extreme parameters (W 1.01 and 10⁴, D 0.9, T 10, S 0.5 and 2, N 0.25 and 20, mirror valve; walls 0.4 and 6 mm; sizes 30 and 250 mm), every kind of ornament and every ornamented preset give closed, consistently oriented, outward-facing solids of the exact size with the base at z = 0; STL structure; 3MF package (ZIP entries, units, vertex and triangle counts) |
 | `tests/ornament.test.mjs` | Bumps (width, asymmetry), cones and growth factor; no relief when every term is off; spines only at their positions and in symmetric rows; nodules only at crossings; keel at its position; buckling: minimum load at n*, first whole mode, unstable band, threshold and amplitude; ornamented presets use complete shapes inside the morphospace |
 | `tests/imagefile.test.mjs` | TIFF round trip (decoded with zlib, predictor undone) for several sizes and strips; compression of a flat background; reframing at wider and taller aspect ratios; layout of the plate in landscape, portrait and strip formats; file names from free text; fixed sizes within the limit |
+| `tests/cdn.test.mjs` | Every library loaded from jsDelivr (in `index.html` and `js/`) is loaded at a single version, equal to its exact version in the `devDependencies` of `package.json` |
+| `tests/browser.test.mjs` | Drives the whole interface in headless Chrome over the DevTools protocol (see its header). With `node_modules` installed, requests to jsDelivr are answered from the local copies (CDP `Fetch` domain) and web fonts are answered empty, and the test checks that nothing went to the network |
 | `tests/i18n.test.mjs` | English and Spanish have the same keys; every key and element id used in the HTML, `main.js` and the modules of `js/ui/` exists; no control characters in the strings |
 
-The tests run on every push and pull request through GitHub Actions (`.github/workflows/tests.yml`).
+The tests run on every push and pull request through GitHub Actions (`.github/workflows/tests.yml`): one job runs the linter, and another runs the tests on Node 20, 22 and 24 after `npm ci --ignore-scripts`; the browser test runs as a separate step, outside `node --test`, so that its error lines reach the run as annotations.
+
+**Code style.** ESLint (`eslint.config.js`: the recommended rules, browser, worker and Node globals) and Prettier (`.prettierrc.json`: single quotes, lines of 140 characters) cover the JavaScript; `.prettierignore` leaves the other files alone. The commit that formatted the code is listed in `.git-blame-ignore-revs`, so `git blame` skips it (GitHub reads that file automatically; locally, `git config blame.ignoreRevsFile .git-blame-ignore-revs`).
 
 ## Running locally
 

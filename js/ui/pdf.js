@@ -44,7 +44,7 @@ let jsPDFPromise = null;
 function loadJsPDF() {
   jsPDFPromise ??= new Promise((resolve, reject) => {
     const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
+    s.src = 'https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js';
     s.onload = () => resolve(window.jspdf.jsPDF);
     s.onerror = () => {
       jsPDFPromise = null;

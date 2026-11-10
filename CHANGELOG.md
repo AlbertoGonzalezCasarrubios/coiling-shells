@@ -16,6 +16,9 @@ All notable changes to this project are documented in this file. The format is b
 - Secondary sections of the sidebar fold: geometry, the pigment colours and, in the ornament tab, ribs, cords, spines, keel and change with growth, which now have equal rank. The ornament sections the shell has open by themselves when an example is loaded, and the rest stay folded.
 - The sidebar's scrollbar is thin, in the theme colours, and only visible while the pointer is over the panel.
 
+- jsPDF updated from 2.5.1 to 4.2.1. Version 2.5.1 has published security advisories; the app was not exposed to them in practice, because it only writes its own images and text into the PDF, but the update removes them.
+- Development: ESLint and Prettier (`npm run lint`, also in CI); the code is formatted with Prettier. The browser test serves Three.js, MathJax and jsPDF from local copies installed with `npm ci` at the same versions as the CDN, so it no longer depends on the CDN, and a test keeps those versions equal.
+
 ### Fixed
 - Since the code was organised in folders (1.1.0) the pattern worker was looked for in the wrong folder: patterns were computed on the main thread, which froze the interface for a moment on every change, and the thumbnails of the pattern gallery stayed blank. The browser test now checks both.
 

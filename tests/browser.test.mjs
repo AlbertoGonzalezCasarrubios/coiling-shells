@@ -6,6 +6,11 @@
 // the About pages and the exports (image, plate, PDF, STL). It fails if the page
 // throws any error or if an export does not produce a file.
 //
+// The libraries the app loads from jsDelivr (Three.js, MathJax, jsPDF) are served
+// from node_modules when they are installed (npm ci), at the same versions, so the
+// test does not depend on the CDN; web fonts are answered empty. Without
+// node_modules the requests go to the network as usual.
+//
 // It needs Chrome or Chromium and Node.js with a global WebSocket (Node ≥ 22).
 // Without them it is skipped, and SKIP_BROWSER=1 skips it on purpose (npm run
 // test:fast). CHROME=/path/to/chrome chooses the browser.
@@ -13,7 +18,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join, extname, normalize } from 'node:path';
@@ -63,6 +68,23 @@ function serve() {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+const CDN_TYPES = { ...TYPES, '.woff': 'font/woff', '.woff2': 'font/woff2', '.otf': 'font/otf' };
+/** Local copy of a jsDelivr npm URL (…/npm/pkg@version/path), if that exact version is installed. */
+function localCopy(url) {
+  const m = /^https:\/\/cdn\.jsdelivr\.net\/npm\/((?:@[^/]+\/)?[^@/]+)@([^/]+)\/([^?#]*)/.exec(url);
+  if (!m) return null;
+  const [, pkg, version, path] = m;
+  const dir = join(ROOT, 'node_modules', pkg);
+  try {
+    if (JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).version !== version) return null;
+  } catch {
+    return null;
+  }
+  const file = join(dir, normalize(path).replace(/^(\.\.[/\\])+/, ''));
+  return existsSync(file) ? file : null;
+}
+const LOCAL_LIBS = existsSync(join(ROOT, 'node_modules', 'three', 'package.json'));
+
 /** Minimal Chrome DevTools Protocol client. */
 async function launch() {
   const profile = mkdtempSync(join(tmpdir(), 'shells-'));
@@ -101,8 +123,10 @@ async function launch() {
   let id = 0;
   const pending = new Map();
   const errors = [];
+  const network = []; // CDN requests that had to go to the network
   ws.addEventListener('message', (e) => {
     const m = JSON.parse(e.data);
+    if (m.method === 'Fetch.requestPaused') answerRequest(m.params);
     if (m.id && pending.has(m.id)) {
       pending.get(m.id)(m);
       pending.delete(m.id);
@@ -118,8 +142,44 @@ async function launch() {
       pending.set(i, r);
       ws.send(JSON.stringify({ id: i, method, params }));
     });
+  // Requests to the CDN and to the web fonts are answered here (see localCopy)
+  async function answerRequest({ requestId, request }) {
+    const url = request.url;
+    if (/^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(url)) {
+      const css = url.includes('googleapis');
+      await send('Fetch.fulfillRequest', {
+        requestId,
+        responseCode: css ? 200 : 404,
+        responseHeaders: [{ name: 'Content-Type', value: css ? 'text/css' : 'text/plain' }],
+        body: '',
+      });
+      return;
+    }
+    const file = localCopy(url);
+    if (!file) {
+      network.push(url);
+      await send('Fetch.continueRequest', { requestId });
+      return;
+    }
+    await send('Fetch.fulfillRequest', {
+      requestId,
+      responseCode: 200,
+      responseHeaders: [
+        { name: 'Content-Type', value: CDN_TYPES[extname(file)] ?? 'application/octet-stream' },
+        { name: 'Access-Control-Allow-Origin', value: '*' },
+      ],
+      body: (await readFile(file)).toString('base64'),
+    });
+  }
   await send('Runtime.enable');
   await send('Page.enable');
+  await send('Fetch.enable', {
+    patterns: [
+      { urlPattern: 'https://cdn.jsdelivr.net/*' },
+      { urlPattern: 'https://fonts.googleapis.com/*' },
+      { urlPattern: 'https://fonts.gstatic.com/*' },
+    ],
+  });
   // A page that stops answering (a crashed renderer) fails the test instead of hanging it
   const evaluate = async (expression, ms = 300_000) => {
     let timer;
@@ -144,7 +204,7 @@ async function launch() {
       /* temporary folder */
     }
   };
-  return { send, evaluate, errors, close };
+  return { send, evaluate, errors, network, close };
 }
 
 // The tour runs inside the page. Downloads are captured instead of saved.
@@ -269,6 +329,7 @@ test('the whole interface works in a real browser', { skip, timeout: 400_000 }, 
     for (const f of log.files) assert.ok(+f.split(':')[1] > 1000, `non-empty file ${f}`);
     assert.equal(log.lang, 'es');
     assert.deepEqual(b.errors, [], 'no errors in the page');
+    if (LOCAL_LIBS) assert.deepEqual(b.network, [], 'every library is served from node_modules');
   } catch (err) {
     // On GitHub Actions the reason shows as an annotation of the run, without opening the log
     if (process.env.CI)
