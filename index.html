@@ -11,7 +11,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css" />
+  <!-- Styles by area, in cascade order -->
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/sidebar.css" />
+  <link rel="stylesheet" href="css/viewer.css" />
+  <link rel="stylesheet" href="css/dialogs.css" />
 
   <script>
     // Formulas are typeset when shown (they are hidden at first)
@@ -280,6 +284,7 @@
 
           <div class="save-row">
             <button type="button" class="btn" id="savePattern" data-i18n="pig.save">Save pattern</button>
+            <label for="savePatternFormat" class="sr-only" data-i18n="ex.format">Format</label>
             <select id="savePatternFormat" class="select" data-i18n-title="ex.format">
               <option value="png">PNG</option>
               <option value="jpg">JPG</option>
@@ -489,7 +494,7 @@
       <button type="button" role="tab" data-page="controls" aria-selected="false" tabindex="-1" data-i18n="info.page.controls">Controls</button>
       <button type="button" role="tab" data-page="app" aria-selected="false" tabindex="-1" data-i18n="info.page.app">Credits</button>
     </div>
-    <div class="info-body" id="infoBody">
+    <div class="info-body" id="infoBody" tabindex="0">
       <div class="info-page" data-page="raup" role="tabpanel" data-i18n-html="info.raup"></div>
       <div class="info-page" data-page="meinhardt" role="tabpanel" data-i18n-html="info.meinhardt" hidden></div>
       <div class="info-page" data-page="ornament" role="tabpanel" data-i18n-html="info.ornament" hidden></div>

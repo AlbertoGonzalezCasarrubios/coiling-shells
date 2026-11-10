@@ -47,3 +47,56 @@ test('element ids used in main.js exist in the HTML', () => {
   const missing = [...used].filter((id) => !ids.has(id));
   assert.deepEqual(missing, []);
 });
+
+test('translation helpers: language, fallbacks and static texts', async () => {
+  const { setLang, getLang, t, tParam, tPattern, tPreset, applyStatic } = await import('../js/i18n/i18n.js');
+  assert.equal(setLang('fr'), 'en', 'an unknown language falls back to English');
+  assert.equal(setLang('es'), 'es');
+  assert.equal(getLang(), 'es');
+  assert.equal(t('pig.save'), STRINGS.es['pig.save']);
+  assert.equal(t('no.such.key'), 'no.such.key', 'a missing key shows itself');
+  assert.equal(t('ex.dims', 1, 2, 3), STRINGS.es['ex.dims'](1, 2, 3), 'function strings take arguments');
+  assert.equal(tPattern('naticarius'), STRINGS.es.patterns.naticarius);
+  assert.equal(tPattern('unknown'), 'unknown');
+  assert.equal(tPreset('unknown'), 'unknown');
+  assert.deepEqual(tParam('unknown'), {});
+  assert.ok(tParam('pT').name);
+  // Static elements: text, HTML, labels, placeholders and titles (with an accessible name when there is no text)
+  const el = (dataset, text = '') => ({
+    dataset,
+    textContent: text,
+    attrs: {},
+    setAttribute(k, v) {
+      this.attrs[k] = v;
+    },
+    getAttribute(k) {
+      return this.attrs[k] ?? null;
+    },
+  });
+  const nodes = {
+    '[data-i18n]': [el({ i18n: 'pig.save' })],
+    '[data-i18n-html]': [el({ i18nHtml: 'ex.print.tips' })],
+    '[data-i18n-label]': [el({ i18nLabel: 'pig.save' })],
+    '[data-i18n-placeholder]': [el({ i18nPlaceholder: 'pig.save' })],
+    '[data-i18n-title]': [el({ i18nTitle: 'tb.undo' }), el({ i18nTitle: 'tb.undo' }, 'visible text')],
+  };
+  const root = { querySelectorAll: (sel) => nodes[sel] };
+  const previous = globalThis.document;
+  globalThis.document = { documentElement: {}, title: '' };
+  try {
+    applyStatic(root);
+    assert.equal(nodes['[data-i18n]'][0].textContent, STRINGS.es['pig.save']);
+    assert.equal(nodes['[data-i18n-html]'][0].innerHTML, STRINGS.es['ex.print.tips']);
+    assert.equal(nodes['[data-i18n-label]'][0].label, STRINGS.es['pig.save']);
+    assert.equal(nodes['[data-i18n-placeholder]'][0].placeholder, STRINGS.es['pig.save']);
+    const [iconOnly, withText] = nodes['[data-i18n-title]'];
+    assert.equal(iconOnly.title, STRINGS.es['tb.undo']);
+    assert.equal(iconOnly.attrs['aria-label'], STRINGS.es['tb.undo'], 'icon-only controls get an accessible name');
+    assert.equal(withText.attrs['aria-label'], undefined);
+    assert.equal(globalThis.document.documentElement.lang, 'es');
+    assert.equal(globalThis.document.title, STRINGS.es['doc.title']);
+  } finally {
+    globalThis.document = previous;
+    setLang('en');
+  }
+});

@@ -2,7 +2,22 @@
  * Small helpers shared by the interface modules.
  */
 
+/**
+ * Element by id. Typed loosely on purpose: the interface reads `.value`,
+ * `.checked`, `.open`… of many kinds of elements, and the type check of the
+ * app is about its data, not about each control.
+ * @param {string} id
+ * @returns {any}
+ */
 export const $ = (id) => document.getElementById(id);
+
+/**
+ * Elements matching a selector, as an array (typed loosely, like `$`).
+ * @param {string} sel
+ * @param {ParentNode} [root]
+ * @returns {any[]}
+ */
+export const qsa = (sel, root = document) => [...root.querySelectorAll(sel)];
 
 /** W with as many decimals as make sense for its range. */
 export const formatW = (v) => v.toFixed(v < 100 ? 2 : v < 1000 ? 1 : 0);

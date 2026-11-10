@@ -10,7 +10,7 @@ import { ORNAMENT_DEFAULTS, hasOrnament } from '../model/ornament.js';
 import { ORNAMENT_PRESETS } from '../model/presets.js';
 import { openInfo } from './formulas.js';
 import { ORN_BOOLS, ORN_KEYS, ORN_PARAMS, SHAPE_KEYS, state } from './state.js';
-import { $, f } from './util.js';
+import { $, f, qsa } from './util.js';
 
 // Provided by main.js through init()
 let applyMode, applyShape, controlsByKey, createParam, markDirty;
@@ -75,7 +75,7 @@ export function onOrnamentChange() {
 }
 function setOrnMode(mode) {
   $('tab-ornament').dataset.omode = mode;
-  document.querySelectorAll('#ornMode [data-omode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.omode === mode)));
+  qsa('#ornMode [data-omode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.omode === mode)));
 }
 // Mechanical model of the cords: the mantle edge buckles on its elastic attachment
 const mech = { lambda: lambdaForWaves(9), eta: 1.6 };
@@ -224,7 +224,7 @@ export function initOrnamentTab(ctx) {
     syncOrnamentControls();
     onOrnamentChange();
   });
-  document.querySelectorAll('#ornMode [data-omode]').forEach((b) => b.addEventListener('click', () => setOrnMode(b.dataset.omode)));
+  qsa('#ornMode [data-omode]').forEach((b) => b.addEventListener('click', () => setOrnMode(b.dataset.omode)));
 
   MECH_PARAMS.forEach((d) => createParam(d, $('mech-params'), { target: mech, onChange: drawMech }));
 

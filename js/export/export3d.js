@@ -20,9 +20,11 @@ const PRINT_QUALITY = { segPerTurn: 160, segPhi: 96, maxRows: 900 };
 const END_WINDOW = Math.PI / 3;
 
 /**
- * @param {object} shape  W, D, T, S, turns, hand, mirror and, optionally, the ornament (ribN, ribH…)
- * @param {object} opt    size (mm, largest dimension), wall (mm)
- * @returns {{ positions: Float32Array, indices: Uint32Array, dims: number[] }}
+ * @param {import('../model/raup.js').ShellShape & import('../model/ornament.js').OrnamentParams} shape
+ *   Raup's parameters and, optionally, the ornament
+ * @param {{ size?: number, wall?: number }} [opt]  size: largest dimension (mm); wall: thickness (mm)
+ * @returns {{ positions: Float32Array, indices: Uint32Array, dims: number[],
+ *   spine: { height: number, base: number } | null }}  spine: largest spine in mm (see buildShell)
  */
 export function buildPrintMesh(shape, { size = 80, wall = 1.2 } = {}) {
   const boost = Math.max(1, Math.log10(Math.max(shape.W, 1)));

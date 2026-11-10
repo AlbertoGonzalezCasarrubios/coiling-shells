@@ -2,9 +2,13 @@
 //
 // It serves the app, opens it, and walks through every part of the interface:
 // guide, tabs, render modes, orientations, equations, the pattern following a
-// dragged slider, appearance in the address, undo, the shell creator,
-// the About pages and the exports (image, plate, PDF, STL). It fails if the page
-// throws any error or if an export does not produce a file.
+// dragged slider, appearance in the address, undo, the shell creator, the
+// advanced controls and the mechanical model, the morphospace chart, the growth
+// animation, the About pages and every export (image, plate, PDF with its
+// pattern and equations pages, STL, 3MF, GLB). With axe-core installed it also
+// audits the accessibility of the guide, the tabs, the shell creator and the
+// dialogs. It fails if the page throws any error or if an export does not
+// produce a file.
 //
 // The libraries the app loads from jsDelivr (Three.js, MathJax, jsPDF) are served
 // from node_modules when they are installed (npm ci), at the same versions, so the
@@ -237,10 +241,50 @@ const TOUR = String.raw`(async () => {
   const dispatch = HTMLAnchorElement.prototype.dispatchEvent;
   HTMLAnchorElement.prototype.dispatchEvent = function (e) { if (this.download) { capture.call(this); return true; } return dispatch.call(this, e); };
   const log = {};
+  // Accessibility audit with axe-core, when it is installed (npm ci): serious and critical problems
+  log.a11y = [];
+  log.a11yRan = await new Promise((resolve) => {
+    const sc = document.createElement('script');
+    sc.src = '/node_modules/axe-core/axe.min.js';
+    sc.onload = () => resolve(true);
+    sc.onerror = () => resolve(false);
+    document.head.append(sc);
+  });
+  const audit = async (name, context = document) => {
+    if (!log.a11yRan) return;
+    const r = await axe.run(context, { resultTypes: ['violations'] });
+    for (const v of r.violations) if (v.impact === 'serious' || v.impact === 'critical') log.a11y.push(name + ': ' + v.id + ' (' + v.nodes.map((n) => n.target.join(' ')).slice(0, 3).join(', ') + ')');
+  };
   console.info('stage guide');
   log.guideOpen = $('welcome').open;
-  $('welcomeStart').click();
-  for (const t of ['ornament', 'pigment', 'shape']) { $('tabbtn-' + t).click(); await sl(300); }
+  await audit('guide', $('welcome'));
+  $('welcomeStart').click(); await sl(500);
+  await audit('shape tab');
+  for (const t of ['ornament', 'pigment', 'shape']) { $('tabbtn-' + t).click(); await sl(300); await audit(t + ' tab'); }
+  $('ornPreset').value = 'spinyAmmonite'; $('ornPreset').dispatchEvent(new Event('change')); await sl(1200);
+  console.info('stage advanced controls');
+  // Advanced ornament controls and the mechanical model of the cords
+  document.querySelector('#ornMode [data-omode=advanced]').click(); await sl(200);
+  $('mechDrawer').open = true; $('mechDrawer').dispatchEvent(new Event('toggle')); await sl(300);
+  $('mechApply').click();
+  log.mechCords = await until(() => /cn=/.test(location.hash));
+  document.querySelector('#ornMode [data-omode=simple]').click();
+  // A shape slider, the growth animation, the morphospace chart, the axis and the "shell only" mode
+  const pW = $('p-W'); pW.value = 2.5; pW.dispatchEvent(new Event('input'));
+  log.custom = await until(() => $('preset').value === 'custom');
+  $('grow').click(); await sl(1500); $('grow').click(); await sl(300);
+  $('tabbtn-shape').click(); $('morphoDrawer').open = true; $('morphoDrawer').dispatchEvent(new Event('toggle')); await sl(300);
+  const mc = $('morpho').getBoundingClientRect();
+  const at = { bubbles: true, pointerId: 1, clientX: mc.left + mc.width * 0.3, clientY: mc.top + mc.height * 0.6 };
+  $('preset').value = 'caracol'; $('preset').dispatchEvent(new Event('change')); await sl(300);
+  log.presetLoaded = $('preset').value === 'caracol';
+  $('morpho').dispatchEvent(new PointerEvent('pointerdown', at)); $('morpho').dispatchEvent(new PointerEvent('pointerup', at));
+  log.morphoPick = await until(() => $('preset').value === 'custom');
+  for (const s of ['1', '4']) { document.querySelector('[data-wscale="' + s + '"]').click(); await sl(200); }
+  $('showAxis').click(); await sl(200); $('showAxis').click();
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'h', bubbles: true }));
+  log.clean = await until(() => document.body.classList.contains('clean'));
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'h', bubbles: true })); await sl(300);
   $('ornPreset').value = 'spinyAmmonite'; $('ornPreset').dispatchEvent(new Event('change')); await sl(1200);
   log.ornHash = /sn=12/.test(location.hash);
   for (const m of ['lines', 'both', 'solid']) { document.querySelector('#mode [data-mode=' + m + ']').click(); await sl(300); }
@@ -250,6 +294,15 @@ const TOUR = String.raw`(async () => {
   console.info('stage pattern');
   $('tabbtn-pigment').click(); document.querySelectorAll('#patternGallery button')[1].click(); await sl(3000);
   log.patternOn = /pg=1/.test(location.hash);
+  // Meinhardt's equation, advanced pigment controls, the unrolled record and picking a moment on it
+  $('toggleFormula').click(); document.querySelector('#eqView [data-eq=meinhardt]').click(); await sl(2500); $('toggleFormula').click();
+  document.querySelector('#pigMode [data-pmode=advanced]').click(); await sl(300);
+  const st = $('spacetime').getBoundingClientRect();
+  const pick = { bubbles: true, pointerId: 2, clientX: st.left + st.width / 2, clientY: st.top + st.height * 0.7 };
+  $('spacetime').dispatchEvent(new PointerEvent('pointerdown', pick)); $('spacetime').dispatchEvent(new PointerEvent('pointerup', pick)); await sl(300);
+  document.querySelector('#stView [data-stview=shell]').click(); await sl(500);
+  document.querySelector('#stView [data-stview=time]').click();
+  document.querySelector('#pigMode [data-pmode=simple]').click();
   // The gallery thumbnails are drawn, and the simulation runs in its Web Worker
   const painted = (c) => c.getContext('2d').getImageData(0, 0, c.width, c.height).data.some((v, i) => i % 4 === 3 && v > 0);
   log.thumbs = await until(() => [...document.querySelectorAll('#patternGallery canvas')].every(painted));
@@ -284,6 +337,7 @@ const TOUR = String.raw`(async () => {
   log.undone = await until(() => /pg=0/.test(location.hash), 3000);
   console.info('stage shell creator');
   $('openWizard').click(); await sl(500);
+  await audit('shell creator', $('wizard'));
   for (let i = 0; i < 4; i++) { $('wzNext').click(); await sl(400); }
   $('wzNext').click(); await sl(300);
   log.wizardClosed = !$('wizard').open && !!document.querySelector('#viewport canvas');
@@ -294,23 +348,34 @@ const TOUR = String.raw`(async () => {
   $('openInfo').click();
   for (const p of ['raup', 'meinhardt', 'ornament', 'controls', 'app']) { document.querySelector('.info-tabs [data-page=' + p + ']').click(); await sl(1200); }
   log.mathErrors = document.querySelectorAll('[data-mjx-error]').length;
+  await audit('About window', document.querySelector('dialog[open]'));
   document.querySelector('#info .icon-btn, #closeInfo')?.click();
   $('infoDialog')?.close?.();
   document.querySelectorAll('dialog[open]').forEach((d) => d.close());
+  // The PDF gets its pattern page: the pattern is applied again
+  $('tabbtn-pigment').click(); document.querySelectorAll('#patternGallery button')[1].click();
+  await until(() => /pg=1/.test(location.hash) && $('patternStatus').hidden);
   console.info('stage exports');
   $('openExport').click(); await sl(1200);
   // Spines (the spiny ammonite) printed very small: the warning appears
   await until(() => $('exDims').textContent !== '');
+  await audit('export window', document.querySelector('dialog[open]'));
   log.spineOk = $('exSpineWarn').hidden;
   $('exSize').value = 20; $('exSize').dispatchEvent(new Event('input'));
   log.spineWarn = await until(() => !$('exSpineWarn').hidden);
   $('exSize').value = 80; $('exSize').dispatchEvent(new Event('input'));
   await until(() => $('exSpineWarn').hidden);
-  $('exFormat').value = 'jpg'; $('exPng').click(); await sl(3000);
-  $('exPlateFormat').value = 'tiff'; $('exPlate').click(); await sl(5000);
-  $('exStl').click(); await sl(4000);
+  // Each export: wait until its file has been produced
+  const saved = (ext) => until(() => files.some((f) => f.name.endsWith(ext)), 60000);
+  $('exFormat').value = 'jpg'; $('exPng').click(); await saved('.jpg');
+  $('exPlateFormat').value = 'tiff'; $('exPlate').click(); await until(() => files.filter((f) => f.name.endsWith('.tif')).length > 1, 60000);
+  $('exStl').click(); await saved('.stl');
+  $('ex3mf').click(); await saved('.3mf');
+  $('exGlb').click(); await saved('.glb');
+  // The PDF with its pattern page and the equations page (MathJax's SVG output)
   console.info('stage pdf');
-  $('exEq').checked = false; $('exPdf').click(); await sl(12000);
+  $('exEq').checked = true; $('exPdf').click();
+  await until(() => files.some((f) => f.name.endsWith('.pdf')), 60000);
   log.files = [];
   for (const f of files) {
     const b = await (await fetch(f.href)).blob();
@@ -347,8 +412,14 @@ test('the whole interface works in a real browser', { skip, timeout: 400_000 }, 
     assert.equal(log.wizardClosed, true, 'the shell creator gives the canvas back');
     assert.equal(log.raupTheory, true, "the Theory link of the shape tab opens Raup's page");
     assert.equal(log.mathErrors, 0, 'every About page typesets');
+    if (LOCAL_LIBS) assert.equal(log.a11yRan, true, 'axe-core loads');
+    assert.deepEqual(log.a11y, [], 'no serious or critical accessibility problems (axe-core)');
     const kinds = log.files.map((f) => f.split(':')[0]);
-    for (const k of ['jpg', 'tif', 'stl', 'pdf']) assert.ok(kinds.includes(k), `export ${k} (${log.files})`);
+    for (const k of ['jpg', 'tif', 'stl', '3mf', 'glb', 'pdf']) assert.ok(kinds.includes(k), `export ${k} (${log.files})`);
+    assert.equal(log.mechCords, true, 'the mechanical model grows cords on the shell');
+    assert.equal(log.custom, true, 'moving a shape slider leaves the preset');
+    assert.equal(log.presetLoaded && log.morphoPick, true, 'a click on the morphospace chart picks W and D');
+    assert.equal(log.clean, true, 'H hides the panels');
     for (const f of log.files) assert.ok(+f.split(':')[1] > 1000, `non-empty file ${f}`);
     assert.equal(log.lang, 'es');
     assert.deepEqual(b.errors, [], 'no errors in the page');

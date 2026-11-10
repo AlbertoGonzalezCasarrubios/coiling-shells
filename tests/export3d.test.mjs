@@ -83,9 +83,8 @@ test('binary STL has the right header, triangle count and length', () => {
   assert.match(new TextDecoder().decode(stl.slice(0, 20)), /^Theoretical Shells/);
 });
 
-test('3MF is a valid ZIP package with the model in millimetres', async () => {
-  const mesh = buildPrintMesh(base, { size: 80, wall: 1.2 });
-  const zip = await to3MF(mesh, 'Test shell');
+/** Files of a ZIP package, with the compression method of each entry. */
+function readZip(zip) {
   const dv = new DataView(zip.buffer, zip.byteOffset, zip.byteLength);
   // End of central directory
   const eocd = zip.length - 22;
@@ -93,6 +92,7 @@ test('3MF is a valid ZIP package with the model in millimetres', async () => {
   const entries = dv.getUint16(eocd + 10, true);
   let p = dv.getUint32(eocd + 16, true);
   const files = {};
+  const methods = new Set();
   for (let i = 0; i < entries; i++) {
     assert.equal(dv.getUint32(p, true), 0x02014b50);
     const method = dv.getUint16(p + 10, true);
@@ -103,13 +103,43 @@ test('3MF is a valid ZIP package with the model in millimetres', async () => {
     const localName = dv.getUint16(local + 26, true);
     const data = zip.slice(local + 30 + localName, local + 30 + localName + csize);
     files[name] = new TextDecoder().decode(method === 8 ? inflateRawSync(data) : data);
+    methods.add(method);
     p += 46 + nameLen;
   }
+  return { files, methods };
+}
+
+test('3MF is a valid ZIP package with the model in millimetres', async () => {
+  const mesh = buildPrintMesh(base, { size: 80, wall: 1.2 });
+  const { files, methods } = readZip(await to3MF(mesh, 'Test shell'));
+  assert.deepEqual([...methods], [8], 'compressed');
   assert.deepEqual(Object.keys(files).sort(), ['3D/3dmodel.model', '[Content_Types].xml', '_rels/.rels']);
   const model = files['3D/3dmodel.model'];
   assert.match(model, /unit="millimeter"/);
   assert.equal((model.match(/<vertex /g) || []).length, mesh.positions.length / 3);
   assert.equal((model.match(/<triangle /g) || []).length, mesh.indices.length / 3);
+});
+
+test('without compression in the browser, the 3MF is stored uncompressed and still valid', async () => {
+  const mesh = buildPrintMesh(base, { size: 40, wall: 1.2 });
+  const original = globalThis.CompressionStream;
+  for (const missing of [
+    undefined,
+    class {
+      constructor() {
+        throw new Error('not supported');
+      }
+    },
+  ]) {
+    globalThis.CompressionStream = missing;
+    try {
+      const { files, methods } = readZip(await to3MF(mesh, 'Test shell'));
+      assert.deepEqual([...methods], [0], 'stored');
+      assert.equal((files['3D/3dmodel.model'].match(/<triangle /g) || []).length, mesh.indices.length / 3);
+    } finally {
+      globalThis.CompressionStream = original;
+    }
+  }
 });
 
 test('the largest spine is measured in millimetres, only when there are spines', () => {

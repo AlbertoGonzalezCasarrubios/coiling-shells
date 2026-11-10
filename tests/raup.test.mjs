@@ -186,3 +186,45 @@ test('ornament: bumps, relief along the normal and no relief when off', async ()
   const flat = ratios.filter((r) => r < lo * 1.001).length;
   assert.ok(flat > ratios.length * 0.4 && flat < ratios.length, 'between ribs the surface is unchanged');
 });
+
+// Line drawing: rows and columns of the grid that carry a line
+function lineRowsAndColumns(shell) {
+  const { cols } = shell.grid;
+  const rows = new Set(),
+    columns = new Set();
+  const L = shell.lineIndices;
+  for (let k = 0; k < L.length; k += 2) {
+    const [i0, j0] = [Math.floor(L[k] / cols), L[k] % cols];
+    const [i1, j1] = [Math.floor(L[k + 1] / cols), L[k + 1] % cols];
+    if (i0 === i1 && Math.abs(j1 - j0) === 1) rows.add(i0);
+    if (j0 === j1 && Math.abs(i1 - i0) === 1) columns.add(j0);
+  }
+  return { rows, columns };
+}
+
+test('with ornament the line drawing follows the relief', () => {
+  const plain = lineRowsAndColumns(buildShell(base));
+  assert.equal(plain.columns.size, 16, 'spiral lines');
+  assert.equal(plain.rows.size, 24 * 4.5 + 1, 'growth lines, and the aperture');
+  // Ribs: one growth line on each crest (12 per whorl over 4.5 whorls, the first one at the aperture)
+  const ribs = lineRowsAndColumns(buildShell({ ...base, ribN: 12, ribH: 0.1, ribW: 0.4 }));
+  assert.equal(ribs.rows.size, 12 * 4.5 + 1);
+  // Cords: one spiral line on each crest
+  const cords = lineRowsAndColumns(buildShell({ ...base, cordN: 7, cordH: 0.08, cordW: 0.4 }));
+  assert.equal(cords.columns.size, 7);
+  // Spines: each one is outlined as a cone; spines that have not grown yet are not drawn
+  const spines = { ...base, spineN: 6, spineH: 0.5, spineW: 0.4, spinePos: 0 };
+  const count = (p) => buildShell(p).lineIndices.length;
+  const whole = count(spines),
+    half = count({ ...spines, grow: 0.5 }),
+    none = count(base);
+  assert.ok(whole > none, 'spine outlines add lines');
+  assert.ok(half < whole);
+  for (const shell of [buildShell(spines), buildShell({ ...spines, mirror: true })]) {
+    const n = shell.positions.length / 3;
+    assert.ok(
+      shell.lineIndices.every((v) => v >= 0 && v < n),
+      'valid indices',
+    );
+  }
+});

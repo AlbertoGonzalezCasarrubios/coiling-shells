@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 import { CAMERA_HOME, camera, controls, ground, renderer, shellGroup, solid, viewport } from './scene.js';
 import { state, writeHash } from './state.js';
+import { qsa } from './util.js';
 
 // ---------------------------------------------------------------------------
 // Display orientation: coiling axis vertical (orbit around it), horizontal
@@ -23,6 +24,11 @@ const ORIENT_BASE = {
     .setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(CAMERA_HOME.x, CAMERA_HOME.z))
     .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2)),
 };
+// With "reduce motion" in the system settings, camera and orientation changes are instantaneous
+const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+/** Duration of an animation in ms (1 ms, i.e. instantaneous, under reduced motion). */
+const motion = (ms) => (reducedMotion?.matches ? 1 : ms);
+
 export let orientTween = null;
 
 /** The ground (shadow) touches the lowest point of the shell in its current orientation. */
@@ -41,10 +47,10 @@ export function updateGround() {
 export function setOrient(mode, { animate = true } = {}) {
   state.orient = mode;
   controls.enableRotate = mode !== 'free';
-  document.querySelectorAll('.orient [data-orient]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.orient === mode)));
+  qsa('.orient [data-orient]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.orient === mode)));
   if (mode !== 'free') {
     const to = ORIENT_BASE[mode];
-    if (animate) orientTween = { t0: performance.now(), dur: 600, from: shellGroup.quaternion.clone(), to };
+    if (animate) orientTween = { t0: performance.now(), dur: motion(600), from: shellGroup.quaternion.clone(), to };
     else {
       orientTween = null;
       shellGroup.quaternion.copy(to);
@@ -88,15 +94,15 @@ function flyTo(name) {
   // Standard views are defined on the shell: they follow its display orientation.
   // In free rotation the shell is first set upright again.
   if (state.orient === 'free')
-    orientTween = { t0: performance.now(), dur: 700, from: shellGroup.quaternion.clone(), to: ORIENT_BASE.vertical };
+    orientTween = { t0: performance.now(), dur: motion(700), from: shellGroup.quaternion.clone(), to: ORIENT_BASE.vertical };
   const base = ORIENT_BASE[state.orient] ?? ORIENT_BASE.vertical;
   const dir = name === 'iso' ? VIEWS.iso() : VIEWS[name]().applyQuaternion(base);
   const to = new THREE.Spherical().setFromVector3(dir.normalize().multiplyScalar(dist));
   // Azimuth along the shortest path
   let dTheta = to.theta - from.theta;
   dTheta = Math.atan2(Math.sin(dTheta), Math.cos(dTheta));
-  tween = { t0: performance.now(), dur: 700, from, dTheta, to, fromTarget: controls.target.clone() };
-  document.querySelectorAll('.views [data-view]').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
+  tween = { t0: performance.now(), dur: motion(700), from, dTheta, to, fromTarget: controls.target.clone() };
+  qsa('.views [data-view]').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
 }
 
 export function stepTween(now) {
@@ -119,7 +125,7 @@ export function stepTween(now) {
 
 /** Connects this part of the interface to the rest of the app. */
 export function initViews() {
-  document.querySelectorAll('.orient [data-orient]').forEach((b) => b.addEventListener('click', () => setOrient(b.dataset.orient)));
+  qsa('.orient [data-orient]').forEach((b) => b.addEventListener('click', () => setOrient(b.dataset.orient)));
 
   renderer.domElement.addEventListener('pointerdown', (e) => {
     freeDrag.pointers.add(e.pointerId);
@@ -152,14 +158,15 @@ export function initViews() {
   });
   for (const type of ['pointerup', 'pointercancel', 'pointerleave']) {
     renderer.domElement.addEventListener(type, (e) => {
-      freeDrag.pointers.delete(e.pointerId);
-      if (e.pointerId === freeDrag.id) freeDrag.id = null;
+      const { pointerId } = /** @type {PointerEvent} */ (e);
+      freeDrag.pointers.delete(pointerId);
+      if (pointerId === freeDrag.id) freeDrag.id = null;
     });
   }
 
-  document.querySelectorAll('.views [data-view]').forEach((b) => b.addEventListener('click', () => flyTo(b.dataset.view)));
+  qsa('.views [data-view]').forEach((b) => b.addEventListener('click', () => flyTo(b.dataset.view)));
   controls.addEventListener('start', () => {
     tween = null;
-    document.querySelectorAll('.views [data-view].active').forEach((b) => b.classList.remove('active'));
+    qsa('.views [data-view].active').forEach((b) => b.classList.remove('active'));
   });
 }

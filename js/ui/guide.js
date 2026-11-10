@@ -68,6 +68,7 @@ function shellAnchors(shell, turns, orn = {}) {
   // lie in the same meridian plane; in that plane (distance to the axis, height)
   // the outline of the later whorl crosses the outline of the earlier one, and the
   // crossing farther from the axis is the suture seen on the outside of the shell.
+  /** @type {(v: THREE.Vector3) => [number, number]} */
   const toPlane = (v) => [Math.hypot(v.x - x, v.z - z), v.y];
   const inside = (poly, [px, py]) => {
     let c = false;

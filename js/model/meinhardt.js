@@ -45,17 +45,21 @@ export function rng32(seed) {
 /**
  * @param {object} p  model parameters
  * @param {'AI'|'AS'} p.model   activator–inhibitor or activator–substrate
- * @param {number} p.Da, p.D2   diffusion of the activator and of the second substance
- * @param {number} p.ra, p.r2   decay rates
+ * @param {number} p.Da         diffusion of the activator
+ * @param {number} p.D2         diffusion of the second substance (inhibitor or substrate)
+ * @param {number} p.ra         decay rate of the activator
+ * @param {number} p.r2         decay rate of the second substance
  * @param {number} p.kappa      saturation of the autocatalysis
- * @param {number} p.ba, p.b2   basal production of the activator and of the second substance
+ * @param {number} p.ba         basal production of the activator
+ * @param {number} p.b2         basal production of the second substance
  * @param {number} p.noise      fluctuation of the source density (0–1)
  * @param {number} p.globalCtl  strength of the global control (0 = no control)
  * @param {number} p.T          total simulated time from the apex to the aperture
  * @param {number} p.seed       seed of the random cell-to-cell differences
  * @param {boolean} p.insertion cell insertion: the margin grows with the shell
  * @param {object} g  growth geometry
- * @param {number} g.W, g.turns Raup's parameters (for the size at each row)
+ * @param {number} g.W         whorl expansion rate (for the size at each row)
+ * @param {number} g.turns     number of whorls
  * @param {number} g.rows       rows of the result
  * @param {number} g.width      columns of the result (the margin is resampled)
  * @param {number} g.nMax       cells at the aperture
@@ -203,6 +207,9 @@ function scaleToMax(v, skip = 0) {
  * dim the rest. If the activator died out or the margin stayed practically
  * uniform, nothing is rescaled: amplifying tiny differences would fabricate a
  * false pattern.
+ * @param {Float32Array} v
+ * @param {number} [skip]  values at the start that are left out of the statistics
+ * @returns {'pattern' | 'uniform' | 'extinct'}
  */
 function normalize(v, skip = 0) {
   const sample = [];
@@ -211,6 +218,7 @@ function normalize(v, skip = 0) {
   sample.sort((x, y) => x - y);
   const lo = sample[Math.floor(sample.length * 0.02)];
   const hi = sample[Math.min(sample.length - 1, Math.floor(sample.length * 0.995))];
+  /** @type {'pattern' | 'uniform' | 'extinct'} */
   let state = 'pattern';
   if (hi < 1e-4) state = 'extinct';
   else if ((hi - lo) / hi < 0.05) state = 'uniform';

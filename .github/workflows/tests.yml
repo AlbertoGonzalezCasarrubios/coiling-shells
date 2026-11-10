@@ -20,6 +20,8 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run lint
+      # Coverage of the modules that run in Node (the interface is covered by the browser test)
+      - run: npm run coverage
 
   test:
     runs-on: ubuntu-latest
