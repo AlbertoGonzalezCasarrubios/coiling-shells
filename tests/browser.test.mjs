@@ -34,6 +34,11 @@ const CANDIDATES = [
   '/usr/bin/chromium-browser',
 ].filter(Boolean);
 const CHROME = CANDIDATES.find((p) => existsSync(p));
+// Last stage the tour reported (console.info('stage …') in the page), for error messages
+let lastStage = 'start';
+let passed = false;
+const annotate = (msg) => process.env.CI && console.log(`::error title=Browser test::${msg.replace(/\n/g, ' ')}`);
+
 const skip = process.env.SKIP_BROWSER
   ? 'SKIP_BROWSER is set'
   : !CHROME
@@ -135,11 +140,23 @@ async function launch() {
       errors.push(m.params.exceptionDetails.exception?.description ?? m.params.exceptionDetails.text);
     if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error')
       errors.push(m.params.args.map((a) => a.value ?? a.description).join(' '));
+    if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'info') {
+      const text = String(m.params.args[0]?.value ?? '');
+      if (text.startsWith('stage ')) lastStage = text.slice(6);
+    }
   });
-  const send = (method, params = {}) =>
-    new Promise((r) => {
+  // Every command gets an answer or an error within a minute: nothing waits forever
+  const send = (method, params = {}, ms = 60_000) =>
+    new Promise((resolve, reject) => {
       const i = ++id;
-      pending.set(i, r);
+      const timer = setTimeout(() => {
+        pending.delete(i);
+        reject(new Error(`${method} got no answer within ${ms / 1000} s`));
+      }, ms);
+      pending.set(i, (m) => {
+        clearTimeout(timer);
+        resolve(m);
+      });
       ws.send(JSON.stringify({ id: i, method, params }));
     });
   // Requests to the CDN and to the web fonts are answered here (see localCopy)
@@ -184,7 +201,7 @@ async function launch() {
   const evaluate = async (expression, ms = 300_000) => {
     let timer;
     const r = await Promise.race([
-      send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }),
+      send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, ms + 5000),
       new Promise((_, reject) => {
         timer = setTimeout(() => reject(new Error(`the page did not answer within ${ms / 1000} s`)), ms);
       }),
@@ -220,6 +237,7 @@ const TOUR = String.raw`(async () => {
   const dispatch = HTMLAnchorElement.prototype.dispatchEvent;
   HTMLAnchorElement.prototype.dispatchEvent = function (e) { if (this.download) { capture.call(this); return true; } return dispatch.call(this, e); };
   const log = {};
+  console.info('stage guide');
   log.guideOpen = $('welcome').open;
   $('welcomeStart').click();
   for (const t of ['ornament', 'pigment', 'shape']) { $('tabbtn-' + t).click(); await sl(300); }
@@ -229,6 +247,7 @@ const TOUR = String.raw`(async () => {
   for (const o of ['vertical', 'free', 'horizontal']) { document.querySelector('[data-orient=' + o + ']').click(); await sl(300); }
   document.querySelector('[data-view=apical]').click(); await sl(800);
   $('toggleFormula').click(); await sl(2500); $('toggleFormula').click();
+  console.info('stage pattern');
   $('tabbtn-pigment').click(); document.querySelectorAll('#patternGallery button')[1].click(); await sl(3000);
   log.patternOn = /pg=1/.test(location.hash);
   // The gallery thumbnails are drawn, and the simulation runs in its Web Worker
@@ -263,6 +282,7 @@ const TOUR = String.raw`(async () => {
   // Then undo goes back through the slider drag to the plain shell
   for (let i = 0; i < 3 && !/pg=0/.test(location.hash); i++) { await sl(600); $('undo').click(); await until(() => !$('patternStatus').hidden || /pg=0/.test(location.hash), 1500); }
   log.undone = await until(() => /pg=0/.test(location.hash), 3000);
+  console.info('stage shell creator');
   $('openWizard').click(); await sl(500);
   for (let i = 0; i < 4; i++) { $('wzNext').click(); await sl(400); }
   $('wzNext').click(); await sl(300);
@@ -270,12 +290,14 @@ const TOUR = String.raw`(async () => {
   $('tabbtn-shape').click(); $('raupTheory').click(); await sl(800);
   log.raupTheory = !!document.querySelector('dialog[open] .info-tabs [data-page=raup][aria-selected=true]');
   document.querySelectorAll('dialog[open]').forEach((d) => d.close());
+  console.info('stage about pages');
   $('openInfo').click();
   for (const p of ['raup', 'meinhardt', 'ornament', 'controls', 'app']) { document.querySelector('.info-tabs [data-page=' + p + ']').click(); await sl(1200); }
   log.mathErrors = document.querySelectorAll('[data-mjx-error]').length;
   document.querySelector('#info .icon-btn, #closeInfo')?.click();
   $('infoDialog')?.close?.();
   document.querySelectorAll('dialog[open]').forEach((d) => d.close());
+  console.info('stage exports');
   $('openExport').click(); await sl(1200);
   // Spines (the spiny ammonite) printed very small: the warning appears
   await until(() => $('exDims').textContent !== '');
@@ -287,6 +309,7 @@ const TOUR = String.raw`(async () => {
   $('exFormat').value = 'jpg'; $('exPng').click(); await sl(3000);
   $('exPlateFormat').value = 'tiff'; $('exPlate').click(); await sl(5000);
   $('exStl').click(); await sl(4000);
+  console.info('stage pdf');
   $('exEq').checked = false; $('exPdf').click(); await sl(12000);
   log.files = [];
   for (const f of files) {
@@ -330,11 +353,12 @@ test('the whole interface works in a real browser', { skip, timeout: 400_000 }, 
     assert.equal(log.lang, 'es');
     assert.deepEqual(b.errors, [], 'no errors in the page');
     if (LOCAL_LIBS) assert.deepEqual(b.network, [], 'every library is served from node_modules');
+    passed = true;
   } catch (err) {
     // On GitHub Actions the reason shows as an annotation of the run, without opening the log
     if (process.env.CI)
       console.log(
-        `::error title=Browser test::${String(err.message).replace(/\n/g, ' ')} | log ${progress} | page errors ${JSON.stringify(b.errors)}`,
+        `::error title=Browser test::${String(err.message).replace(/\n/g, ' ')} | stage ${lastStage} | log ${progress} | page errors ${JSON.stringify(b.errors)}`,
       );
     throw err;
   } finally {
@@ -343,3 +367,17 @@ test('the whole interface works in a real browser', { skip, timeout: 400_000 }, 
     server.close();
   }
 });
+
+// Watchdog: if the test has not finished after 9 minutes (a browser that hangs, or
+// open handles after a failure), report the last stage and end the process
+if (!skip) {
+  setTimeout(() => {
+    if (passed) {
+      console.error('Browser test: passed, but something kept the process open; ending it');
+      process.exit(0);
+    }
+    annotate(`no result after 9 minutes; last stage: ${lastStage}`);
+    console.error(`Browser test: no result after 9 minutes; last stage: ${lastStage}`);
+    process.exit(1);
+  }, 9 * 60_000).unref();
+}
