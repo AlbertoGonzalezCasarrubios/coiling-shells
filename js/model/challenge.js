@@ -196,12 +196,13 @@ export function overlap(A, B) {
 
 /**
  * From overlap to score: 0 at the overlap `floor`, 100 for identical shells,
- * with a concave curve in between. Calibrated on real shells: variants with every
- * parameter a little off overlap by 0.92–0.97 (score ≈ 75–90), and different
- * shells by 0.65 (median) to 0.83 (the most alike pair, snail and nautilus;
- * score ≈ 30). See tests/challenge.test.mjs.
+ * with a concave curve in between. Calibrated on real shells so that the score
+ * agrees with the eye: variants with every shape parameter a little off (W ± 2.5 %,
+ * D ± 0.015, T ± 4 %, S ± 3 %, a quarter of a whorl) score about 93 (80–99), and
+ * different shells score 0, except pairs that do look alike (Peringia and Trochus,
+ * Planorbis and Nautilus: below 60). See tests/challenge.test.mjs.
  */
-export const CALIBRATION = { floor: 0.78, power: 0.6 };
+export const CALIBRATION = { floor: 0.76, power: 0.45 };
 
 /**
  * Score of a guess against a target, 0–100.
@@ -295,17 +296,25 @@ export function bestHint(guess, target, keys) {
 }
 
 /**
+ * How near a parameter is, 0–1, from its distance in its own scale: gentle near
+ * the target (a difference the eye barely sees costs almost nothing) and steep
+ * further away (1 − (d/2.5)², so one scale unit off is 0.84 and 2.5 is 0).
+ * @param {number} d
+ */
+const nearness = (d) => Math.max(0, 1 - (d / 2.5) ** 2);
+
+/**
  * Score of the relief, 0–100, for the last level. Ribs and cords barely change
  * the outline of a shell, so silhouettes cannot judge them. Instead, each kind
  * of relief present in either shell (ribs, cords, spines) scores how close its
  * number and its height are to the target's, the two multiplied: the right
- * height is worth nothing without the ribs. With every parameter within its
- * tolerance the score is at least 90.
+ * height is worth nothing without the ribs. A rib more or a slightly different
+ * height scores about 97.
  * @param {ChallengeShell} guess
  * @param {ChallengeShell} target
  */
 export function reliefScore(guess, target) {
-  const close = (k) => Math.max(0, 1 - SCALE[k].d(guess[k], target[k]) / 5);
+  const close = (k) => nearness(SCALE[k].d(guess[k], target[k]));
   const kinds = [
     ['ribN', 'ribH'],
     ['cordN', 'cordH'],
@@ -325,7 +334,7 @@ export function reliefScore(guess, target) {
  */
 export function colourScore(guess, target) {
   const keys = ['patternSize', 'patternT', 'patternNoise', 'patternAmount', 'patternBase', 'patternPigment'];
-  const close = keys.map((k) => Math.max(0, 1 - SCALE[k].d(guess[k], target[k]) / 2.5));
+  const close = keys.map((k) => nearness(SCALE[k].d(guess[k], target[k])));
   const mean = close.reduce((a, b) => a + b, 0) / keys.length;
   return Math.round(100 * mean * (guess.patternPreset === target.patternPreset ? 1 : 0.35));
 }
@@ -344,7 +353,10 @@ export function levelScore(level, guess, target, targetSil) {
   const scores = parts.map((part) => {
     if (part === 'relief') return reliefScore(guess, target);
     if (part === 'colour') return colourScore(guess, target);
-    const shape = scoreFromOverlap(overlap(silhouettes(guess), targetSil ?? silhouettes(target)));
+    // The outline judges the shape only: the guess is drawn with the target's relief, so a
+    // difference of relief is counted once, by the relief score
+    const asShape = parts.includes('relief') ? { ...guess, ...Object.fromEntries(ORNAMENT_KEYS.map((k) => [k, target[k]])) } : guess;
+    const shape = scoreFromOverlap(overlap(silhouettes(asShape), targetSil ?? silhouettes(target)));
     return guess.hand === target.hand ? shape : Math.round(shape * WRONG_HAND);
   });
   return Math.min(...scores);
