@@ -56,6 +56,10 @@
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6.5 4.2v11.6L15.8 10z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
         <span data-i18n="wz.open">Create your own shell</span>
       </button>
+      <button type="button" class="btn btn-wide create-btn" id="openChallenge">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="10" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="10" r="0.9" fill="currentColor"/></svg>
+        <span data-i18n="ch.open">Challenge: match the shell</span>
+      </button>
 
       <nav class="tabs" role="tablist" data-i18n-title="tab.label">
         <button type="button" role="tab" id="tabbtn-shape" data-tab="shape" aria-controls="tab-shape" aria-selected="true" ><span data-i18n="tab.n.shape">Shape</span><small>Raup</small></button>
@@ -772,6 +776,53 @@
           </button>
           <button type="button" class="btn" id="wzBack" data-i18n="wz.back">Back</button>
           <button type="button" class="btn primary" id="wzNext" data-i18n="wz.next">Next</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="info wizard challenge" id="challenge" aria-labelledby="challengeTitle">
+    <div class="info-head">
+      <h2 id="challengeTitle" data-i18n="ch.title">Challenge: match the shell</h2>
+      <button type="button" class="icon-btn" id="closeChallenge" data-i18n-title="info.close">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="wizard-body">
+      <div class="wizard-view" id="chView">
+        <figure class="ch-target">
+          <img id="chTarget" alt="" data-i18n-title="ch.target.alt" />
+          <figcaption data-i18n="ch.target">Target</figcaption>
+        </figure>
+        <span class="ch-yours" data-i18n="ch.yours">Your shell</span>
+      </div>
+      <div class="wizard-side">
+        <ol class="wizard-steps" id="chLevels">
+          <li><button type="button" data-level="1" data-i18n="ch.l1">W</button></li>
+          <li><button type="button" data-level="2" data-i18n="ch.l2">W, T</button></li>
+          <li><button type="button" data-level="3" data-i18n="ch.l3">W, D, T</button></li>
+          <li><button type="button" data-level="4" data-i18n="ch.l4">Shape</button></li>
+          <li><button type="button" data-level="5" data-i18n="ch.l5">Relief</button></li>
+        </ol>
+        <div class="wizard-panels">
+          <section class="wizard-panel">
+            <p class="note" id="chIntro"></p>
+            <div id="ch-params"></div>
+            <div class="segmented two" id="chHand" role="radiogroup" data-i18n-title="geo.hand">
+              <button type="button" data-hand="1" data-i18n="geo.dextral">Dextral</button>
+              <button type="button" data-hand="-1" data-i18n="geo.sinistral">Sinistral</button>
+            </div>
+            <div class="ch-result" id="chResult" role="status" aria-live="polite" hidden>
+              <div class="ch-score"><span id="chScore"></span><span class="ch-bar" id="chBar"></span></div>
+              <p id="chMessage"></p>
+            </div>
+            <p class="note ch-how" data-i18n="ch.how"></p>
+          </section>
+        </div>
+        <div class="wizard-nav">
+          <button type="button" class="btn" id="chNew" data-i18n="ch.new">Another shell</button>
+          <button type="button" class="btn primary" id="chCheck" data-i18n="ch.check">Check</button>
+          <button type="button" class="btn primary" id="chNext" data-i18n="ch.next" hidden>Next level</button>
         </div>
       </div>
     </div>

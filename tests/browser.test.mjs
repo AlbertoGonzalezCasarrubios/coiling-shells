@@ -3,6 +3,7 @@
 // It serves the app, opens it, and walks through every part of the interface:
 // guide, tabs, render modes, orientations, equations, the pattern following a
 // dragged slider, appearance in the address, undo, the shell creator, the
+// challenge (a level passed by following its hints, the user's shell restored), the
 // advanced controls and the mechanical model, the morphospace chart, the growth
 // animation, the About pages and every export (image, plate, PDF with its
 // pattern and equations pages, STL, 3MF, GLB). With axe-core installed it also
@@ -341,6 +342,30 @@ const TOUR = String.raw`(async () => {
   for (let i = 0; i < 4; i++) { $('wzNext').click(); await sl(400); }
   $('wzNext').click(); await sl(300);
   log.wizardClosed = !$('wizard').open && !!document.querySelector('#viewport canvas');
+  // The challenge: level 1 passed by following its hints alone (bisection on W),
+  // and on closing the user's shell, the address and the undo history are as before
+  console.info('stage challenge');
+  await sl(800);
+  const before = { hash: location.hash, preset: $('preset').value, undo: $('undo').disabled };
+  localStorage.removeItem('coiling-shells.challenge');
+  $('openChallenge').click(); await sl(1500);
+  log.chTarget = $('chTarget').src.startsWith('data:image/png') && $('chTarget').src.length > 5000;
+  const wBox = $('p-ch-W').closest('.param').querySelector('input[type=number]');
+  let lo = 1, hi = 10;
+  for (let i = 0; i < 30 && !$('chResult').classList.contains('passed'); i++) {
+    $('chCheck').click(); await sl(150);
+    if ($('chResult').classList.contains('passed')) break;
+    const msg = $('chMessage').textContent;
+    const w = +wBox.value.replace(',', '.');
+    if (/rais/.test(msg)) lo = w; else if (/lower/.test(msg)) hi = w; else break;
+    wBox.value = ((lo + hi) / 2).toFixed(2); wBox.dispatchEvent(new Event('input')); await sl(50);
+  }
+  log.chPassed = $('chResult').classList.contains('passed') && /\d+/.test($('chScore').textContent);
+  log.chNext = !$('chNext').hidden;
+  log.chAddressPaused = location.hash === before.hash;
+  $('closeChallenge').click(); await sl(1500);
+  log.chRestored = location.hash === before.hash && $('preset').value === before.preset && $('undo').disabled === before.undo && !!document.querySelector('#viewport canvas');
+  log.chProgress = localStorage.getItem('coiling-shells.challenge') === '1';
   $('tabbtn-shape').click(); $('raupTheory').click(); await sl(800);
   log.raupTheory = !!document.querySelector('dialog[open] .info-tabs [data-page=raup][aria-selected=true]');
   document.querySelectorAll('dialog[open]').forEach((d) => d.close());
@@ -410,6 +435,11 @@ test('the whole interface works in a real browser', { skip, timeout: 400_000 }, 
     assert.equal(log.spineOk, true, 'no spine warning at 80 mm');
     assert.equal(log.spineWarn, true, 'spine warning at 20 mm');
     assert.equal(log.wizardClosed, true, 'the shell creator gives the canvas back');
+    assert.equal(log.chTarget, true, 'the challenge draws its target');
+    assert.equal(log.chPassed && log.chNext, true, 'level 1 of the challenge can be passed by following its hints');
+    assert.equal(log.chAddressPaused, true, 'the game does not touch the address');
+    assert.equal(log.chRestored, true, 'closing the challenge brings back the shell, the address and undo');
+    assert.equal(log.chProgress, true, 'the challenge remembers the levels passed');
     assert.equal(log.raupTheory, true, "the Theory link of the shape tab opens Raup's page");
     assert.equal(log.mathErrors, 0, 'every About page typesets');
     if (LOCAL_LIBS) assert.equal(log.a11yRan, true, 'axe-core loads');

@@ -29,6 +29,10 @@ Al cerrar la guía, la app muestra un caracol de jardín dibujado con líneas, l
 
 ![El creador de conchas en su paso de ornamento: un ammonites con costillas y espinas dibujado con líneas a la izquierda y los deslizadores simplificados a la derecha](images/wizard.png)
 
+**Reto: imita la concha**, justo debajo, es un juego para aprender qué hace cada parámetro. Muestra una concha objetivo, una real con el nombre oculto o una variante suya, y tú cambias la tuya hasta que se parezcan. *Comprobar* da el parecido en porcentaje y una pista sobre qué cambiar; a partir del 90 % superas el nivel y se revela el nombre. Los cinco niveles liberan los parámetros poco a poco: W; W y T; W, D y T; toda la forma, y por último el relieve (costillas, cordones y espinas) de una concha ornamentada. El parecido compara los contornos de las dos conchas vistas de frente, de lado y desde arriba; en el nivel del relieve, que apenas cambia el contorno, compara el propio relieve. Siguiendo las pistas siempre se supera un nivel, y el juego no toca tu propia concha.
+
+![El reto en el nivel 2: el objetivo, un Planorbis plano, en una esquina, la concha del jugador en 3D y los deslizadores de W y T con un parecido del 67 % y la pista de bajar un poco la altura de la espira](images/challenge.png)
+
 ## Para qué sirve
 
 - **Explorar el modelo de Raup:** cambia W, D, T y S y la concha se reconstruye al instante, con la ecuación en forma general y con los valores actuales.
@@ -175,11 +179,12 @@ Los tests comprueban, entre otras cosas, que:
 - cada preset de forma cae en la región del morfoespacio de su grupo;
 - el sólido imprimible está cerrado, mira hacia fuera y tiene exactamente el tamaño pedido. Se comprueba con cada preset, cada ejemplo ornamentado y parámetros extremos;
 - costillas, cordones, nódulos, quilla y espinas aparecen exactamente donde deben, y las espinas nunca abren el labio de la apertura;
+- el reto puntúa 100 a conchas idénticas y bajo a grupos distintos, y siguiendo sus pistas siempre se supera cada nivel;
 - el modelo mecánico se pandea primero en el número de ondas del mínimo de su curva de carga, y queda liso por debajo del umbral;
 - las imágenes TIFF se decodifican en los mismos píxeles, y la lámina de vistas se adapta a cualquier formato;
 - los archivos STL y 3MF están bien formados;
 - los textos en inglés y en español están completos;
-- toda la interfaz funciona en un navegador real: una prueba abre la app en Chrome sin ventana y recorre la guía, las pestañas, los modos de dibujo, las orientaciones, las ecuaciones, el patrón siguiendo a un deslizador mientras se arrastra, el aspecto en la dirección, deshacer, el creador de conchas, las páginas de Info y las exportaciones, y falla ante cualquier error en la página. Necesita Chrome y Node.js ≥ 22, y se omite sin ellos;
+- toda la interfaz funciona en un navegador real: una prueba abre la app en Chrome sin ventana y recorre la guía, las pestañas, los modos de dibujo, las orientaciones, las ecuaciones, el patrón siguiendo a un deslizador mientras se arrastra, el aspecto en la dirección, deshacer, el creador de conchas, el reto, las páginas de Info y las exportaciones, y falla ante cualquier error en la página. Necesita Chrome y Node.js ≥ 22, y se omite sin ellos;
 - las librerías que se cargan del CDN tienen las mismas versiones que las copias locales;
 - la interfaz no tiene problemas de accesibilidad graves (auditada con axe-core en los dos temas) y cumple el contraste WCAG AA.
 

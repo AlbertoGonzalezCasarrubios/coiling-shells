@@ -27,6 +27,10 @@ After closing the guide, the app shows a garden snail drawn with lines, ready to
 
 ![The shell creator at its ornament step: an ammonite with ribs and spines drawn with lines on the left and the simplified sliders on the right](docs/images/wizard.png)
 
+**Challenge: match the shell**, just below it, is a game for learning what each parameter does. It shows a target shell, a real one with its name hidden or a variant of it, and you change your own shell until they look alike. *Check* gives the likeness as a percentage and a hint on what to change; from 90 % you pass the level and the name is revealed. The five levels free the parameters one by one: W; W and T; W, D and T; the whole shape; and finally the relief (ribs, cords and spines) of an ornamented shell. The likeness compares the outlines of both shells seen from the front, the side and above; in the relief level, which barely changes the outline, it compares the relief itself. Following the hints always passes a level, and your own shell is untouched by the game.
+
+![The challenge at level 2: the target, a flat Planorbis, in a corner, the player's shell in 3D, and the sliders of W and T with a likeness of 67 % and the hint to lower the spire height a little](docs/images/challenge.png)
+
 ## What it is for
 
 - **Exploring Raup's model:** change W, D, T and S and the shell rebuilds instantly, with the equation shown both in general form and with the current values.
@@ -173,11 +177,12 @@ The tests check, among other things, that:
 - each shape preset lies in the morphospace region of its group;
 - the printable solid is closed, faces outwards and has exactly the requested size. This is checked for every preset, every ornamented example and extreme parameters;
 - ribs, cords, nodules, keel and spines appear exactly where they should, and spines never open the lip of the aperture;
+- the challenge scores identical shells 100 and different groups low, and following its hints always passes every level;
 - the mechanical model buckles first into the number of waves at the minimum of its load curve, and stays smooth below the threshold;
 - TIFF images decode to the same pixels, and the plate of views fits every format;
 - STL and 3MF files are well formed;
 - the English and Spanish texts are complete;
-- the whole interface works in a real browser: a test opens the app in headless Chrome and walks through the guide, the tabs, the render modes, the orientations, the equations, the pattern following a dragged slider, the look in the address, undo, the shell creator, the About pages and the exports, and fails on any error in the page. It needs Chrome and Node.js ≥ 22, and is skipped without them;
+- the whole interface works in a real browser: a test opens the app in headless Chrome and walks through the guide, the tabs, the render modes, the orientations, the equations, the pattern following a dragged slider, the look in the address, undo, the shell creator, the challenge, the About pages and the exports, and fails on any error in the page. It needs Chrome and Node.js ≥ 22, and is skipped without them;
 - the libraries loaded from the CDN have the same versions as the local copies;
 - the interface has no serious accessibility problems (audited with axe-core in both themes) and meets WCAG AA contrast.
 

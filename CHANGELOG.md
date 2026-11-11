@@ -4,6 +4,9 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+### Added
+- *Challenge: match the shell*: a game for learning what each parameter does. A target shell (a real one with its name hidden, or a variant) and the player's shell in 3D; *Check* gives the likeness and a hint, and from 90 % the level is passed and the shell revealed. Five levels free the parameters one by one (W; W and T; W, D and T; the whole shape; the relief). The likeness compares the outlines from the front, the side and above, and the relief itself in the last level. The user's own shell, the page address and the undo history are left untouched.
+
 ### Changed
 - The ornament page of the About window is rewritten to be clearer: a sketch of the kinds of ornament, the terms explained (suture, periphery, shoulder), a table of which control does what, the formula after the explanation in words, and the mechanical model of the cords explained with the same names as its panel. Two details are corrected: the change with growth is limited between 0 and 2, and positive values make the relief appear late.
 - Accessibility: secondary text meets WCAG AA contrast (4.5:1) in both themes, the format selector of the pattern has a label, the About text can be scrolled with the keyboard, and *reduce motion* in the system settings makes transitions and camera animations instantaneous.

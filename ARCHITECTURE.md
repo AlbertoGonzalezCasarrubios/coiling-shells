@@ -28,6 +28,7 @@ js/model/             The science, pure modules without DOM or Three.js (tested 
   raup.js             Geometry: parametric mesh, UVs, lines, mirror valve, normalisation
   ornament.js         Ornament: ribs, cords, keel, spines and change with growth
   mechanics.js        Mechanical model of the cords: buckling of the mantle edge
+  challenge.js        Match-the-shell challenge: silhouettes, score, hints, levels, targets (pure)
   meinhardt.js        Pigmentation: Meinhardt's reaction–diffusion models
   morphospace.js      W–D morphospace: contact curve and occupied regions
   presets.js          Shape, ornament and pigmentation presets
@@ -48,6 +49,7 @@ js/ui/                The interface, one module per part
   pdf.js              PDF sheet (jsPDF and MathJax SVG loaded on demand)
   guide.js            Welcome guide with its own small 3D scene
   wizard.js           Create your own shell: the step-by-step window
+  challenge.js        Challenge: match the shell (window, levels, check)
   undo.js             Undo history
 js/workers/
   pigment-worker.js   Web Worker that runs meinhardt.js off the main thread (loaded by ui/pigment.js as ../workers/pigment-worker.js; if it cannot load, the pattern and the gallery thumbnails are computed on the main thread)
@@ -288,6 +290,17 @@ In `js/ui/pigment.js` the result is coloured with a **pigmentation threshold**, 
 
 `#wizard` is a modal window with five steps (shape, ornament, colour, look, export). It does not have its own scene or renderer: `openWizard` moves the app's canvas into `#wizView` with `setViewport`, so `resize`, the render loop, the orbit controls, free rotation and `renderViewImage` all use the window's view; closing it moves the canvas back. Its sliders are ordinary `createParam` controls (ids `wz-…`, with plain-language names `wzW`, `wzD`…) bound to the same `state`; their `onChange` updates the matching sidebar control and calls the same handlers (`onShapeChange`, `onOrnamentChange`). Menus, colours and toggles set the sidebar inputs and dispatch their events, so every change goes through one code path, is recorded by undo and written to the URL. `syncWizard` refreshes the window from the state when a step is shown or after undo. The export step calls `renderViewImage` at the screen size, `exportPDF`, or `openExport`.
 
+## Challenge
+
+`#challenge` is a modal window built like the shell creator: `openChallenge` moves the app's canvas into `#chView`, and its sliders are `createParam` controls (ids `ch-…`) bound to `state`. The game logic is the pure module `js/model/challenge.js`:
+
+- **Levels** (`LEVELS`) list the free parameters: W; W, T; W, D, T; the whole shape (with the coiling direction); and the relief (`ribN`, `ribH`, `cordN`, `cordH`, `spineN`, `spineH`) of an ornamented shell whose shape is given. Every other parameter is set to the target's value.
+- **Targets** (`makeTarget`) are the shape presets, or the ornamented presets in the last level; half of the time the free parameters are nudged a little. The player starts away from the target (`startShell` puts each free parameter on the other side of its range; relief starts smooth).
+- **Score.** `silhouettes` builds both shells at the same normalised size, projects them along the three axes and fills the triangles into a 96 × 96 grid; `overlap` is the mean intersection over union. `scoreFromOverlap` maps the mismatch d = 1 − overlap to 0–100 with (1 − d/0.5)^1.4, calibrated on real shells: indistinguishable shells differ by d ≈ 0.02 (≈ 95), shells of the same kind by d ≈ 0.1 (≈ 70), different groups by d = 0.3–0.8 (< 30). Relief barely changes an outline, so the last level uses `reliefScore` instead: for each kind of relief present in either shell, the closeness of its number times that of its height.
+- **Hints** (`bestHint`) report the free parameter furthest from the target in its own scale (`SCALE`, W logarithmic), with its direction. A hint based on silhouettes alone would fail when several parameters are wrong, because setting one right can make the outlines less alike. Tolerances are about half a slider step, so a right answer can always be set exactly; `tests/challenge.test.mjs` plays every level by following the hints with slider steps and checks that it always passes.
+
+The target is drawn with the plate renderer (`renderPlateSubset`, 3/4 and apertural views) after putting its parameters in the state and rebuilding (`rebuildNow`); then the player's starting shell takes its place. Opening the challenge saves the user's shell (`saveState` in undo.js) and pauses the page address and the undo history (`pauseAddress` in state.js); the keyboard shortcuts are off while it is open; closing it brings everything back with `loadState`, which is not an undo step. The highest level passed is kept in `localStorage` (`coiling-shells.challenge`).
+
 ## Undo
 
 Every change goes through `writeHash`, which also calls `noteChange`. A step is closed 450 ms after the last change: `commitStep` compares a JSON snapshot of the shape, the ornament, the render mode, the pattern and the look (`readLook`: colours, resolution, bands, axis) with the last committed one and, if it differs, pushes the old one onto `undoStack` (at most 50 steps). `undo` closes any step in progress, pops the previous snapshot and restores it through the same controls a user would move (`restoreSnapshot`); the pattern is recomputed only if it changed, and `applyLook` touches only the parts of the look that differ. The camera and the display orientation are not steps.
@@ -331,6 +344,7 @@ npm run format    # prettier --write .
 | `tests/meinhardt.test.mjs` | Seeded generator; every pattern preset forms a pattern with values in [0, 1]; same seed, same pattern; `extinct` and `uniform` diagnoses; bands are stable in time while flames oscillate; the default constants of each model form a pattern, and those of the activator–substrate model draw travelling waves |
 | `tests/morphospace.test.mjs` | Contact curve; each shape preset lies in the region of its group; freely coiled forms lie outside; regions point to existing presets and state their range of T |
 | `tests/export3d.test.mjs` | Every preset and extreme parameters (W 1.01 and 10⁴, D 0.9, T 10, S 0.5 and 2, N 0.25 and 20, mirror valve; walls 0.4 and 6 mm; sizes 30 and 250 mm), every kind of ornament and every ornamented preset give closed, consistently oriented, outward-facing solids of the exact size with the base at z = 0; STL structure; 3MF package (ZIP entries, units, vertex and triangle counts) |
+| `tests/challenge.test.mjs` | Silhouettes of the normalised shell; the score is 100 for the same shell, high for near matches and low across groups; the relief level scores relief, not outline; every level starts away from its target; following the hints with slider steps always passes every level; targets are real shells or modest variants |
 | `tests/ornament.test.mjs` | Bumps (width, asymmetry), cones and growth factor; no relief when every term is off; spines only at their positions and in symmetric rows; nodules only at crossings; keel at its position; buckling: minimum load at n*, first whole mode, unstable band, threshold and amplitude; ornamented presets use complete shapes inside the morphospace |
 | `tests/imagefile.test.mjs` | TIFF round trip (decoded with zlib, predictor undone) for several sizes and strips; compression of a flat background; reframing at wider and taller aspect ratios; layout of the plate in landscape, portrait and strip formats; file names from free text; fixed sizes within the limit |
 | `tests/cdn.test.mjs` | Every library loaded from jsDelivr (in `index.html` and `js/`) is loaded at a single version, equal to its exact version in the `devDependencies` of `package.json` |

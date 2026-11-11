@@ -81,6 +81,7 @@ import {
   fileStem,
   openExport,
   renderViewImage,
+  renderPlateSubset,
   initExport,
 } from './ui/export-dialog.js';
 import {
@@ -106,6 +107,7 @@ import {
 } from './ui/formulas.js';
 import { noteChange, startUndo, undo, initUndo } from './ui/undo.js';
 import { syncWizard, wizardDlg, initWizard } from './ui/wizard.js';
+import { challengeDlg, initChallenge } from './ui/challenge.js';
 import { ornamentResolution } from './model/ornament.js';
 import { PRESETS, DEFAULT_PRESET } from './model/presets.js';
 import { setLang, getLang, t, tPreset, applyStatic } from './i18n/i18n.js';
@@ -440,7 +442,8 @@ $('hideInfo').addEventListener('click', () => setClean(true));
 $('showInfo').addEventListener('click', () => setClean(false));
 
 window.addEventListener('keydown', (e) => {
-  if (infoDialog.open || $('welcome').open || $('exportDlg').open) return;
+  // In the challenge the shell is a game: no undo of the user's history, no shortcuts
+  if (infoDialog.open || $('welcome').open || $('exportDlg').open || challengeDlg.open) return;
   // Ctrl+Z / ⌘Z undoes the last step (outside text boxes, which have their own undo)
   if (
     (e.ctrlKey || e.metaKey) &&
@@ -690,6 +693,21 @@ initWizard({
   syncPatternControls,
 });
 
+// Challenge (ui/challenge.js)
+initChallenge({
+  applyMode,
+  controlsByKey,
+  createParam,
+  markDirty,
+  rebuildNow: () => {
+    rebuild();
+    applyMode();
+  },
+  renderPlateSubset,
+  resize,
+  setPatternOn,
+});
+
 // Undo (ui/undo.js)
 initUndo({
   applyLook,
@@ -723,6 +741,7 @@ function resize() {
 }
 new ResizeObserver(resize).observe(viewport);
 new ResizeObserver(() => wizardDlg.open && resize()).observe($('wizView'));
+new ResizeObserver(() => challengeDlg.open && resize()).observe($('chView'));
 resize();
 
 function renderFrame() {
