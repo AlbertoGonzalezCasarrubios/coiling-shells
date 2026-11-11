@@ -253,6 +253,7 @@ function newRound() {
   syncControls();
   $('chResult').hidden = true;
   $('chNext').hidden = true;
+  $('chRestart').hidden = true;
   $('chCheck').hidden = false;
   /** @type {HTMLElement} */ (document.querySelector('[data-view=iso]')).click();
 }
@@ -269,8 +270,11 @@ function check() {
   if (passed) {
     $('chMessage').textContent = t(target.varied ? 'ch.passed.varied' : 'ch.passed', shellName());
     if (level > best()) storage.set(PROGRESS_KEY, String(level));
-    $('chNext').hidden = level === LEVELS.length;
-    $('chNext').textContent = t('ch.next');
+    const last = level === LEVELS.length;
+    $('chNext').hidden = last;
+    // The last level passed: the challenge is complete, and can be played again from the start
+    $('chRestart').hidden = !last;
+    if (last) $('chMessage').textContent += ' ' + t('ch.done');
   } else {
     // Harder levels name the parameter to look at, and only give the direction once it is close
     $('chMessage').textContent =
@@ -403,6 +407,11 @@ export function initChallenge(ctx) {
   $('chCheck').addEventListener('click', check);
   $('chNew').addEventListener('click', newRound);
   $('chNext').addEventListener('click', () => setLevel(level + 1));
+  // Starting again forgets the progress kept in the browser
+  $('chRestart').addEventListener('click', () => {
+    storage.remove(PROGRESS_KEY);
+    setLevel(1);
+  });
 }
 
 /** Names of the kinds of pattern (after a change of language). */

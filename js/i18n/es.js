@@ -189,6 +189,8 @@ export default {
   'ch.hue': (p) => `«${p}» es de otro tono.`,
   'ch.new': 'Otra concha',
   'ch.check': 'Comprobar',
+  'ch.restart': 'Empezar de nuevo',
+  'ch.done': '¡Has completado el reto! Empezar de nuevo lo juega desde el primer nivel y olvida tu progreso.',
   'ch.next': 'Siguiente nivel',
   'ch.score': (n) => `Parecido: ${n} %`,
   'ch.passed': (name) => `¡Conseguido! La concha era: ${name}.`,
@@ -252,6 +254,9 @@ export default {
   'wel.s5.t': 'Crea tu propia concha.',
   'wel.s5':
     'El botón de arriba de la barra lateral abre una ventana breve, paso a paso: forma, ornamento, color y aspecto, y después llévatela como fondo de pantalla, PDF o pieza impresa en 3D.',
+  'wel.s6.t': 'Reto.',
+  'wel.s6':
+    'El botón amarillo de debajo es un juego: imita una concha oculta, primero su forma, después su relieve y su color, con una pista tras cada intento. Es una forma rápida de aprender qué hace cada parámetro.',
   'wel.theory': 'Leer la teoría',
   'wel.start': 'Empezar',
   'wel.author': 'Alberto González Casarrubios · Universidad Complutense de Madrid',

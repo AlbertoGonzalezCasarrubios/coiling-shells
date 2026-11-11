@@ -150,6 +150,13 @@ export const storage = {
       /* not remembered */
     }
   },
+  remove(key) {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      /* nothing was remembered */
+    }
+  },
 };
 export const LANG_KEY = 'coiling-shells.lang';
 export const WELCOME_KEY = 'coiling-shells.welcome';

@@ -208,4 +208,24 @@ test('targets: real shells, sometimes varied within their kind', () => {
   const e = makeTarget(8, rand);
   assert.ok(ORNAMENT_PRESETS[e.name] && PATTERN_PRESETS[e.pattern], 'the last level has a shape, a relief and a pattern');
   assert.deepEqual([...new Set(LEVELS.map((L) => L.block))], ['shape', 'ornament', 'colour'], 'three blocks, in order');
+  // Choosing the right kind of pattern, with its own settings and colours, never passes a colour level
+  for (const id of [7, 8])
+    for (let i = 0; i < 30; i++) {
+      const { shell } = makeTarget(id, rand);
+      const own = makeTargetFor(shell.patternPreset);
+      assert.ok(
+        colourScore(
+          {
+            ...shell,
+            ...own,
+            ...Object.fromEntries(
+              Object.keys(shell)
+                .filter((k) => !k.startsWith('pattern'))
+                .map((k) => [k, shell[k]]),
+            ),
+          },
+          shell,
+        ) < passScore(id),
+      );
+    }
 });

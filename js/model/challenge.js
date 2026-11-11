@@ -431,6 +431,9 @@ function patternOf(key) {
 }
 
 /** Background and pigment colours of real shells, for colour targets. */
+/** The highest score the kind's own pattern may get against a colour target. */
+const OWN_PATTERN_MAX = 75;
+
 const SHELL_COLOURS = [
   ['#f1e7d6', '#9c4a1f'], // cream and rust
   ['#ecc95a', '#3a2216'], // yellow and dark brown
@@ -488,14 +491,17 @@ export function makeTarget(level, rand = Math.random) {
     if (free.includes('D')) shell.D = Math.min(0.6, Math.max(0, shell.D + 0.4 * f * (2 * rand() - 1)));
     if (free.includes('S')) shell.S = Math.min(1.8, Math.max(0.6, nudge(shell.S)));
     if (free.includes('patternSize')) {
-      shell.patternSize = Math.min(3, Math.max(0.6, nudge(shell.patternSize)));
-      shell.patternT = nudge(shell.patternT);
-      shell.patternNoise = Math.min(0.5, Math.max(0, shell.patternNoise + 0.2 * f * (2 * rand() - 1)));
-      shell.patternAmount = Math.min(0.85, Math.max(0.15, shell.patternAmount + 0.4 * f * (2 * rand() - 1)));
-      // Other colours than the kind's own, so choosing the right kind is not enough
-      const own = PATTERN_PRESETS[shell.patternPreset];
-      const others = SHELL_COLOURS.filter(([b, g]) => colourDistance(b, own.base) + colourDistance(g, own.pigment) > 0.15);
-      [shell.patternBase, shell.patternPigment] = pick(others);
+      // Other settings and colours than the kind's own, far enough that choosing the
+      // right kind is never enough: drawn again until the kind's own pattern scores low
+      const own = { ...shell, ...patternOf(shell.patternPreset) };
+      const others = SHELL_COLOURS.filter(([b, g]) => colourDistance(b, own.patternBase) + colourDistance(g, own.patternPigment) > 0.15);
+      for (let i = 0; i < 50 && (i === 0 || colourScore(own, shell) >= OWN_PATTERN_MAX); i++) {
+        shell.patternSize = Math.min(3, Math.max(0.6, nudge(own.patternSize, 1.6)));
+        shell.patternT = nudge(own.patternT, 1.6);
+        shell.patternNoise = Math.min(0.5, Math.max(0, own.patternNoise + 0.2 * f * (2 * rand() - 1)));
+        shell.patternAmount = Math.min(0.85, Math.max(0.15, own.patternAmount + 0.4 * f * (2 * rand() - 1)));
+        [shell.patternBase, shell.patternPigment] = pick(others);
+      }
     }
   }
   return { name, pattern, shell, varied };

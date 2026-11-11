@@ -190,6 +190,8 @@ export default {
   'ch.hue': (p) => `“${p}” is of another hue.`,
   'ch.new': 'Another shell',
   'ch.check': 'Check',
+  'ch.restart': 'Start again',
+  'ch.done': 'You have completed the challenge! Start again plays it from the first level and forgets your progress.',
   'ch.next': 'Next level',
   'ch.score': (n) => `Likeness: ${n} %`,
   'ch.passed': (name) => `Well done! The shell was: ${name}.`,
@@ -250,6 +252,9 @@ export default {
   'wel.s5.t': 'Create your own shell.',
   'wel.s5':
     'The button at the top of the sidebar opens a short step-by-step window: shape, ornament, colour and look, and then take it with you as a wallpaper, a PDF or a 3D print.',
+  'wel.s6.t': 'Challenge.',
+  'wel.s6':
+    'The yellow button below it is a game: copy a hidden shell, first its shape, then its relief and its colour, with a hint after each try. It is a quick way to learn what each parameter does.',
   'wel.theory': 'Read the theory',
   'wel.start': 'Start exploring',
   'wel.author': 'Alberto González Casarrubios · Universidad Complutense de Madrid',
