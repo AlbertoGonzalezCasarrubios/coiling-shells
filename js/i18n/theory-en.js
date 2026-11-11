@@ -2,7 +2,19 @@
  * Long pages of the About window in English: the theory of each model, the
  * controls and the credits (HTML with TeX, typeset by MathJax when shown).
  */
-import { GENERAL_TEX, DEFS_TEX, MIRROR_TEX, ORN_REFS, REFS, AI_TEX, AS_TEX, GLOBAL_TEX, MEIN_REFS } from './tex.js';
+import { GENERAL_TEX, DEFS_TEX, MIRROR_TEX, ORN_REFS, REFS, AI_TEX, AS_TEX, GLOBAL_TEX, MEIN_REFS, ornamentFigure } from './tex.js';
+
+/** Sketch of the kinds of ornament, with the labels of this language. */
+const ORN_FIGURE = ornamentFigure({
+  ribs: 'Axial ribs',
+  cords: 'Spiral cords',
+  net: 'Reticulation, nodules',
+  keel: 'Keel and spines',
+  margin: 'thick line: margin of the aperture',
+  growth: 'growth',
+  periphery: 'periphery',
+  alt: 'Sketch of a piece of whorl seen from outside, with growth to the right and the margin of the aperture on the right: axial ribs run parallel to the margin, spiral cords run along the whorl, a reticulation combines them with nodules where they cross, and a keel is a strong cord with a row of spines.',
+});
 
 export default {
   'info.raup': `
@@ -54,50 +66,76 @@ export default {
     <h3>References</h3>
     ${REFS}`,
   'info.ornament': `
-    <blockquote class="quote">
-      Shells are not only coiled tubes: many are ribbed, corded, keeled or spiny, and this relief, like the colour pattern, is laid down at the growing edge.
-    </blockquote>
+    <p>Shells are not only coiled tubes: many carry ribs, cords, keels or spines. This relief, like the colour pattern, is made at the margin of the aperture while the shell grows, and then stays fixed.</p>
+
+    <h3>First, finding your way around</h3>
+    <p>All relief is described relative to the <strong>margin of the aperture</strong>, where the animal makes new shell. Picture a piece of a whorl seen from outside and laid flat: growth runs to the right, and the margin of the aperture is the thick line on the right.</p>
+    ${ORN_FIGURE}
+    <ul>
+      <li>The <strong>suture</strong> is the line where one whorl rests on the previous one; the <strong>apex</strong> is the tip of the shell.</li>
+      <li>The <strong>periphery</strong> is the most prominent part of the whorl, the one farthest from the axis.</li>
+      <li>The <strong>shoulder</strong> is the angle that some whorls make just below the suture.</li>
+    </ul>
 
     <h3>Kinds of ornament</h3>
-    <p>All ornament is built at the margin of the aperture, by the edge of the mantle, and stays fixed in the shell afterwards. It is described by its direction relative to that margin.</p>
     <ul>
-      <li><strong>Axial ribs</strong> (commarginal) run parallel to the margin, so across the whorls, like the growth lines. Each one records a moment when the mantle laid down a thicker or flared lip, as in <i>Epitonium</i> or many ammonites. A few strong ribs per whorl, steep on the side of the aperture, are <strong>varices</strong>: the remains of old lips.</li>
-      <li><strong>Spiral cords</strong> (antimarginal) run perpendicular to the margin, so along the whorls, parallel to the suture. Each one is a point of the margin that always secretes more, as in <i>Turritella</i>. In bivalves they are the radial ribs of a cockle.</li>
-      <li>When both are present they form a <strong>reticulate</strong> pattern (<i>Cancellaria</i>), and where they cross they can rise into <strong>nodules</strong> (<i>Cerithium</i>).</li>
-      <li>A <strong>keel</strong> is a single strong cord, often on the periphery. <strong>Spines</strong> are long projections, usually on ribs or on the shoulder.</li>
+      <li><strong>Axial ribs.</strong> They run parallel to the margin of the aperture, so they cross each whorl from suture to suture, like the growth lines. Each rib is a moment when the animal made a thicker or flared margin, as in <i>Epitonium</i> or many ammonites. When there are only a few per whorl, strong and steep on the side of the aperture, they are called <strong>varices</strong>: the remains of old margins.</li>
+      <li><strong>Spiral cords.</strong> They run perpendicular to the margin, so along the whorl, parallel to the suture. Each cord is a point of the margin that always makes more shell than its neighbours, as in <i>Turritella</i>. In bivalves the cords are the radial ribs running from the umbo to the edge, as in a cockle.</li>
+      <li><strong>Reticulation and nodules.</strong> With ribs and cords together they form a grid (<i>Cancellaria</i>). Sometimes the relief only rises where they cross, leaving <strong>nodules</strong>, bumps in rows (<i>Cerithium</i>).</li>
+      <li><strong>Keel.</strong> A single strong, sharp cord, often on the periphery.</li>
+      <li><strong>Spines.</strong> Points that stand out at intervals along the whorl, usually on the ribs or on the shoulder.</li>
     </ul>
+    <p>In technical texts, axial ribs are called <em>commarginal</em> (they follow the margin) and cords <em>antimarginal</em> (they cut across it).</p>
 
-    <h3>The descriptive model</h3>
-    <p>The <em>Ornament</em> tab adds the relief to Raup's surface. At each point the generating curve is pushed outwards along its normal \\(\\mathbf{n}(\\varphi)\\), by an amount proportional to the size of the aperture, so the ornament grows with the shell exactly as the rest of the aperture does:</p>
+    <h3>How the app draws it</h3>
+    <p>The <em>Ornament</em> tab starts from Raup's smooth shell and pushes its surface outwards wherever there is relief. The height of the relief is measured relative to the radius of the aperture, so it grows with the shell: a rib on the last whorl is much larger than one on the first whorls, as in a real shell.</p>
+    <table class="keys plain">
+      <tr><td>Axial ribs</td><td><em>Ribs per whorl</em>, <em>Height</em>; in advanced, <em>Width</em> (1 = a smooth wave) and <em>Asymmetry</em> (for varices).</td></tr>
+      <tr><td>Spiral cords</td><td><em>Cords</em>, <em>Height</em>; in advanced, <em>Width</em>. The <em>Nodules</em> box keeps the relief only where they cross the ribs.</td></tr>
+      <tr><td>Spines</td><td><em>Spines per whorl</em>, <em>Length</em>; in advanced, <em>Base</em>, <em>Position</em> (0 = periphery) and two symmetric rows.</td></tr>
+      <tr><td>Keel</td><td>In advanced: <em>Height</em>, <em>Width</em> and <em>Position</em>.</td></tr>
+      <tr><td>Change with growth</td><td>In advanced. Below 0, the relief fades towards the aperture (many shells are smooth when adult); above 0, it appears late.</td></tr>
+    </table>
+    <p>Spines are left out where the shell is still tiny, because there they would be specks: they are missing on the first whorls and on the part of the shell below a fifth of its final size. This is why a bivalve, which has a single whorl, carries them on the outer part of its valve, as in the spiny venus <i>Pitar lupanaria</i>.</p>
+
+    <h3>The formula</h3>
+    <p>For those who want the details: each point \\(\\mathbf{P}\\) of Raup's surface is moved along the normal \\(\\mathbf{n}\\), the direction perpendicular to the surface and pointing outwards. The factor \\(W^{\\theta/2\\pi}\\,a\\) is the radius of the aperture at that point of the spiral (see the Raup page), and \\(\\delta\\) is the height of the relief in units of that radius:</p>
     \\[ \\mathbf{P}^{*}(\\theta,\\varphi) = \\mathbf{P}(\\theta,\\varphi) + W^{\\theta/2\\pi}\\,a\\,\\delta(\\theta,\\varphi)\\,\\mathbf{n}(\\varphi) \\]
     \\[ \\delta = f(s)\\,\\bigl[\\,h_r R(\\theta) + h_c C(u) + h_k K(u) + h_s \\Sigma(\\theta,u)\\,\\bigr] \\]
+    <p>\\(\\theta\\) is the position along the spiral, and \\(u\\) the position around the aperture, measured as a fraction of its outline (0 at the periphery). Each term is one kind of relief, with its height \\(h\\):</p>
     <ul>
-      <li>\\(R\\): \\(n_r\\) axial ribs per whorl along \\(\\theta\\), counted from the final aperture. Each is a \\(\\cos^2\\) bump covering a fraction \\(w_r\\) of the spacing; the asymmetry \\(k\\) makes it steep on the side of the aperture and gentle behind, as varices are.</li>
-      <li>\\(C\\): \\(n_c\\) spiral cords around the margin, in the arc-length coordinate \\(u\\), which runs from 0 to 1 starting at the periphery. With <em>nodules</em> the two profiles multiply, \\((h_r + h_c)\\,R\\,C\\), so relief appears only where they cross.</li>
-      <li>\\(K\\): a keel, one cord at position \\(u_k\\).</li>
-      <li>\\(\\Sigma\\): spines, cones of length \\(h_s\\) placed \\(n_s\\) times per whorl, in one row at \\(u_s\\) or two rows at \\(\\pm u_s\\). They are left out where the shell is still tiny (the first whorls, or the part below a fifth of the final size), so a bivalve carries them on the outer part of its valve.</li>
-      <li>\\(f(s) = 1 + c\\,(2s-1)\\), with \\(s\\) the fraction of growth from the apex (0) to the aperture (1): with \\(c < 0\\) the ornament fades as the shell grows, as in many shells that become smooth when adult.</li>
+      <li>\\(R(\\theta)\\): the ribs, \\(n_r\\) per whorl. Each is a smooth bump (shaped as \\(\\cos^2\\)) covering a fraction \\(w_r\\) of the space between ribs; the asymmetry \\(k\\) makes it steep in front and gentle behind.</li>
+      <li>\\(C(u)\\): the cords, \\(n_c\\) around the aperture, of width \\(w_c\\). With nodules, ribs and cords multiply, \\((h_r + h_c)\\,R\\,C\\), so the relief only rises where both coincide.</li>
+      <li>\\(K(u)\\): the keel, one cord at position \\(u_k\\).</li>
+      <li>\\(\\Sigma(\\theta,u)\\): the spines, cones of length \\(h_s\\), \\(n_s\\) per whorl, in one row at \\(u_s\\) or two at \\(\\pm u_s\\).</li>
+      <li>\\(f(s) = 1 + c\\,(2s-1)\\), limited between 0 and 2, with \\(s\\) the fraction of growth (0 at the apex, 1 at the aperture): this is the <em>change with growth</em> \\(c\\).</li>
     </ul>
-    <p>This part is <strong>descriptive</strong>, like Raup's model: it reproduces the form of the ornament without explaining it (Fowler, Meinhardt &amp; Prusinkiewicz, 1992; Cortie, 1993). It also inherits Raup's limits. The aperture keeps one shape, so shells with a long siphonal canal, such as <i>Murex</i>, cannot be drawn and are left out of the examples. Spines point along the normal of the surface, while real spines often curve back or are open gutters.</p>
+    <p>This part is <strong>descriptive</strong>, like Raup's model: it reproduces the form of the relief without explaining why it appears (Fowler, Meinhardt &amp; Prusinkiewicz, 1992; Cortie, 1993). It also inherits Raup's limits. The aperture always keeps the same shape, so shells with a long canal, such as <i>Murex</i>, cannot be drawn and are left out of the examples. Spines stand perpendicular to the surface, while real ones often curve back or are open gutters.</p>
 
-    <h3 id="mech-theory">A mechanical explanation of the cords</h3>
-    <p>Why should a shell have nine cords and not twenty? Moulton, Goriely &amp; Chirat (2012) proposed a mechanical answer. The edge of the mantle is a soft, elastic strip that lies along the margin of the aperture and is attached to the shell it has just secreted. If the mantle grows a little faster than the margin it has to follow, it is compressed along its length, and a compressed strip on an elastic support buckles into waves, like a rug pushed against a wall. The shell records those waves as cords.</p>
-    <p>In the simplest version, the mantle edge is an elastic rod of bending stiffness \\(B\\) on an elastic foundation of stiffness \\(k\\) (a Winkler foundation). A wave of wavenumber \\(q\\) costs bending energy, which grows with \\(q^2\\), and foundation energy, which grows with \\(1/q^2\\). The compression \\(P\\) needed to buckle into that wave is</p>
+    <h3 id="mech-theory">Why this number of cords? A mechanical explanation</h3>
+    <p>Why should a shell have nine cords and not twenty? Moulton, Goriely &amp; Chirat (2012) proposed a mechanical answer. The shell is made by the <strong>edge of the mantle</strong>, a soft strip of tissue that runs along the margin of the aperture and is attached to the freshly made shell. If the mantle grows a little faster than the shell, it has length to spare; since it is attached, it cannot simply stretch out, and it <strong>wrinkles into waves</strong>, like a rug pushed against a wall. Each wave leaves a cord on the shell.</p>
+    <p>How many waves? Two costs compete:</p>
+    <ul>
+      <li><strong>Bending the mantle</strong> costs, and costs more the more waves there are, because each one is tighter.</li>
+      <li><strong>Pulling it away from the shell</strong> also costs, and costs more the fewer waves there are, because each one is longer and taller and lifts it further.</li>
+    </ul>
+    <p>The number of waves that appears is the one that makes the sum of both smallest: the compromise. In the app, the <em>Attachment / bending</em> control \\(\\Lambda\\) says how firmly the mantle is held compared with how stiff it is: a firmer hold or a more flexible mantle gives <strong>more, finer cords</strong>. The <em>Push of growth</em> control \\(\\eta\\) says how much length the mantle has to spare: below 1 it is not enough to wrinkle and the shell stays smooth; above 1, the waves grow.</p>
+    <p>In formulas, the mantle is an elastic rod of bending stiffness \\(B\\) on an elastic foundation of stiffness \\(k\\) (a Winkler foundation). The push needed to wrinkle into waves of wavenumber \\(q\\) is</p>
     \\[ P(q) = B\\,q^2 + \\frac{k}{q^2}, \\qquad P_c = 2\\sqrt{kB}, \\qquad q^{*} = \\left(\\frac{k}{B}\\right)^{1/4}. \\]
-    <p>Around a margin of length \\(L_0\\), \\(q\\) corresponds to \\(n = qL_0/2\\pi\\) waves. With the dimensionless stiffness ratio \\(\\Lambda = kL_0^4/B\\) and the load \\(\\eta = P/P_c\\):</p>
+    <p>The first term is the cost of bending and the second the cost of pulling away. Around a margin of length \\(L_0\\) there is room for \\(n = qL_0/2\\pi\\) waves. With \\(\\Lambda = kL_0^4/B\\) and \\(\\eta = P/P_c\\):</p>
     \\[ \\frac{P(n)}{P_c} = \\frac{1}{2}\\left[\\left(\\frac{n}{n^{*}}\\right)^2 + \\left(\\frac{n^{*}}{n}\\right)^2\\right], \\qquad n^{*} = \\frac{\\Lambda^{1/4}}{2\\pi}. \\]
     <ul>
-      <li>Below the threshold (\\(\\eta < 1\\)) no wave is possible and the shell is smooth.</li>
-      <li>Just above it, the first wave to appear is the one with the lowest load: \\(n^{*}\\) crests, rounded to a whole number. Its amplitude grows as \\(\\sqrt{\\eta - 1}\\), as in any supercritical bifurcation; the linear theory does not give the constant, and the app uses \\(0.08\\,a\\sqrt{\\eta - 1}\\).</li>
-      <li>A stiffer attachment or a softer mantle (larger \\(\\Lambda\\)) gives more, finer cords. Because \\(n^{*}\\) grows with \\(L_0\\), a growing aperture favours more waves; this is consistent with cords being added between the old ones as many shells grow.</li>
+      <li>With \\(\\eta < 1\\) no wave is possible and the shell is smooth.</li>
+      <li>Just above 1, the cheapest wave appears first: \\(n^{*}\\) crests, rounded to a whole number. Its height grows as \\(\\sqrt{\\eta - 1}\\); the theory does not give the constant, and the app uses \\(0.08\\,a\\sqrt{\\eta - 1}\\).</li>
+      <li>Because \\(n^{*}\\) grows with \\(L_0\\), a growing aperture has room for more and more waves, which fits the way many shells add new cords between the old ones.</li>
     </ul>
-    <p>The panel <em>Why this number of cords?</em>, in the advanced controls of the ornament tab, draws this curve. The shaded band shows the wave numbers that are unstable under the chosen load, and the point marks the one that appears first. The button grows those cords on the shell with a smooth, sinusoidal profile (\\(w_c = 1\\)), because that is the shape of a buckling mode.</p>
+    <p>The panel <em>Why this number of cords?</em>, in the advanced controls of the ornament tab, draws the curve \\(P(n)/P_c\\). The dashed line is the chosen push; the shaded band, the numbers of waves that push can produce, and the dot, the one that appears first. The button grows those cords on the shell with a smooth, wavy profile (width 1), which is the shape of a wrinkle.</p>
 
     <h3>Ribs and spines</h3>
-    <p>The same ideas extend to the other kinds of ornament. Axial ribs can arise as an oscillation in time: the mantle edge is held back by its elastic attachment while it grows, so the aperture overshoots and recoils, and the shell records each cycle as a rib (Moulton, Goriely &amp; Chirat, 2015, for ammonites). Spines appear when the excess growth is concentrated at a few points of the margin, which bend out of the surface; this explains why spines in unrelated groups look so alike (Chirat, Moulton &amp; Goriely, 2013). In the app these forms are drawn with the descriptive model; only the cords have an interactive mechanical model, because their theory is the simplest.</p>
+    <p>The same ideas apply to the rest of the relief. Axial ribs can be an oscillation in time: the elastic attachment holds the mantle back while it grows, the margin overshoots and recoils, and each cycle leaves a rib (Moulton, Goriely &amp; Chirat, 2015, for ammonites). Spines appear when the excess growth is concentrated at a few points of the margin, which bend outwards; this explains why unrelated groups have such similar spines (Chirat, Moulton &amp; Goriely, 2013). In the app, ribs and spines are drawn with the descriptive model; only the cords have an interactive mechanical model, because their theory is the simplest.</p>
 
     <h3>What the mechanical model leaves out</h3>
-    <p>It is a linear, one-dimensional model: the mantle is a uniform rod, the foundation is uniform, and only the onset of buckling is described. Real mantles vary in thickness and stiffness along the margin, waves interact once they are large, and the secretion of calcium carbonate has its own rules. The model explains why regular cords should appear, and what sets their number, not the detailed shape of a particular shell.</p>
+    <p>It is a simplified model: the mantle is a uniform strip on a uniform attachment, and it only describes the moment the wrinkles start. Real mantles vary in thickness and stiffness along the margin, large wrinkles interact with each other, and the making of calcium carbonate has its own rules. The model explains why regular cords should appear and what sets their number, not the exact shape of a particular shell.</p>
 
     <h3>References</h3>
     ${ORN_REFS}`,

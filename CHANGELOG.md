@@ -5,6 +5,7 @@ All notable changes to this project are documented in this file. The format is b
 ## [Unreleased]
 
 ### Changed
+- The ornament page of the About window is rewritten to be clearer: a sketch of the kinds of ornament, the terms explained (suture, periphery, shoulder), a table of which control does what, the formula after the explanation in words, and the mechanical model of the cords explained with the same names as its panel. Two details are corrected: the change with growth is limited between 0 and 2, and positive values make the relief appear late.
 - Accessibility: secondary text meets WCAG AA contrast (4.5:1) in both themes, the format selector of the pattern has a label, the About text can be scrolled with the keyboard, and *reduce motion* in the system settings makes transitions and camera animations instantaneous.
 - The stylesheet is split by area (`base`, `sidebar`, `viewer`, `dialogs`), loaded in cascade order; the computed style of every element is unchanged.
 - Development: type check of the JavaScript with TypeScript and JSDoc (`npm run typecheck`), with the JSDoc corrected where it no longer described the code; coverage with thresholds (`npm run coverage`), both in CI; new tests for the line drawing with relief, the translation helpers and the 3MF without compression; the browser test covers the advanced controls, the mechanical model, the morphospace chart, the growth animation and every export, audits accessibility with axe-core, and can no longer hang.

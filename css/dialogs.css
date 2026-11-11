@@ -198,3 +198,9 @@ kbd { font-family: var(--mono); font-size: 12px; padding: 1px 5px; border: 1px s
 .recipes strong { color: var(--text); font-weight: 600; }
 .recipes ul { margin: 4px 0 0; padding-left: 16px; }
 .recipes li + li { margin-top: 3px; }
+
+/* Sketches inside the About pages */
+.theory-figure { margin: 10px 0 14px; color: var(--text); }
+.theory-figure svg { display: block; width: 100%; max-width: 560px; height: auto; font-family: var(--font); }
+/* A table of names rather than keys (the ornament page) */
+.keys.plain td:first-child { font-family: var(--font); font-size: 13.5px; font-weight: 600; width: 30%; }

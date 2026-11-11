@@ -2,7 +2,19 @@
  * Long pages of the About window in Spanish: the theory of each model, the
  * controls and the credits (HTML with TeX, typeset by MathJax when shown).
  */
-import { GENERAL_TEX, DEFS_TEX, MIRROR_TEX, ORN_REFS, REFS, AI_TEX, AS_TEX, GLOBAL_TEX, MEIN_REFS } from './tex.js';
+import { GENERAL_TEX, DEFS_TEX, MIRROR_TEX, ORN_REFS, REFS, AI_TEX, AS_TEX, GLOBAL_TEX, MEIN_REFS, ornamentFigure } from './tex.js';
+
+/** Sketch of the kinds of ornament, with the labels of this language. */
+const ORN_FIGURE = ornamentFigure({
+  ribs: 'Costillas axiales',
+  cords: 'Cordones espirales',
+  net: 'Retícula y nódulos',
+  keel: 'Quilla y espinas',
+  margin: 'línea gruesa: borde de la apertura',
+  growth: 'crecimiento',
+  periphery: 'periferia',
+  alt: 'Esquema de un trozo de vuelta visto desde fuera, con el crecimiento hacia la derecha y el borde de la apertura a la derecha: las costillas axiales son paralelas al borde, los cordones espirales van a lo largo de la vuelta, la retícula los combina con nódulos en los cruces, y la quilla es un cordón fuerte con una fila de espinas.',
+});
 
 export default {
   'info.raup': `
@@ -55,50 +67,76 @@ export default {
     <h3>Referencias</h3>
     ${REFS}`,
   'info.ornament': `
-    <blockquote class="quote">
-      Las conchas no son solo tubos enrollados: muchas tienen costillas, cordones, quillas o espinas, y este relieve, como el dibujo de color, se forma en el borde que crece.
-    </blockquote>
+    <p>Las conchas no son solo tubos enrollados: muchas tienen costillas, cordones, quillas o espinas. Este relieve, igual que el dibujo de color, se forma en el borde de la apertura mientras la concha crece, y después queda fijo.</p>
+
+    <h3>Antes de empezar: cómo orientarse</h3>
+    <p>Todo el relieve se describe respecto al <strong>borde de la apertura</strong>, que es donde el animal fabrica concha nueva. Imagina un trozo de una vuelta visto desde fuera y estirado: el crecimiento avanza hacia la derecha y el borde de la apertura es la línea gruesa de la derecha.</p>
+    ${ORN_FIGURE}
+    <ul>
+      <li>La <strong>sutura</strong> es la línea donde una vuelta se apoya en la anterior; el <strong>ápice</strong> es la punta de la concha.</li>
+      <li>La <strong>periferia</strong> es la parte más saliente de la vuelta, la que queda más lejos del eje.</li>
+      <li>El <strong>hombro</strong> es el ángulo que forman algunas vueltas justo por debajo de la sutura.</li>
+    </ul>
 
     <h3>Tipos de ornamentación</h3>
-    <p>Toda la ornamentación se construye en el borde de la apertura, con el borde del manto, y después queda fija en la concha. Se describe por su dirección respecto a ese borde.</p>
     <ul>
-      <li>Las <strong>costillas axiales</strong> (comarginales) son paralelas al borde, así que cruzan las vueltas, como las líneas de crecimiento. Cada una registra un momento en que el manto depositó un labio más grueso o más abierto, como en <i>Epitonium</i> o en muchos ammonites. Unas pocas costillas fuertes por vuelta, abruptas por el lado de la apertura, son <strong>várices</strong>: restos de labios antiguos.</li>
-      <li>Los <strong>cordones espirales</strong> (antimarginales) son perpendiculares al borde, así que recorren las vueltas, paralelos a la sutura. Cada uno es un punto del borde que siempre segrega más, como en <i>Turritella</i>. En los bivalvos son las costillas radiales de un berberecho.</li>
-      <li>Cuando hay de los dos forman un dibujo <strong>reticulado</strong> (<i>Cancellaria</i>), y donde se cruzan pueden elevarse en <strong>nódulos</strong> (<i>Cerithium</i>).</li>
-      <li>Una <strong>quilla</strong> es un solo cordón fuerte, a menudo en la periferia. Las <strong>espinas</strong> son proyecciones largas, normalmente sobre las costillas o en el hombro.</li>
+      <li><strong>Costillas axiales.</strong> Son paralelas al borde de la apertura, así que cruzan cada vuelta de sutura a sutura, como las líneas de crecimiento. Cada costilla es un momento en que el animal hizo un borde más grueso o más abierto, como en <i>Epitonium</i> o en muchos ammonites. Cuando hay pocas por vuelta, fuertes y abruptas por el lado de la apertura, se llaman <strong>várices</strong>: son restos de bordes antiguos.</li>
+      <li><strong>Cordones espirales.</strong> Son perpendiculares al borde, así que recorren la vuelta a lo largo, paralelos a la sutura. Cada cordón es un punto del borde que fabrica siempre más concha que sus vecinos, como en <i>Turritella</i>. En los bivalvos, los cordones son las costillas radiales que van del umbo al borde, como en un berberecho.</li>
+      <li><strong>Retícula y nódulos.</strong> Si hay costillas y cordones a la vez, forman una cuadrícula (<i>Cancellaria</i>). A veces el relieve solo sube donde se cruzan, y quedan <strong>nódulos</strong>, bultos en filas (<i>Cerithium</i>).</li>
+      <li><strong>Quilla.</strong> Un solo cordón fuerte y afilado, a menudo en la periferia.</li>
+      <li><strong>Espinas.</strong> Puntas que sobresalen a intervalos a lo largo de la vuelta, normalmente sobre las costillas o en el hombro.</li>
     </ul>
+    <p>En los textos técnicos, las costillas axiales se llaman <em>comarginales</em> (siguen el borde) y los cordones, <em>antimarginales</em> (lo cortan).</p>
 
-    <h3>El modelo descriptivo</h3>
-    <p>La pestaña <em>Ornamento</em> añade el relieve a la superficie de Raup. En cada punto, la curva generatriz se desplaza hacia fuera a lo largo de su normal \\(\\mathbf{n}(\\varphi)\\), en una cantidad proporcional al tamaño de la apertura, así que la ornamentación crece con la concha igual que el resto de la apertura:</p>
+    <h3>Cómo lo dibuja la app</h3>
+    <p>La pestaña <em>Ornamento</em> parte de la concha lisa de Raup y empuja su superficie hacia fuera allí donde hay relieve. La altura del relieve se mide en proporción al radio de la apertura, así que crece con la concha: una costilla de la última vuelta es mucho mayor que una de las primeras, igual que en una concha real.</p>
+    <table class="keys plain">
+      <tr><td>Costillas axiales</td><td><em>Costillas por vuelta</em>, <em>Altura</em>; en avanzado, <em>Anchura</em> (1 = ondulación suave) y <em>Asimetría</em> (para várices).</td></tr>
+      <tr><td>Cordones espirales</td><td><em>Cordones</em>, <em>Altura</em>; en avanzado, <em>Anchura</em>. La casilla <em>Nódulos</em> deja el relieve solo en los cruces con las costillas.</td></tr>
+      <tr><td>Espinas</td><td><em>Espinas por vuelta</em>, <em>Longitud</em>; en avanzado, <em>Base</em>, <em>Posición</em> (0 = periferia) y dos filas simétricas.</td></tr>
+      <tr><td>Quilla</td><td>En avanzado: <em>Altura</em>, <em>Anchura</em> y <em>Posición</em>.</td></tr>
+      <tr><td>Cambio con el crecimiento</td><td>En avanzado. Por debajo de 0, el relieve se va borrando hacia la apertura (muchas conchas son lisas de adultas); por encima de 0, aparece tarde.</td></tr>
+    </table>
+    <p>Las espinas no aparecen donde la concha aún es diminuta, porque allí serían motas: faltan en las primeras vueltas y en la parte de la concha que no llega a una quinta parte de su tamaño final. Por eso un bivalvo, que tiene una sola vuelta, las lleva en la parte exterior de su valva, como la almeja espinosa <i>Pitar lupanaria</i>.</p>
+
+    <h3>La fórmula</h3>
+    <p>Para quien quiera el detalle: cada punto \\(\\mathbf{P}\\) de la superficie de Raup se desplaza a lo largo de la normal \\(\\mathbf{n}\\), la dirección perpendicular a la superficie hacia fuera. El factor \\(W^{\\theta/2\\pi}\\,a\\) es el radio de la apertura en ese punto de la espiral (véase la página de Raup), y \\(\\delta\\) es la altura del relieve en unidades de ese radio:</p>
     \\[ \\mathbf{P}^{*}(\\theta,\\varphi) = \\mathbf{P}(\\theta,\\varphi) + W^{\\theta/2\\pi}\\,a\\,\\delta(\\theta,\\varphi)\\,\\mathbf{n}(\\varphi) \\]
     \\[ \\delta = f(s)\\,\\bigl[\\,h_r R(\\theta) + h_c C(u) + h_k K(u) + h_s \\Sigma(\\theta,u)\\,\\bigr] \\]
+    <p>\\(\\theta\\) es la posición a lo largo de la espiral, y \\(u\\) la posición alrededor de la apertura, medida como fracción de su contorno (0 en la periferia). Cada término es un tipo de relieve, con su altura \\(h\\):</p>
     <ul>
-      <li>\\(R\\): \\(n_r\\) costillas axiales por vuelta a lo largo de \\(\\theta\\), contadas desde la apertura final. Cada una es un relieve en \\(\\cos^2\\) que ocupa una fracción \\(w_r\\) del espaciado; la asimetría \\(k\\) la hace abrupta por el lado de la apertura y suave por detrás, como las várices.</li>
-      <li>\\(C\\): \\(n_c\\) cordones espirales alrededor del borde, en la coordenada de longitud de arco \\(u\\), que va de 0 a 1 empezando en la periferia. Con <em>nódulos</em>, los dos perfiles se multiplican, \\((h_r + h_c)\\,R\\,C\\), y el relieve solo aparece donde se cruzan.</li>
-      <li>\\(K\\): una quilla, un cordón en la posición \\(u_k\\).</li>
-      <li>\\(\\Sigma\\): espinas, conos de longitud \\(h_s\\) colocados \\(n_s\\) veces por vuelta, en una fila en \\(u_s\\) o en dos filas en \\(\\pm u_s\\). No aparecen donde la concha aún es diminuta (las primeras vueltas, o la parte por debajo de una quinta parte del tamaño final), así que un bivalvo las lleva en la parte exterior de su valva.</li>
-      <li>\\(f(s) = 1 + c\\,(2s-1)\\), con \\(s\\) la fracción de crecimiento desde el ápice (0) hasta la apertura (1): con \\(c < 0\\), la ornamentación se desvanece al crecer, como en muchas conchas que se vuelven lisas de adultas.</li>
+      <li>\\(R(\\theta)\\): las costillas, \\(n_r\\) por vuelta. Cada una es un bulto suave (con forma de \\(\\cos^2\\)) que ocupa una fracción \\(w_r\\) del espacio entre costillas; la asimetría \\(k\\) lo hace abrupto por delante y suave por detrás.</li>
+      <li>\\(C(u)\\): los cordones, \\(n_c\\) alrededor de la apertura, con anchura \\(w_c\\). Con nódulos, costillas y cordones se multiplican, \\((h_r + h_c)\\,R\\,C\\), así que el relieve solo sube donde coinciden los dos.</li>
+      <li>\\(K(u)\\): la quilla, un cordón en la posición \\(u_k\\).</li>
+      <li>\\(\\Sigma(\\theta,u)\\): las espinas, conos de longitud \\(h_s\\), \\(n_s\\) por vuelta, en una fila en \\(u_s\\) o en dos en \\(\\pm u_s\\).</li>
+      <li>\\(f(s) = 1 + c\\,(2s-1)\\), limitado entre 0 y 2, con \\(s\\) la fracción de crecimiento (0 en el ápice, 1 en la apertura): es el <em>cambio con el crecimiento</em> \\(c\\).</li>
     </ul>
-    <p>Esta parte es <strong>descriptiva</strong>, como el modelo de Raup: reproduce la forma de la ornamentación sin explicarla (Fowler, Meinhardt y Prusinkiewicz, 1992; Cortie, 1993). También hereda los límites de Raup. La apertura conserva una misma forma, así que las conchas con un canal sifonal largo, como <i>Murex</i>, no se pueden dibujar y quedan fuera de los ejemplos. Las espinas apuntan según la normal de la superficie, mientras que las reales a menudo se curvan hacia atrás o son canales abiertos.</p>
+    <p>Esta parte es <strong>descriptiva</strong>, como el modelo de Raup: reproduce la forma del relieve sin explicar por qué aparece (Fowler, Meinhardt y Prusinkiewicz, 1992; Cortie, 1993). También hereda los límites de Raup. La apertura conserva siempre la misma forma, así que no se pueden dibujar conchas con un canal largo, como <i>Murex</i>, y quedan fuera de los ejemplos. Las espinas salen perpendiculares a la superficie, mientras que las reales a menudo se curvan hacia atrás o son canales abiertos.</p>
 
-    <h3 id="mech-theory">Una explicación mecánica de los cordones</h3>
-    <p>¿Por qué una concha tiene nueve cordones y no veinte? Moulton, Goriely y Chirat (2012) propusieron una respuesta mecánica. El borde del manto es una tira blanda y elástica que recorre el borde de la apertura y está unida a la concha que acaba de segregar. Si el manto crece un poco más deprisa que el borde que debe seguir, queda comprimido a lo largo, y una tira comprimida sobre un soporte elástico se pandea en ondas, como una alfombra empujada contra la pared. La concha registra esas ondas como cordones.</p>
-    <p>En la versión más sencilla, el borde del manto es una varilla elástica de rigidez a flexión \\(B\\) sobre una base elástica de rigidez \\(k\\) (una base de Winkler). Una onda de número de onda \\(q\\) cuesta energía de flexión, que crece con \\(q^2\\), y energía de la base, que crece con \\(1/q^2\\). La compresión \\(P\\) necesaria para pandearse en esa onda es</p>
+    <h3 id="mech-theory">¿Por qué ese número de cordones? Una explicación mecánica</h3>
+    <p>¿Por qué una concha tiene nueve cordones y no veinte? Moulton, Goriely y Chirat (2012) propusieron una respuesta mecánica. Quien fabrica la concha es el <strong>borde del manto</strong>, una tira de tejido blanda que recorre el borde de la apertura y está pegada a la concha recién hecha. Si el manto crece un poco más deprisa que la concha, le sobra longitud; como está pegado, no puede estirarse sin más y se <strong>arruga en ondas</strong>, como una alfombra empujada contra la pared. Cada onda deja un cordón en la concha.</p>
+    <p>¿Cuántas ondas? Hay dos costes que compiten:</p>
+    <ul>
+      <li><strong>Doblar el manto</strong> cuesta, y cuesta más cuantas más ondas haya, porque cada una es más cerrada.</li>
+      <li><strong>Despegarlo de la concha</strong> también cuesta, y cuesta más cuantas menos ondas haya, porque cada una es más larga y más alta y lo separa más.</li>
+    </ul>
+    <p>El número de ondas que aparece es el que hace mínima la suma de los dos: el compromiso. En la app, el control <em>Unión / flexión</em> \\(\\Lambda\\) dice cuánto se sujeta el manto frente a lo rígido que es: con más sujeción o un manto más flexible salen <strong>más cordones y más finos</strong>. El control <em>Empuje del crecimiento</em> \\(\\eta\\) dice cuánto le sobra al manto: por debajo de 1 no llega para arrugarse y la concha queda lisa; por encima, las ondas crecen.</p>
+    <p>En fórmulas, el manto es una varilla elástica de rigidez a flexión \\(B\\) sobre una base elástica de rigidez \\(k\\) (una base de Winkler). El empuje necesario para arrugarse en ondas de número de onda \\(q\\) es</p>
     \\[ P(q) = B\\,q^2 + \\frac{k}{q^2}, \\qquad P_c = 2\\sqrt{kB}, \\qquad q^{*} = \\left(\\frac{k}{B}\\right)^{1/4}. \\]
-    <p>Alrededor de un borde de longitud \\(L_0\\), \\(q\\) corresponde a \\(n = qL_0/2\\pi\\) ondas. Con la razón de rigideces adimensional \\(\\Lambda = kL_0^4/B\\) y la carga \\(\\eta = P/P_c\\):</p>
+    <p>El primer término es el coste de doblar y el segundo, el de despegar. Alrededor de un borde de longitud \\(L_0\\) caben \\(n = qL_0/2\\pi\\) ondas. Con \\(\\Lambda = kL_0^4/B\\) y \\(\\eta = P/P_c\\):</p>
     \\[ \\frac{P(n)}{P_c} = \\frac{1}{2}\\left[\\left(\\frac{n}{n^{*}}\\right)^2 + \\left(\\frac{n^{*}}{n}\\right)^2\\right], \\qquad n^{*} = \\frac{\\Lambda^{1/4}}{2\\pi}. \\]
     <ul>
-      <li>Por debajo del umbral (\\(\\eta < 1\\)) no hay ninguna onda posible y la concha es lisa.</li>
-      <li>Justo por encima, la primera onda que aparece es la de menor carga: \\(n^{*}\\) crestas, redondeado a un número entero. Su amplitud crece como \\(\\sqrt{\\eta - 1}\\), como en cualquier bifurcación supercrítica; la teoría lineal no da la constante, y la app usa \\(0{,}08\\,a\\sqrt{\\eta - 1}\\).</li>
-      <li>Una unión más rígida o un manto más blando (\\(\\Lambda\\) mayor) dan más cordones y más finos. Como \\(n^{*}\\) crece con \\(L_0\\), una apertura que crece favorece más ondas; esto encaja con que muchas conchas añadan cordones entre los antiguos a medida que crecen.</li>
+      <li>Con \\(\\eta < 1\\) no hay ninguna onda posible y la concha es lisa.</li>
+      <li>Justo por encima de 1, aparece primero la onda más barata: \\(n^{*}\\) crestas, redondeado a un número entero. Su altura crece como \\(\\sqrt{\\eta - 1}\\); la teoría no da la constante, y la app usa \\(0{,}08\\,a\\sqrt{\\eta - 1}\\).</li>
+      <li>Como \\(n^{*}\\) crece con \\(L_0\\), una apertura que crece admite cada vez más ondas, lo que encaja con que muchas conchas añadan cordones nuevos entre los antiguos.</li>
     </ul>
-    <p>El panel <em>¿Por qué ese número de cordones?</em>, en los controles avanzados de la pestaña de ornamento, dibuja esta curva. La banda sombreada muestra los números de onda inestables con la carga elegida, y el punto marca el primero que aparece. El botón hace crecer esos cordones en la concha con un perfil suave y sinusoidal (\\(w_c = 1\\)), porque esa es la forma de un modo de pandeo.</p>
+    <p>El panel <em>¿Por qué ese número de cordones?</em>, en los controles avanzados de la pestaña de ornamento, dibuja la curva \\(P(n)/P_c\\). La línea discontinua es el empuje elegido; la banda sombreada, los números de ondas que ese empuje puede producir, y el punto, el que aparece primero. El botón hace crecer esos cordones en la concha con un perfil suave y ondulado (anchura 1), que es la forma de una arruga.</p>
 
     <h3>Costillas y espinas</h3>
-    <p>Las mismas ideas se extienden a los otros tipos de ornamentación. Las costillas axiales pueden surgir como una oscilación en el tiempo: la unión elástica frena al borde del manto mientras crece, así que la apertura se pasa y retrocede, y la concha registra cada ciclo como una costilla (Moulton, Goriely y Chirat, 2015, para los ammonites). Las espinas aparecen cuando el exceso de crecimiento se concentra en unos pocos puntos del borde, que se doblan fuera de la superficie; esto explica que las espinas de grupos sin parentesco se parezcan tanto (Chirat, Moulton y Goriely, 2013). En la app estas formas se dibujan con el modelo descriptivo; solo los cordones tienen un modelo mecánico interactivo, porque su teoría es la más sencilla.</p>
+    <p>Las mismas ideas sirven para el resto del relieve. Las costillas axiales pueden ser una oscilación en el tiempo: la unión elástica frena al manto mientras crece, el borde se pasa y retrocede, y cada ciclo deja una costilla (Moulton, Goriely y Chirat, 2015, para los ammonites). Las espinas aparecen cuando el exceso de crecimiento se concentra en unos pocos puntos del borde, que se doblan hacia fuera; eso explica que grupos sin parentesco tengan espinas tan parecidas (Chirat, Moulton y Goriely, 2013). En la app, costillas y espinas se dibujan con el modelo descriptivo; solo los cordones tienen un modelo mecánico interactivo, porque su teoría es la más sencilla.</p>
 
     <h3>Qué deja fuera el modelo mecánico</h3>
-    <p>Es un modelo lineal y unidimensional: el manto es una varilla uniforme, la base es uniforme y solo se describe el comienzo del pandeo. Los mantos reales varían en grosor y rigidez a lo largo del borde, las ondas interaccionan cuando son grandes y la secreción del carbonato cálcico tiene sus propias reglas. El modelo explica por qué deberían aparecer cordones regulares y qué fija su número, no la forma detallada de una concha concreta.</p>
+    <p>Es un modelo simplificado: el manto es una tira uniforme sobre una unión uniforme, y solo describe el momento en que empiezan las arrugas. Los mantos reales varían de grosor y rigidez a lo largo del borde, las arrugas grandes interaccionan entre sí y la fabricación del carbonato cálcico tiene sus propias reglas. El modelo explica por qué deberían aparecer cordones regulares y qué fija su número, no la forma exacta de una concha concreta.</p>
 
     <h3>Referencias</h3>
     ${ORN_REFS}`,

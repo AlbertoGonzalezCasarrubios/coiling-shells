@@ -61,3 +61,47 @@ export const MEIN_REFS = `
     <li>Fowler, D. R., Meinhardt, H. &amp; Prusinkiewicz, P. (1992). Modeling seashells. <i>Computer Graphics (SIGGRAPH '92)</i> 26(2), 379–387.</li>
     <li>Meinhardt, H. (2009). <i>The Algorithmic Beauty of Sea Shells</i>, 4th ed. Springer.</li>
   </ul>`;
+
+/**
+ * Sketch of the kinds of ornament on a piece of whorl seen from outside and
+ * unrolled: growth runs to the right, and the right edge of each panel is the
+ * margin of the aperture. `l` holds the labels of one language.
+ * @param {{ ribs: string, cords: string, net: string, keel: string, margin: string, growth: string, periphery: string, alt: string }} l
+ */
+export function ornamentFigure(l) {
+  const W = 118,
+    H = 84,
+    Y = 8;
+  const panel = (i, title, inner) => {
+    const x = 6 + i * 132;
+    return `<g transform="translate(${x} ${Y})">
+      <rect x="0" y="0" width="${W}" height="${H}" rx="3" fill="var(--surface-2)" stroke="var(--border)" />
+      <g stroke="var(--accent)" fill="var(--accent)" stroke-linecap="round">${inner}</g>
+      <line x1="${W}" y1="0" x2="${W}" y2="${H}" stroke="currentColor" stroke-width="3" />
+      <text x="${W / 2}" y="${H + 16}" text-anchor="middle" font-size="11" fill="currentColor">${title}</text>
+    </g>`;
+  };
+  const xs = [18, 38, 58, 78, 98],
+    ys = [16, 32, 48, 64];
+  const ribs = xs.map((x) => `<line x1="${x}" y1="4" x2="${x}" y2="${H - 4}" stroke-width="3" />`).join('');
+  const cords = ys.map((y) => `<line x1="4" y1="${y}" x2="${W - 4}" y2="${y}" stroke-width="3" />`).join('');
+  const thin = (s) => s.replaceAll('stroke-width="3"', 'stroke-width="1.5"');
+  const nodules = xs.flatMap((x) => ys.map((y) => `<circle cx="${x}" cy="${y}" r="3.6" stroke="none" />`)).join('');
+  const keel = `<line x1="4" y1="${H / 2}" x2="${W - 4}" y2="${H / 2}" stroke-width="5" />
+    <text x="6" y="${H / 2 - 6}" font-size="9" fill="currentColor" stroke="none">${l.periphery}</text>`;
+  const spines = [24, 54, 84].map((x) => `<path d="M${x - 6} ${H - 14} L${x} ${H - 34} L${x + 6} ${H - 14} Z" stroke="none" />`).join('');
+  return `<figure class="theory-figure">
+    <svg viewBox="0 0 532 154" role="img" aria-label="${l.alt}">
+      ${panel(0, l.ribs, ribs)}
+      ${panel(1, l.cords, cords)}
+      ${panel(2, l.net, thin(ribs) + thin(cords) + nodules)}
+      ${panel(3, l.keel, keel + spines)}
+      <g fill="currentColor" stroke="currentColor">
+        <line x1="40" y1="142" x2="470" y2="142" stroke-width="1.2" />
+        <path d="M470 138 L480 142 L470 146 Z" stroke="none" />
+        <text x="40" y="136" font-size="10.5" stroke="none">${l.growth}</text>
+        <text x="526" y="136" font-size="10.5" text-anchor="end" stroke="none">${l.margin}</text>
+      </g>
+    </svg>
+  </figure>`;
+}
