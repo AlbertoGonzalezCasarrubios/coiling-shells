@@ -221,11 +221,14 @@ kbd { font-family: var(--mono); font-size: 12px; padding: 1px 5px; border: 1px s
   .ch-block-name { font-size: 9.5px; letter-spacing: 0; }
   .ch-block-steps { gap: 3px; }
   .ch-block-steps button { width: 23px; height: 23px; font-size: 11px; }
+  .ch-result { margin: 8px 12px 0; padding: 8px 10px; }
+  .ch-result p { margin-top: 4px; font-size: 13px; line-height: 1.35; }
 }
 /* A thin scrollbar in the theme's colours (the creator and the challenge) */
 .wizard-panels { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 .ch-level-name { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); }
-.ch-result { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; background: var(--surface-2); }
+.ch-result { flex: none; margin: 10px 16px 0; border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; background: var(--surface-2); }
+.ch-result:not([hidden]) + .wizard-nav { margin-top: 10px; }
 .ch-result.passed { border-color: var(--accent); background: var(--accent-soft); }
 .ch-result p { margin: 6px 0 0; font-size: 13.5px; line-height: 1.45; }
 .ch-score { display: flex; align-items: center; gap: 10px; font-weight: 600; font-variant-numeric: tabular-nums; }

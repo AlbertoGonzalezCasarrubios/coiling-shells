@@ -849,12 +849,13 @@
                 <label class="color-field"><input type="color" id="chPigment" /><span data-i18n="pig.pigment">Pigment</span></label>
               </div>
             </section>
-            <div class="ch-result" id="chResult" role="status" aria-live="polite" hidden>
-              <div class="ch-score"><span id="chScore"></span><span class="ch-bar" id="chBar"></span></div>
-              <p id="chMessage"></p>
-            </div>
             <p class="note ch-how" data-i18n="ch.how"></p>
           </section>
+        </div>
+        <!-- The result stays in view, outside the scrolling controls -->
+        <div class="ch-result" id="chResult" role="status" aria-live="polite" hidden>
+          <div class="ch-score"><span id="chScore"></span><span class="ch-bar" id="chBar"></span></div>
+          <p id="chMessage"></p>
         </div>
         <div class="wizard-nav">
           <button type="button" class="btn" id="chNew" data-i18n="ch.new">Another shell</button>
