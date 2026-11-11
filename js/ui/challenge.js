@@ -46,10 +46,31 @@ const chView = $('chView');
 const PROGRESS_KEY = 'coiling-shells.challenge';
 
 // One slider per parameter that a level can free (plain names, as in the shell creator)
+// grouped as in the main interface: Raup parameters, geometry, and each kind of relief
 const SLIDERS = [
-  ...['W', 'D', 'T', 'S', 'turns'].map((k) => ({ ...[...RAUP_PARAMS, ...GEO_PARAMS].find((d) => d.key === k), i18n: `wz${k}` })),
-  ...['ribN', 'ribH', 'cordN', 'cordH', 'spineN', 'spineH'].map((k) => ({ ...ORN_PARAMS.find((d) => d.key === k), i18n: k })),
+  ...['W', 'D', 'T', 'S', 'turns'].map((k) => ({
+    ...[...RAUP_PARAMS, ...GEO_PARAMS].find((d) => d.key === k),
+    i18n: `wz${k}`,
+    group: k === 'turns' ? 'geo' : 'raup',
+  })),
+  ...['ribN', 'ribH', 'cordN', 'cordH', 'spineN', 'spineH'].map((k) => ({
+    ...ORN_PARAMS.find((d) => d.key === k),
+    i18n: k,
+    group: k.slice(0, -1),
+  })),
 ].map((d) => ({ ...d, id: `ch-${d.key}` }));
+/** The group of each parameter a level can free. */
+const GROUP_OF = {
+  ...Object.fromEntries(SLIDERS.map((d) => [d.key, d.group])),
+  hand: 'geo',
+  patternPreset: 'pattern',
+  patternSize: 'pattern',
+  patternT: 'pattern',
+  patternNoise: 'pattern',
+  patternAmount: 'pattern',
+  patternBase: 'colours',
+  patternPigment: 'colours',
+};
 
 // The colour level moves the simple pigment controls of the app's own pattern
 const COLOUR = {
@@ -195,8 +216,9 @@ function syncControls() {
   $('chHand').hidden = !free.includes('hand');
   const L = LEVELS[level - 1];
   const colour = L.parts.includes('colour');
-  $('chKinds').hidden = !colour;
-  $('chColours').hidden = !colour;
+  // A category shows when the level frees one of its parameters
+  const groups = new Set(free.map((k) => GROUP_OF[k]));
+  qsa('#challenge .ch-group').forEach((g) => (g.hidden = !groups.has(g.dataset.group)));
   $('chBase').value = pattern.base;
   $('chPigment').value = pattern.pigment;
   for (const d of PIG_SLIDERS) {
@@ -358,7 +380,7 @@ export function initChallenge(ctx) {
     }),
   );
   SLIDERS.forEach((d) =>
-    createParam(d, $('ch-params'), {
+    createParam(d, $(`ch-g-${d.group}`), {
       compact: true,
       onChange: () => {
         markDirty();

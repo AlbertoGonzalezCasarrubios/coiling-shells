@@ -18,7 +18,7 @@
  * Pure module (no Three.js, no DOM): it runs in the browser and in Node.
  */
 import { buildShell } from './raup.js';
-import { ORNAMENT_DEFAULTS, ornamentResolution } from './ornament.js';
+import { ORNAMENT_DEFAULTS, ORNAMENT_NEEDS, ornamentResolution } from './ornament.js';
 import { PRESETS, ORNAMENT_PRESETS, PATTERN_PRESETS } from './presets.js';
 
 const SIZE = 4;
@@ -274,6 +274,8 @@ export function bestHint(guess, target, keys) {
   let best = null,
     worst = 0;
   for (const key of keys) {
+    // A height means nothing without ribs, cords or spines to carry it: the count comes first
+    if (ORNAMENT_NEEDS[key] && !(guess[ORNAMENT_NEEDS[key]] > 0)) continue;
     const { d, tol } = SCALE[key];
     const e = d(guess[key], target[key]);
     if (e > tol && e > worst) {

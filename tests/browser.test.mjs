@@ -367,10 +367,20 @@ const TOUR = String.raw`(async () => {
   document.querySelector('#chLevels [data-level="7"]').click(); await sl(1500);
   document.querySelector('#chKinds [data-kind]').click(); await sl(1500);
   $('chCheck').click(); await sl(300);
-  log.chColour = !$('chKinds').hidden && /\d+/.test($('chScore').textContent) && $('chMessage').textContent.length > 0;
+  log.chColour = !$('chKinds').closest('.ch-group').hidden && /\d+/.test($('chScore').textContent) && $('chMessage').textContent.length > 0;
   $('closeChallenge').click(); await sl(1500);
   log.chRestored = location.hash === before.hash && $('preset').value === before.preset && $('undo').disabled === before.undo && !!document.querySelector('#viewport canvas');
   log.chProgress = localStorage.getItem('coiling-shells.challenge') === '1';
+  // The height of the ribs only shows when the shell has ribs
+  {
+    const hidden = () => $('p-ribH').closest('.param').classList.contains('absent');
+    const ribs = $('p-ribN').closest('.param').querySelector('input[type=number]');
+    const before = ribs.value;
+    const set = async (v) => { ribs.value = v; ribs.dispatchEvent(new Event('input')); await sl(300); };
+    await set('0'); const smoothHidden = hidden();
+    await set('12'); log.presence = smoothHidden && !hidden();
+    ribs.value = before; ribs.dispatchEvent(new Event('input')); await sl(300);
+  }
   $('tabbtn-shape').click(); $('raupTheory').click(); await sl(800);
   log.raupTheory = !!document.querySelector('dialog[open] .info-tabs [data-page=raup][aria-selected=true]');
   document.querySelectorAll('dialog[open]').forEach((d) => d.close());
@@ -446,6 +456,7 @@ test('the whole interface works in a real browser', { skip, timeout: 400_000 }, 
     assert.equal(log.chColour, true, 'the colour level can be played');
     assert.equal(log.chRestored, true, 'closing the challenge brings back the shell, the address and undo');
     assert.equal(log.chProgress, true, 'the challenge remembers the levels passed');
+    assert.equal(log.presence, true, 'the height of the ribs shows only when there are ribs ' + log.presenceDbg);
     assert.equal(log.raupTheory, true, "the Theory link of the shape tab opens Raup's page");
     assert.equal(log.mathErrors, 0, 'every About page typesets');
     if (LOCAL_LIBS) assert.equal(log.a11yRan, true, 'axe-core loads');

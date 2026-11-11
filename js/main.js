@@ -38,7 +38,16 @@ import {
   solid,
 } from './ui/scene.js';
 import { initGuide, openWelcome, updateWelcomeText, welcomeDlg } from './ui/guide.js';
-import { capturePointer, controlsByKey, createParam, markCustom, onShapeChange, setFill, initControls } from './ui/controls.js';
+import {
+  capturePointer,
+  controlsByKey,
+  createParam,
+  markCustom,
+  onShapeChange,
+  setFill,
+  initControls,
+  syncPresence,
+} from './ui/controls.js';
 import { VIEWS, orientTween, setOrient, stepOrient, stepTween, tween, updateGround, initViews } from './ui/views.js';
 import {
   PATTERN_CELLS,
@@ -126,6 +135,7 @@ let dirty = true;
 /** Asks for the mesh to be rebuilt on the next frame (for the modules of js/ui/). */
 function markDirty() {
   dirty = true;
+  syncPresence();
 }
 
 /**
@@ -796,6 +806,7 @@ renderer.setAnimationLoop((now) => {
   if (growAnim) stepGrow(now);
   if (dirty) {
     dirty = false;
+    syncPresence(); // also for changes that did not go through markDirty (the opening state)
     rebuild();
     applyMode();
   }

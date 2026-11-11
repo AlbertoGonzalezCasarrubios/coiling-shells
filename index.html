@@ -824,17 +824,31 @@
           <section class="wizard-panel">
             <p class="ch-level-name" id="chLevelName"></p>
             <p class="note" id="chIntro"></p>
-            <div class="wz-choices" id="chKinds" role="radiogroup" data-i18n-title="pig.preset"></div>
-            <div id="ch-params"></div>
-            <div id="ch-pig"></div>
-            <div class="colors two" id="chColours">
-              <label class="color-field"><input type="color" id="chBase" /><span data-i18n="pig.base">Background</span></label>
-              <label class="color-field"><input type="color" id="chPigment" /><span data-i18n="pig.pigment">Pigment</span></label>
-            </div>
-            <div class="segmented two" id="chHand" role="radiogroup" data-i18n-title="geo.hand">
-              <button type="button" data-hand="1" data-i18n="geo.dextral">Dextral</button>
-              <button type="button" data-hand="-1" data-i18n="geo.sinistral">Sinistral</button>
-            </div>
+            <!-- The free parameters, in the categories of the main interface -->
+            <section class="ch-group" data-group="raup"><h3 class="ch-group-title" data-i18n="raup.title">Raup parameters</h3><div id="ch-g-raup"></div></section>
+            <section class="ch-group" data-group="geo">
+              <h3 class="ch-group-title" data-i18n="geo.title">Geometry</h3>
+              <div id="ch-g-geo"></div>
+              <div class="segmented two" id="chHand" role="radiogroup" data-i18n-title="geo.hand">
+                <button type="button" data-hand="1" data-i18n="geo.dextral">Dextral</button>
+                <button type="button" data-hand="-1" data-i18n="geo.sinistral">Sinistral</button>
+              </div>
+            </section>
+            <section class="ch-group" data-group="rib"><h3 class="ch-group-title" data-i18n="orn.ribs">Axial ribs</h3><div id="ch-g-rib"></div></section>
+            <section class="ch-group" data-group="cord"><h3 class="ch-group-title" data-i18n="orn.cords">Spiral cords</h3><div id="ch-g-cord"></div></section>
+            <section class="ch-group" data-group="spine"><h3 class="ch-group-title" data-i18n="orn.spines">Spines</h3><div id="ch-g-spine"></div></section>
+            <section class="ch-group" data-group="pattern">
+              <h3 class="ch-group-title" data-i18n="pig.preset">Pattern</h3>
+              <div class="wz-choices" id="chKinds" role="radiogroup" data-i18n-title="pig.preset"></div>
+              <div id="ch-pig"></div>
+            </section>
+            <section class="ch-group" data-group="colours">
+              <h3 class="ch-group-title" data-i18n="pig.colors">Pigment colours</h3>
+              <div class="colors two" id="chColours">
+                <label class="color-field"><input type="color" id="chBase" /><span data-i18n="pig.base">Background</span></label>
+                <label class="color-field"><input type="color" id="chPigment" /><span data-i18n="pig.pigment">Pigment</span></label>
+              </div>
+            </section>
             <div class="ch-result" id="chResult" role="status" aria-live="polite" hidden>
               <div class="ch-score"><span id="chScore"></span><span class="ch-bar" id="chBar"></span></div>
               <p id="chMessage"></p>

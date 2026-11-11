@@ -90,6 +90,8 @@ test('the relief level scores the relief itself, not the outline', () => {
   assert.ok(levelScore(5, { ...t, ribN: t.ribN + 1 }, t) >= passScore(5), 'one rib more is still a match');
   assert.ok(levelScore(5, { ...t, ribN: t.ribN + 4 }, t) < passScore(5));
   assert.equal(bestHint({ ...t, ribN: t.ribN + 4 }, t, keys).key, 'ribN');
+  // Without ribs their height means nothing: the hint asks for the ribs first
+  assert.equal(bestHint({ ...t, ribN: 0, ribH: 0.4 }, t, keys).key, 'ribN');
   // With the shape free too, both must be right
   assert.equal(levelScore(6, t, t), 100);
   assert.ok(levelScore(6, { ...t, ribN: 0 }, t) < passScore(6), 'the right shape without the relief does not pass');
