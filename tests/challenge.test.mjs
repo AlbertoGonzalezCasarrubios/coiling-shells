@@ -32,7 +32,18 @@ const makeTargetFor = (kind) => {
     patternT: p.T,
     patternNoise: p.noise,
     patternAmount: p.amount ?? 0.5,
+    patternBase: p.base,
+    patternPigment: p.pigment,
   };
+};
+/** A colour a fraction k of the way from a to b (a player nudging a colour picker). */
+const mix = (a, b, k) => {
+  const c = [1, 3, 5].map((i) => {
+    const x = parseInt(a.slice(i, i + 2), 16),
+      y = parseInt(b.slice(i, i + 2), 16);
+    return Math.round(x + (y - x) * k + Math.sign(y - x));
+  });
+  return '#' + c.map((v) => Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0')).join('');
 };
 const seeded = (seed) => () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
@@ -86,24 +97,34 @@ test('the relief level scores the relief itself, not the outline', () => {
 });
 
 test('the colour level: the kind of pattern first, then its controls', () => {
-  const t = { ...shape('caracol'), patternPreset: 'cepaea', patternSize: 1, patternT: 3000, patternNoise: 0.05, patternAmount: 0.5 };
+  const t = makeTargetFor('cepaea');
   assert.equal(colourScore(t, t), 100);
   assert.ok(colourScore({ ...t, patternPreset: 'nautilus' }, t) <= 35, 'another kind of pattern scores low');
   assert.ok(colourScore({ ...t, patternSize: 1.15 }, t) >= 90, 'a slightly larger pattern still matches');
   assert.ok(colourScore({ ...t, patternSize: 2, patternT: 6000 }, t) < passScore(7));
+  // Colours count: other colours on the right pattern do not pass
+  assert.ok(colourScore({ ...t, patternBase: '#f2d9d6', patternPigment: '#7a3550' }, t) < passScore(7));
+  assert.ok(colourScore({ ...t, patternBase: '#efcc5e' }, t) >= 95, 'a nearly identical colour still matches');
+  const dark = bestHint({ ...t, patternPigment: '#bbbbbb' }, t, LEVELS[6].keys);
+  assert.equal(dark.key, 'patternPigment');
+  assert.equal(dark.dir, 'darker');
+  // The last level judges shape, relief and colour together
+  const all = { ...t, ...ORNAMENT_DEFAULTS, ...ORNAMENT_PRESETS.cerithium.shape, ...ORNAMENT_PRESETS.cerithium.orn };
+  assert.equal(levelScore(8, all, all), 100);
+  assert.ok(levelScore(8, { ...all, patternPreset: 'nautilus' }, all) < passScore(8), 'everything but the colour does not pass');
+  assert.ok(levelScore(8, { ...all, ribN: 0 }, all) < passScore(8), 'everything but the relief does not pass');
   assert.equal(bestHint({ ...t, patternPreset: 'nautilus', patternSize: 2 }, t, LEVELS[6].keys).key, 'patternPreset');
+  assert.equal(
+    bestHint({ ...t, patternPreset: 'nautilus', patternBase: '#ff9900' }, t, LEVELS[6].keys).key,
+    'patternPreset',
+    'the kind before the colours',
+  );
 });
 
 test('every level starts away from its target', () => {
   for (const L of LEVELS) {
-    const targets =
-      L.kind === 'relief' || L.kind === 'shapeRelief'
-        ? Object.keys(ORNAMENT_PRESETS)
-            .filter((k) => ORNAMENT_PRESETS[k].shape)
-            .map((k) => ({ ...ORNAMENT_DEFAULTS, ...ORNAMENT_PRESETS[k].shape, ...ORNAMENT_PRESETS[k].orn }))
-        : L.kind === 'colour'
-          ? Object.keys(PATTERN_PRESETS).map((k) => makeTargetFor(k))
-          : SHAPES.map(shape);
+    const rand = seeded(17);
+    const targets = Array.from({ length: 12 }, () => makeTarget(L.id, rand).shell);
     for (const t of targets) {
       const start = startShell(L.id, t);
       assert.ok(bestHint(start, t, L.keys), `level ${L.id}: there is something to change`);
@@ -140,13 +161,14 @@ test('following the hints with the sliders always passes the level', () => {
     for (let i = 0; i < 12; i++) {
       const { name, shell: target } = makeTarget(L.id, rand);
       let g = startShell(L.id, target);
-      for (const k of L.keys) if (k !== 'hand' && k !== 'patternPreset') g[k] = snap(k, g[k]);
+      for (const k of L.keys) if (!['hand', 'patternPreset', 'patternBase', 'patternPigment'].includes(k)) g[k] = snap(k, g[k]);
       let steps = 0;
       for (let h = bestHint(g, target, L.keys); h && steps < 3000; h = bestHint(g, target, L.keys), steps++) {
         const sign = h.dir === 'up' ? 1 : -1;
         let v;
         if (h.key === 'hand') v = -g.hand;
         else if (h.key === 'patternPreset') v = kinds[(kinds.indexOf(g.patternPreset) + 1) % kinds.length];
+        else if (h.key === 'patternBase' || h.key === 'patternPigment') v = mix(g[h.key], target[h.key], 0.25);
         else if (REL[h.key]) v = g[h.key] * (1 + sign * REL[h.key]);
         else v = snap(h.key, g[h.key] + sign * STEP[h.key]);
         g = { ...g, [h.key]: v };
@@ -181,4 +203,7 @@ test('targets: real shells, sometimes varied within their kind', () => {
   for (let i = 0; i < 20; i++) assert.ok(makeTarget(6, rand).shell.W < 10, 'level 6 leaves bivalves out');
   const c = makeTarget(7, rand);
   assert.ok(PATTERN_PRESETS[c.shell.patternPreset], 'the colour level uses a pattern preset');
+  const e = makeTarget(8, rand);
+  assert.ok(ORNAMENT_PRESETS[e.name] && PATTERN_PRESETS[e.pattern], 'the last level has a shape, a relief and a pattern');
+  assert.deepEqual([...new Set(LEVELS.map((L) => L.block))], ['shape', 'ornament', 'colour'], 'three blocks, in order');
 });

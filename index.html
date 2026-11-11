@@ -795,21 +795,42 @@
         <span class="ch-divider" aria-hidden="true"></span>
       </div>
       <div class="wizard-side">
-        <ol class="wizard-steps compact" id="chLevels">
-          <li><button type="button" data-level="1" data-i18n="ch.l1">W</button></li>
-          <li><button type="button" data-level="2" data-i18n="ch.l2">W, T</button></li>
-          <li><button type="button" data-level="3" data-i18n="ch.l3">W, D, T</button></li>
-          <li><button type="button" data-level="4" data-i18n="ch.l4">Shape</button></li>
-          <li><button type="button" data-level="5" data-i18n="ch.l5">Relief I</button></li>
-          <li><button type="button" data-level="6" data-i18n="ch.l6">Relief II</button></li>
-          <li><button type="button" data-level="7" data-i18n="ch.l7">Colour</button></li>
-        </ol>
+        <div class="ch-levels" id="chLevels">
+          <div class="ch-block">
+            <span class="ch-block-name" data-i18n="ch.b.shape">Shape</span>
+            <div class="ch-block-steps">
+              <button type="button" data-level="1" data-i18n-title="ch.l1">1</button>
+              <button type="button" data-level="2" data-i18n-title="ch.l2">2</button>
+              <button type="button" data-level="3" data-i18n-title="ch.l3">3</button>
+              <button type="button" data-level="4" data-i18n-title="ch.l4">4</button>
+            </div>
+          </div>
+          <div class="ch-block">
+            <span class="ch-block-name" data-i18n="ch.b.ornament">Ornament</span>
+            <div class="ch-block-steps">
+              <button type="button" data-level="5" data-i18n-title="ch.l5">1</button>
+              <button type="button" data-level="6" data-i18n-title="ch.l6">2</button>
+            </div>
+          </div>
+          <div class="ch-block">
+            <span class="ch-block-name" data-i18n="ch.b.colour">Colour</span>
+            <div class="ch-block-steps">
+              <button type="button" data-level="7" data-i18n-title="ch.l7">1</button>
+              <button type="button" data-level="8" data-i18n-title="ch.l8">2</button>
+            </div>
+          </div>
+        </div>
         <div class="wizard-panels">
           <section class="wizard-panel">
+            <p class="ch-level-name" id="chLevelName"></p>
             <p class="note" id="chIntro"></p>
             <div class="wz-choices" id="chKinds" role="radiogroup" data-i18n-title="pig.preset"></div>
             <div id="ch-params"></div>
             <div id="ch-pig"></div>
+            <div class="colors two" id="chColours">
+              <label class="color-field"><input type="color" id="chBase" /><span data-i18n="pig.base">Background</span></label>
+              <label class="color-field"><input type="color" id="chPigment" /><span data-i18n="pig.pigment">Pigment</span></label>
+            </div>
             <div class="segmented two" id="chHand" role="radiogroup" data-i18n-title="geo.hand">
               <button type="button" data-hand="1" data-i18n="geo.dextral">Dextral</button>
               <button type="button" data-hand="-1" data-i18n="geo.sinistral">Sinistral</button>

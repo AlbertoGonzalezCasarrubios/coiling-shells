@@ -708,6 +708,7 @@ initWizard({
 // Challenge (ui/challenge.js)
 initChallenge({
   PIG_SIMPLE,
+  paintPattern,
   applyMode,
   computePattern,
   controlsByKey,

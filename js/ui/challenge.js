@@ -17,7 +17,7 @@ import { t, tParam, tPattern, tPreset } from '../i18n/i18n.js';
 import { LEVELS, bestHint, levelScore, makeTarget, passScore, silhouettes, startShell } from '../model/challenge.js';
 import { simulatePattern } from '../model/meinhardt.js';
 import { ORNAMENT_DEFAULTS } from '../model/ornament.js';
-import { PATTERN_PRESETS, PRESETS } from '../model/presets.js';
+import { ORNAMENT_PRESETS, PATTERN_PRESETS, PRESETS } from '../model/presets.js';
 import { colorize } from './pigment.js';
 import { welcomeDlg } from './guide.js';
 import { camera, inner, innerMat, renderer, scene, setViewport, shellGroup, solid, solidMat } from './scene.js';
@@ -32,6 +32,7 @@ let PIG_SIMPLE,
   controlsByKey,
   createParam,
   markDirty,
+  paintPattern,
   pattern,
   pigControls,
   resize,
@@ -51,7 +52,14 @@ const SLIDERS = [
 ].map((d) => ({ ...d, id: `ch-${d.key}` }));
 
 // The colour level moves the simple pigment controls of the app's own pattern
-const COLOUR = { patternSize: 'size', patternT: 'T', patternNoise: 'noise', patternAmount: 'amount' };
+const COLOUR = {
+  patternSize: 'size',
+  patternT: 'T',
+  patternNoise: 'noise',
+  patternAmount: 'amount',
+  patternBase: 'base',
+  patternPigment: 'pigment',
+};
 let PIG_SLIDERS = [];
 let kind = null; // the kind of pattern the player has chosen (the app's preset name turns "custom" when a slider moves)
 
@@ -65,15 +73,17 @@ const best = () => +(storage.get(PROGRESS_KEY) ?? 0);
 
 function paramName(key) {
   if (key === 'hand') return t('geo.hand');
+  if (key === 'patternBase') return t('pig.base');
+  if (key === 'patternPigment') return t('pig.pigment');
   if (COLOUR[key]) return tParam(PIG_SLIDERS.find((d) => d.key === COLOUR[key]).i18n).name;
   const d = SLIDERS.find((s) => s.key === key);
   return tParam(d.i18n).name || key;
 }
 
 function shellName() {
-  const n = target.name;
-  if (LEVELS[level - 1].kind === 'colour') return tPattern(n);
-  return PRESETS[n] ? tPreset(n) : t(`orn.p.${n}`);
+  const { name, pattern: pat } = target;
+  const shell = PRESETS[name] ? tPreset(name) : ORNAMENT_PRESETS[name] ? t(`orn.p.${name}`) : tPattern(name);
+  return pat && pat !== name ? `${shell} + ${tPattern(pat)}` : shell;
 }
 
 /** The relief and the shape of a target go to the state; colour is left plain. */
@@ -114,7 +124,7 @@ function paintTarget() {
   };
   const { values } = simulatePattern(p, { W: s.W, turns: s.turns, rows, width, nMax: Math.round(256 / s.patternSize) });
   const rgba = new Uint8Array(rows * width * 4);
-  colorize(values, preset.base, preset.pigment, s.patternAmount, rgba);
+  colorize(values, s.patternBase, s.patternPigment, s.patternAmount, rgba);
   targetTexture.image = /** @type {any} */ ({ data: rgba, width, height: rows });
   targetTexture.needsUpdate = true;
   targetMat ??= solidMat.clone();
@@ -123,7 +133,7 @@ function paintTarget() {
   targetMat.color.set('#ffffff');
   targetMat.vertexColors = false;
   targetMat.needsUpdate = true;
-  targetInnerMat.color.set(preset.base).lerp(new THREE.Color('#ffffff'), 0.55);
+  targetInnerMat.color.set(s.patternBase).lerp(new THREE.Color('#ffffff'), 0.55);
   targetSolid.material = targetMat;
   targetInner.material = targetInnerMat;
 }
@@ -131,7 +141,7 @@ function paintTarget() {
 function drawTarget() {
   targetSolid.geometry.dispose();
   targetSolid.geometry = targetInner.geometry = targetGeometry(target.shell);
-  if (LEVELS[level - 1].kind === 'colour') paintTarget();
+  if (LEVELS[level - 1].parts.includes('colour')) paintTarget();
   else {
     targetSolid.material = solidMat;
     targetInner.material = innerMat;
@@ -183,8 +193,12 @@ function syncControls() {
     controlsByKey[d.id].el.hidden = !free.includes(d.key);
   }
   $('chHand').hidden = !free.includes('hand');
-  const colour = LEVELS[level - 1].kind === 'colour';
+  const L = LEVELS[level - 1];
+  const colour = L.parts.includes('colour');
   $('chKinds').hidden = !colour;
+  $('chColours').hidden = !colour;
+  $('chBase').value = pattern.base;
+  $('chPigment').value = pattern.pigment;
   for (const d of PIG_SLIDERS) {
     controlsByKey[d.id].set(pattern[d.key]);
     controlsByKey[d.id].el.hidden = !colour;
@@ -196,20 +210,22 @@ function syncControls() {
     b.setAttribute('aria-current', k === level ? 'step' : 'false');
     b.classList.toggle('done', k <= best());
   });
+  const inBlock = LEVELS.filter((x) => x.block === L.block);
+  $('chLevelName').textContent = `${t(`ch.b.${L.block}`)} · ${inBlock.indexOf(L) + 1}/${inBlock.length} · ${t(`ch.l${level}`)}`;
   $('chIntro').textContent = t(`ch.level${level}`);
   // The note about outlines only applies to the shape levels; the others explain their score
-  /** @type {HTMLElement} */ (document.querySelector('.ch-how')).hidden = LEVELS[level - 1].kind !== 'shape';
+  /** @type {HTMLElement} */ (document.querySelector('.ch-how')).hidden = L.parts.join() !== 'shape';
 }
 
 function newRound() {
   const L = LEVELS[level - 1];
   target = makeTarget(level);
-  targetSil = L.kind === 'shape' || L.kind === 'shapeRelief' ? silhouettes(target.shell) : null;
+  targetSil = L.parts.includes('shape') ? silhouettes(target.shell) : null;
   passed = false;
   drawTarget();
   const start = startShell(level, target.shell);
   applyShell(start);
-  if (L.kind === 'colour') chooseKind(start.patternPreset);
+  if (L.parts.includes('colour')) chooseKind(start.patternPreset);
   else setPatternOn(false);
   markDirty();
   syncControls();
@@ -240,9 +256,11 @@ function check() {
         ? t('ch.flip')
         : hint.dir === 'change'
           ? t('ch.kind')
-          : L.vague && hint.far
-            ? t('ch.look', paramName(hint.key))
-            : t(hint.dir === 'up' ? (hint.far ? 'ch.upFar' : 'ch.up') : hint.far ? 'ch.downFar' : 'ch.down', paramName(hint.key));
+          : ['lighter', 'darker', 'hue'].includes(hint.dir)
+            ? t(`ch.${hint.dir}`, paramName(hint.key))
+            : L.vague && hint.far
+              ? t('ch.look', paramName(hint.key))
+              : t(hint.dir === 'up' ? (hint.far ? 'ch.upFar' : 'ch.up') : hint.far ? 'ch.downFar' : 'ch.down', paramName(hint.key));
   }
   $('chResult').hidden = false;
   $('chResult').classList.toggle('passed', passed);
@@ -302,7 +320,20 @@ export function initChallenge(ctx) {
     selectPattern,
     setPatternOn,
     targetGeometry,
+    paintPattern,
   } = ctx);
+  // Colour level: the two colours of the pattern, kept in step with the pigment tab
+  for (const [id, key, side] of [
+    ['chBase', 'base', 'pigBase'],
+    ['chPigment', 'pigment', 'pigColor'],
+  ]) {
+    $(id).addEventListener('input', (e) => {
+      pattern[key] = e.target.value;
+      $(side).value = e.target.value;
+      paintPattern();
+      $('chResult').hidden = true;
+    });
+  }
   // Colour level: the kinds of pattern and the simple pigment sliders, bound to the app's pattern
   for (const key of Object.keys(PATTERN_PRESETS)) {
     const b = document.createElement('button');
