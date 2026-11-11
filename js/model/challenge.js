@@ -19,7 +19,7 @@
  */
 import { buildShell } from './raup.js';
 import { ORNAMENT_DEFAULTS, ornamentResolution } from './ornament.js';
-import { PRESETS, ORNAMENT_PRESETS } from './presets.js';
+import { PRESETS, ORNAMENT_PRESETS, PATTERN_PRESETS } from './presets.js';
 
 const SIZE = 4;
 /** Coordinates kept by each projection: front (x, y), side (z, y), top (x, z). */
@@ -37,9 +37,14 @@ const SPREAD = 0.2;
 /** Shape parameters of the challenge, and the ornament ones of its last level. */
 export const SHAPE_KEYS = ['W', 'D', 'T', 'S', 'turns', 'hand'];
 export const ORNAMENT_KEYS = ['ribN', 'ribH', 'cordN', 'cordH', 'spineN', 'spineH'];
+/** The colour level: the kind of pattern and the simple controls of the pigment tab. */
+export const COLOUR_KEYS = ['patternPreset', 'patternSize', 'patternT', 'patternNoise', 'patternAmount'];
 
 /**
- * @typedef {import('./raup.js').ShellShape & import('./ornament.js').OrnamentParams} ChallengeShell
+ * A shell of the challenge: Raup's shape, the relief and, in the colour level,
+ * the pattern (a preset of presets.js and its simple controls).
+ * @typedef {import('./raup.js').ShellShape & import('./ornament.js').OrnamentParams & {
+ *   patternPreset?: string, patternSize?: number, patternT?: number, patternNoise?: number, patternAmount?: number }} ChallengeShell
  */
 
 /**
@@ -209,9 +214,6 @@ export function scoreFromOverlap(ov) {
 /** Factor applied to the score when the coiling direction is wrong (the hint asks to flip it). */
 export const WRONG_HAND = 0.8;
 
-/** Score needed to pass a level. */
-export const PASS = 90;
-
 /**
  * How far a parameter is from the target, in a scale of its own: 1 is a clear,
  * visible difference. Below `tol` the parameter counts as right. W is compared
@@ -230,6 +232,11 @@ const SCALE = {
   cordH: { d: (a, b) => Math.abs(a - b) / 0.04, tol: 0.25 },
   spineN: { d: (a, b) => Math.abs(a - b) / 3, tol: 0.2 },
   spineH: { d: (a, b) => Math.abs(a - b) / 0.2, tol: 0.25 },
+  patternPreset: { d: (a, b) => (a === b ? 0 : 3), tol: 0.5 },
+  patternSize: { d: (a, b) => Math.abs(Math.log(a / b)) / Math.log(1.4), tol: 0.02 / Math.log(1.4) },
+  patternT: { d: (a, b) => Math.abs(Math.log(a / b)) / Math.log(1.4), tol: 0.015 / Math.log(1.4) },
+  patternNoise: { d: (a, b) => Math.abs(a - b) / 0.1, tol: 0.06 },
+  patternAmount: { d: (a, b) => Math.abs(a - b) / 0.12, tol: 0.05 },
 };
 
 /**
@@ -242,7 +249,7 @@ const SCALE = {
  * @param {ChallengeShell} guess
  * @param {ChallengeShell} target
  * @param {string[]} keys parameters the player can change
- * @returns {{ key: string, dir: 'up' | 'down' | 'flip', far: boolean } | null}
+ * @returns {{ key: string, dir: 'up' | 'down' | 'flip' | 'change', far: boolean } | null}
  *   far: the parameter is still well off (more than one visible step)
  */
 export function bestHint(guess, target, keys) {
@@ -253,7 +260,8 @@ export function bestHint(guess, target, keys) {
     const e = d(guess[key], target[key]);
     if (e > tol && e > worst) {
       worst = e;
-      best = { key, dir: key === 'hand' ? 'flip' : target[key] > guess[key] ? 'up' : 'down', far: e > 1 };
+      const dir = key === 'hand' ? 'flip' : key === 'patternPreset' ? 'change' : target[key] > guess[key] ? 'up' : 'down';
+      best = { key, dir, far: e > 1 };
     }
   }
   return best;
@@ -282,8 +290,23 @@ export function reliefScore(guess, target) {
 }
 
 /**
- * Score of a guess for a level: silhouettes for the shape, relief parameters
- * for the ornament level.
+ * Score of the pattern, 0–100, for the colour level: how close the simple
+ * controls are to the target's, each in its own scale; the wrong kind of pattern
+ * keeps only a third of it, because size or time cannot make bands look like flames.
+ * @param {ChallengeShell} guess
+ * @param {ChallengeShell} target
+ */
+export function colourScore(guess, target) {
+  const keys = ['patternSize', 'patternT', 'patternNoise', 'patternAmount'];
+  const close = keys.map((k) => Math.max(0, 1 - SCALE[k].d(guess[k], target[k]) / 2.5));
+  const mean = close.reduce((a, b) => a + b, 0) / keys.length;
+  return Math.round(100 * mean * (guess.patternPreset === target.patternPreset ? 1 : 0.35));
+}
+
+/**
+ * Score of a guess for a level: silhouettes for the shape, relief parameters for
+ * the relief, both together (their geometric mean, so both must be right) when
+ * shape and relief are free, and the pattern controls for the colour level.
  * @param {number} level
  * @param {ChallengeShell} guess
  * @param {ChallengeShell} target
@@ -291,23 +314,34 @@ export function reliefScore(guess, target) {
  */
 export function levelScore(level, guess, target, targetSil) {
   const L = LEVELS[level - 1];
-  if (L.ornament) return reliefScore(guess, target);
-  const score = scoreFromOverlap(overlap(silhouettes(guess), targetSil ?? silhouettes(target)));
-  return guess.hand === target.hand ? score : Math.round(score * WRONG_HAND);
+  if (L.kind === 'relief') return reliefScore(guess, target);
+  if (L.kind === 'colour') return colourScore(guess, target);
+  let shape = scoreFromOverlap(overlap(silhouettes(guess), targetSil ?? silhouettes(target)));
+  if (guess.hand !== target.hand) shape = Math.round(shape * WRONG_HAND);
+  if (L.kind === 'shape') return shape;
+  return Math.round(Math.sqrt(shape * reliefScore(guess, target)));
 }
 
 /**
- * Levels: which parameters the player moves. Everything else is set to the
- * target's values, so each level teaches what its parameters do. The last one
- * gives the shape of an ornamented shell and asks for its relief.
+ * Levels, from easier to harder. `keys` are the parameters the player moves;
+ * everything else is set to the target's values. `pass` is the score needed;
+ * `vary` how far a variant moves from the real shell, `always` that every target
+ * is a variant; `vague` hints name the parameter to look at but not the direction
+ * until it is close.
+ * @type {{ id: number, keys: string[], kind: 'shape' | 'relief' | 'shapeRelief' | 'colour', pass: number, vary: number, always?: boolean, vague?: boolean }[]}
  */
 export const LEVELS = [
-  { id: 1, keys: ['W'] },
-  { id: 2, keys: ['W', 'T'] },
-  { id: 3, keys: ['W', 'D', 'T'] },
-  { id: 4, keys: SHAPE_KEYS },
-  { id: 5, keys: ORNAMENT_KEYS, ornament: true },
+  { id: 1, keys: ['W'], kind: 'shape', pass: 85, vary: 0.15 },
+  { id: 2, keys: ['W', 'T'], kind: 'shape', pass: 88, vary: 0.15 },
+  { id: 3, keys: ['W', 'D', 'T'], kind: 'shape', pass: 90, vary: 0.2 },
+  { id: 4, keys: SHAPE_KEYS, kind: 'shape', pass: 90, vary: 0.25, always: true, vague: true },
+  { id: 5, keys: ORNAMENT_KEYS, kind: 'relief', pass: 90, vary: 0 },
+  { id: 6, keys: [...SHAPE_KEYS, ...ORNAMENT_KEYS], kind: 'shapeRelief', pass: 90, vary: 0.2, vague: true },
+  { id: 7, keys: COLOUR_KEYS, kind: 'colour', pass: 90, vary: 0.25 },
 ];
+
+/** Score needed to pass a level. */
+export const passScore = (level) => LEVELS[level - 1].pass;
 
 /**
  * Where a free parameter starts: on the other side of its range from the
@@ -328,49 +362,77 @@ const START = {
   spineH: (t) => t,
 };
 
-/** Shapes of the real shells that the first four levels use as targets. */
+/** Shapes of the real shells that the shape levels use as targets. */
 const SHAPE_TARGETS = ['caracol', 'turritella', 'trochus', 'planorbis', 'physa', 'peringia', 'nautilus', 'ammonite'];
 
+/** The simple pattern controls of a pattern preset (presets without size or amount use the defaults). */
+function patternOf(key) {
+  const p = PATTERN_PRESETS[key];
+  return { patternPreset: key, patternSize: p.size ?? 1, patternT: p.T, patternNoise: p.noise, patternAmount: p.amount ?? 0.5 };
+}
+
 /**
- * A target for a level: a real shell, sometimes varied a little so the same
- * shell does not always come back identical.
- * @param {number} level 1–5
+ * A target for a level: a real shell, often varied so the same shell does not
+ * always come back identical (more often and further in harder levels).
+ * @param {number} level 1–7
  * @param {() => number} rand random numbers in [0, 1)
  * @returns {{ name: string, shell: ChallengeShell, varied: boolean }}
  */
 export function makeTarget(level, rand = Math.random) {
+  const L = LEVELS[level - 1];
   const pick = (list) => list[Math.floor(rand() * list.length)];
+  const shapeOf = (k) => {
+    const { W, D, T, S, turns, hand, mirror } = PRESETS[k];
+    return { ...ORNAMENT_DEFAULTS, W, D, T, S, turns, hand, mirror };
+  };
   let name, shell;
-  if (LEVELS[level - 1].ornament) {
-    name = pick(Object.keys(ORNAMENT_PRESETS).filter((k) => k !== 'smooth' && ORNAMENT_PRESETS[k].shape));
+  if (L.kind === 'relief' || L.kind === 'shapeRelief') {
+    // With the shape free, bivalves are left out: their W of hundreds is beyond the slider of the challenge
+    const ok = (k) => k !== 'smooth' && ORNAMENT_PRESETS[k].shape && (L.kind === 'relief' || ORNAMENT_PRESETS[k].shape.W < 10);
+    name = pick(Object.keys(ORNAMENT_PRESETS).filter(ok));
     const p = ORNAMENT_PRESETS[name];
     shell = { ...ORNAMENT_DEFAULTS, ...p.shape, ...p.orn };
+  } else if (L.kind === 'colour') {
+    name = pick(Object.keys(PATTERN_PRESETS));
+    shell = { ...shapeOf(pick(SHAPE_TARGETS)), ...patternOf(name) };
   } else {
     name = pick(SHAPE_TARGETS);
-    const { W, D, T, S, turns, hand, mirror } = PRESETS[name];
-    shell = { ...ORNAMENT_DEFAULTS, W, D, T, S, turns, hand, mirror };
+    shell = shapeOf(name);
   }
-  // Half of the time, a variant: the free parameters move by a modest amount
-  const varied = rand() < 0.5;
+  const varied = L.vary > 0 && (L.always || rand() < 0.5);
   if (varied) {
-    const free = LEVELS[level - 1].keys;
-    const nudge = (v, f) => v * (1 + f * (2 * rand() - 1));
-    if (free.includes('W')) shell.W = Math.max(1.15, nudge(shell.W, 0.15));
-    if (free.includes('T') && shell.T > 0) shell.T = nudge(shell.T, 0.2);
-    if (free.includes('D')) shell.D = Math.min(0.6, Math.max(0, shell.D + 0.06 * (2 * rand() - 1)));
+    const free = L.keys;
+    const f = L.vary;
+    const nudge = (v, k = 1) => v * (1 + k * f * (2 * rand() - 1));
+    if (free.includes('W') && shell.W < 10) shell.W = Math.max(1.15, nudge(shell.W));
+    if (free.includes('T') && shell.T > 0) shell.T = nudge(shell.T, 1.3);
+    if (free.includes('D')) shell.D = Math.min(0.6, Math.max(0, shell.D + 0.4 * f * (2 * rand() - 1)));
+    if (free.includes('S')) shell.S = Math.min(1.8, Math.max(0.6, nudge(shell.S)));
+    if (free.includes('patternSize')) {
+      shell.patternSize = Math.min(3, Math.max(0.6, nudge(shell.patternSize)));
+      shell.patternT = nudge(shell.patternT);
+      shell.patternNoise = Math.min(0.5, Math.max(0, shell.patternNoise + 0.2 * f * (2 * rand() - 1)));
+      shell.patternAmount = Math.min(0.85, Math.max(0.15, shell.patternAmount + 0.4 * f * (2 * rand() - 1)));
+    }
   }
   return { name, shell, varied };
 }
 
 /**
  * The player's starting shell: the target's values for the fixed parameters and,
- * for the free ones, a value away from the target (START).
+ * for the free ones, a value away from the target (START); in the colour level,
+ * another kind of pattern with its own controls.
  * @param {number} level
  * @param {ChallengeShell} target
  * @returns {ChallengeShell}
  */
 export function startShell(level, target) {
+  const L = LEVELS[level - 1];
   const s = { ...target };
-  for (const k of LEVELS[level - 1].keys) s[k] = START[k](target[k]);
+  if (L.kind === 'colour') {
+    const kinds = Object.keys(PATTERN_PRESETS);
+    return { ...s, ...patternOf(kinds[(kinds.indexOf(target.patternPreset) + 1) % kinds.length]) };
+  }
+  for (const k of L.keys) s[k] = START[k](target[k]);
   return s;
 }

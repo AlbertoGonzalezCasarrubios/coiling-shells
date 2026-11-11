@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 import {
   GRID,
   LEVELS,
-  PASS,
+  passScore,
+  colourScore,
   bestHint,
   levelScore,
   makeTarget,
@@ -14,7 +15,7 @@ import {
   startShell,
 } from '../js/model/challenge.js';
 import { ORNAMENT_DEFAULTS } from '../js/model/ornament.js';
-import { ORNAMENT_PRESETS, PRESETS } from '../js/model/presets.js';
+import { ORNAMENT_PRESETS, PATTERN_PRESETS, PRESETS } from '../js/model/presets.js';
 
 const SHAPES = ['caracol', 'turritella', 'trochus', 'planorbis', 'physa', 'peringia', 'nautilus', 'ammonite'];
 const shape = (k) => {
@@ -22,6 +23,17 @@ const shape = (k) => {
   return { ...ORNAMENT_DEFAULTS, W, D, T, S, turns, hand, mirror };
 };
 const score = (a, b) => scoreFromOverlap(overlap(silhouettes(a), silhouettes(b)));
+const makeTargetFor = (kind) => {
+  const p = PATTERN_PRESETS[kind];
+  return {
+    ...shape('caracol'),
+    patternPreset: kind,
+    patternSize: p.size ?? 1,
+    patternT: p.T,
+    patternNoise: p.noise,
+    patternAmount: p.amount ?? 0.5,
+  };
+};
 const seeded = (seed) => () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
 test('silhouettes: three filled views of the normalised shell', () => {
@@ -64,22 +76,38 @@ test('the relief level scores the relief itself, not the outline', () => {
   // The smooth shell has nearly the same outline, but not the same relief
   assert.ok(score({ ...t, ribN: 0 }, t) > 70, 'silhouettes barely see the ribs');
   assert.ok(levelScore(5, { ...t, ribN: 0 }, t) < 60, 'the relief score does');
-  assert.ok(levelScore(5, { ...t, ribN: t.ribN + 1 }, t) >= PASS, 'one rib more is still a match');
-  assert.ok(levelScore(5, { ...t, ribN: t.ribN + 4 }, t) < PASS);
+  assert.ok(levelScore(5, { ...t, ribN: t.ribN + 1 }, t) >= passScore(5), 'one rib more is still a match');
+  assert.ok(levelScore(5, { ...t, ribN: t.ribN + 4 }, t) < passScore(5));
   assert.equal(bestHint({ ...t, ribN: t.ribN + 4 }, t, keys).key, 'ribN');
+  // With the shape free too, both must be right
+  assert.equal(levelScore(6, t, t), 100);
+  assert.ok(levelScore(6, { ...t, ribN: 0 }, t) < passScore(6), 'the right shape without the relief does not pass');
+  assert.ok(levelScore(6, { ...t, W: t.W * 1.4 }, t) < passScore(6), 'the right relief on another shape does not pass');
+});
+
+test('the colour level: the kind of pattern first, then its controls', () => {
+  const t = { ...shape('caracol'), patternPreset: 'cepaea', patternSize: 1, patternT: 3000, patternNoise: 0.05, patternAmount: 0.5 };
+  assert.equal(colourScore(t, t), 100);
+  assert.ok(colourScore({ ...t, patternPreset: 'nautilus' }, t) <= 35, 'another kind of pattern scores low');
+  assert.ok(colourScore({ ...t, patternSize: 1.15 }, t) >= 90, 'a slightly larger pattern still matches');
+  assert.ok(colourScore({ ...t, patternSize: 2, patternT: 6000 }, t) < passScore(7));
+  assert.equal(bestHint({ ...t, patternPreset: 'nautilus', patternSize: 2 }, t, LEVELS[6].keys).key, 'patternPreset');
 });
 
 test('every level starts away from its target', () => {
   for (const L of LEVELS) {
-    const targets = L.ornament
-      ? Object.keys(ORNAMENT_PRESETS)
-          .filter((k) => ORNAMENT_PRESETS[k].shape)
-          .map((k) => ({ ...ORNAMENT_DEFAULTS, ...ORNAMENT_PRESETS[k].shape, ...ORNAMENT_PRESETS[k].orn }))
-      : SHAPES.map(shape);
+    const targets =
+      L.kind === 'relief' || L.kind === 'shapeRelief'
+        ? Object.keys(ORNAMENT_PRESETS)
+            .filter((k) => ORNAMENT_PRESETS[k].shape)
+            .map((k) => ({ ...ORNAMENT_DEFAULTS, ...ORNAMENT_PRESETS[k].shape, ...ORNAMENT_PRESETS[k].orn }))
+        : L.kind === 'colour'
+          ? Object.keys(PATTERN_PRESETS).map((k) => makeTargetFor(k))
+          : SHAPES.map(shape);
     for (const t of targets) {
       const start = startShell(L.id, t);
       assert.ok(bestHint(start, t, L.keys), `level ${L.id}: there is something to change`);
-      assert.ok(levelScore(L.id, start, t) < PASS, `level ${L.id}: the start does not pass already`);
+      assert.ok(levelScore(L.id, start, t) < passScore(L.id), `level ${L.id}: the start does not pass already`);
       // Only the free parameters differ
       for (const k of Object.keys(t)) if (!L.keys.includes(k)) assert.equal(start[k], t[k], `level ${L.id}: ${k} is given`);
     }
@@ -88,22 +116,43 @@ test('every level starts away from its target', () => {
 
 test('following the hints with the sliders always passes the level', () => {
   // A player who moves the hinted parameter one slider step at a time
-  const STEP = { D: 0.005, T: 0.05, S: 0.01, turns: 0.25, ribN: 1, ribH: 0.01, cordN: 1, cordH: 0.01, spineN: 1, spineH: 0.01 };
-  const snap = (k, v) => (k === 'W' ? +v.toFixed(2) : Math.round(v / STEP[k]) * STEP[k]);
+  const STEP = {
+    D: 0.005,
+    T: 0.05,
+    S: 0.01,
+    turns: 0.25,
+    ribN: 1,
+    ribH: 0.01,
+    cordN: 1,
+    cordH: 0.01,
+    spineN: 1,
+    spineH: 0.01,
+    patternNoise: 0.01,
+    patternAmount: 0.01,
+  };
+  // W, the pattern size and the growth time move by small relative steps, like their sliders
+  const REL = { W: 0.005, patternSize: 0.01, patternT: 0.005 };
+  const kinds = Object.keys(PATTERN_PRESETS);
+  // (the W slider switches to a logarithmic scale above 10, so its steps are relative)
+  const snap = (k, v) => (REL[k] ? v : Math.round(v / STEP[k]) * STEP[k]);
   const rand = seeded(3);
   for (const L of LEVELS) {
     for (let i = 0; i < 12; i++) {
       const { name, shell: target } = makeTarget(L.id, rand);
       let g = startShell(L.id, target);
-      for (const k of L.keys) if (k !== 'hand') g[k] = snap(k, g[k]);
+      for (const k of L.keys) if (k !== 'hand' && k !== 'patternPreset') g[k] = snap(k, g[k]);
       let steps = 0;
       for (let h = bestHint(g, target, L.keys); h && steps < 3000; h = bestHint(g, target, L.keys), steps++) {
         const sign = h.dir === 'up' ? 1 : -1;
-        const v = h.key === 'hand' ? -g.hand : h.key === 'W' ? g.W + sign * 0.01 : g[h.key] + sign * STEP[h.key];
-        g = { ...g, [h.key]: h.key === 'hand' ? v : snap(h.key, v) };
+        let v;
+        if (h.key === 'hand') v = -g.hand;
+        else if (h.key === 'patternPreset') v = kinds[(kinds.indexOf(g.patternPreset) + 1) % kinds.length];
+        else if (REL[h.key]) v = g[h.key] * (1 + sign * REL[h.key]);
+        else v = snap(h.key, g[h.key] + sign * STEP[h.key]);
+        g = { ...g, [h.key]: v };
       }
       assert.equal(bestHint(g, target, L.keys), null, `level ${L.id} ${name}: the hints come to an end`);
-      assert.ok(levelScore(L.id, g, target) >= PASS, `level ${L.id} ${name}: ${levelScore(L.id, g, target)}`);
+      assert.ok(levelScore(L.id, g, target) >= passScore(L.id), `level ${L.id} ${name}: ${levelScore(L.id, g, target)}`);
     }
   }
 });
@@ -112,16 +161,24 @@ test('targets: real shells, sometimes varied within their kind', () => {
   const rand = seeded(9);
   let varied = 0;
   for (let i = 0; i < 40; i++) {
-    const level = 1 + (i % 4);
+    const level = 1 + (i % 3);
     const t = makeTarget(level, rand);
     assert.ok(SHAPES.includes(t.name));
     const real = shape(t.name);
     if (t.varied) varied++;
     else assert.deepEqual(t.shell, real);
-    assert.ok(Math.abs(Math.log(t.shell.W / real.W)) < Math.log(1.16) && t.shell.W > 1.1);
+    assert.ok(Math.abs(Math.log(t.shell.W / real.W)) < Math.log(1.21) && t.shell.W > 1.1);
     assert.ok(t.shell.D >= 0 && t.shell.D <= 0.6);
   }
   assert.ok(varied > 5 && varied < 35, `${varied} variants of 40`);
-  const orn = makeTarget(5, rand);
-  assert.ok(ORNAMENT_PRESETS[orn.name]?.shape, 'the last level uses ornamented shells');
+  // Harder levels: level 4 always varies its target, and further
+  for (let i = 0; i < 10; i++) assert.equal(makeTarget(4, rand).varied, true);
+  assert.ok(
+    LEVELS.every((L, i) => i === 0 || L.pass >= LEVELS[i - 1].pass),
+    'the pass score never goes down',
+  );
+  for (const k of [5, 6]) assert.ok(ORNAMENT_PRESETS[makeTarget(k, rand).name]?.shape, `level ${k} uses ornamented shells`);
+  for (let i = 0; i < 20; i++) assert.ok(makeTarget(6, rand).shell.W < 10, 'level 6 leaves bivalves out');
+  const c = makeTarget(7, rand);
+  assert.ok(PATTERN_PRESETS[c.shell.patternPreset], 'the colour level uses a pattern preset');
 });

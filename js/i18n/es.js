@@ -159,17 +159,26 @@ export default {
   'ch.l2': 'W, T',
   'ch.l3': 'W, D, T',
   'ch.l4': 'Forma',
-  'ch.l5': 'Relieve',
+  'ch.l5': 'Relieve I',
   'ch.level1':
     'Las dos conchas solo se diferencian en W: cuánto crece la espiral en cada vuelta. Muévela hasta que tu concha se parezca al objetivo y pulsa Comprobar.',
   'ch.level2':
     'Ahora también T: cuánto avanza la concha a lo largo de su eje. Una espira alta y estrecha necesita una T alta; una concha plana, T = 0.',
   'ch.level3': 'Se suma D, la distancia al eje: con una D alta se abre un hueco en el centro (el ombligo) y las vueltas se separan.',
-  'ch.level4': 'Toda la forma: W, D, T, la forma de la apertura S, el número de vueltas y el sentido de enrollamiento.',
+  'ch.level4':
+    'Toda la forma: W, D, T, la forma de la apertura S, el número de vueltas y el sentido de enrollamiento. Desde aquí la pista te dice en qué fijarte, pero solo te da la dirección cuando ya estás cerca.',
   'ch.level5':
     'La forma ya está hecha: imita su relieve, el número y la altura de costillas, cordones y espinas. En este nivel la nota mide el propio relieve, porque apenas cambia el contorno.',
   'ch.how':
     'La nota compara los contornos de las dos conchas vistas de frente, de lado y desde arriba. Con un 90 % o más superas el nivel. Una pista te dice qué cambiar.',
+  'ch.l6': 'Relieve II',
+  'ch.l7': 'Color',
+  'ch.level6':
+    'Las dos cosas a la vez: encuentra la forma de la concha (W, D, T, S, vueltas y sentido) y su relieve. La nota exige que acierten las dos.',
+  'ch.level7':
+    'La forma ya está hecha: píntala como el objetivo. Elige el tipo de patrón y ajusta su tamaño, tiempo de crecimiento, irregularidad y cantidad de pigmento. La nota compara estos ajustes, que son los que dibujan el patrón.',
+  'ch.kind': 'El patrón es de otro tipo: prueba otro.',
+  'ch.look': (p) => `Fíjate en «${p}»: es lo que más se aleja.`,
   'ch.new': 'Otra concha',
   'ch.check': 'Comprobar',
   'ch.next': 'Siguiente nivel',

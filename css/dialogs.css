@@ -201,6 +201,9 @@ kbd { font-family: var(--mono); font-size: 12px; padding: 1px 5px; border: 1px s
 .ch-divider { position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: var(--border); z-index: 1; pointer-events: none; }
 .wizard-view.portrait .ch-label-yours { left: 10px; top: calc(50% + 10px); }
 .wizard-view.portrait .ch-divider { top: 50%; bottom: auto; left: 0; right: 0; width: auto; height: 1px; }
+/* Seven levels: only the current one shows its name */
+.wizard-steps.compact button { font-size: 0; gap: 0; padding: 3px; }
+.wizard-steps.compact button[aria-current='step'] { font-size: 12.5px; gap: 6px; padding-right: 9px; }
 .ch-result { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; background: var(--surface-2); }
 .ch-result.passed { border-color: var(--accent); background: var(--accent-soft); }
 .ch-result p { margin: 6px 0 0; font-size: 13.5px; line-height: 1.45; }

@@ -106,7 +106,7 @@ import {
 } from './ui/formulas.js';
 import { noteChange, startUndo, undo, initUndo } from './ui/undo.js';
 import { syncWizard, wizardDlg, initWizard } from './ui/wizard.js';
-import { challengeDlg, initChallenge, renderChallengeSplit } from './ui/challenge.js';
+import { challengeDlg, initChallenge, relabelChallenge, renderChallengeSplit } from './ui/challenge.js';
 import { ornamentResolution } from './model/ornament.js';
 import { PRESETS, DEFAULT_PRESET } from './model/presets.js';
 import { setLang, getLang, t, tPreset, applyStatic } from './i18n/i18n.js';
@@ -660,6 +660,7 @@ function applyLanguage(lang) {
   updatePatternMessage();
   setSecondLabel();
   Object.values(pigControls).forEach((c) => c.relabel());
+  relabelChallenge();
   drawSpacetime();
   if (!formulaPanel.hidden) setFormulaOpen(true);
   updateWelcomeText();
@@ -706,11 +707,17 @@ initWizard({
 
 // Challenge (ui/challenge.js)
 initChallenge({
+  PIG_SIMPLE,
   applyMode,
+  computePattern,
   controlsByKey,
   createParam,
   markDirty,
+  pattern,
+  pigControls,
   resize,
+  schedulePattern,
+  selectPattern,
   setPatternOn,
   targetGeometry: (p) => surfaceGeometry(buildAtQuality({ ...state, ...p })),
 });

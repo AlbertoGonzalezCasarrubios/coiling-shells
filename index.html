@@ -795,17 +795,21 @@
         <span class="ch-divider" aria-hidden="true"></span>
       </div>
       <div class="wizard-side">
-        <ol class="wizard-steps" id="chLevels">
+        <ol class="wizard-steps compact" id="chLevels">
           <li><button type="button" data-level="1" data-i18n="ch.l1">W</button></li>
           <li><button type="button" data-level="2" data-i18n="ch.l2">W, T</button></li>
           <li><button type="button" data-level="3" data-i18n="ch.l3">W, D, T</button></li>
           <li><button type="button" data-level="4" data-i18n="ch.l4">Shape</button></li>
-          <li><button type="button" data-level="5" data-i18n="ch.l5">Relief</button></li>
+          <li><button type="button" data-level="5" data-i18n="ch.l5">Relief I</button></li>
+          <li><button type="button" data-level="6" data-i18n="ch.l6">Relief II</button></li>
+          <li><button type="button" data-level="7" data-i18n="ch.l7">Colour</button></li>
         </ol>
         <div class="wizard-panels">
           <section class="wizard-panel">
             <p class="note" id="chIntro"></p>
+            <div class="wz-choices" id="chKinds" role="radiogroup" data-i18n-title="pig.preset"></div>
             <div id="ch-params"></div>
+            <div id="ch-pig"></div>
             <div class="segmented two" id="chHand" role="radiogroup" data-i18n-title="geo.hand">
               <button type="button" data-hand="1" data-i18n="geo.dextral">Dextral</button>
               <button type="button" data-hand="-1" data-i18n="geo.sinistral">Sinistral</button>

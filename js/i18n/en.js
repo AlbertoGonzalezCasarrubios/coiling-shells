@@ -160,17 +160,26 @@ export default {
   'ch.l2': 'W, T',
   'ch.l3': 'W, D, T',
   'ch.l4': 'Shape',
-  'ch.l5': 'Relief',
+  'ch.l5': 'Relief I',
   'ch.level1':
     'The two shells differ only in W: how much the spiral grows in each whorl. Move it until your shell looks like the target, then press Check.',
   'ch.level2': 'Now T as well: how far the shell advances along its axis. A tall, slender spire needs a high T; a flat shell, T = 0.',
   'ch.level3':
     'D joins in: the distance from the axis. With a high D a hollow opens in the centre (the umbilicus) and the whorls draw apart.',
-  'ch.level4': 'The whole shape: W, D, T, the shape of the aperture S, the number of whorls and the direction of coiling.',
+  'ch.level4':
+    'The whole shape: W, D, T, the shape of the aperture S, the number of whorls and the direction of coiling. From here on the hint names what to look at, but gives the direction only once you are close.',
   'ch.level5':
     'The shape is given: copy its relief, the number and height of the ribs, cords and spines. In this level the score measures the relief itself, because it barely changes the outline.',
   'ch.how':
     'The score compares the outlines of the two shells seen from the front, the side and above. With 90 % or more you pass the level. A hint tells you what to change.',
+  'ch.l6': 'Relief II',
+  'ch.l7': 'Colour',
+  'ch.level6':
+    'Both at once: find the shape of the shell (W, D, T, S, whorls and coiling) and its relief. The score asks for both to be right.',
+  'ch.level7':
+    'The shape is given: paint it like the target. Choose the kind of pattern, then match its size, growth time, irregularity and amount of pigment. The score compares these settings, which make the pattern.',
+  'ch.kind': 'The pattern is of another kind: try another one.',
+  'ch.look': (p) => `Look at “${p}”: it is the furthest off.`,
   'ch.new': 'Another shell',
   'ch.check': 'Check',
   'ch.next': 'Next level',

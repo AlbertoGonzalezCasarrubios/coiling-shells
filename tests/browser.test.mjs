@@ -363,6 +363,11 @@ const TOUR = String.raw`(async () => {
   log.chPassed = $('chResult').classList.contains('passed') && /\d+/.test($('chScore').textContent);
   log.chNext = !$('chNext').hidden;
   log.chAddressPaused = location.hash === before.hash;
+  // The colour level: the target gets its own pattern, the player chooses a kind and checks
+  document.querySelector('#chLevels [data-level="7"]').click(); await sl(1500);
+  document.querySelector('#chKinds [data-kind]').click(); await sl(1500);
+  $('chCheck').click(); await sl(300);
+  log.chColour = !$('chKinds').hidden && /\d+/.test($('chScore').textContent) && $('chMessage').textContent.length > 0;
   $('closeChallenge').click(); await sl(1500);
   log.chRestored = location.hash === before.hash && $('preset').value === before.preset && $('undo').disabled === before.undo && !!document.querySelector('#viewport canvas');
   log.chProgress = localStorage.getItem('coiling-shells.challenge') === '1';
@@ -438,6 +443,7 @@ test('the whole interface works in a real browser', { skip, timeout: 400_000 }, 
     assert.equal(log.chTarget, true, "the challenge shows the target and the player's shell in its 3D view");
     assert.equal(log.chPassed && log.chNext, true, 'level 1 of the challenge can be passed by following its hints');
     assert.equal(log.chAddressPaused, true, 'the game does not touch the address');
+    assert.equal(log.chColour, true, 'the colour level can be played');
     assert.equal(log.chRestored, true, 'closing the challenge brings back the shell, the address and undo');
     assert.equal(log.chProgress, true, 'the challenge remembers the levels passed');
     assert.equal(log.raupTheory, true, "the Theory link of the shape tab opens Raup's page");
