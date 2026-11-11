@@ -204,7 +204,7 @@ Son modelos mínimos:
 
 ## Cómo citar
 
-> González Casarrubios, A. (2026). *Theoretical Shells: Form and Colour* (versión 1.2.0) [Software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells
+> González Casarrubios, A. (2026). *Theoretical Shells: Form and Colour* (versión 1.3.0) [Software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells
 
 Los datos de cita están en [CITATION.cff](../CITATION.cff); GitHub los muestra en *Cite this repository*.
 

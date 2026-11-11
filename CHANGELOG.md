@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [semantic versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.3.0] - 2026-11-11
 
 ### Added
 - *Challenge: match the shell*: a game for learning what each parameter does. The target shell (a real one with its name hidden, or a variant) and the player's shell side by side in 3D, turning together; *Check* gives the likeness and a hint, and from 90 % the level is passed and the shell revealed. Eight levels in three blocks (each in its own box), harder step by step; the controls are grouped by category as in the sidebar. Shape: W; W and T; W, D and T; the whole shape (targets further from the real shells, hints that name the parameter but not the direction). Ornament: the relief with the shape given; shape and relief together. Colour: the pattern (its kind, settings and two colours, with colour pickers) on a given shape; and everything at once. The score needed rises from 85 % to 90 %; a level that judges several things scores the one furthest off. The likeness compares the outlines from the front, the side and above, centred, scaled and slightly blurred so that shells that look alike score high, the relief itself in the relief levels, and the pattern settings and colours in the colour levels. The user's own shell, the page address and the undo history are left untouched. The highest level passed is remembered; after the last one, *Start again* forgets it. The welcome guide has a sixth step about the challenge.
@@ -99,6 +99,7 @@ First release in its own repository. The app was previously published as `shells
 - Automated test suite (`npm test`) with continuous integration.
 - Licences: MIT for the code and CC BY 4.0 for texts and images.
 
+[1.3.0]: https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/releases/tag/v1.3.0
 [1.2.0]: https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/releases/tag/v1.2.0
 [1.1.0]: https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/releases/tag/v1.1.0
 [1.0.0]: https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/releases/tag/v1.0.0

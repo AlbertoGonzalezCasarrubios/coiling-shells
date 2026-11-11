@@ -11,8 +11,8 @@ authors:
     given-names: "Alberto"
     email: "albert23@ucm.es"
     affiliation: "Universidad Complutense de Madrid"
-version: "1.2.0"
-date-released: "2026-11-10"
+version: "1.3.0"
+date-released: "2026-11-11"
 license: MIT
 repository-code: "https://github.com/AlbertoGonzalezCasarrubios/coiling-shells"
 url: "https://albertogonzalezcasarrubios.github.io/coiling-shells/"
