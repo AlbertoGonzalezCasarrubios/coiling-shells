@@ -155,7 +155,6 @@ export default {
   'ch.open': 'Challenge: match the shell',
   'ch.title': 'Challenge: match the shell',
   'ch.target': 'Target',
-  'ch.target.alt': 'The target shell, in 3/4 and apertural views',
   'ch.yours': 'Your shell',
   'ch.l1': 'W',
   'ch.l2': 'W, T',

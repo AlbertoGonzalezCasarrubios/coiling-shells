@@ -56,7 +56,7 @@
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6.5 4.2v11.6L15.8 10z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
         <span data-i18n="wz.open">Create your own shell</span>
       </button>
-      <button type="button" class="btn btn-wide create-btn" id="openChallenge">
+      <button type="button" class="btn btn-wide create-btn challenge-btn" id="openChallenge">
         <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="10" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="10" r="0.9" fill="currentColor"/></svg>
         <span data-i18n="ch.open">Challenge: match the shell</span>
       </button>
@@ -790,11 +790,9 @@
     </div>
     <div class="wizard-body">
       <div class="wizard-view" id="chView">
-        <figure class="ch-target">
-          <img id="chTarget" alt="" data-i18n-title="ch.target.alt" />
-          <figcaption data-i18n="ch.target">Target</figcaption>
-        </figure>
-        <span class="ch-yours" data-i18n="ch.yours">Your shell</span>
+        <span class="ch-label ch-label-target" data-i18n="ch.target">Target</span>
+        <span class="ch-label ch-label-yours" data-i18n="ch.yours">Your shell</span>
+        <span class="ch-divider" aria-hidden="true"></span>
       </div>
       <div class="wizard-side">
         <ol class="wizard-steps" id="chLevels">

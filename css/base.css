@@ -13,6 +13,10 @@
   --muted: #5f6672; /* 5:1 on the panels (WCAG AA) */
   --accent: #115e59;
   --accent-soft: #d6ebe8;
+  /* Warm amber of the challenge button, a companion to the sand tones of the page */
+  --amber: #f3dfa6;
+  --amber-border: #e2c477;
+  --amber-text: #5c4310;
   --track: #ddd6c7;
   --radius: 10px;
   --sidebar-w: 340px;
@@ -30,6 +34,9 @@
     --muted: #9aa3ae;
     --accent: #5eb8ad;
     --accent-soft: #1d3a37;
+    --amber: #3d3220;
+    --amber-border: #6b5530;
+    --amber-text: #f1d999;
     --track: #343b46;
   }
 }

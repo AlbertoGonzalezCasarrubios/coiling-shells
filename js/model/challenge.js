@@ -2,14 +2,18 @@
  * The "match the shell" challenge: how alike two shells look, and which
  * parameter to change to get closer.
  *
- * Likeness is measured on silhouettes. Both shells are built with Raup's model
- * at the same normalised size (buildShell centres them and scales their largest
- * dimension to SIZE), projected along the three axes (front, side and top) and
- * filled into a small grid; the overlap of each pair of silhouettes is their
- * intersection over their union (IoU). The score maps the mean overlap to a
- * percentage with a calibration measured on pairs of real shells (see
- * tests/challenge.test.mjs). Hints try each parameter at the target's value and
- * report the change that would improve the overlap most.
+ * Likeness is measured on silhouettes, compared the way the eye compares them.
+ * Both shells are built with Raup's model, projected along the three axes
+ * (front, side and top) and filled into a grid. Each silhouette is then centred
+ * on its centre of mass and scaled by its own size (radius of gyration), so an
+ * extra tiny whorl at the apex does not rescale the whole shell, and blurred a
+ * little, so a small shift of the outline is a small difference rather than a
+ * failure. The overlap of two silhouettes is the sum of their minimum over the
+ * sum of their maximum (a soft intersection over union); the side and top views
+ * are also compared mirrored, because a shell and its mirror image look alike.
+ * The score maps the mean overlap to a percentage with a calibration measured on
+ * real shells (see tests/challenge.test.mjs), and a wrong coiling direction
+ * costs a fifth of it. Hints point at the parameter furthest from the target.
  *
  * Pure module (no Three.js, no DOM): it runs in the browser and in Node.
  */
@@ -24,8 +28,11 @@ const VIEWS = [
   [2, 1],
   [0, 2],
 ];
-/** Side of the grid on which silhouettes are filled. */
-export const GRID = 96;
+/** Side of the grid on which silhouettes are filled, and blur radius in cells. */
+export const GRID = 128;
+const BLUR = 2;
+/** Radius of gyration of a normalised silhouette, as a fraction of the grid. */
+const SPREAD = 0.2;
 
 /** Shape parameters of the challenge, and the ornament ones of its last level. */
 export const SHAPE_KEYS = ['W', 'D', 'T', 'S', 'turns', 'hand'];
@@ -36,12 +43,21 @@ export const ORNAMENT_KEYS = ['ribN', 'ribH', 'cordN', 'cordH', 'spineN', 'spine
  */
 
 /**
- * Silhouettes of a shell along the three axes.
+ * Silhouettes of a shell along the three axes, normalised and blurred.
  * @param {ChallengeShell} p
- * @param {number} [res] side of the grid
+ * @returns {Float32Array[]} one GRID × GRID image per view, values 0–1
+ */
+export function silhouettes(p) {
+  return masks(p, GRID).map((m) => blur(normalise(m, GRID), GRID, BLUR));
+}
+
+/**
+ * Raw silhouettes: the shell at its normalised size, filled into a grid.
+ * @param {ChallengeShell} p
+ * @param {number} res side of the grid
  * @returns {Uint8Array[]} one res × res mask per view (1 = shell)
  */
-export function silhouettes(p, res = GRID) {
+export function masks(p, res) {
   const orn = ornamentResolution(p);
   const boost = Math.max(1, Math.log10(Math.max(p.W, 1)));
   const shell = buildShell({
@@ -96,42 +112,102 @@ function rasterize(P, I, a, b, res) {
   return mask;
 }
 
+/** Centres a mask on its centre of mass and scales it so its radius of gyration is SPREAD·res. */
+function normalise(m, res) {
+  let n = 0,
+    cx = 0,
+    cy = 0;
+  for (let j = 0; j < res; j++) for (let i = 0; i < res; i++) if (m[j * res + i]) (n++, (cx += i), (cy += j));
+  const out = new Float32Array(res * res);
+  if (!n) return out;
+  cx /= n;
+  cy /= n;
+  let rg = 0;
+  for (let j = 0; j < res; j++) for (let i = 0; i < res; i++) if (m[j * res + i]) rg += (i - cx) ** 2 + (j - cy) ** 2;
+  const k = Math.sqrt(rg / n) / (SPREAD * res) || 1;
+  for (let j = 0; j < res; j++)
+    for (let i = 0; i < res; i++) {
+      const x = Math.round(cx + (i - res / 2) * k),
+        y = Math.round(cy + (j - res / 2) * k);
+      if (x >= 0 && x < res && y >= 0 && y < res) out[j * res + i] = m[y * res + x];
+    }
+  return out;
+}
+
+/** Box blur of radius r, done along rows and then along columns. */
+function blur(m, res, r) {
+  const tmp = new Float32Array(res * res),
+    out = new Float32Array(res * res);
+  const at = (v) => Math.min(res - 1, Math.max(0, v));
+  for (let j = 0; j < res; j++)
+    for (let i = 0; i < res; i++) {
+      let s = 0;
+      for (let d = -r; d <= r; d++) s += m[j * res + at(i + d)];
+      tmp[j * res + i] = s / (2 * r + 1);
+    }
+  for (let j = 0; j < res; j++)
+    for (let i = 0; i < res; i++) {
+      let s = 0;
+      for (let d = -r; d <= r; d++) s += tmp[at(j + d) * res + i];
+      out[j * res + i] = s / (2 * r + 1);
+    }
+  return out;
+}
+
+/** Soft intersection over union of two images; with `flip`, also of the first one mirrored. */
+function softOverlap(a, b, res, flip) {
+  const one = (get) => {
+    let lo = 0,
+      hi = 0;
+    for (let j = 0; j < res; j++)
+      for (let i = 0; i < res; i++) {
+        const x = get(i, j),
+          y = b[j * res + i];
+        lo += Math.min(x, y);
+        hi += Math.max(x, y);
+      }
+    return hi ? lo / hi : 1;
+  };
+  const direct = one((i, j) => a[j * res + i]);
+  if (!flip) return direct;
+  const mirrored = flip === 'h' ? one((i, j) => a[j * res + res - 1 - i]) : one((i, j) => a[(res - 1 - j) * res + i]);
+  return Math.max(direct, mirrored);
+}
+
 /**
- * Mean overlap (intersection over union) of two sets of silhouettes, 0–1.
- * @param {Uint8Array[]} A
- * @param {Uint8Array[]} B
+ * Mean overlap of two sets of silhouettes, 0–1. The front view is compared as it
+ * is; the side and top views also mirrored (left–right and top–bottom), where a
+ * shell and its mirror image differ.
+ * @param {Float32Array[]} A
+ * @param {Float32Array[]} B
  */
 export function overlap(A, B) {
+  const flips = [null, 'h', 'v'];
   let sum = 0;
-  for (let v = 0; v < A.length; v++) {
-    let inter = 0,
-      union = 0;
-    for (let k = 0; k < A[v].length; k++) {
-      inter += A[v][k] & B[v][k];
-      union += A[v][k] | B[v][k];
-    }
-    sum += union ? inter / union : 1;
-  }
+  for (let v = 0; v < A.length; v++) sum += softOverlap(A[v], B[v], GRID, flips[v]);
   return sum / A.length;
 }
 
 /**
- * From overlap to score. The score falls with the mismatch d = 1 − overlap,
- * reaching 0 at d = `zero`. Calibrated on pairs of real shells: shells that the
- * eye cannot tell apart differ by d ≈ 0.02 (score ≈ 95), shells of the same
- * kind by d ≈ 0.1 (≈ 70), and shells of different groups by d = 0.3–0.8 (< 30).
- * See tests/challenge.test.mjs.
+ * From overlap to score: 0 at the overlap `floor`, 100 for identical shells,
+ * with a concave curve in between. Calibrated on real shells: variants with every
+ * parameter a little off overlap by 0.92–0.97 (score ≈ 75–90), and different
+ * shells by 0.65 (median) to 0.83 (the most alike pair, snail and nautilus;
+ * score ≈ 30). See tests/challenge.test.mjs.
  */
-export const CALIBRATION = { zero: 0.5, power: 1.4 };
+export const CALIBRATION = { floor: 0.78, power: 0.6 };
 
 /**
  * Score of a guess against a target, 0–100.
- * @param {number} iou mean overlap of their silhouettes
+ * @param {number} ov mean overlap of their silhouettes
  */
-export function scoreFromOverlap(iou) {
-  const x = Math.max(0, 1 - (1 - iou) / CALIBRATION.zero);
+export function scoreFromOverlap(ov) {
+  const x = Math.max(0, (ov - CALIBRATION.floor) / (1 - CALIBRATION.floor));
   return Math.round(100 * x ** CALIBRATION.power);
 }
+
+/** Factor applied to the score when the coiling direction is wrong (the hint asks to flip it). */
+export const WRONG_HAND = 0.8;
 
 /** Score needed to pass a level. */
 export const PASS = 90;
@@ -211,12 +287,13 @@ export function reliefScore(guess, target) {
  * @param {number} level
  * @param {ChallengeShell} guess
  * @param {ChallengeShell} target
- * @param {Uint8Array[]} [targetSil] silhouettes of the target, if already computed
+ * @param {Float32Array[]} [targetSil] silhouettes of the target, if already computed
  */
 export function levelScore(level, guess, target, targetSil) {
   const L = LEVELS[level - 1];
   if (L.ornament) return reliefScore(guess, target);
-  return scoreFromOverlap(overlap(silhouettes(guess), targetSil ?? silhouettes(target)));
+  const score = scoreFromOverlap(overlap(silhouettes(guess), targetSil ?? silhouettes(target)));
+  return guess.hand === target.hand ? score : Math.round(score * WRONG_HAND);
 }
 
 /**

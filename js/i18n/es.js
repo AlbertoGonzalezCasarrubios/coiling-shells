@@ -154,7 +154,6 @@ export default {
   'ch.open': 'Reto: imita la concha',
   'ch.title': 'Reto: imita la concha',
   'ch.target': 'Objetivo',
-  'ch.target.alt': 'La concha objetivo, en vistas 3/4 y apertural',
   'ch.yours': 'Tu concha',
   'ch.l1': 'W',
   'ch.l2': 'W, T',

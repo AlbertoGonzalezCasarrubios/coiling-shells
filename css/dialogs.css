@@ -149,6 +149,8 @@ kbd { font-family: var(--mono); font-size: 12px; padding: 1px 5px; border: 1px s
 /* ---------- Shell creator ---------- */
 .create-btn { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px; }
 .create-btn svg { width: 17px; height: 17px; }
+.challenge-btn { background: var(--amber); border-color: var(--amber-border); color: var(--amber-text); font-weight: 600; }
+.challenge-btn:hover { background: color-mix(in srgb, var(--amber) 85%, var(--amber-border)); }
 .info.wizard { width: min(1180px, calc(100vw - 32px)); height: min(760px, calc(100vh - 32px)); max-height: none; display: none; }
 .info.wizard[open] { display: flex; flex-direction: column; }
 .wizard-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.45fr 1fr; }
@@ -192,20 +194,19 @@ kbd { font-family: var(--mono); font-size: 12px; padding: 1px 5px; border: 1px s
 }
 .wz-pig[hidden] { display: none !important; }
 
-/* Challenge: the target in a corner of the 3D view, the score and the hint */
-.ch-target { position: absolute; top: 10px; left: 10px; z-index: 2; width: min(46%, 340px); margin: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 6px 20px rgb(0 0 0 / 0.12); overflow: hidden; }
-.ch-target img { display: block; width: 100%; height: auto; }
-.ch-target figcaption { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 4px 8px 6px; }
-.ch-yours { position: absolute; left: 12px; bottom: 10px; z-index: 2; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+/* Challenge: the view split in two halves, target and player's shell */
+.ch-label { position: absolute; top: 10px; z-index: 2; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); background: color-mix(in srgb, var(--surface) 80%, transparent); padding: 3px 8px; border-radius: 6px; pointer-events: none; }
+.ch-label-target { left: 10px; }
+.ch-label-yours { left: calc(50% + 10px); }
+.ch-divider { position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: var(--border); z-index: 1; pointer-events: none; }
+.wizard-view.portrait .ch-label-yours { left: 10px; top: calc(50% + 10px); }
+.wizard-view.portrait .ch-divider { top: 50%; bottom: auto; left: 0; right: 0; width: auto; height: 1px; }
 .ch-result { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; background: var(--surface-2); }
 .ch-result.passed { border-color: var(--accent); background: var(--accent-soft); }
 .ch-result p { margin: 6px 0 0; font-size: 13.5px; line-height: 1.45; }
 .ch-score { display: flex; align-items: center; gap: 10px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .ch-bar { flex: 1; height: 8px; border-radius: 4px; background: linear-gradient(to right, var(--accent) var(--pct, 0%), var(--border) var(--pct, 0%)); }
 .ch-how { margin-top: auto; }
-@media (max-width: 760px) {
-  .ch-target { width: 44%; top: 6px; left: 6px; }
-}
 
 /* Boxes of tips, in the pigment tab and in the export window. Last, so that inside a
    dialog their list wins over the general list style of .info-body */

@@ -1,28 +1,33 @@
 /**
- * The "match the shell" challenge: a window with a target shell (a picture, its
- * name hidden) and the player's shell in 3D, with the sliders of the level.
+ * The "match the shell" challenge: a window split in two, the target shell (its
+ * name hidden) and the player's shell, both in 3D and seen from the same camera,
+ * so turning one turns the other; and the sliders of the level.
  * "Check" gives the likeness and a hint; passing reveals the shell. The score,
  * hints, levels and targets live in model/challenge.js.
  *
  * Like the shell creator, the window borrows the app's 3D canvas. The player's
- * shell is the app's state, so on opening the state is saved (undo's snapshot)
+ * shell is the app's state; the target is a second mesh in the same scene, and
+ * each frame draws the scene twice, one half showing only the target and the
+ * other only the player's shell (renderChallengeSplit). The player's shell so on opening the state is saved (undo's snapshot)
  * and the page address and the undo history are paused; on closing everything
  * comes back as it was.
  */
+import * as THREE from 'three';
 import { t, tParam, tPreset } from '../i18n/i18n.js';
 import { LEVELS, PASS, bestHint, levelScore, makeTarget, silhouettes, startShell } from '../model/challenge.js';
 import { ORNAMENT_DEFAULTS } from '../model/ornament.js';
 import { PRESETS } from '../model/presets.js';
 import { welcomeDlg } from './guide.js';
-import { setViewport } from './scene.js';
+import { camera, inner, innerMat, renderer, scene, setViewport, shellGroup, solid, solidMat } from './scene.js';
 import { GEO_PARAMS, ORN_PARAMS, RAUP_PARAMS, pauseAddress, state, storage } from './state.js';
 import { loadState, saveState } from './undo.js';
 import { $, qsa } from './util.js';
 
 // Provided by main.js through init()
-let applyMode, controlsByKey, createParam, markDirty, rebuildNow, renderPlateSubset, resize, setPatternOn;
+let applyMode, controlsByKey, createParam, markDirty, resize, setPatternOn, targetGeometry;
 
 export const challengeDlg = $('challenge');
+const chView = $('chView');
 const PROGRESS_KEY = 'coiling-shells.challenge';
 
 // One slider per parameter that a level can free (plain names, as in the shell creator)
@@ -56,13 +61,56 @@ function applyShell(shell) {
   $('hand').value = String(state.hand);
 }
 
-/** A picture of the target, drawn by the same renderer as the plate of views. */
+// The target: a second mesh in the shell group, with the same materials as the player's shell
+const targetSolid = new THREE.Mesh(new THREE.BufferGeometry(), solidMat);
+targetSolid.castShadow = true;
+targetSolid.receiveShadow = true;
+const targetInner = new THREE.Mesh(targetSolid.geometry, innerMat);
+targetInner.receiveShadow = true;
+targetSolid.visible = targetInner.visible = false;
+shellGroup.add(targetSolid, targetInner);
+
 function drawTarget() {
-  applyShell(target.shell);
-  rebuildNow();
-  const bg = $('bgColor').value;
-  const img = renderPlateSubset(['iso', 'apertural'], 360, bg);
-  $('chTarget').src = img.toDataURL('image/png');
+  targetSolid.geometry.dispose();
+  targetSolid.geometry = targetInner.geometry = targetGeometry(target.shell);
+}
+
+/**
+ * Draws the scene twice, the target in one half and the player's shell in the
+ * other (side by side, or one above the other on a portrait screen), with the
+ * same camera so that both turn together.
+ * @param {number} w
+ * @param {number} h
+ */
+export function renderChallengeSplit(w, h) {
+  const portrait = h > w;
+  const hw = portrait ? w : w / 2,
+    hh = portrait ? h / 2 : h;
+  const { aspect, fov } = camera;
+  camera.aspect = hw / hh;
+  // On narrow halves the horizontal framing is kept, as in the full view
+  camera.fov = camera.aspect >= 1 ? 35 : THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(17.5)) / camera.aspect));
+  camera.updateProjectionMatrix();
+  const own = [solid, inner];
+  const halves = [
+    { meshes: [targetSolid, targetInner], x: 0, y: portrait ? hh : 0 },
+    { meshes: own, x: portrait ? 0 : hw, y: 0 },
+  ];
+  // The labels and the divider of the window follow the orientation of the split
+  if (chView.classList.contains('portrait') !== portrait) chView.classList.toggle('portrait', portrait);
+  renderer.setScissorTest(true);
+  for (const half of halves) {
+    for (const m of [targetSolid, targetInner, ...own]) m.visible = half.meshes.includes(m);
+    renderer.setViewport(half.x, half.y, hw, hh);
+    renderer.setScissor(half.x, half.y, hw, hh);
+    renderer.render(scene, camera);
+  }
+  renderer.setScissorTest(false);
+  targetSolid.visible = targetInner.visible = false;
+  solid.visible = inner.visible = true;
+  camera.aspect = aspect;
+  camera.fov = fov;
+  camera.updateProjectionMatrix();
 }
 
 function syncControls() {
@@ -141,6 +189,8 @@ function openChallenge() {
 }
 
 function closeChallenge() {
+  targetSolid.geometry.dispose();
+  targetSolid.geometry = targetInner.geometry = new THREE.BufferGeometry();
   setViewport($('viewport'));
   resize();
   pauseAddress(false);
@@ -150,7 +200,7 @@ function closeChallenge() {
 
 /** Connects this part of the interface to the rest of the app. */
 export function initChallenge(ctx) {
-  ({ applyMode, controlsByKey, createParam, markDirty, rebuildNow, renderPlateSubset, resize, setPatternOn } = ctx);
+  ({ applyMode, controlsByKey, createParam, markDirty, resize, setPatternOn, targetGeometry } = ctx);
   SLIDERS.forEach((d) =>
     createParam(d, $('ch-params'), {
       compact: true,

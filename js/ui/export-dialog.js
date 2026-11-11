@@ -413,7 +413,7 @@ let pdfContext;
 export const exportPDF = () => makePDF(pdfContext());
 
 /** Some views of the plate, in one row (for the pattern page). */
-export function renderPlateSubset(names, tile, background = '#ffffff') {
+function renderPlateSubset(names, tile, background = '#ffffff') {
   const saved = PLATE_VIEWS.slice();
   PLATE_VIEWS.splice(0, PLATE_VIEWS.length, ...names);
   try {

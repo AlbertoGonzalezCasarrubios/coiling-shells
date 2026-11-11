@@ -81,7 +81,6 @@ import {
   fileStem,
   openExport,
   renderViewImage,
-  renderPlateSubset,
   initExport,
 } from './ui/export-dialog.js';
 import {
@@ -107,7 +106,7 @@ import {
 } from './ui/formulas.js';
 import { noteChange, startUndo, undo, initUndo } from './ui/undo.js';
 import { syncWizard, wizardDlg, initWizard } from './ui/wizard.js';
-import { challengeDlg, initChallenge } from './ui/challenge.js';
+import { challengeDlg, initChallenge, renderChallengeSplit } from './ui/challenge.js';
 import { ornamentResolution } from './model/ornament.js';
 import { PRESETS, DEFAULT_PRESET } from './model/presets.js';
 import { setLang, getLang, t, tPreset, applyStatic } from './i18n/i18n.js';
@@ -129,34 +128,46 @@ function markDirty() {
   dirty = true;
 }
 
-function rebuild() {
+/**
+ * Builds a shell at the mesh resolution of the current quality setting.
+ * @param {typeof state} p shape, ornament and drawing settings (as in state)
+ */
+function buildAtQuality(p) {
   const q = QUALITY[state.quality];
   // With a high W almost the whole shell lies in the last fraction of a whorl
   // (bivalves): θ is refined so the mesh and the growth lines are not sparse.
-  const boost = Math.max(1, Math.log10(state.W));
+  const boost = Math.max(1, Math.log10(p.W));
   // Ornament needs about six segments across each rib, cord and spine, within a vertex budget
-  const res = ornamentResolution(state);
+  const res = ornamentResolution(p);
   const segPhi = Math.min(256, Math.max(q.segPhi, res.phi));
   let segPerTurn = Math.max(Math.round(q.segPerTurn * boost), Math.round(res.perTurn * boost));
-  segPerTurn = Math.min(segPerTurn, Math.max(q.segPerTurn, Math.floor(500000 / (segPhi * Math.max(state.turns, 0.25)))));
-  const shell = buildShell({
-    ...state,
+  segPerTurn = Math.min(segPerTurn, Math.max(q.segPerTurn, Math.floor(500000 / (segPhi * Math.max(p.turns, 0.25)))));
+  return buildShell({
+    ...p,
     segPhi,
     segPerTurn,
-    ringsPerTurn: Math.round(state.ringsPerTurn * boost),
+    ringsPerTurn: Math.round(p.ringsPerTurn * boost),
     size: SHELL_SIZE,
   });
-  lastBuild = shell;
+}
 
-  const position = new THREE.BufferAttribute(shell.positions, 3);
+/** The surface of a built shell as a Three.js geometry (normals averaged across the seam). */
+function surfaceGeometry(shell) {
   const meshGeo = new THREE.BufferGeometry();
-  meshGeo.setAttribute('position', position);
+  meshGeo.setAttribute('position', new THREE.BufferAttribute(shell.positions, 3));
   meshGeo.setAttribute('color', new THREE.BufferAttribute(shell.colors, 3));
   meshGeo.setAttribute('uv', new THREE.BufferAttribute(shell.uvs, 2));
   meshGeo.setIndex(new THREE.BufferAttribute(shell.indices, 1));
   meshGeo.computeVertexNormals();
   fixSeamNormals(meshGeo.attributes.normal.array, shell.grid);
   meshGeo.computeBoundingSphere();
+  return meshGeo;
+}
+
+function rebuild() {
+  const shell = buildAtQuality(state);
+  lastBuild = shell;
+  const meshGeo = surfaceGeometry(shell);
 
   // LineSegmentsGeometry needs explicit pairs of points
   const li = shell.lineIndices;
@@ -699,13 +710,9 @@ initChallenge({
   controlsByKey,
   createParam,
   markDirty,
-  rebuildNow: () => {
-    rebuild();
-    applyMode();
-  },
-  renderPlateSubset,
   resize,
   setPatternOn,
+  targetGeometry: (p) => surfaceGeometry(buildAtQuality({ ...state, ...p })),
 });
 
 // Undo (ui/undo.js)
@@ -749,7 +756,9 @@ function renderFrame() {
   renderer.setScissorTest(false);
   renderer.setViewport(0, 0, w, h);
   renderer.clear();
-  renderer.render(scene, camera);
+  // The challenge shows the target and the player's shell side by side, from the same camera
+  if (challengeDlg.open) renderChallengeSplit(w, h);
+  else renderer.render(scene, camera);
 
   if (gizmo.visible && !isClean()) {
     const s = gizmo.size;

@@ -349,7 +349,7 @@ const TOUR = String.raw`(async () => {
   const before = { hash: location.hash, preset: $('preset').value, undo: $('undo').disabled };
   localStorage.removeItem('coiling-shells.challenge');
   $('openChallenge').click(); await sl(1500);
-  log.chTarget = $('chTarget').src.startsWith('data:image/png') && $('chTarget').src.length > 5000;
+  log.chTarget = !!$('chView').querySelector('canvas') && !!$('chView').querySelector('.ch-label-target');
   const wBox = $('p-ch-W').closest('.param').querySelector('input[type=number]');
   let lo = 1, hi = 10;
   for (let i = 0; i < 30 && !$('chResult').classList.contains('passed'); i++) {
@@ -435,7 +435,7 @@ test('the whole interface works in a real browser', { skip, timeout: 400_000 }, 
     assert.equal(log.spineOk, true, 'no spine warning at 80 mm');
     assert.equal(log.spineWarn, true, 'spine warning at 20 mm');
     assert.equal(log.wizardClosed, true, 'the shell creator gives the canvas back');
-    assert.equal(log.chTarget, true, 'the challenge draws its target');
+    assert.equal(log.chTarget, true, "the challenge shows the target and the player's shell in its 3D view");
     assert.equal(log.chPassed && log.chNext, true, 'level 1 of the challenge can be passed by following its hints');
     assert.equal(log.chAddressPaused, true, 'the game does not touch the address');
     assert.equal(log.chRestored, true, 'closing the challenge brings back the shell, the address and undo');
