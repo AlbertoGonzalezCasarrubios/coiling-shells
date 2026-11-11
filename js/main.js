@@ -38,7 +38,16 @@ import {
   solid,
 } from './ui/scene.js';
 import { initGuide, openWelcome, updateWelcomeText, welcomeDlg } from './ui/guide.js';
-import { capturePointer, controlsByKey, createParam, markCustom, onShapeChange, setFill, initControls } from './ui/controls.js';
+import {
+  capturePointer,
+  controlsByKey,
+  createParam,
+  markCustom,
+  onShapeChange,
+  setFill,
+  initControls,
+  syncPresence,
+} from './ui/controls.js';
 import { VIEWS, orientTween, setOrient, stepOrient, stepTween, tween, updateGround, initViews } from './ui/views.js';
 import {
   PATTERN_CELLS,
@@ -106,6 +115,7 @@ import {
 } from './ui/formulas.js';
 import { noteChange, startUndo, undo, initUndo } from './ui/undo.js';
 import { syncWizard, wizardDlg, initWizard } from './ui/wizard.js';
+import { challengeDlg, initChallenge, relabelChallenge, renderChallengeSplit } from './ui/challenge.js';
 import { ornamentResolution } from './model/ornament.js';
 import { PRESETS, DEFAULT_PRESET } from './model/presets.js';
 import { setLang, getLang, t, tPreset, applyStatic } from './i18n/i18n.js';
@@ -125,36 +135,49 @@ let dirty = true;
 /** Asks for the mesh to be rebuilt on the next frame (for the modules of js/ui/). */
 function markDirty() {
   dirty = true;
+  syncPresence();
 }
 
-function rebuild() {
+/**
+ * Builds a shell at the mesh resolution of the current quality setting.
+ * @param {typeof state} p shape, ornament and drawing settings (as in state)
+ */
+function buildAtQuality(p) {
   const q = QUALITY[state.quality];
   // With a high W almost the whole shell lies in the last fraction of a whorl
   // (bivalves): θ is refined so the mesh and the growth lines are not sparse.
-  const boost = Math.max(1, Math.log10(state.W));
+  const boost = Math.max(1, Math.log10(p.W));
   // Ornament needs about six segments across each rib, cord and spine, within a vertex budget
-  const res = ornamentResolution(state);
+  const res = ornamentResolution(p);
   const segPhi = Math.min(256, Math.max(q.segPhi, res.phi));
   let segPerTurn = Math.max(Math.round(q.segPerTurn * boost), Math.round(res.perTurn * boost));
-  segPerTurn = Math.min(segPerTurn, Math.max(q.segPerTurn, Math.floor(500000 / (segPhi * Math.max(state.turns, 0.25)))));
-  const shell = buildShell({
-    ...state,
+  segPerTurn = Math.min(segPerTurn, Math.max(q.segPerTurn, Math.floor(500000 / (segPhi * Math.max(p.turns, 0.25)))));
+  return buildShell({
+    ...p,
     segPhi,
     segPerTurn,
-    ringsPerTurn: Math.round(state.ringsPerTurn * boost),
+    ringsPerTurn: Math.round(p.ringsPerTurn * boost),
     size: SHELL_SIZE,
   });
-  lastBuild = shell;
+}
 
-  const position = new THREE.BufferAttribute(shell.positions, 3);
+/** The surface of a built shell as a Three.js geometry (normals averaged across the seam). */
+function surfaceGeometry(shell) {
   const meshGeo = new THREE.BufferGeometry();
-  meshGeo.setAttribute('position', position);
+  meshGeo.setAttribute('position', new THREE.BufferAttribute(shell.positions, 3));
   meshGeo.setAttribute('color', new THREE.BufferAttribute(shell.colors, 3));
   meshGeo.setAttribute('uv', new THREE.BufferAttribute(shell.uvs, 2));
   meshGeo.setIndex(new THREE.BufferAttribute(shell.indices, 1));
   meshGeo.computeVertexNormals();
   fixSeamNormals(meshGeo.attributes.normal.array, shell.grid);
   meshGeo.computeBoundingSphere();
+  return meshGeo;
+}
+
+function rebuild() {
+  const shell = buildAtQuality(state);
+  lastBuild = shell;
+  const meshGeo = surfaceGeometry(shell);
 
   // LineSegmentsGeometry needs explicit pairs of points
   const li = shell.lineIndices;
@@ -440,7 +463,8 @@ $('hideInfo').addEventListener('click', () => setClean(true));
 $('showInfo').addEventListener('click', () => setClean(false));
 
 window.addEventListener('keydown', (e) => {
-  if (infoDialog.open || $('welcome').open || $('exportDlg').open) return;
+  // In the challenge the shell is a game: no undo of the user's history, no shortcuts
+  if (infoDialog.open || $('welcome').open || $('exportDlg').open || challengeDlg.open) return;
   // Ctrl+Z / ⌘Z undoes the last step (outside text boxes, which have their own undo)
   if (
     (e.ctrlKey || e.metaKey) &&
@@ -646,6 +670,7 @@ function applyLanguage(lang) {
   updatePatternMessage();
   setSecondLabel();
   Object.values(pigControls).forEach((c) => c.relabel());
+  relabelChallenge();
   drawSpacetime();
   if (!formulaPanel.hidden) setFormulaOpen(true);
   updateWelcomeText();
@@ -690,6 +715,24 @@ initWizard({
   syncPatternControls,
 });
 
+// Challenge (ui/challenge.js)
+initChallenge({
+  PIG_SIMPLE,
+  paintPattern,
+  applyMode,
+  computePattern,
+  controlsByKey,
+  createParam,
+  markDirty,
+  pattern,
+  pigControls,
+  resize,
+  schedulePattern,
+  selectPattern,
+  setPatternOn,
+  targetGeometry: (p) => surfaceGeometry(buildAtQuality({ ...state, ...p })),
+});
+
 // Undo (ui/undo.js)
 initUndo({
   applyLook,
@@ -723,6 +766,7 @@ function resize() {
 }
 new ResizeObserver(resize).observe(viewport);
 new ResizeObserver(() => wizardDlg.open && resize()).observe($('wizView'));
+new ResizeObserver(() => challengeDlg.open && resize()).observe($('chView'));
 resize();
 
 function renderFrame() {
@@ -730,7 +774,9 @@ function renderFrame() {
   renderer.setScissorTest(false);
   renderer.setViewport(0, 0, w, h);
   renderer.clear();
-  renderer.render(scene, camera);
+  // The challenge shows the target and the player's shell side by side, from the same camera
+  if (challengeDlg.open) renderChallengeSplit(w, h);
+  else renderer.render(scene, camera);
 
   if (gizmo.visible && !isClean()) {
     const s = gizmo.size;
@@ -760,6 +806,7 @@ renderer.setAnimationLoop((now) => {
   if (growAnim) stepGrow(now);
   if (dirty) {
     dirty = false;
+    syncPresence(); // also for changes that did not go through markDirty (the opening state)
     rebuild();
     applyMode();
   }

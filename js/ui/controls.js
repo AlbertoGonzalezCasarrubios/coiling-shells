@@ -5,6 +5,7 @@
  */
 import { t, tParam } from '../i18n/i18n.js';
 import { ornPresetKey, ornPresetSel } from './ornament-tab.js';
+import { ORNAMENT_NEEDS } from '../model/ornament.js';
 import { lineMat } from './scene.js';
 import { GEO_PARAMS, RAUP_PARAMS, VIS_PARAMS, state } from './state.js';
 import { $, f, qsa } from './util.js';
@@ -16,6 +17,26 @@ let markDirty;
 // ---------------------------------------------------------------------------
 
 export const controlsByKey = {};
+
+/**
+ * Hides the settings of a kind of relief the shell does not have (the height
+ * of the ribs when there are none), everywhere they appear: the ornament tab,
+ * the shell creator and the challenge. So do the nodules, which need ribs and
+ * cords, and the second row of spines.
+ */
+export function syncPresence() {
+  for (const c of Object.values(controlsByKey)) {
+    const need = ORNAMENT_NEEDS[c.key];
+    if (need) c.el.classList.toggle('absent', !(state[need] > 0));
+  }
+  for (const id of ['nodules', 'wzNodules'])
+    $(id)
+      .closest('.toggle')
+      .classList.toggle('absent', !(state.ribN > 0 && state.cordN > 0));
+  $('spineBoth')
+    .closest('.toggle')
+    .classList.toggle('absent', !(state.spineN > 0));
+}
 
 /** Captures the pointer if it is still active (a cancelled touch cannot be captured). */
 export function capturePointer(el, e) {
@@ -143,7 +164,7 @@ export function createParam(def, container, { compact = false, onChange, target 
   relabel();
   applyScale();
 
-  controlsByKey[ctlId] = { set, relabel, el };
+  controlsByKey[ctlId] = { set, relabel, el, key: def.key };
   set(target[def.key]);
 }
 

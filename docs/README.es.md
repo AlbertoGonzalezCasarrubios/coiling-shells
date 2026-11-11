@@ -17,9 +17,9 @@ Un explorador 3D interactivo de la **morfología teórica de las conchas enrolla
 
 **▶ Abrir la app: https://albertogonzalezcasarrubios.github.io/coiling-shells/**
 
-En la primera visita, una guía breve muestra las partes de una concha enrollada, costillas, cordones y espinas incluidos, sobre un modelo 3D interactivo, y explica en cinco pasos cómo funciona la app. El botón *Guía* la vuelve a abrir, y añadir `?guide` a la dirección la muestra siempre. La app se abre en inglés; el español se elige en la guía o con el botón EN / ES, y la elección se recuerda.
+En la primera visita, una guía breve muestra las partes de una concha enrollada, costillas, cordones y espinas incluidos, sobre un modelo 3D interactivo, y explica en seis pasos, el último el reto, cómo funciona la app. El botón *Guía* la vuelve a abrir, y añadir `?guide` a la dirección la muestra siempre. La app se abre en inglés; el español se elige en la guía o con el botón EN / ES, y la elección se recuerda.
 
-![La guía de bienvenida: un caracol generado con el modelo, con costillas, cordones y espinas añadidos y sus partes señaladas, y cinco pasos breves sobre cómo usar la simulación](images/guide-es.png)
+![La guía de bienvenida: un caracol generado con el modelo, con costillas, cordones y espinas añadidos y sus partes señaladas, y seis pasos breves sobre cómo usar la simulación](images/guide-es.png)
 
 Al cerrar la guía, la app muestra un caracol de jardín dibujado con líneas, listo para explorar:
 
@@ -28,6 +28,10 @@ Al cerrar la guía, la app muestra un caracol de jardín dibujado con líneas, l
 **Crea tu propia concha**, el botón de arriba de la barra lateral, abre una ventana que recorre cinco pasos con controles simplificados: forma, ornamento, color, aspecto y exportación. Es la propia app, no una copia: la vista 3D se traslada a la ventana, así que deshacer, la dirección de la página y todas las exportaciones funcionan como siempre, y el último paso descarga un fondo de pantalla del tamaño de tu pantalla o la ficha en PDF.
 
 ![El creador de conchas en su paso de ornamento: un ammonites con costillas y espinas dibujado con líneas a la izquierda y los deslizadores simplificados a la derecha](images/wizard.png)
+
+**Reto: imita la concha**, justo debajo, es un juego para aprender qué hace cada parámetro. Muestra una concha objetivo, una real con el nombre oculto o una variante suya, junto a la tuya, las dos en 3D y girando a la vez, y tú cambias la tuya hasta que se parezcan. *Comprobar* da el parecido en porcentaje y una pista sobre qué cambiar; al superar un nivel se revela el nombre. Los ocho niveles se agrupan en tres bloques y se vuelven más difíciles poco a poco. *Forma*: W; W y T; W, D y T, y toda la forma, con objetivos más alejados de las conchas reales y pistas que dicen en qué fijarse pero no hacia dónde. *Ornamentación*: el relieve de una concha ornamentada, y después su forma y su relieve a la vez. *Color*: el patrón de una forma dada, eligiendo su tipo, sus ajustes y sus dos colores, y por último todo a la vez: forma, relieve y color. La nota necesaria sube del 85 % al 90 %; cuando un nivel juzga varias cosas, el parecido es el de la que más se aleja, así que no se puede saltar ninguna. El parecido compara los contornos de las dos conchas vistas de frente, de lado y desde arriba, centrados, a la misma escala y ligeramente suavizados, de modo que las conchas que se parecen a la vista puntúan alto; en los niveles de relieve, que apenas cambia el contorno, compara el propio relieve, y en los de color, los ajustes y colores que dibujan el patrón. Siguiendo las pistas siempre se supera un nivel, y el juego no toca tu propia concha. El navegador recuerda el nivel más alto superado; al superar el último, *Empezar de nuevo* juega el reto desde el primer nivel y olvida ese progreso.
+
+![El reto en el primer nivel de color: el objetivo, una Turritella con llamas rosas y moradas, arriba y la concha del jugador con llamas naranjas abajo; los niveles en tres cajas, una por bloque, los deslizadores del patrón y los colores del pigmento en cajas propias, un parecido del 81 % y la pista de oscurecer el pigmento](images/challenge.png)
 
 ## Para qué sirve
 
@@ -175,11 +179,12 @@ Los tests comprueban, entre otras cosas, que:
 - cada preset de forma cae en la región del morfoespacio de su grupo;
 - el sólido imprimible está cerrado, mira hacia fuera y tiene exactamente el tamaño pedido. Se comprueba con cada preset, cada ejemplo ornamentado y parámetros extremos;
 - costillas, cordones, nódulos, quilla y espinas aparecen exactamente donde deben, y las espinas nunca abren el labio de la apertura;
+- el reto puntúa 100 a conchas idénticas y bajo a grupos distintos, y siguiendo sus pistas siempre se supera cada nivel;
 - el modelo mecánico se pandea primero en el número de ondas del mínimo de su curva de carga, y queda liso por debajo del umbral;
 - las imágenes TIFF se decodifican en los mismos píxeles, y la lámina de vistas se adapta a cualquier formato;
 - los archivos STL y 3MF están bien formados;
 - los textos en inglés y en español están completos;
-- toda la interfaz funciona en un navegador real: una prueba abre la app en Chrome sin ventana y recorre la guía, las pestañas, los modos de dibujo, las orientaciones, las ecuaciones, el patrón siguiendo a un deslizador mientras se arrastra, el aspecto en la dirección, deshacer, el creador de conchas, las páginas de Info y las exportaciones, y falla ante cualquier error en la página. Necesita Chrome y Node.js ≥ 22, y se omite sin ellos;
+- toda la interfaz funciona en un navegador real: una prueba abre la app en Chrome sin ventana y recorre la guía, las pestañas, los modos de dibujo, las orientaciones, las ecuaciones, el patrón siguiendo a un deslizador mientras se arrastra, el aspecto en la dirección, deshacer, el creador de conchas, el reto, las páginas de Info y las exportaciones, y falla ante cualquier error en la página. Necesita Chrome y Node.js ≥ 22, y se omite sin ellos;
 - las librerías que se cargan del CDN tienen las mismas versiones que las copias locales;
 - la interfaz no tiene problemas de accesibilidad graves (auditada con axe-core en los dos temas) y cumple el contraste WCAG AA.
 

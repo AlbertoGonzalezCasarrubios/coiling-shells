@@ -43,6 +43,8 @@
 .lang button[aria-pressed='true'] { background: var(--accent); color: var(--surface); }
 
 .panel { display: flex; flex-direction: column; gap: 10px; }
+/* Settings of a relief the shell does not have (controls.js syncPresence) */
+.absent { display: none !important; }
 .panel-title {
   margin: 0;
   font-size: 11px;

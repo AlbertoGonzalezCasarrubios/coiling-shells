@@ -56,6 +56,10 @@
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6.5 4.2v11.6L15.8 10z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
         <span data-i18n="wz.open">Create your own shell</span>
       </button>
+      <button type="button" class="btn btn-wide create-btn challenge-btn" id="openChallenge">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="10" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="10" r="0.9" fill="currentColor"/></svg>
+        <span data-i18n="ch.open">Challenge: match the shell</span>
+      </button>
 
       <nav class="tabs" role="tablist" data-i18n-title="tab.label">
         <button type="button" role="tab" id="tabbtn-shape" data-tab="shape" aria-controls="tab-shape" aria-selected="true" ><span data-i18n="tab.n.shape">Shape</span><small>Raup</small></button>
@@ -679,6 +683,7 @@
           <li><strong data-i18n="wel.s3.t">Colour</strong> <span data-i18n="wel.s3"></span></li>
           <li><strong data-i18n="wel.s4.t">Learn and export</strong> <span data-i18n="wel.s4"></span></li>
           <li><strong data-i18n="wel.s5.t">Create your own shell.</strong> <span data-i18n="wel.s5"></span></li>
+          <li><strong data-i18n="wel.s6.t">Challenge.</strong> <span data-i18n="wel.s6"></span></li>
         </ol>
       </div>
       <div class="welcome-actions">
@@ -772,6 +777,92 @@
           </button>
           <button type="button" class="btn" id="wzBack" data-i18n="wz.back">Back</button>
           <button type="button" class="btn primary" id="wzNext" data-i18n="wz.next">Next</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="info wizard challenge" id="challenge" aria-labelledby="challengeTitle">
+    <div class="info-head">
+      <h2 id="challengeTitle" data-i18n="ch.title">Challenge: match the shell</h2>
+      <button type="button" class="icon-btn" id="closeChallenge" data-i18n-title="info.close">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="wizard-body">
+      <div class="wizard-view" id="chView">
+        <span class="ch-label ch-label-target" data-i18n="ch.target">Target</span>
+        <span class="ch-label ch-label-yours" data-i18n="ch.yours">Your shell</span>
+        <span class="ch-divider" aria-hidden="true"></span>
+      </div>
+      <div class="wizard-side">
+        <div class="ch-levels" id="chLevels">
+          <div class="ch-block">
+            <span class="ch-block-name" data-i18n="ch.b.shape">Shape</span>
+            <div class="ch-block-steps">
+              <button type="button" data-level="1" data-i18n-title="ch.l1">1</button>
+              <button type="button" data-level="2" data-i18n-title="ch.l2">2</button>
+              <button type="button" data-level="3" data-i18n-title="ch.l3">3</button>
+              <button type="button" data-level="4" data-i18n-title="ch.l4">4</button>
+            </div>
+          </div>
+          <div class="ch-block">
+            <span class="ch-block-name" data-i18n="ch.b.ornament">Ornament</span>
+            <div class="ch-block-steps">
+              <button type="button" data-level="5" data-i18n-title="ch.l5">1</button>
+              <button type="button" data-level="6" data-i18n-title="ch.l6">2</button>
+            </div>
+          </div>
+          <div class="ch-block">
+            <span class="ch-block-name" data-i18n="ch.b.colour">Colour</span>
+            <div class="ch-block-steps">
+              <button type="button" data-level="7" data-i18n-title="ch.l7">1</button>
+              <button type="button" data-level="8" data-i18n-title="ch.l8">2</button>
+            </div>
+          </div>
+        </div>
+        <div class="wizard-panels">
+          <section class="wizard-panel">
+            <p class="ch-level-name" id="chLevelName"></p>
+            <p class="note" id="chIntro"></p>
+            <!-- The free parameters, in the categories of the main interface -->
+            <section class="ch-group" data-group="raup"><h3 class="ch-group-title" data-i18n="raup.title">Raup parameters</h3><div id="ch-g-raup"></div></section>
+            <section class="ch-group" data-group="geo">
+              <h3 class="ch-group-title" data-i18n="geo.title">Geometry</h3>
+              <div id="ch-g-geo"></div>
+              <div class="segmented two" id="chHand" role="radiogroup" data-i18n-title="geo.hand">
+                <button type="button" data-hand="1" data-i18n="geo.dextral">Dextral</button>
+                <button type="button" data-hand="-1" data-i18n="geo.sinistral">Sinistral</button>
+              </div>
+            </section>
+            <section class="ch-group" data-group="rib"><h3 class="ch-group-title" data-i18n="orn.ribs">Axial ribs</h3><div id="ch-g-rib"></div></section>
+            <section class="ch-group" data-group="cord"><h3 class="ch-group-title" data-i18n="orn.cords">Spiral cords</h3><div id="ch-g-cord"></div></section>
+            <section class="ch-group" data-group="spine"><h3 class="ch-group-title" data-i18n="orn.spines">Spines</h3><div id="ch-g-spine"></div></section>
+            <section class="ch-group" data-group="pattern">
+              <h3 class="ch-group-title" data-i18n="pig.preset">Pattern</h3>
+              <div class="wz-choices" id="chKinds" role="radiogroup" data-i18n-title="pig.preset"></div>
+              <div id="ch-pig"></div>
+            </section>
+            <section class="ch-group" data-group="colours">
+              <h3 class="ch-group-title" data-i18n="pig.colors">Pigment colours</h3>
+              <div class="colors two" id="chColours">
+                <label class="color-field"><input type="color" id="chBase" /><span data-i18n="pig.base">Background</span></label>
+                <label class="color-field"><input type="color" id="chPigment" /><span data-i18n="pig.pigment">Pigment</span></label>
+              </div>
+            </section>
+            <p class="note ch-how" data-i18n="ch.how"></p>
+          </section>
+        </div>
+        <!-- The result stays in view, outside the scrolling controls -->
+        <div class="ch-result" id="chResult" role="status" aria-live="polite" hidden>
+          <div class="ch-score"><span id="chScore"></span><span class="ch-bar" id="chBar"></span></div>
+          <p id="chMessage"></p>
+        </div>
+        <div class="wizard-nav">
+          <button type="button" class="btn" id="chNew" data-i18n="ch.new">Another shell</button>
+          <button type="button" class="btn primary" id="chCheck" data-i18n="ch.check">Check</button>
+          <button type="button" class="btn primary" id="chNext" data-i18n="ch.next" hidden>Next level</button>
+          <button type="button" class="btn primary" id="chRestart" data-i18n="ch.restart" hidden>Start again</button>
         </div>
       </div>
     </div>

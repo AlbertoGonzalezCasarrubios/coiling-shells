@@ -123,7 +123,7 @@ const profileCanvas = $('profile');
  * with a short smoothstep transition so edges are sharp but not jagged. The
  * pigment amount shifts the threshold.
  */
-function colorize(values, base, pigment, amount, out) {
+export function colorize(values, base, pigment, amount, out) {
   const b = hexRgb(base);
   const p = hexRgb(pigment);
   const lo = 1 - amount - PIGMENT_EDGE;

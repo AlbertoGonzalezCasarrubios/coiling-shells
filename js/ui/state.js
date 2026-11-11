@@ -150,6 +150,13 @@ export const storage = {
       /* not remembered */
     }
   },
+  remove(key) {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      /* nothing was remembered */
+    }
+  },
 };
 export const LANG_KEY = 'coiling-shells.lang';
 export const WELCOME_KEY = 'coiling-shells.welcome';
@@ -162,8 +169,17 @@ export function setHashHooks(h) {
   Object.assign(hooks, h);
 }
 
+// While the challenge is open the shell on screen is a game, not the user's
+// shell: it is neither written to the address nor recorded by undo
+let addressPaused = false;
+/** @param {boolean} on */
+export function pauseAddress(on) {
+  addressPaused = on;
+}
+
 /** Every change of the shell goes through here: the address is updated shortly after. */
 export function writeHash() {
+  if (addressPaused) return;
   hooks.noteChange();
   clearTimeout(hashTimer);
   hashTimer = setTimeout(writeHashNow, 250);
@@ -171,6 +187,7 @@ export function writeHash() {
 
 export function writeHashNow() {
   clearTimeout(hashTimer);
+  if (addressPaused) return;
   const q = new URLSearchParams();
   for (const [short, key] of Object.entries(HASH_KEYS)) q.set(short, String(+Number(state[key]).toFixed(3)));
   q.set('v', state.mirror ? '1' : '0');

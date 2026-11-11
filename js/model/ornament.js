@@ -96,6 +96,25 @@ const SPINE_MIN_SIZE = 0.2;
  */
 
 /** Neutral values: a smooth shell. */
+/**
+ * Settings that only mean something when a kind of relief is present: the
+ * height, width and position of ribs, cords and spines need at least one of
+ * them, and the keel's width and position need a keel. The interface shows
+ * them only then.
+ */
+export const ORNAMENT_NEEDS = {
+  ribH: 'ribN',
+  ribW: 'ribN',
+  ribSkew: 'ribN',
+  cordH: 'cordN',
+  cordW: 'cordN',
+  keelW: 'keelH',
+  keelPos: 'keelH',
+  spineH: 'spineN',
+  spineW: 'spineN',
+  spinePos: 'spineN',
+};
+
 export const ORNAMENT_DEFAULTS = {
   ribN: 0,
   ribH: 0.12,

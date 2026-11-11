@@ -35,6 +35,18 @@ export function startUndo() {
   committed = takeSnapshot();
 }
 
+/** The whole shell (shape, ornament, mode, pattern, look) as a string, to bring back later. */
+export const saveState = () => takeSnapshot();
+
+/**
+ * Brings back a shell saved with saveState. It does not become an undo step.
+ * @param {string} json
+ */
+export function loadState(json) {
+  restoreSnapshot(JSON.parse(json));
+  committed = takeSnapshot();
+}
+
 function takeSnapshot() {
   return JSON.stringify({
     shape: pickShape(state),

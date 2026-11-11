@@ -101,6 +101,8 @@ Unir la geometría de Raup con la pigmentación de Meinhardt no es una ocurrenci
 
 ## Cómo usar la app
 
+Si quieres ponerte a prueba, el botón **Reto: imita la concha** te enseña una concha real con el nombre oculto y te pide que la imites moviendo los controles; una pista te dice qué cambiar y, al acertar, descubres de qué especie se trata. Los niveles van añadiendo parámetros, así que es una buena forma de aprender qué hace cada uno.
+
 Si es tu primera vez, el botón **Crea tu propia concha** (arriba de la barra lateral) abre una ventana que recorre cinco pasos con controles sencillos: forma, ornamento, color, aspecto y exportación. La concha se ve en grande a la izquierda y puedes girarla mientras la cambias. Al final puedes ponerle nombre y descargar un fondo de pantalla del tamaño de tu pantalla o la ficha en PDF. Todo lo que hagas ahí se queda en la app, así que después puedes seguir afinándolo con los controles completos:
 
 1. **Elige un preset** (caracol, Turritella, nautilo, ammonite, almeja…) para partir de una forma real.
