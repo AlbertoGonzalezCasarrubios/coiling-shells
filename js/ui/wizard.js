@@ -8,7 +8,7 @@
 import { t, tPattern } from '../i18n/i18n.js';
 import { MODEL_DEFAULTS, ORNAMENT_PRESETS, PATTERN_PRESETS, PRESETS } from '../model/presets.js';
 import { welcomeDlg } from './guide.js';
-import { setViewport } from './scene.js';
+import { renderer, setViewport } from './scene.js';
 import { GEO_PARAMS, ORN_PARAMS, RAUP_PARAMS, state, writeHash } from './state.js';
 import { $, qsa } from './util.js';
 
@@ -145,6 +145,8 @@ function openWizard() {
 }
 
 function closeWizardView() {
+  // The close event comes a moment later: if another window (the challenge) has already taken the canvas, it keeps it
+  if (renderer.domElement.parentElement !== $('wizView')) return;
   setViewport($('viewport'));
   resize();
 }

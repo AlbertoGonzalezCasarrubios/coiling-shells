@@ -349,7 +349,8 @@ const TOUR = String.raw`(async () => {
   const before = { hash: location.hash, preset: $('preset').value, undo: $('undo').disabled };
   localStorage.removeItem('coiling-shells.challenge');
   $('openChallenge').click(); await sl(1500);
-  log.chTarget = !!$('chView').querySelector('canvas') && !!$('chView').querySelector('.ch-label-target');
+  log.chTarget = await until(() => !!$('chView').querySelector('canvas') && !!$('chView').querySelector('.ch-label-target'), 5000);
+  log.chCanvasIn = document.querySelector('canvas')?.parentElement?.id;
   const wBox = $('p-ch-W').closest('.param').querySelector('input[type=number]');
   let lo = 1, hi = 10;
   for (let i = 0; i < 30 && !$('chResult').classList.contains('passed'); i++) {
