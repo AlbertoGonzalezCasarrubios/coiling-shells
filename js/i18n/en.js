@@ -1,6 +1,6 @@
 /** Interface strings in English. Keys are shared with the other language (a test checks it). */
 export default {
-  'doc.title': 'Theoretical Shells: Form and Colour',
+  'doc.title': 'Coiling Shells: Form and Colour',
   'brand.subtitle': "Raup's coiling model · Meinhardt's pigmentation models",
   'lang.label': 'Language',
   'preset.title': 'Preset',
@@ -102,8 +102,7 @@ export default {
   'ex.pdf.pattern': 'Pigmentation',
   'ex.pdf.constants': 'Model constants',
   'ex.pdf.cells': 'Cells along the margin',
-  'ex.pdf.cite':
-    'González Casarrubios, A. (2026). Theoretical Shells: Form and Colour. albertogonzalezcasarrubios.github.io/coiling-shells',
+  'ex.pdf.cite': 'González Casarrubios, A. (2026). Coiling Shells: Form and Colour. albertogonzalezcasarrubios.github.io/coiling-shells',
   'ex.image': 'Image of the current view',
   'ex.image.desc':
     'Exactly what you see in the 3D view, without panels or axes. At a fixed size, for example 16:9 for a wallpaper, the framing widens or narrows to the new proportions, so the shell is never cut.',

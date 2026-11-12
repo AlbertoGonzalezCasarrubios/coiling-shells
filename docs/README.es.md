@@ -4,7 +4,7 @@
 >
 > — David M. Raup, *Science* (1962)
 
-# Conchas teóricas: forma y color
+# Conchas en espiral: forma y color
 
 [![Tests](https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/actions/workflows/tests.yml/badge.svg)](https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/actions/workflows/tests.yml)
 [![Licencia: MIT](https://img.shields.io/badge/c%C3%B3digo-MIT-blue.svg)](../LICENSE)
@@ -209,7 +209,7 @@ Son modelos mínimos:
 
 ## Cómo citar
 
-> González Casarrubios, A. (2026). *Theoretical Shells: Form and Colour* (versión 1.3.0) [Software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells
+> González Casarrubios, A. (2026). *Coiling Shells: Form and Colour* (versión 1.3.0) [Software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells
 
 Los datos de cita están en [CITATION.cff](../CITATION.cff); GitHub los muestra en *Cite this repository*. Los cambios de cada versión están en el [registro de cambios](CHANGELOG.md), en inglés.
 

@@ -1,6 +1,6 @@
 /** Interface strings in Spanish. Keys are shared with the other language (a test checks it). */
 export default {
-  'doc.title': 'Conchas teóricas: forma y color',
+  'doc.title': 'Conchas en espiral: forma y color',
   'brand.subtitle': 'Modelo de enrollamiento de Raup · modelos de pigmentación de Meinhardt',
   'lang.label': 'Idioma',
   'preset.title': 'Preset',
@@ -102,7 +102,7 @@ export default {
   'ex.pdf.pattern': 'Pigmentación',
   'ex.pdf.constants': 'Constantes del modelo',
   'ex.pdf.cells': 'Células del borde',
-  'ex.pdf.cite': 'González Casarrubios, A. (2026). Conchas teóricas: forma y color. albertogonzalezcasarrubios.github.io/coiling-shells',
+  'ex.pdf.cite': 'González Casarrubios, A. (2026). Conchas en espiral: forma y color. albertogonzalezcasarrubios.github.io/coiling-shells',
   'ex.image': 'Imagen de la vista actual',
   'ex.image.desc':
     'Exactamente lo que ves en la vista 3D, sin paneles ni ejes. Con un tamaño fijo, por ejemplo 16:9 para un fondo de pantalla, el encuadre se ensancha o se estrecha a las nuevas proporciones, así que la concha nunca queda cortada.',

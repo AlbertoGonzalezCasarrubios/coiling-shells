@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
-title: "Theoretical Shells: Form and Colour"
+title: "Coiling Shells: Form and Colour"
 abstract: >-
   Interactive 3D explorer of the theoretical morphology of coiled shells, based
   on David M. Raup's shell-coiling model and Hans Meinhardt's reaction–diffusion
