@@ -31,17 +31,26 @@ const motion = (ms) => (reducedMotion?.matches ? 1 : ms);
 
 export let orientTween = null;
 
-/** The ground (shadow) touches the lowest point of the shell in its current orientation. */
-export function updateGround() {
-  const P = solid.geometry.attributes.position?.array;
-  if (!P) return;
+/**
+ * The height of the lowest point of a geometry of the shell in its current orientation.
+ * @param {THREE.BufferGeometry} geometry
+ */
+export function lowestPoint(geometry) {
+  const P = geometry.attributes.position?.array;
+  if (!P) return null;
   const e = new THREE.Matrix4().makeRotationFromQuaternion(shellGroup.quaternion).elements;
   let minY = Infinity;
   for (let k = 0; k < P.length; k += 3) {
     const y = e[1] * P[k] + e[5] * P[k + 1] + e[9] * P[k + 2];
     if (y < minY) minY = y;
   }
-  ground.position.y = minY - 0.002;
+  return minY;
+}
+
+/** The ground (shadow) touches the lowest point of the shell in its current orientation. */
+export function updateGround() {
+  const minY = lowestPoint(solid.geometry);
+  if (minY !== null) ground.position.y = minY - 0.002;
 }
 
 export function setOrient(mode, { animate = true } = {}) {
