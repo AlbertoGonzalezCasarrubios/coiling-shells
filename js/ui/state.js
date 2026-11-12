@@ -66,7 +66,7 @@ export const MODES = ['lines', 'solid', 'both'];
 /**
  * State of the shell and of its view.
  * @type {import('../model/raup.js').ShellShape & import('../model/ornament.js').OrnamentParams & {
- *   grow: number, quality: 'low' | 'medium' | 'high', mode: 'lines' | 'solid' | 'both',
+ *   grow: number, quality: 'low' | 'medium' | 'high', patternDef: number, mode: 'lines' | 'solid' | 'both',
  *   spiralLines: number, ringsPerTurn: number, lineWidth: number, lineOpacity: number,
  *   axisWidth: number, orient: 'vertical' | 'horizontal' | 'free' }}
  */
@@ -74,6 +74,7 @@ export const state = {
   ...pickShape(PRESETS[DEFAULT_PRESET]),
   grow: 1,
   quality: 'medium',
+  patternDef: 1, // definition of the pattern: sub-cells per cell of the model
   mode: 'lines',
   spiralLines: 16,
   ringsPerTurn: 24,

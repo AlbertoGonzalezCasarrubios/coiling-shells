@@ -295,6 +295,8 @@ const TOUR = String.raw`(async () => {
   console.info('stage pattern');
   $('tabbtn-pigment').click(); document.querySelectorAll('#patternGallery button')[1].click(); await sl(3000);
   log.patternOn = /pg=1/.test(location.hash);
+  // A long pigment panel scrolls inside the sidebar, never the whole page
+  log.noPageScroll = document.documentElement.scrollHeight <= innerHeight + 1;
   // Meinhardt's equation, advanced pigment controls, the unrolled record and picking a moment on it
   $('toggleFormula').click(); document.querySelector('#eqView [data-eq=meinhardt]').click(); await sl(2500); $('toggleFormula').click();
   document.querySelector('#pigMode [data-pmode=advanced]').click(); await sl(300);
@@ -336,6 +338,12 @@ const TOUR = String.raw`(async () => {
   // Then undo goes back through the slider drag to the plain shell
   for (let i = 0; i < 3 && !/pg=0/.test(location.hash); i++) { await sl(600); $('undo').click(); await until(() => !$('patternStatus').hidden || /pg=0/.test(location.hash), 1500); }
   log.undone = await until(() => /pg=0/.test(location.hash), 3000);
+  // The definition of the pattern is part of the appearance, and of the address
+  const setDef = (v) => { $('patternDef').value = v; $('patternDef').dispatchEvent(new Event('change')); };
+  setDef('2');
+  log.patternDef = await until(() => /pd=2/.test(location.hash), 3000);
+  setDef('1');
+  log.patternDef &&= await until(() => !/pd=/.test(location.hash), 3000);
   console.info('stage shell creator');
   $('openWizard').click(); await sl(500);
   await audit('shell creator', $('wizard'));
@@ -442,6 +450,7 @@ test('the whole interface works in a real browser', { skip, timeout: 400_000 }, 
     assert.equal(log.guideOpen, true, 'the guide opens');
     assert.equal(log.ornHash, true, 'an ornament preset reaches the URL');
     assert.equal(log.patternOn, true, 'a pattern can be applied');
+    assert.equal(log.noPageScroll, true, 'the page itself never scrolls');
     assert.equal(log.thumbs, true, 'the gallery thumbnails are drawn');
     assert.equal(log.worker, true, 'the pattern worker loads');
     assert.ok(log.liveUpdates >= 2, `the pattern follows a dragged slider (${log.liveUpdates} updates)`);
@@ -450,6 +459,7 @@ test('the whole interface works in a real browser', { skip, timeout: 400_000 }, 
     assert.equal(log.lookHash, true, 'the colours reach the address');
     assert.equal(log.lookUndone, true, 'undo restores the previous colours');
     assert.equal(log.undone, true, 'undo removes it again');
+    assert.equal(log.patternDef, true, 'the pattern definition reaches the address');
     assert.equal(log.spineOk, true, 'no spine warning at 80 mm');
     assert.equal(log.spineWarn, true, 'spine warning at 20 mm');
     assert.equal(log.wizardClosed, true, 'the shell creator gives the canvas back');

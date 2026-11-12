@@ -14,7 +14,7 @@
  */
 import * as THREE from 'three';
 import { t, tParam, tPattern, tPreset } from '../i18n/i18n.js';
-import { LEVELS, bestHint, levelScore, makeTarget, passScore, silhouettes, startShell } from '../model/challenge.js';
+import { CHALLENGE_PATTERNS, LEVELS, bestHint, levelScore, makeTarget, passScore, silhouettes, startShell } from '../model/challenge.js';
 import { simulatePattern } from '../model/meinhardt.js';
 import { ORNAMENT_DEFAULTS } from '../model/ornament.js';
 import { ORNAMENT_PRESETS, PATTERN_PRESETS, PRESETS } from '../model/presets.js';
@@ -142,7 +142,6 @@ function paintTarget() {
     T: s.patternT,
     noise: s.patternNoise,
     seed: pattern.seed,
-    globalCtl: preset.model === 'AS' ? preset.globalCtl : 0,
   };
   const { values } = simulatePattern(p, { W: s.W, turns: s.turns, rows, width, nMax: Math.round(256 / s.patternSize) });
   const rgba = new Uint8Array(rows * width * 4);
@@ -383,7 +382,7 @@ export function initChallenge(ctx) {
     });
   }
   // Colour level: the kinds of pattern and the simple pigment sliders, bound to the app's pattern
-  for (const key of Object.keys(PATTERN_PRESETS)) {
+  for (const key of CHALLENGE_PATTERNS) {
     const b = document.createElement('button');
     b.type = 'button';
     b.dataset.kind = key;

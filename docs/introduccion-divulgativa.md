@@ -81,7 +81,7 @@ Un molusco solo añade pigmento donde la concha crece, en el borde de la apertur
 Ese proceso es una **reacción-difusión**, la idea que Alan Turing propuso en 1952 y que Gierer y Meinhardt desarrollaron en 1972: una sustancia **activadora** que se estimula a sí misma y un **antagonista** que difunde más deprisa y la frena. De la competición entre ambos surgen patrones regulares sin que nadie los dibuje. La app ofrece los dos modelos de Meinhardt:
 
 - **Activador-inhibidor.** Si el inhibidor actúa rápido y llega lejos, los picos de activador son estables y dibujan **bandas a lo largo de la espiral** (como en *Cepaea nemoralis*). Si el inhibidor dura más que el activador, el sistema **oscila** y dibuja **rayas paralelas al borde** (como las llamas del *Nautilus*). Si pasan las dos cosas a la vez, cada pico se queda en su sitio pero se enciende y se apaga, y deja **filas de puntos** (como en los *Naticarius*).
-- **Activador-sustrato.** La activación consume un sustrato que tarda en recuperarse, así que cada célula queda un tiempo **refractaria**. La activación avanza entonces como **ondas** que dibujan líneas oblicuas; cuando dos ondas chocan se aniquilan y forman una V. Meinhardt y Klingler (1987) explicaron los **triángulos** de *Oliva porphyria* con un **control global**, una señal común a todo el borde que dispara ondas nuevas cuando la actividad cae. La app incluye una versión simplificada de ese control, que da líneas oblicuas y uves, pero no el patrón completo de *Oliva*.
+- **Activador-sustrato.** La activación consume un sustrato que tarda en recuperarse, así que cada célula queda un tiempo **refractaria**. La activación avanza entonces como **ondas** que dibujan líneas oblicuas; cuando dos ondas chocan se aniquilan y forman una V. Meinhardt y Klingler (1987) explicaron los **triángulos** de *Oliva porphyria* con un **control global**: una hormona común a todo el animal que cuenta cuántas ondas hay. Cuando quedan pocas, las células activas se quedan encendidas y lanzan ondas hacia atrás, y muchas líneas se ramifican a la vez. La app lo incluye en el modelo activador-inhibidor, con un preset de *Oliva porphyria*. En el modelo activador-sustrato la misma hormona da el patrón contrario, triángulos blancos sobre una red oscura, como en *Conus marmoreus*, que también tiene su preset.
 
 El pigmento se deposita en la capa externa de la concha, así que la app solo pinta el exterior: el interior de la apertura se ve claro, con un ligero brillo nacarado. Como en las simulaciones de Meinhardt, se deposita pigmento donde el activador supera un umbral, lo que da bordes nítidos; la *cantidad de pigmento* sube o baja ese umbral.
 
@@ -93,7 +93,9 @@ Cada tipo de patrón vive en su propia región del espacio de parámetros, y ent
 
 - **Bandas a lo largo de la espiral**: activador-inhibidor con un inhibidor de largo alcance (D<sub>h</sub> ≫ D<sub>a</sub>) y más rápido que el activador (r<sub>h</sub> > r<sub>a</sub>).
 - **Rayas paralelas al borde**: activador-inhibidor con D<sub>h</sub> ≈ 0 y un inhibidor de vida más larga (r<sub>h</sub> < r<sub>a</sub>).
-- **Líneas oblicuas y uves**: activador-sustrato sin saturación y con un sustrato que se recupera despacio; un control global inicia ondas nuevas cuando la actividad baja.
+- **Líneas oblicuas y uves**: activador-sustrato sin saturación y con un sustrato que se recupera despacio; un control global débil mantiene las ondas.
+- **Líneas que se ramifican en triángulos**: activador-inhibidor con un inhibidor de vida larga, apenas acoplamiento entre células y control global (la hormona de *Oliva*).
+- **Triángulos blancos sobre fondo oscuro**: activador-sustrato con mucha saturación, control global y mucho pigmento (*Conus marmoreus*).
 
 Al cambiar de modelo se cargan constantes que funcionan con él: las de un modelo no sirven para el otro (por ejemplo, sin producción de sustrato no hay patrón). Si una combinación de valores no forma patrón, la app lo indica en lugar de mostrar una concha en blanco. Un preset fija también la semilla, la inserción de células, el tiempo, la irregularidad, el tamaño, la cantidad de pigmento y los colores; con exactamente los mismos valores se obtiene exactamente el mismo patrón.
 
@@ -178,6 +180,8 @@ Aproximaciones a los tipos de patrón de cada especie, no ajustes a ejemplares r
 | *Nautilus*: rayas en llama | Activador-inhibidor | Oscilación (inhibidor de vida larga) | Sí |
 | *Cepaea nemoralis*: bandas espirales | Activador-inhibidor | Picos estables (inhibición de largo alcance) | No |
 | *Naticarius*: puntos en filas espirales | Activador-inhibidor | Picos en su sitio que se encienden y se apagan (inhibición de alcance medio y vida larga) | Sí |
+| *Oliva porphyria*: triángulos que se ramifican | Activador-inhibidor con control global | Ondas viajeras que se ramifican cuando una hormona indica que quedan pocas | Sí |
+| *Conus marmoreus*: triángulos blancos sobre red oscura | Activador-sustrato con control global | Las mismas ramas, con las células entre ellas en una activación baja y pigmentada | Sí |
 
 ## Para desarrolladores
 

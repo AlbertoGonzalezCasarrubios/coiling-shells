@@ -2,7 +2,19 @@
  * Long pages of the About window in Spanish: the theory of each model, the
  * controls and the credits (HTML with TeX, typeset by MathJax when shown).
  */
-import { GENERAL_TEX, DEFS_TEX, MIRROR_TEX, ORN_REFS, REFS, AI_TEX, AS_TEX, GLOBAL_TEX, MEIN_REFS, ornamentFigure } from './tex.js';
+import {
+  GENERAL_TEX,
+  DEFS_TEX,
+  MIRROR_TEX,
+  ORN_REFS,
+  REFS,
+  AI_TEX,
+  AS_TEX,
+  GLOBAL_TEX,
+  HORMONE_TEX,
+  MEIN_REFS,
+  ornamentFigure,
+} from './tex.js';
 
 /** Sketch of the kinds of ornament, with the labels of this language. */
 const ORN_FIGURE = ornamentFigure({
@@ -169,17 +181,25 @@ export default {
     <p>Así, la activación recorre el borde como una <strong>onda</strong>, y a medida que la concha crece, la onda en movimiento deja una <strong>línea oblicua</strong>. Cuando dos ondas que avanzan en sentidos opuestos se encuentran, cada una choca con la estela agotada de la otra y las dos <strong>desaparecen</strong>, cerrando una V. Donde el sustrato se ha recuperado puede surgir espontáneamente una onda nueva que se divide en dos ondas que se alejan, y eso abre una V invertida.</p>
 
     <h3>Control global: los triángulos de <i>Oliva porphyria</i></h3>
-    <p>Las ondas que se aniquilan y se ramifican dan zigzags, pero no los grandes triángulos de <i>Oliva porphyria</i>, en los que aparecen líneas nuevas en muchos puntos a la vez. Meinhardt y Klingler (1987) los explicaron con una sustancia adicional compartida por todo el animal, como una hormona. Esa sustancia mide la actividad total del borde: cuando muchas ondas se aniquilan y la actividad cae, la señal baja y facilita que surjan ondas nuevas en todas partes. Esta app usa una versión simplificada del mecanismo, que actúa sobre la producción basal de activador:</p>
+    <p>Las ondas viajeras dibujan líneas oblicuas, y cuando dos se encuentran mueren las dos. Si no pasara nada más, las ondas se acabarían. En <i>Oliva porphyria</i> no se acaban: las líneas se <strong>ramifican</strong>, es decir, una línea suelta de pronto otra en sentido contrario, y las dos abren un triángulo. Las ramas aparecen en muchas líneas en el mismo momento, algo que ninguna señal local podría coordinar a lo largo de todo el borde.</p>
+    <p>Meinhardt y Klingler (1987) lo explicaron con una sustancia compartida por todo el animal, como una hormona \\(R\\), que fabrican las células activas. Su concentración mide, por tanto, cuántas ondas hay. En su modelo cada célula oscila, porque el inhibidor dura más que el activador, y la hormona frena la eliminación del inhibidor, cuyo decaimiento pasa a ser \\(r_h/R\\):</p>
+    ${HORMONE_TEX}
+    <p>Mientras hay muchas ondas, \\(R\\) está alta y el inhibidor decae despacio: cada célula se enciende una vez y se apaga, y las ondas avanzan como siempre. Cuando los choques han dejado pocas ondas, \\(R\\) baja, el inhibidor se elimina deprisa y las células activas en ese momento <strong>se quedan encendidas</strong> en vez de apagarse. Cuando sus vecinas se han recuperado, la activación vuelve hacia ellas: una onda hacia atrás, es decir, una rama. Como \\(R\\) es igual en todas partes, ocurre en muchas líneas a la vez. Las ondas nuevas hacen subir \\(R\\) y todo vuelve a la normalidad. Así la hormona mantiene más o menos constante el número de ondas, y el decaimiento del inhibidor \\(r_h\\) fija ese número.</p>
+    <p>En la app es el <em>Control global</em> \\(g\\) del modelo activador-inhibidor, y su valor es lo rápido que la hormona sigue a la actividad; con \\(g = 0\\) no hay hormona y las ecuaciones son las de siempre. El preset <i>Oliva porphyria</i> parte de las constantes de Fowler, Meinhardt y Prusinkiewicz (1992), con un decaimiento del inhibidor algo más rápido y más células, para que zonas de triángulos pequeños se alternen con otros grandes, como en la concha real. La inserción de células mantiene su tamaño a medida que crece la concha. Sin la hormona, las mismas constantes no forman ningún patrón. La concha real tiene además un fondo de retícula fina y más oscura que el modelo deja fuera, y su forma alargada queda fuera del modelo de Raup.</p>
+
+    <h3>Triángulos blancos sobre fondo oscuro: <i>Conus marmoreus</i></h3>
+    <p>El cono marmóreo tiene el patrón contrario: triángulos blancos sobre una red oscura. Meinhardt y Klingler (1987) lo explicaron con la misma hormona, ahora en el modelo activador-sustrato, donde frena la <strong>producción de sustrato</strong>, que pasa a ser \\(b_b/R\\):</p>
     ${GLOBAL_TEX}
-    <p>\\(c\\) sigue con retraso al activador medio \\(\\langle a \\rangle\\), y \\(g\\) fija la intensidad del control. Con \\(g = 0\\) no hay señal global.</p>
-    <p>Esta versión simplificada mantiene las ondas iniciando otras nuevas cuando la actividad baja, y dibuja líneas oblicuas y uves. No reproduce la red densa de triángulos superpuestos de una <i>Oliva porphyria</i> real, que necesita el modelo completo de Meinhardt y Klingler; por eso la app no ofrece un preset de <i>Oliva</i>. Al cambiar al modelo activador-sustrato en los controles avanzados se cargan constantes que dibujan ondas viajeras.</p>
+    <p>Cuando los choques han dejado pocas ondas, \\(R\\) baja y hay más sustrato. Las células activas pasan entonces a una <strong>activación estable</strong>, mucho más baja que el pico de una onda pero por encima del umbral de pigmento, así que la región entre dos ramas queda <strong>pigmentada</strong>. Las ondas siguen su camino, y las células que dejan atrás esperan, sin pigmento, hasta la siguiente ramificación: son los triángulos blancos. Tienen que quedar activadas muchas células antes de que \\(R\\) suba lo bastante para volver a las ondas, y por eso las zonas oscuras son anchas. En la app es el <em>Control global</em> del modelo activador-sustrato, y el preset <i>Conus marmoreus</i> usa las constantes del artículo, con algo menos de saturación. Su umbral es bajo, mucho pigmento, para que se vea la activación estable. Con menos ondas y menos saturación, el mismo mecanismo da en cambio líneas oblicuas y uves (las constantes que se cargan al cambiar a este modelo).</p>
 
     <h3>Qué patrón sale de cada mecanismo</h3>
     <ul>
       <li><strong>Bandas a lo largo de la espiral</strong>, como en el caracol <i>Cepaea nemoralis</i>: picos de activador estables (activador-inhibidor con un inhibidor de largo alcance).</li>
       <li><strong>Rayas paralelas a las líneas de crecimiento</strong>, como las llamas del <i>Nautilus</i>: oscilaciones sincronizadas entre células vecinas (activador-inhibidor con un inhibidor de vida larga). Su contorno irregular y ramificado se debe a las diferencias entre células.</li>
       <li><strong>Puntos en filas espirales</strong>, como en los <i>Naticarius</i>: las dos cosas a la vez. El inhibidor mantiene separados los picos a lo largo del borde, como en las bandas, y dura más que el activador, así que cada pico se enciende y se apaga en su sitio, como en las llamas.</li>
-      <li><strong>Líneas oblicuas, zigzags y triángulos</strong>, como en <i>Oliva</i> y en muchos conos: ondas viajeras, sus choques y ramificaciones y, en el caso de los triángulos, el control global (activador-sustrato).</li>
+      <li><strong>Líneas oblicuas y uves</strong>, como en muchos conos y volutas: ondas viajeras que se aniquilan al encontrarse (activador-sustrato).</li>
+      <li><strong>Líneas que se ramifican en triángulos</strong>, como en <i>Oliva porphyria</i>: ondas viajeras y una hormona que, cuando quedan pocas ondas, las hace ramificarse en muchas líneas a la vez (activador-inhibidor con control global).</li>
+      <li><strong>Triángulos blancos sobre fondo oscuro</strong>, como en <i>Conus marmoreus</i>: la misma ramificación, pero las células entre ramas quedan en una activación estable, baja y pigmentada (activador-sustrato con control global).</li>
     </ul>
     <p>Un pequeño cambio en una sola constante puede convertir un tipo de patrón en otro. El mismo mecanismo, con ritmos algo distintos, explica conchas muy diferentes.</p>
 

@@ -32,6 +32,19 @@ test('every pattern preset forms a pattern, with values in [0, 1]', () => {
   }
 });
 
+test('with a higher definition every preset keeps its pattern, and definition 1 changes nothing', () => {
+  for (const key of Object.keys(PATTERN_PRESETS)) {
+    if (PATTERN_PRESETS[key].D2 > 5) continue; // a far-reaching inhibitor makes the finer step slow; its bands are smooth anyway
+    const fine = simulatePattern(preset(key), { ...g, refine: 2 });
+    assert.equal(fine.state, 'pattern', key);
+    assert.ok(
+      fine.values.every((v) => v >= 0 && v <= 1),
+      key,
+    );
+  }
+  assert.deepEqual(simulatePattern(preset('nautilus'), { ...g, refine: 1 }).values, simulatePattern(preset('nautilus'), g).values);
+});
+
 test('the same seed gives the same pattern; another seed a different one', () => {
   const a = simulatePattern(preset('nautilus'), g).values;
   const b = simulatePattern(preset('nautilus'), g).values;
@@ -140,4 +153,52 @@ test('the Naticarius preset draws many separate spots, not stripes or bands', ()
   assert.ok(spots.largest < 0.005, `largest spot ${spots.largest}`);
   // Bands and flames are long connected patches
   for (const key of ['cepaea', 'nautilus']) assert.ok(patches(key).largest > 5 * spots.largest, key);
+});
+
+test('in the Oliva preset the hormone keeps the waves going by branching', () => {
+  const go = { ...g, rows: 512, nMax: Math.round(256 / PATTERN_PRESETS.oliva.size) };
+  // Peaks of the activator (wave fronts) in each row of the last half of the record
+  const fronts = (values) => {
+    const counts = [];
+    for (let r = go.rows / 2; r < go.rows; r++) {
+      const row = values.subarray(r * go.width, (r + 1) * go.width);
+      let n = 0;
+      for (let x = 0; x < go.width; x++) {
+        const v = row[x];
+        if (v > 0.5 && v >= row[(x + go.width - 1) % go.width] && v > row[(x + 1) % go.width]) n++;
+      }
+      counts.push(n);
+    }
+    return counts;
+  };
+  const oliva = simulatePattern(preset('oliva'), go);
+  assert.equal(oliva.state, 'pattern');
+  const counts = fronts(oliva.values);
+  // Waves never die out, and new ones keep appearing (branches) as others annihilate
+  assert.ok(Math.min(...counts) >= 1, `fewest fronts ${Math.min(...counts)}`);
+  const births = counts.filter((n, i) => i > 0 && n > counts[i - 1]).length;
+  assert.ok(births > 20, `rows with new waves: ${births}`);
+  // Without the hormone the same constants form no pattern: the margin stays at rest
+  assert.notEqual(simulatePattern(preset('oliva', { globalCtl: 0 }), go).state, 'pattern');
+});
+
+test('in the Conus preset the hormone leaves white triangles on a pigmented background', () => {
+  const gc = { ...g, rows: 512, nMax: Math.round(256 / PATTERN_PRESETS.conus.size) };
+  // Over the last half: cells in the low steady activation (pigmented) and cells at rest (white)
+  const shares = (p) => {
+    const { values } = simulatePattern(p, gc);
+    const half = values.length / 2;
+    let dark = 0,
+      white = 0;
+    for (let i = half; i < values.length; i++) {
+      if (values[i] > 0.06) dark++;
+      if (values[i] < 0.01) white++;
+    }
+    return { dark: dark / half, white: white / half };
+  };
+  const conus = shares(preset('conus'));
+  assert.ok(conus.dark > 0.3 && conus.dark < 0.85, `pigmented ${conus.dark}`);
+  assert.ok(conus.white > 0.15, `white ${conus.white}`);
+  // Without the hormone the cells never rest long enough to leave white areas
+  assert.ok(shares(preset('conus', { globalCtl: 0 })).white < 0.1);
 });

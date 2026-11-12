@@ -109,9 +109,12 @@ A mollusc only adds pigment at the growing margin, so a shell pattern is a **tim
   ∂h/∂t = s·a² − r_h·h + D_h·∂²h/∂x² + b_h
   ```
 
-- **Activator–substrate model.** The activator consumes a substrate that recovers slowly, so activation travels as waves that draw oblique lines and annihilate when they meet. Meinhardt and Klingler (1987) explained the triangles of *Oliva porphyria* by adding a signal shared by the whole margin that starts new waves when activity drops. The app includes a simplified version of that global control, which gives oblique lines and V shapes but not the full *Oliva* pattern, so it is available in the advanced controls and not as a species preset.
+- **Activator–substrate model.** The activator consumes a substrate that recovers slowly, so activation travels as waves that draw oblique lines and annihilate when they meet. With a weak global control (below) the waves keep going and draw oblique lines and V shapes.
+- **Global control: *Oliva porphyria*.** Meinhardt and Klingler (1987) explained the branching lines and triangles of *Oliva porphyria* with a hormone made by the active cells, which measures how many waves there are. In the activator–inhibitor model with global control, a low hormone level makes the inhibitor vanish quickly, so the active cells stay active and send out backward waves: many lines branch at once. The *Oliva porphyria* preset starts from the constants of Fowler, Meinhardt and Prusinkiewicz (1992). In the activator–substrate model the same hormone raises the production of substrate, so the cells between branches stay in a low, pigmented activation: white triangles on a dark net, as in the marble cone (*Conus marmoreus* preset, Meinhardt and Klingler's Fig. 9).
 
-Three presets reproduce real pattern types: the flame stripes of *Nautilus*, the spiral bands of *Cepaea nemoralis* and the spots in spiral rows of *Naticarius*.
+In the global-control presets each margin cell is barely coupled to its neighbours, so a front does not slide but jumps from cell to cell, and on the last whorls each jump can be seen. The *Pattern definition* of the Appearance menu splits each cell in two, with the diffusion scaled so that the pattern keeps its size and look, and the fronts advance in steps twice as fine. At any definition the cells are joined with a slight smoothing, less than a cell, and the record has 4096 rows, so edges are not drawn as staircases.
+
+Five presets reproduce real pattern types: the flame stripes of *Nautilus*, the spiral bands of *Cepaea nemoralis*, the spots in spiral rows of *Naticarius*, the branching triangles of *Oliva porphyria* and the white triangles on a dark net of *Conus marmoreus*.
 
 **Simple controls** set real quantities of the model: the number of cells along the margin, the growth time, the irregularity between cells and the pigment threshold. A seed chooses the random differences between cells. **Advanced controls** expose every constant of the equations, the choice of model and the insertion of new cells as the margin grows. The space–time record can be seen in time, which is Meinhardt's diagram, or unrolled with the true proportions of the shell. A **margin profile** plots the activator and the inhibitor or substrate at any moment of growth. If a set of values forms no pattern, the app says so instead of showing an empty shell.
 
@@ -128,7 +131,7 @@ The **Export…** button at the bottom of the sidebar opens a dialog with every 
 | 3D model | GLB (glTF) | The surface with its colour and pattern, for 3D viewers, Blender or augmented reality |
 | Pattern | PNG, JPG, TIFF | The space–time record of the pigmentation |
 
-The page address also stores the current shell, the pattern and the look (colours, mesh resolution, growth bands and axis), so copying the link shares exactly what is on screen. The colours enter the address once you choose them; until then each visitor sees the palette of their own light or dark theme.
+The page address also stores the current shell, the pattern and the look (colours, mesh resolution, pattern definition, growth bands and axis), so copying the link shares exactly what is on screen. The colours enter the address once you choose them; until then each visitor sees the palette of their own light or dark theme.
 
 **Example report** (garden snail with the *Cepaea nemoralis* pattern, three pages):
 
@@ -174,6 +177,8 @@ The tests check, among other things, that:
 - planispiral whorls touch exactly at D = 1/W for any aperture shape;
 - pattern cells are evenly spaced along elliptical apertures;
 - every pigmentation preset forms a pattern, and the same seed always gives the same pattern;
+- with the hormone of global control, the *Oliva* waves keep branching and the *Conus* cells leave white triangles on a pigmented background, and without it neither pattern forms;
+- with the high pattern definition every preset keeps its pattern;
 - each shape preset lies in the morphospace region of its group;
 - the printable solid is closed, faces outwards and has exactly the requested size. This is checked for every preset, every ornamented example and extreme parameters;
 - ribs, cords, nodules, keel and spines appear exactly where they should, and spines never open the lip of the aperture;

@@ -111,9 +111,12 @@ Un molusco solo añade pigmento en el borde que crece, así que un patrón de co
   ∂h/∂t = s·a² − r_h·h + D_h·∂²h/∂x² + b_h
   ```
 
-- **Modelo activador-sustrato.** El activador consume un sustrato que se recupera despacio, así que la activación avanza como ondas que dibujan líneas oblicuas y se aniquilan al encontrarse. Meinhardt y Klingler (1987) explicaron los triángulos de *Oliva porphyria* añadiendo una señal compartida por todo el borde que inicia ondas nuevas cuando la actividad baja. La app incluye una versión simplificada de ese control global, que da líneas oblicuas y uves pero no el patrón completo de *Oliva*; por eso está disponible en los controles avanzados y no como preset de una especie.
+- **Modelo activador-sustrato.** El activador consume un sustrato que se recupera despacio, así que la activación avanza como ondas que dibujan líneas oblicuas y se aniquilan al encontrarse. Con un control global débil (abajo) las ondas se mantienen y dibujan líneas oblicuas y uves.
+- **Control global: *Oliva porphyria*.** Meinhardt y Klingler (1987) explicaron las líneas que se ramifican y los triángulos de *Oliva porphyria* con una hormona que fabrican las células activas y que mide cuántas ondas hay. En el modelo activador-inhibidor con control global, cuando la hormona baja el inhibidor desaparece deprisa, así que las células activas siguen activas y lanzan ondas hacia atrás: muchas líneas se ramifican a la vez. El preset *Oliva porphyria* parte de las constantes de Fowler, Meinhardt y Prusinkiewicz (1992). En el modelo activador-sustrato la misma hormona aumenta la producción de sustrato, así que las células entre ramas quedan en una activación baja y pigmentada: triángulos blancos sobre una red oscura, como en el cono marmóreo (preset *Conus marmoreus*, figura 9 de Meinhardt y Klingler).
 
-Tres presets reproducen tipos de patrón reales: las rayas en llama del *Nautilus*, las bandas espirales de *Cepaea nemoralis* y los puntos en filas espirales de *Naticarius*.
+En los presets con control global cada célula del borde está muy poco acoplada a sus vecinas, así que un frente no se desliza, sino que salta de célula en célula, y en las últimas vueltas cada salto se ve. La *Definición del patrón* del menú Apariencia divide cada célula en dos, con la difusión escalada para que el patrón conserve su tamaño y su aspecto, y los frentes avanzan en pasos el doble de finos. Con cualquier definición las células se unen con un ligero suavizado, menor que una célula, y el registro tiene 4096 filas, así que los bordes no se dibujan como escaleras.
+
+Cinco presets reproducen tipos de patrón reales: las rayas en llama del *Nautilus*, las bandas espirales de *Cepaea nemoralis*, los puntos en filas espirales de *Naticarius*, los triángulos que se ramifican de *Oliva porphyria* y los triángulos blancos sobre red oscura de *Conus marmoreus*.
 
 Los **controles simples** fijan magnitudes reales del modelo: el número de células a lo largo del borde, el tiempo de crecimiento, la irregularidad entre células y el umbral de pigmento. Una semilla elige las diferencias al azar entre células. Los **controles avanzados** dan acceso a todas las constantes de las ecuaciones, a la elección del modelo y a la inserción de células nuevas a medida que el borde crece. El registro espacio-tiempo se puede ver en el tiempo, que es el diagrama de Meinhardt, o desenrollado con las proporciones reales de la concha. Un **perfil del borde** representa el activador y el inhibidor o el sustrato en cualquier instante del crecimiento. Si un conjunto de valores no forma ningún patrón, la app lo indica en lugar de mostrar una concha vacía.
 
@@ -130,7 +133,7 @@ El botón **Export…** de la parte inferior de la barra lateral abre una ventan
 | Modelo 3D | GLB (glTF) | La superficie con su color y su patrón, para visores 3D, Blender o realidad aumentada |
 | Patrón | PNG, JPG, TIFF | El registro espacio-tiempo de la pigmentación |
 
-La dirección de la página también guarda la concha, el patrón y el aspecto actuales (colores, resolución de la malla, bandas de crecimiento y eje), así que al copiar el enlace se comparte exactamente lo que se ve en pantalla. Los colores pasan a la dirección en cuanto los eliges; hasta entonces, cada visitante ve la paleta de su propio tema claro u oscuro.
+La dirección de la página también guarda la concha, el patrón y el aspecto actuales (colores, resolución de la malla, definición del patrón, bandas de crecimiento y eje), así que al copiar el enlace se comparte exactamente lo que se ve en pantalla. Los colores pasan a la dirección en cuanto los eliges; hasta entonces, cada visitante ve la paleta de su propio tema claro u oscuro.
 
 **Informe de ejemplo** (caracol de jardín con el patrón de *Cepaea nemoralis*, tres páginas):
 
@@ -176,6 +179,8 @@ Los tests comprueban, entre otras cosas, que:
 - las vueltas planispirales se tocan exactamente en D = 1/W para cualquier forma de la apertura;
 - las células del patrón quedan igual de espaciadas a lo largo de las aperturas elípticas;
 - cada preset de pigmentación forma un patrón, y la misma semilla da siempre el mismo patrón;
+- con la hormona del control global, las ondas de *Oliva* siguen ramificándose y las células de *Conus* dejan triángulos blancos sobre un fondo pigmentado, y sin ella ninguno de los dos patrones se forma;
+- con la definición alta del patrón cada preset conserva su patrón;
 - cada preset de forma cae en la región del morfoespacio de su grupo;
 - el sólido imprimible está cerrado, mira hacia fuera y tiene exactamente el tamaño pedido. Se comprueba con cada preset, cada ejemplo ornamentado y parámetros extremos;
 - costillas, cordones, nódulos, quilla y espinas aparecen exactamente donde deben, y las espinas nunca abren el labio de la apertura;
