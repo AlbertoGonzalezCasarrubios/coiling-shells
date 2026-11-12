@@ -430,10 +430,17 @@ function patternOf(key) {
   };
 }
 
-/** Background and pigment colours of real shells, for colour targets. */
 /** The highest score the kind's own pattern may get against a colour target. */
 const OWN_PATTERN_MAX = 75;
 
+/**
+ * The kinds of pattern of the colour levels. The ones with global control
+ * (Oliva, Conus) are left out: their look comes from the balance kept by the
+ * hormone, so a target with another time or size can lose its triangles.
+ */
+export const CHALLENGE_PATTERNS = Object.keys(PATTERN_PRESETS).filter((k) => !(PATTERN_PRESETS[k].globalCtl > 0));
+
+/** Background and pigment colours of real shells, for colour targets. */
 const SHELL_COLOURS = [
   ['#f1e7d6', '#9c4a1f'], // cream and rust
   ['#ecc95a', '#3a2216'], // yellow and dark brown
@@ -477,7 +484,7 @@ export function makeTarget(level, rand = Math.random) {
     shell = shapeOf(pick(SHAPE_TARGETS));
   }
   if (L.parts.includes('colour')) {
-    pattern = pick(Object.keys(PATTERN_PRESETS));
+    pattern = pick(CHALLENGE_PATTERNS);
     shell = { ...shell, ...patternOf(pattern) };
     name ??= pattern;
   }
@@ -520,7 +527,7 @@ export function startShell(level, target) {
   const s = { ...target };
   for (const k of L.keys) if (START[k]) s[k] = START[k](target[k]);
   if (L.parts.includes('colour')) {
-    const kinds = Object.keys(PATTERN_PRESETS);
+    const kinds = CHALLENGE_PATTERNS;
     Object.assign(s, patternOf(kinds[(kinds.indexOf(target.patternPreset) + 1) % kinds.length]));
   }
   return s;

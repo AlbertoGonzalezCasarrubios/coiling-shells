@@ -35,6 +35,10 @@ export default {
   'look.shell': 'Concha',
   'look.bg': 'Fondo',
   'look.quality': 'Resolución de la malla',
+  'look.patternDef': 'Definición del patrón',
+  'look.defNormal': 'Normal',
+  'look.defHigh': 'Alta',
+  'look.patternDefHint': 'Células más finas a lo largo del borde: bordes del patrón más suaves, cálculo más lento.',
   'look.low': 'Baja',
   'look.medium': 'Media',
   'look.high': 'Alta',
@@ -356,7 +360,7 @@ export default {
   'pig.model.AI': 'Activador-inhibidor',
   'pig.model.AS': 'Activador-sustrato',
   'pig.recipes':
-    '<strong>Cómo cambiar de tipo de patrón</strong><ul><li><b>Bandas a lo largo de la espiral</b>: activador-inhibidor con un inhibidor de largo alcance (D<sub>h</sub> ≫ D<sub>a</sub>) más rápido que el activador (r<sub>h</sub> &gt; r<sub>a</sub>).</li><li><b>Rayas paralelas al borde</b>: activador-inhibidor con D<sub>h</sub> ≈ 0 (a la izquierda del todo) y un inhibidor de vida más larga (r<sub>h</sub> &lt; r<sub>a</sub>).</li><li><b>Líneas oblicuas y uves</b>: activador-sustrato sin saturación (κ = 0) y con un sustrato que se recupera despacio (b<sub>b</sub> y r<sub>b</sub> pequeños); un control global g &gt; 0 inicia ondas nuevas cuando la actividad baja.</li></ul>',
+    '<strong>Cómo cambiar de tipo de patrón</strong><ul><li><b>Bandas a lo largo de la espiral</b>: activador-inhibidor con un inhibidor de largo alcance (D<sub>h</sub> ≫ D<sub>a</sub>) más rápido que el activador (r<sub>h</sub> &gt; r<sub>a</sub>).</li><li><b>Rayas paralelas al borde</b>: activador-inhibidor con D<sub>h</sub> ≈ 0 (a la izquierda del todo) y un inhibidor de vida más larga (r<sub>h</sub> &lt; r<sub>a</sub>).</li><li><b>Líneas oblicuas y uves</b>: activador-sustrato sin saturación (κ = 0) y con un sustrato que se recupera despacio (b<sub>b</sub> y r<sub>b</sub> pequeños); un control global g &gt; 0 débil mantiene las ondas.</li><li><b>Líneas que se ramifican en triángulos</b> (<i>Oliva</i>): activador-inhibidor con un inhibidor de vida más larga, poco acoplamiento y control global g &gt; 0.</li><li><b>Triángulos blancos sobre fondo oscuro</b> (<i>Conus</i>): activador-sustrato con mucha saturación, control global g &gt; 0 y mucho pigmento.</li></ul>',
   'pig.params': 'Controles del patrón',
   'pig.advanced': 'Avanzado: constantes del modelo',
   'pig.advanced.hint':
@@ -461,9 +465,13 @@ export default {
       desc: 'Lo rápido que se repone el sustrato: con valores bajos se recupera despacio y las ondas quedan más separadas',
     },
     noise: { name: 'Ruido entre células' },
-    globalCtl: {
+    'globalCtl.AI': {
       name: 'Control global',
-      desc: 'Intensidad de la señal, parecida a una hormona, que dispara ondas nuevas cuando baja la actividad total',
+      desc: 'Hormona que cuenta las ondas: si quedan pocas, las líneas se ramifican (Oliva). Su valor es lo rápido que las sigue; 0, ninguna',
+    },
+    'globalCtl.AS': {
+      name: 'Control global',
+      desc: 'Hormona que cuenta las ondas: si quedan pocas, sube el sustrato y las células quedan pigmentadas (Conus). Su valor es lo rápido que las sigue; 0, ninguna',
     },
     pT: {
       name: 'Tiempo de crecimiento',
@@ -480,6 +488,8 @@ export default {
     nautilus: 'Nautilus — rayas en llama',
     cepaea: 'Cepaea nemoralis — bandas espirales',
     naticarius: 'Naticarius — puntos en filas espirales',
+    oliva: 'Oliva porphyria — triángulos en forma de tienda',
+    conus: 'Conus marmoreus — tiendas blancas sobre red oscura',
   },
   presets: {
     Gasterópodos: 'Gasterópodos',

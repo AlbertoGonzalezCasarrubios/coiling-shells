@@ -21,7 +21,10 @@ let applyMode, capturePointer, controlsByKey, createParam, setFill;
 // Pigmentation (Meinhardt's reaction–diffusion models)
 // ---------------------------------------------------------------------------
 
-export const PATTERN_ROWS = 2048; // rows of the space–time record (apex → aperture)
+// Rows of the space–time record (apex → aperture). A fast front moves several
+// columns from one row to the next, so with fewer rows its edge looks stepped on
+// the last whorls; 4096 when the graphics card takes a texture that tall.
+export const PATTERN_ROWS = Math.min(4096, renderer.capabilities.maxTextureSize);
 const PATTERN_WIDTH = 1024; // texture columns (once around the aperture)
 export const PATTERN_CELLS = 256; // margin cells at the aperture (size ×1)
 // Half-width of the pigmentation threshold: pigment is laid down where the
@@ -438,10 +441,10 @@ let patternJob = 0;
 let patternTimer = 0;
 let patternGeomKey = '';
 
-/** Simulation parameters from the state (global control only exists with a substrate). */
+/** Simulation parameters from the state. */
 function simParams(p) {
   const { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl, T, seed, insertion } = p;
-  return { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl: model === 'AS' ? globalCtl : 0, T, seed, insertion };
+  return { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl, T, seed, insertion };
 }
 
 export function computePattern() {
@@ -449,7 +452,14 @@ export function computePattern() {
   patternPending = false;
   const p = simParams(pattern);
   // The pattern size is the number of margin cells (fewer cells, larger elements)
-  const g = { W: state.W, turns: state.turns, rows: PATTERN_ROWS, width: PATTERN_WIDTH, nMax: Math.round(PATTERN_CELLS / pattern.size) };
+  const g = {
+    W: state.W,
+    turns: state.turns,
+    rows: PATTERN_ROWS,
+    width: PATTERN_WIDTH,
+    nMax: Math.round(PATTERN_CELLS / pattern.size),
+    refine: state.patternDef,
+  };
   patternGeomKey = `${state.W}|${state.turns}`;
   $('patternStatus').hidden = false;
   if (workerBusy && patternWorker) {
@@ -503,7 +513,7 @@ const sub = (x, y) => `${x}<sub>${y}</sub>`;
 const second = () => (pattern.model === 'AS' ? 'b' : 'h');
 export const PIG_SIMPLE = [
   { key: 'size', id: 'pSize', i18n: 'pSize', log: true, min: 0.5, max: 4, digits: 2 },
-  { key: 'T', id: 'pT', i18n: 'pT', log: true, min: 500, max: 12000, format: (v) => v.toFixed(0) },
+  { key: 'T', id: 'pT', i18n: 'pT', log: true, min: 500, max: 60000, format: (v) => v.toFixed(0) },
   { key: 'noise', id: 'pnoise', i18n: 'pNoise', min: 0, max: 0.5, step: 0.01, digits: 2 },
   { key: 'amount', id: 'pAmount', i18n: 'pAmount', min: 0.15, max: 0.85, step: 0.01, digits: 2 },
 ];
@@ -534,7 +544,7 @@ const PIG_ADVANCED = [
     max: 0.3,
     format: sig,
   },
-  { key: 'kappa', id: 'pkappa', sym: 'κ', min: 0, max: 2, step: 0.01, digits: 2 },
+  { key: 'kappa', id: 'pkappa', sym: 'κ', min: 0, max: 4, step: 0.01, digits: 2 },
   { key: 'ba', id: 'pba', sym: sub('b', 'a'), log: true, zero: true, min: 0.0001, max: 0.1, format: sig },
   {
     key: 'b2',
@@ -543,11 +553,21 @@ const PIG_ADVANCED = [
     i18n: () => `b2.${pattern.model}`,
     log: true,
     zero: true,
-    min: 0.0005,
+    min: 0.0001,
     max: 0.1,
     format: sig,
   },
-  { key: 'globalCtl', id: 'pglobal', sym: 'g', log: true, zero: true, min: 0.0005, max: 0.05, format: sig },
+  {
+    key: 'globalCtl',
+    id: 'pglobal',
+    sym: 'g',
+    i18n: () => `globalCtl.${pattern.model}`,
+    log: true,
+    zero: true,
+    min: 0.0005,
+    max: 0.05,
+    format: sig,
+  },
 ];
 const PIG_PARAMS = [...PIG_SIMPLE, ...PIG_ADVANCED];
 
@@ -664,7 +684,6 @@ export function selectPattern(key) {
 export function syncPatternControls() {
   PIG_PARAMS.forEach((d) => pigControls[d.id].set(pattern[d.key]));
   Object.values(pigControls).forEach((c) => c.relabel());
-  pigControls.pglobal.el.hidden = pattern.model !== 'AS'; // global control only exists with a substrate
   $('patternModel').value = pattern.model;
   $('patternInsertion').checked = pattern.insertion;
   $('patternSeed').value = pattern.seed;

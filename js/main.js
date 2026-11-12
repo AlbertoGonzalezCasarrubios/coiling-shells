@@ -305,6 +305,12 @@ $('quality').addEventListener('change', (e) => {
   dirty = true; // the rebuild rewrites the address
 });
 
+$('patternDef').addEventListener('change', (e) => {
+  state.patternDef = Number(e.target.value);
+  if (pattern.on) computePattern();
+  writeHash();
+});
+
 qsa('#mode button').forEach((btn) =>
   btn.addEventListener('click', () => {
     state.mode = btn.dataset.mode;
@@ -324,6 +330,7 @@ function readLook() {
     shell: $('shellColor').value,
     bg: $('bgColor').value,
     quality: state.quality,
+    patternDef: state.patternDef,
     bands: $('bands').checked,
     axis: $('showAxis').checked,
   };
@@ -356,6 +363,11 @@ function applyLook(l) {
     $('quality').value = l.quality;
     dirty = true;
   }
+  if (l.patternDef !== now.patternDef) {
+    state.patternDef = l.patternDef;
+    $('patternDef').value = String(l.patternDef);
+    if (pattern.on) computePattern();
+  }
 }
 function lookHash(q) {
   if (lookChosen)
@@ -366,6 +378,7 @@ function lookHash(q) {
     ])
       q.set(k, $(id).value.slice(1));
   if (state.quality !== 'medium') q.set('q', state.quality[0]);
+  if (state.patternDef !== 1) q.set('pd', String(state.patternDef));
   if (!$('bands').checked) q.set('bd', '0');
   if ($('showAxis').checked) q.set('ax', '1');
 }
@@ -377,6 +390,7 @@ function lookFromHash() {
   l.shell = hex('sc') ?? l.shell;
   l.bg = hex('bg') ?? l.bg;
   l.quality = { l: 'low', m: 'medium', h: 'high' }[fromHash.get('q')] ?? l.quality;
+  if (fromHash.get('pd') === '2') l.patternDef = 2;
   if (fromHash.has('bd')) l.bands = fromHash.get('bd') !== '0';
   if (fromHash.has('ax')) l.axis = fromHash.get('ax') === '1';
   applyLook(l);

@@ -2,6 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  CHALLENGE_PATTERNS,
   GRID,
   LEVELS,
   passScore,
@@ -155,7 +156,7 @@ test('following the hints with the sliders always passes the level', () => {
   };
   // W, the pattern size and the growth time move by small relative steps, like their sliders
   const REL = { W: 0.005, patternSize: 0.01, patternT: 0.005 };
-  const kinds = Object.keys(PATTERN_PRESETS);
+  const kinds = CHALLENGE_PATTERNS;
   // (the W slider switches to a logarithmic scale above 10, so its steps are relative)
   const snap = (k, v) => (REL[k] ? v : Math.round(v / STEP[k]) * STEP[k]);
   const rand = seeded(3);
@@ -205,6 +206,7 @@ test('targets: real shells, sometimes varied within their kind', () => {
   for (let i = 0; i < 20; i++) assert.ok(makeTarget(6, rand).shell.W < 10, 'level 6 leaves bivalves out');
   const c = makeTarget(7, rand);
   assert.ok(PATTERN_PRESETS[c.shell.patternPreset], 'the colour level uses a pattern preset');
+  assert.deepEqual(CHALLENGE_PATTERNS, ['nautilus', 'cepaea', 'naticarius'], 'patterns with global control are left out');
   const e = makeTarget(8, rand);
   assert.ok(ORNAMENT_PRESETS[e.name] && PATTERN_PRESETS[e.pattern], 'the last level has a shape, a relief and a pattern');
   assert.deepEqual([...new Set(LEVELS.map((L) => L.block))], ['shape', 'ornament', 'colour'], 'three blocks, in order');

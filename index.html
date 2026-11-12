@@ -386,6 +386,14 @@
               <option value="high" data-i18n="look.high">High</option>
             </select>
           </label>
+          <label class="field">
+            <span data-i18n="look.patternDef">Pattern definition</span>
+            <select id="patternDef" class="select" aria-describedby="patternDefHint">
+              <option value="1" selected data-i18n="look.defNormal">Normal</option>
+              <option value="2" data-i18n="look.defHigh">High</option>
+            </select>
+          </label>
+          <p class="note" id="patternDefHint" data-i18n="look.patternDefHint">Finer cells along the margin: smoother pattern edges, slower to compute.</p>
           <div id="vis-params"></div>
           <div class="toggles">
             <label class="toggle"><input type="checkbox" id="hideHidden" checked /><span data-i18n="look.hideHidden">Hide back lines</span></label>

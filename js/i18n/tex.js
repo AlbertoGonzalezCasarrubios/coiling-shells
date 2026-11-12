@@ -50,7 +50,23 @@ export const AS_TEX = String.raw`\[
   \end{aligned}
 \]`;
 
-export const GLOBAL_TEX = String.raw`\[ \frac{dc}{dt} = 0.02\,\big(\langle a \rangle - c\big), \qquad b_a^{\mathrm{ef}} = b_a + \frac{g}{1 + 40\,c} \]`;
+/** Activator–substrate with the hormone R of Meinhardt & Klingler (1987, Fig. 9). */
+export const GLOBAL_TEX = String.raw`\[
+  \begin{aligned}
+    \frac{\partial a}{\partial t} &= s\,b\left(\frac{a^2}{1+\kappa a^2} + b_a\right) - r_a\,a + D_a\,\frac{\partial^2 a}{\partial x^2} \\
+    \frac{\partial b}{\partial t} &= \frac{b_b}{R} - s\,b\left(\frac{a^2}{1+\kappa a^2} + b_a\right) - r_b\,b + D_b\,\frac{\partial^2 b}{\partial x^2} \\
+    \frac{dR}{dt} &= g\,\big(\langle a \rangle - R\big)
+  \end{aligned}
+\]`;
+
+/** Activator–inhibitor with the hormone R of Meinhardt & Klingler (1987, Fig. 8). */
+export const HORMONE_TEX = String.raw`\[
+  \begin{aligned}
+    \frac{\partial a}{\partial t} &= s\,\frac{a^{*2} + b_a}{0.1 + h} - r_a\,a + D_a\,\frac{\partial^2 a}{\partial x^2} \\
+    \frac{\partial h}{\partial t} &= s\,a^{*2} - \frac{r_h}{R}\,h + D_h\,\frac{\partial^2 h}{\partial x^2} + b_h \\
+    \frac{dR}{dt} &= g\,\big(\langle a \rangle - R\big), \qquad a^{*2} = \frac{a^2}{1+\kappa a^2}
+  \end{aligned}
+\]`;
 
 export const MEIN_REFS = `
   <ul class="refs-list">

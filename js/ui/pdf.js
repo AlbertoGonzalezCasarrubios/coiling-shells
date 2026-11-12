@@ -410,10 +410,8 @@ export async function exportPDF(app) {
       b2: pattern.model === 'AS' ? 'bb' : 'bh',
       globalCtl: 'g',
     };
-    const name = (k) => tParam(k === 'D2' || k === 'r2' || k === 'b2' ? `${k}.${pattern.model}` : k).name;
-    const rows = Object.keys(sym)
-      .filter((k) => k !== 'globalCtl' || pattern.model === 'AS')
-      .map((k) => [`${sym[k]} · ${name(k)}`, sig(pattern[k])]);
+    const name = (k) => tParam(['D2', 'r2', 'b2', 'globalCtl'].includes(k) ? `${k}.${pattern.model}` : k).name;
+    const rows = Object.keys(sym).map((k) => [`${sym[k]} · ${name(k)}`, sig(pattern[k])]);
     rows.push(
       [`N · ${t('ex.pdf.cells')}`, Math.round(PATTERN_CELLS / pattern.size)],
       [`T · ${tParam('pT').name}`, Math.round(pattern.T)],
@@ -421,6 +419,7 @@ export async function exportPDF(app) {
       [tParam('pAmount').name, f(pattern.amount, 2)],
       [t('pig.insertion'), t(pattern.insertion ? 'ex.yes' : 'ex.no')],
       [t('pig.seed'), pattern.seed],
+      [t('look.patternDef'), t(state.patternDef === 2 ? 'look.defHigh' : 'look.defNormal')],
     );
     rowsTable(rows, sx, yy + 6.5, sw - 22, 22);
     footer();

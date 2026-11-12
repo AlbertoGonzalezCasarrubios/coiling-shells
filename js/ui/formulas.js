@@ -2,7 +2,7 @@
  * The equation panel (general form and current values, typeset by MathJax only
  * while it is visible) and the About window with its pages.
  */
-import { AI_TEX, AS_TEX, DEFS_TEX, GENERAL_TEX, GLOBAL_TEX, MIRROR_TEX, t } from '../i18n/i18n.js';
+import { AI_TEX, AS_TEX, DEFS_TEX, GENERAL_TEX, GLOBAL_TEX, HORMONE_TEX, MIRROR_TEX, t } from '../i18n/i18n.js';
 import { hasOrnament } from '../model/ornament.js';
 import { state } from './state.js';
 import { $, f, formatW, sig, qsa } from './util.js';
@@ -47,7 +47,10 @@ const SOURCE_TEX = String.raw`\[ s_i = r_a\,(1 + \sigma\,\xi_i),\quad \xi_i \in 
 export function generalTeX(view = formulaView) {
   if (view === 'meinhardt') {
     const isAS = pattern.model === 'AS';
-    return (isAS ? AS_TEX : AI_TEX) + (isAS && pattern.globalCtl > 0 ? GLOBAL_TEX : '') + SOURCE_TEX;
+    const global = pattern.globalCtl > 0;
+    // With global control, the activator–inhibitor model takes the hormone of Meinhardt & Klingler
+    if (!isAS) return (global ? HORMONE_TEX : AI_TEX) + SOURCE_TEX;
+    return (global ? GLOBAL_TEX : AS_TEX) + SOURCE_TEX;
   }
   return GENERAL_TEX + DEFS_TEX + (state.mirror ? MIRROR_TEX : '') + (hasOrnament(state) ? ORNAMENT_TEX : '');
 }
@@ -98,7 +101,16 @@ function meinhardtLiveTeX() {
     const prod = String.raw`s\,b\left(\frac{a^2}{${sat || '1'}}${basal}\right)`;
     eqs = String.raw`\begin{aligned}
       \frac{\partial a}{\partial t} &= ${prod} - ${sig(ra)}\,a${term('+', Da, lap('a'))} \\
-      \frac{\partial b}{\partial t} &= ${sig(b2)} - ${prod}${term('-', r2, 'b')}${term('+', D2, lap('b'))}
+      \frac{\partial b}{\partial t} &= ${globalCtl > 0 ? String.raw`\frac{${sig(b2)}}{R}` : sig(b2)} - ${prod}${term('-', r2, 'b')}${term('+', D2, lap('b'))}${
+        globalCtl > 0 ? String.raw` \\ \frac{dR}{dt} &= ${sig(globalCtl)}\,\big(\langle a \rangle - R\big)` : ''
+      }
+    \end{aligned}`;
+  } else if (globalCtl > 0) {
+    const sat2 = kappa > 0 ? String.raw`\frac{a^2}{1+${sig(kappa)}\,a^2}` : 'a^2';
+    eqs = String.raw`\begin{aligned}
+      \frac{\partial a}{\partial t} &= s\,\frac{${sat2}${basal}}{0.1 + h} - ${sig(ra)}\,a${term('+', Da, lap('a'))} \\
+      \frac{\partial h}{\partial t} &= s\,${sat2} - \frac{${sig(r2)}}{R}\,h${term('+', D2, lap('h'))}${term('+', b2, '')} \\
+      \frac{dR}{dt} &= ${sig(globalCtl)}\,\big(\langle a \rangle - R\big)
     \end{aligned}`;
   } else {
     eqs = String.raw`\begin{aligned}
@@ -106,14 +118,8 @@ function meinhardtLiveTeX() {
       \frac{\partial h}{\partial t} &= s\,a^2 - ${sig(r2)}\,h${term('+', D2, lap('h'))}${term('+', b2, '')}
     \end{aligned}`;
   }
-  const global =
-    model === 'AS' && globalCtl > 0 ? String.raw`\[ b_a^{\mathrm{ef}} = ${sig(ba)} + \frac{${sig(globalCtl)}}{1 + 40\,c} \]` : '';
   const cells = Math.round(PATTERN_CELLS / pattern.size);
-  return (
-    String.raw`\[ ${eqs} \]` +
-    global +
-    String.raw`\[ s_i = ${sig(ra)}\,(1 \pm ${sig(noise)}),\quad N = ${cells},\quad T = ${Math.round(T)} \]`
-  );
+  return String.raw`\[ ${eqs} \]` + String.raw`\[ s_i = ${sig(ra)}\,(1 \pm ${sig(noise)}),\quad N = ${cells},\quad T = ${Math.round(T)} \]`;
 }
 
 export function liveTeX(view = formulaView) {

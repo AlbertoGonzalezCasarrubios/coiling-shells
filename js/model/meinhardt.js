@@ -18,12 +18,22 @@
  * s = r_a·(1 ± noise) is the source density of each cell (cell-to-cell
  * heterogeneity). With cell insertion the margin gains cells in proportion to
  * the size of the shell, so pattern elements keep their absolute size and new
- * stripes are intercalated as the shell grows. Global control (activator–
- * substrate only): a signal c, shared by the whole margin, follows the mean
- * activity; when waves annihilate and activity drops, c falls and favours the
- * triggering of new waves. It is a simplified version of the mechanism that
- * Meinhardt and Klingler (1987) proposed for the triangles of Oliva porphyria;
- * in this form it gives oblique lines and V shapes, not that full pattern.
+ * stripes are intercalated as the shell grows.
+ *
+ * Global control (Meinhardt & Klingler 1987): a hormone R made by the active
+ * cells and shared by the whole margin, ∂R/∂t = g·(⟨a⟩ − R), so it measures how
+ * many waves there are. When waves annihilate and few are left, R falls, the
+ * active cells switch from oscillating to a steady activation and, once their
+ * neighbours have recovered, start backward waves: branches. Since R is the
+ * same everywhere, many lines branch at once.
+ * - Activator–inhibitor (their Fig. 8, Oliva porphyria): R slows the decay of
+ *   the inhibitor, which becomes r_h/R, and the activator production becomes
+ *   s·(a*² + b_a)/(0.1 + h) with a*² = a²/(1 + κa²) (also in the production of h).
+ *   The steady activation is high: lines branch into triangles.
+ * - Activator–substrate (their Fig. 9, Conus marmoreus): R slows the production
+ *   of substrate, which becomes b_b/R. The steady activation is low but above
+ *   the pigment threshold: the region between two branches is pigmented, which
+ *   leaves white triangles on a dark background.
  */
 
 export const MODELS = ['AI', 'AS'];
@@ -63,6 +73,7 @@ export function rng32(seed) {
  * @param {number} g.rows       rows of the result
  * @param {number} g.width      columns of the result (the margin is resampled)
  * @param {number} g.nMax       cells at the aperture
+ * @param {number} [g.refine]   definition: sub-cells per cell (1 by default)
  * @returns {{ values: Float32Array, second: Float32Array, state: 'pattern'|'uniform'|'extinct' }}
  *   values: normalised activator 0–1 (rows × width); second: inhibitor or
  *   substrate relative to its maximum (rows × PROFILE_WIDTH), for the profile
@@ -70,10 +81,22 @@ export function rng32(seed) {
  *   the activator died out
  */
 export function simulatePattern(p, g) {
-  const { rows, width, nMax } = g;
-  const nMin = 8;
+  const { rows, width } = g;
+  // Definition: each cell of the model is split into K sub-cells that share its
+  // source density, with the diffusion scaled by K² so that the coupling, and the
+  // size of the pattern, stay the same; a front then advances in steps K times
+  // finer. Counts below (nMax, nMin, the insertion) are in sub-cells.
+  const K = Math.max(1, Math.round(g.refine ?? 1));
+  const nMax = g.nMax * K;
+  const Da = p.Da * K * K;
+  const D2 = p.D2 * K * K;
   const rand = rng32(p.seed);
   const isAS = p.model === 'AS';
+  // The hormone of Meinhardt & Klingler (global control), in either model
+  const global = p.globalCtl > 0;
+  const hormone = !isAS && global; // activator–inhibitor with the hormone
+  // With the hormone a very short margin loses all its waves before the hormone can react
+  const nMin = Math.min(nMax, (global ? 48 : 8) * K);
 
   // Relative size of the shell at each row (1 at the aperture)
   const lnW = Math.log(Math.max(g.W, 1.0001));
@@ -89,12 +112,12 @@ export function simulatePattern(p, g) {
   // (insertion) in proportion to the size of the shell.
 
   // Stable explicit Euler step: diffusion (dt·D ≤ 0.4 with Δx = 1) and reaction
-  const Dmax = Math.max(p.Da, p.D2, 1e-6);
+  const Dmax = Math.max(Da, D2, 1e-6);
   const rmax = Math.max(p.ra, p.r2, 1e-6);
   const dt = Math.min(0.5, 0.4 / Dmax, 0.4 / rmax);
 
   // State of the margin (capacity nMax; the first n cells are used)
-  let n = p.insertion ? Math.max(nMin, Math.round(nMax * size[0])) : nMax;
+  let n = p.insertion ? Math.max(nMin, K * Math.round(g.nMax * size[0])) : nMax;
   const a = new Float64Array(nMax);
   const b = new Float64Array(nMax);
   const s = new Float64Array(nMax);
@@ -105,29 +128,39 @@ export function simulatePattern(p, g) {
   const a0 = isAS ? 1 : Math.max(p.r2 / p.ra, 0.05);
   const b0 = isAS ? p.b2 / Math.max(p.r2 + p.ra, 1e-6) : a0;
   for (let i = 0; i < n; i++) {
+    // A new cell every K sub-cells (the same random draws as without refinement)
+    if (i % K) {
+      s[i] = s[i - 1];
+      a[i] = a[i - 1];
+      b[i] = b[i - 1];
+      continue;
+    }
     s[i] = source();
-    a[i] = isAS ? (rand() < 0.08 ? 2 : 0.02) : a0 * (0.5 + rand());
-    b[i] = b0;
+    // With the hormone the margin starts at rest with a few active cells, which start the first waves
+    // (at least the first one, so that a short margin at the apex also starts)
+    a[i] = isAS ? (rand() < 0.08 ? 2 : 0.02) : hormone ? (i === 0 || rand() < 0.03 ? 3 : 0) : a0 * (0.5 + rand());
+    b[i] = hormone ? 0 : isAS && global ? 1 : b0;
   }
 
-  let c = 0; // global signal (mean activity)
-  const cRate = 0.02;
+  // The hormone starts high, as with many waves
+  let c = isAS ? 0.5 : 1;
 
   const out = new Float32Array(rows * width);
+  const raw = new Float32Array(rows * width); // joined by straight lines, for the scale of the record
   const second = new Float32Array(rows * PROFILE_WIDTH); // inhibitor h or substrate b
   let carry = 0;
 
   for (let row = 0; row < rows; row++) {
-    // Cell insertion: a random cell is duplicated, with its own source density
+    // Cell insertion: a random cell (its K sub-cells) is duplicated, with its own source density
     if (p.insertion) {
-      const target = Math.min(nMax, Math.max(nMin, Math.round(nMax * size[row])));
+      const target = Math.min(nMax, Math.max(nMin, K * Math.round((nMax / K) * size[row])));
       while (n < target) {
-        const k = Math.floor(rand() * n);
-        a.copyWithin(k + 1, k, n);
-        b.copyWithin(k + 1, k, n);
-        s.copyWithin(k + 1, k, n);
-        s[k + 1] = source();
-        n++;
+        const k = Math.floor(rand() * (n / K)) * K;
+        a.copyWithin(k + K, k, n);
+        b.copyWithin(k + K, k, n);
+        s.copyWithin(k + K, k, n);
+        s.fill(source(), k + K, k + 2 * K);
+        n += K;
       }
     }
 
@@ -139,9 +172,10 @@ export function simulatePattern(p, g) {
       let mean = 0;
       for (let i = 0; i < n; i++) mean += a[i];
       mean /= n;
-      c += dt * cRate * (mean - c);
-      // When the global activity drops, the basal activation increases
-      const baEff = p.ba + (isAS && p.globalCtl > 0 ? p.globalCtl / (1 + 40 * c) : 0);
+      if (global) c += dt * p.globalCtl * (mean - c);
+      // Inhibitor decay r_h/R, limited to what one step can remove; substrate production b_b/R
+      const rh = hormone ? Math.min(p.r2 / Math.max(c, 1e-9), 1 / dt) : p.r2;
+      const bb = isAS && global ? p.b2 / Math.max(c, 1e-3) : p.b2;
 
       for (let i = 0; i < n; i++) {
         const l = i === 0 ? n - 1 : i - 1;
@@ -152,13 +186,17 @@ export function simulatePattern(p, g) {
         const lapB = b[l] + b[r] - 2 * bi;
         const a2 = ai * ai;
         if (isAS) {
-          const prod = s[i] * bi * (a2 / (1 + p.kappa * a2) + baEff);
-          na[i] = ai + dt * (prod - p.ra * ai + p.Da * lapA);
-          nb[i] = bi + dt * (p.b2 - prod - p.r2 * bi + p.D2 * lapB);
+          const prod = s[i] * bi * (a2 / (1 + p.kappa * a2) + p.ba);
+          na[i] = ai + dt * (prod - p.ra * ai + Da * lapA);
+          nb[i] = bi + dt * (bb - prod - p.r2 * bi + D2 * lapB);
+        } else if (hormone) {
+          const sat = a2 / (1 + p.kappa * a2);
+          na[i] = ai + dt * ((s[i] * (sat + p.ba)) / (0.1 + bi) - p.ra * ai + Da * lapA);
+          nb[i] = bi + dt * (s[i] * sat - rh * bi + D2 * lapB + p.b2);
         } else {
-          const prod = s[i] * (a2 / ((bi + 1e-9) * (1 + p.kappa * a2)) + baEff);
-          na[i] = ai + dt * (prod - p.ra * ai + p.Da * lapA);
-          nb[i] = bi + dt * (s[i] * a2 - p.r2 * bi + p.D2 * lapB + p.b2);
+          const prod = s[i] * (a2 / ((bi + 1e-9) * (1 + p.kappa * a2)) + p.ba);
+          na[i] = ai + dt * (prod - p.ra * ai + Da * lapA);
+          nb[i] = bi + dt * (s[i] * a2 - p.r2 * bi + D2 * lapB + p.b2);
         }
       }
       // Clamping so that extreme parameters cannot overflow (NaN > 0 is false → 0)
@@ -168,14 +206,25 @@ export function simulatePattern(p, g) {
       }
     }
 
-    // Periodic resampling of the margin (n cells) to the texture width
+    // Periodic resampling of the margin (n cells) to the texture width, with a
+    // Gaussian of SMOOTH_CELLS cells instead of straight lines between cells: each
+    // cell switches on abruptly, so a moving front jumps from one cell to the next
+    // and a straight join would draw it as a staircase
     const base = row * width;
     for (let k = 0; k < width; k++) {
       const x = (k / width) * n;
       const i0 = Math.floor(x);
       const t = x - i0;
-      const i1 = i0 + 1 === n ? 0 : i0 + 1;
-      out[base + k] = a[i0] * (1 - t) + a[i1] * t;
+      raw[base + k] = a[i0] * (1 - t) + a[i0 + 1 === n ? 0 : i0 + 1] * t;
+      let sum = 0,
+        wsum = 0;
+      for (let i = i0 - SMOOTH_REACH; i <= i0 + SMOOTH_REACH + 1; i++) {
+        const d = x - i;
+        const w = Math.exp((-d * d) / (2 * SMOOTH_CELLS * SMOOTH_CELLS));
+        sum += w * a[((i % n) + n) % n];
+        wsum += w;
+      }
+      out[base + k] = sum / wsum;
     }
     const base2 = row * PROFILE_WIDTH;
     for (let k = 0; k < PROFILE_WIDTH; k++) {
@@ -188,11 +237,16 @@ export function simulatePattern(p, g) {
   }
 
   // The initial transient (first quarter, the tiny whorls of the apex) counts
-  // neither for the diagnosis nor for the scaling
-  const state = normalize(out, Math.floor(rows / 4) * width);
+  // neither for the diagnosis nor for the scaling. The scale comes from the
+  // unsmoothed record, so that smoothing the edges does not move the threshold.
+  const state = normalize(out, Math.floor(rows / 4) * width, raw);
   scaleToMax(second, Math.floor(rows / 4) * PROFILE_WIDTH);
   return { values: out, second, state };
 }
+
+/** Smoothing of the margin when it is resampled: σ in cells, and how many cells on each side it reaches. */
+const SMOOTH_CELLS = 0.6;
+const SMOOTH_REACH = 2;
 
 /** Scales to 0–1 by dividing by the maximum (ignoring the initial transient). */
 function scaleToMax(v, skip = 0) {
@@ -209,12 +263,13 @@ function scaleToMax(v, skip = 0) {
  * false pattern.
  * @param {Float32Array} v
  * @param {number} [skip]  values at the start that are left out of the statistics
+ * @param {Float32Array} [ref]  the values the statistics come from (by default, v itself)
  * @returns {'pattern' | 'uniform' | 'extinct'}
  */
-function normalize(v, skip = 0) {
+function normalize(v, skip = 0, ref = v) {
   const sample = [];
-  const stride = Math.max(1, Math.floor((v.length - skip) / 20000));
-  for (let i = skip; i < v.length; i += stride) sample.push(v[i]);
+  const stride = Math.max(1, Math.floor((ref.length - skip) / 20000));
+  for (let i = skip; i < ref.length; i += stride) sample.push(ref[i]);
   sample.sort((x, y) => x - y);
   const lo = sample[Math.floor(sample.length * 0.02)];
   const hi = sample[Math.min(sample.length - 1, Math.floor(sample.length * 0.995))];

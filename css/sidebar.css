@@ -6,6 +6,10 @@
 
 /* ---------- Sidebar ---------- */
 .sidebar {
+  /* The containing block of its hidden labels (.sr-only, absolutely positioned):
+     otherwise they hang from the page at their height in a long panel, and the
+     whole page gets a scrollbar that moves the app up */
+  position: relative;
   background: var(--surface);
   border-right: 1px solid var(--border);
   overflow-y: auto;

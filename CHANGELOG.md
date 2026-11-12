@@ -4,7 +4,17 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+### Added
+- *Oliva porphyria* and *Conus marmoreus* pattern presets, with the global control of Meinhardt and Klingler (1987): a hormone made by the active cells counts the travelling waves, and when few are left the active cells switch to a steady activation and send out backward waves on many lines at once. In *Oliva* (activator–inhibitor, constants from Fowler, Meinhardt and Prusinkiewicz 1992) the hormone makes the inhibitor vanish quickly, and the lines branch into tent-shaped triangles, small ones mixed with large ones. In *Conus* (activator–substrate) it raises the production of substrate, and the cells between branches stay pigmented: white triangles on a dark net. Neither is used in the challenge.
+
+- *Pattern definition* in the Appearance menu (Normal, High). High splits each cell of the margin in two, with the diffusion scaled so that the pattern keeps its size and look: fronts, which jump from cell to cell, then advance in finer steps and edges are smoother. It is part of the address (`pd=2`). It costs little, except with a far-reaching inhibitor (*Cepaea*), which takes about four times longer.
+
+### Changed
+- *Global control* is now the hormone of Meinhardt and Klingler in both models; in the activator–substrate model it replaces a simplified version that raised the basal production. The theory page, the equations and the PDF sheet show it. The growth time slider reaches 60000, saturation 4, and the production of inhibitor or substrate goes down to 0.0001.
+- Smoother patterns at any definition: the margin is turned into the texture with a Gaussian of 0.6 cells instead of straight lines between cells, and the record has 4096 rows instead of 2048 (when the graphics card allows it), so fronts are no longer drawn as staircases on the last whorls.
+
 ### Fixed
+- With a long panel in the sidebar (for example the pigment tab with a pattern), the whole page could scroll and push the app up: the hidden labels for screen readers hung from the page instead of from the sidebar.
 - Challenge: the target's shadow no longer moves when the player's shell changes; each shell stands on its own ground.
 - Challenge: on the light theme the shells are drawn on a cooler, darker backdrop, so the cream shell stands out.
 

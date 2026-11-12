@@ -2,7 +2,19 @@
  * Long pages of the About window in English: the theory of each model, the
  * controls and the credits (HTML with TeX, typeset by MathJax when shown).
  */
-import { GENERAL_TEX, DEFS_TEX, MIRROR_TEX, ORN_REFS, REFS, AI_TEX, AS_TEX, GLOBAL_TEX, MEIN_REFS, ornamentFigure } from './tex.js';
+import {
+  GENERAL_TEX,
+  DEFS_TEX,
+  MIRROR_TEX,
+  ORN_REFS,
+  REFS,
+  AI_TEX,
+  AS_TEX,
+  GLOBAL_TEX,
+  HORMONE_TEX,
+  MEIN_REFS,
+  ornamentFigure,
+} from './tex.js';
 
 /** Sketch of the kinds of ornament, with the labels of this language. */
 const ORN_FIGURE = ornamentFigure({
@@ -168,17 +180,25 @@ export default {
     <p>Activation therefore travels along the margin as a <strong>wave</strong>, and as the shell grows the moving wave leaves an <strong>oblique line</strong>. When two waves moving in opposite directions meet, each runs into the depleted wake of the other and both <strong>disappear</strong>, closing a V. Where the substrate has recovered, a new wave can start spontaneously and split into two waves moving apart, which opens an inverted V.</p>
 
     <h3>Global control: the triangles of <i>Oliva porphyria</i></h3>
-    <p>Annihilating and branching waves produce zigzags, but not the large triangles of <i>Oliva porphyria</i>, where new lines start at many places at the same time. Meinhardt and Klingler (1987) explained them with an additional substance shared by the whole animal, like a hormone. It measures the total activity of the margin: when many waves annihilate and activity drops, the signal falls, and this makes it easier for new waves to start everywhere. This app uses a simplified version of the mechanism, which acts on the basal activator production:</p>
+    <p>Travelling waves draw oblique lines, and when two of them meet both die. If nothing else happened, the waves would run out. On <i>Oliva porphyria</i> they do not: lines keep <strong>branching</strong>, that is, a line suddenly sends out a second one in the opposite direction, and the two open a triangle. Branches appear on many lines at the same moment, which no local signal could coordinate along the whole margin.</p>
+    <p>Meinhardt and Klingler (1987) explained it with a substance shared by the whole animal, like a hormone \\(R\\), made by the active cells. Its concentration therefore measures how many waves there are. In their model each cell oscillates, because the inhibitor outlives the activator, and the hormone slows the removal of the inhibitor, whose decay becomes \\(r_h/R\\):</p>
+    ${HORMONE_TEX}
+    <p>While there are many waves, \\(R\\) is high and the inhibitor decays slowly: each cell fires once and is switched off, and the waves travel as usual. When collisions have left few waves, \\(R\\) falls, the inhibitor is removed quickly, and the cells that are active at that moment <strong>stay active</strong> instead of switching off. When their neighbours have recovered, the activation spreads back towards them: a backward wave, that is, a branch. As \\(R\\) is the same everywhere, this happens on many lines at once. The new waves raise \\(R\\) again and everything returns to normal. In this way the hormone keeps the number of waves about constant, and the inhibitor decay \\(r_h\\) sets that number.</p>
+    <p>In the app this is the <em>Global control</em> \\(g\\) of the activator–inhibitor model, and its value is how fast the hormone follows the activity; with \\(g = 0\\) there is no hormone and the equations are the usual ones. The <i>Oliva porphyria</i> preset starts from the constants of Fowler, Meinhardt and Prusinkiewicz (1992), with a somewhat faster inhibitor decay and more cells, so that areas of small triangles alternate with large ones, as on the real shell. Cell insertion keeps their size as the shell grows. Without the hormone, the same constants give no pattern at all. The real shell also has a background of fine, darker reticulation that the model leaves out, and its elongated shape is beyond Raup's model.</p>
+
+    <h3>White triangles on a dark background: <i>Conus marmoreus</i></h3>
+    <p>The marble cone has the opposite pattern: white triangles on a dark net. Meinhardt and Klingler (1987) explained it with the same hormone, now in the activator–substrate model, where it slows the <strong>production of substrate</strong>, which becomes \\(b_b/R\\):</p>
     ${GLOBAL_TEX}
-    <p>\\(c\\) follows the mean activator \\(\\langle a \\rangle\\) with a delay, and \\(g\\) sets the strength of the control. With \\(g = 0\\) there is no global signal.</p>
-    <p>This simplified version keeps waves going by starting new ones when activity drops, and draws oblique lines and V shapes. It does not reproduce the dense network of overlapping triangles of a real <i>Oliva porphyria</i>, which needs the full model of Meinhardt and Klingler; for that reason the app offers no <i>Oliva</i> preset. When you switch to the activator–substrate model in the advanced controls, it loads constants that draw travelling waves.</p>
+    <p>When collisions have left few waves, \\(R\\) falls and there is more substrate. The active cells then switch to a <strong>steady activation</strong>, much lower than the peak of a wave but above the pigment threshold, so the region between two branches stays <strong>pigmented</strong>. The waves move on, and the cells they leave behind wait, unpigmented, until the next branching: these are the white triangles. Many cells have to stay activated before \\(R\\) rises enough to return to waves, and that is why the dark areas are wide. In the app this is the <em>Global control</em> of the activator–substrate model, and the <i>Conus marmoreus</i> preset uses the constants of the paper, with somewhat less saturation. Its threshold is low, a large pigment amount, so that the steady activation shows. With fewer waves and weaker saturation, the same mechanism gives oblique lines and V shapes instead (the constants loaded when you switch to this model).</p>
 
     <h3>Which pattern comes from which mechanism</h3>
     <ul>
       <li><strong>Bands along the spiral</strong>, as in the banded snail <i>Cepaea nemoralis</i>: stable activator peaks (activator–inhibitor with a far-reaching inhibitor).</li>
       <li><strong>Stripes parallel to the growth lines</strong>, like the flames of <i>Nautilus</i>: oscillations synchronised between neighbouring cells (activator–inhibitor with a long-lived inhibitor). Their irregular, branching outline comes from the differences between cells.</li>
       <li><strong>Spots in spiral rows</strong>, as in the moon snails <i>Naticarius</i>: both at once. The inhibitor keeps the peaks apart along the margin, as in the bands, and outlives the activator, so each peak switches on and off in place, as in the flames.</li>
-      <li><strong>Oblique lines, zigzags and triangles</strong>, as in <i>Oliva</i> and many cone shells: travelling waves, their annihilation and branching and, for the triangles, global control (activator–substrate).</li>
+      <li><strong>Oblique lines and V shapes</strong>, as in many cone and volute shells: travelling waves that annihilate when they meet (activator–substrate).</li>
+      <li><strong>Lines that branch into triangles</strong>, as in <i>Oliva porphyria</i>: travelling waves plus a hormone that, when few waves are left, makes them branch on many lines at once (activator–inhibitor with global control).</li>
+      <li><strong>White triangles on a dark background</strong>, as in <i>Conus marmoreus</i>: the same branching, but the cells between branches stay in a low, pigmented steady activation (activator–substrate with global control).</li>
     </ul>
     <p>A small change in a single constant can turn one type into another. The same mechanism, with slightly different rates, explains very different shells.</p>
 

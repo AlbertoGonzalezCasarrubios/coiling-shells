@@ -176,6 +176,67 @@ export const PATTERN_PRESETS = {
     base: '#f4ead8',
     pigment: '#8b4a24',
   },
+  oliva: {
+    // Meinhardt & Klingler (1987, Fig. 8), with the constants of Fowler,
+    // Meinhardt & Prusinkiewicz (1992, Fig. 14). Each cell oscillates (the
+    // inhibitor outlives the activator) and is coupled only weakly to its
+    // neighbours, so activation travels as waves that draw oblique lines and die
+    // when they meet. A hormone shared by the whole margin (global control)
+    // counts the waves: when few are left, the inhibitor is removed quickly, the
+    // active cells stay active and start backward waves. Many lines branch at
+    // once, opening the tent-shaped triangles. Changes from Fowler: the hormone
+    // follows the activity at 0.05 instead of 0.1 (the top of the slider), with
+    // the same pattern; the inhibitor decays faster (0.025 instead of 0.014) and
+    // the margin has more cells, so that areas of small triangles alternate with
+    // large ones, as on the real shell; the long growth time keeps them from
+    // being stretched along the spiral; and with cell insertion they keep their
+    // size as the shell grows instead of widening towards the aperture.
+    model: 'AI',
+    Da: 0.015,
+    D2: 0,
+    ra: 0.1,
+    r2: 0.025,
+    kappa: 0.25,
+    ba: 0.0001,
+    b2: 0.0002,
+    noise: 0.03,
+    globalCtl: 0.05,
+    T: 22000,
+    insertion: true,
+    size: 0.5,
+    amount: 0.6,
+    base: '#f1dcd6',
+    pigment: '#4b1f2c',
+  },
+  conus: {
+    // Meinhardt & Klingler (1987, Fig. 9). Activator–substrate: waves travel and
+    // die when they meet, as in the oblique lines. The hormone (global control)
+    // slows the production of substrate; when few waves are left, there is more
+    // substrate and the active cells switch to a steady activation, low but above
+    // the pigment threshold. The region between two branches stays pigmented,
+    // which leaves white triangles on a dark background. The paper gives neither
+    // the activator diffusion nor the basal production: 0.005 and 0.001 reproduce
+    // its figure. Its saturation (κ = 3) ends up in stripes on a whole shell, with
+    // many more cells than its 69; 2.5 keeps the triangles with any seed. A high pigment amount (low threshold) is what makes the steady
+    // activation show; growth time and cell size are set so that the triangles
+    // are about as long as they are wide on the shell.
+    model: 'AS',
+    Da: 0.005,
+    D2: 0,
+    ra: 0.1,
+    r2: 0.005,
+    kappa: 2.5,
+    ba: 0.001,
+    b2: 0.038,
+    noise: 0.05,
+    globalCtl: 0.05,
+    T: 45000,
+    insertion: true,
+    size: 0.8,
+    amount: 0.85,
+    base: '#f7f1e6',
+    pigment: '#3b2116',
+  },
 };
 
 export const DEFAULT_PATTERN = 'nautilus';
@@ -183,10 +244,9 @@ export const DEFAULT_PATTERN = 'nautilus';
 /**
  * Constants loaded when the model is changed in the advanced controls. The
  * activator–substrate set is an excitable medium (no substrate saturation,
- * slow recovery) in which the global signal starts new waves: it draws
- * travelling waves, oblique lines and V shapes. It is not offered as a species
- * preset: this simplified model does not reproduce the full pattern of a
- * particular shell such as Oliva porphyria.
+ * slow recovery) in which a weak hormone (global control) keeps the waves going:
+ * it draws travelling waves, oblique lines and V shapes. It is not offered as a
+ * species preset.
  */
 export const MODEL_DEFAULTS = {
   AI: PATTERN_PRESETS.nautilus,

@@ -35,6 +35,10 @@ export default {
   'look.shell': 'Shell',
   'look.bg': 'Background',
   'look.quality': 'Mesh resolution',
+  'look.patternDef': 'Pattern definition',
+  'look.defNormal': 'Normal',
+  'look.defHigh': 'High',
+  'look.patternDefHint': 'Finer cells along the margin: smoother pattern edges, slower to compute.',
   'look.low': 'Low',
   'look.medium': 'Medium',
   'look.high': 'High',
@@ -353,7 +357,7 @@ export default {
   'pig.model.AI': 'Activator–inhibitor',
   'pig.model.AS': 'Activator–substrate',
   'pig.recipes':
-    '<strong>How to change the type of pattern</strong><ul><li><b>Bands along the spiral</b>: activator–inhibitor with a far-reaching inhibitor (D<sub>h</sub> ≫ D<sub>a</sub>) that is faster than the activator (r<sub>h</sub> &gt; r<sub>a</sub>).</li><li><b>Stripes parallel to the margin</b>: activator–inhibitor with D<sub>h</sub> ≈ 0 (far left) and a longer-lived inhibitor (r<sub>h</sub> &lt; r<sub>a</sub>).</li><li><b>Oblique lines and V shapes</b>: activator–substrate without saturation (κ = 0) and a slowly recovering substrate (small b<sub>b</sub> and r<sub>b</sub>); a global control g &gt; 0 starts new waves when activity drops.</li></ul>',
+    '<strong>How to change the type of pattern</strong><ul><li><b>Bands along the spiral</b>: activator–inhibitor with a far-reaching inhibitor (D<sub>h</sub> ≫ D<sub>a</sub>) that is faster than the activator (r<sub>h</sub> &gt; r<sub>a</sub>).</li><li><b>Stripes parallel to the margin</b>: activator–inhibitor with D<sub>h</sub> ≈ 0 (far left) and a longer-lived inhibitor (r<sub>h</sub> &lt; r<sub>a</sub>).</li><li><b>Oblique lines and V shapes</b>: activator–substrate without saturation (κ = 0) and a slowly recovering substrate (small b<sub>b</sub> and r<sub>b</sub>); a weak global control g &gt; 0 keeps the waves going.</li><li><b>Lines that branch into triangles</b> (<i>Oliva</i>): activator–inhibitor with a longer-lived inhibitor, little coupling and a global control g &gt; 0.</li><li><b>White triangles on a dark background</b> (<i>Conus</i>): activator–substrate with strong saturation, a global control g &gt; 0 and a large pigment amount.</li></ul>',
   'pig.params': 'Pattern controls',
   'pig.advanced': 'Advanced: model constants',
   'pig.advanced.hint':
@@ -455,7 +459,14 @@ export default {
       desc: 'How fast the substrate is replenished: low values, slow recovery and wide gaps between waves',
     },
     noise: { name: 'Cell-to-cell noise' },
-    globalCtl: { name: 'Global control', desc: 'Strength of the hormone-like signal that triggers new waves when total activity drops' },
+    'globalCtl.AI': {
+      name: 'Global control',
+      desc: 'Hormone that counts the waves: when few are left, lines branch (Oliva). Its value is how fast it follows; 0, none',
+    },
+    'globalCtl.AS': {
+      name: 'Global control',
+      desc: 'Hormone that counts the waves: when few are left, it raises the substrate and cells stay pigmented (Conus). Its value is how fast it follows; 0, none',
+    },
     pT: { name: 'Growth time', desc: 'Simulated time from apex to aperture: more time, more stripes along the direction of growth' },
     pSize: { name: 'Pattern size', desc: 'Sets the number of cells along the margin: a larger pattern means fewer cells' },
     pNoise: { name: 'Irregularity', desc: 'Differences between cells (σ): from regular to irregular patterns' },
@@ -468,6 +479,8 @@ export default {
     nautilus: 'Nautilus — flame stripes',
     cepaea: 'Cepaea nemoralis — spiral bands',
     naticarius: 'Naticarius — spots in spiral rows',
+    oliva: 'Oliva porphyria — tent-shaped triangles',
+    conus: 'Conus marmoreus — white tents on a dark net',
   },
   presets: {
     Gasterópodos: 'Gastropods',
