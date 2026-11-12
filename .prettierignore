@@ -1,6 +1,0 @@
-# Only the JavaScript is formatted with Prettier
-*.*
-!*.js
-!*.mjs
-node_modules/
-other/

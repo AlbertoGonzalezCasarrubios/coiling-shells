@@ -8,7 +8,7 @@
 
 [![Tests](https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/actions/workflows/tests.yml/badge.svg)](https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/actions/workflows/tests.yml)
 [![Licencia: MIT](https://img.shields.io/badge/c%C3%B3digo-MIT-blue.svg)](../LICENSE)
-[![Contenido: CC BY 4.0](https://img.shields.io/badge/contenido-CC%20BY%204.0-lightgrey.svg)](../LICENSE-CONTENT.md)
+[![Contenido: CC BY 4.0](https://img.shields.io/badge/contenido-CC%20BY%204.0-lightgrey.svg)](LICENSE-CONTENT.md)
 [![App en línea](https://img.shields.io/badge/app-en%20l%C3%ADnea-2a9d8f.svg)](https://albertogonzalezcasarrubios.github.io/coiling-shells/)
 
 [English](../README.md) · **Español** · [Introducción divulgativa](introduccion-divulgativa.md)
@@ -195,7 +195,7 @@ Los tests comprueban, entre otras cosas, que:
 
 Además, se comprueban los tipos del código (TypeScript sobre el JSDoc del JavaScript) y las pruebas cubren todas las líneas de los módulos que se ejecutan en Node.
 
-Se ejecutan en cada subida mediante GitHub Actions. [ARCHITECTURE.md](../ARCHITECTURE.md), en inglés, describe cómo está organizado el programa y qué cubre cada test.
+Se ejecutan en cada subida mediante GitHub Actions. [ARCHITECTURE.md](ARCHITECTURE.md), en inglés, describe cómo está organizado el programa y qué cubre cada test.
 
 ## Limitaciones
 
@@ -211,12 +211,12 @@ Son modelos mínimos:
 
 > González Casarrubios, A. (2026). *Theoretical Shells: Form and Colour* (versión 1.3.0) [Software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells
 
-Los datos de cita están en [CITATION.cff](../CITATION.cff); GitHub los muestra en *Cite this repository*.
+Los datos de cita están en [CITATION.cff](../CITATION.cff); GitHub los muestra en *Cite this repository*. Los cambios de cada versión están en el [registro de cambios](CHANGELOG.md), en inglés.
 
 ## Licencia
 
 - **Código fuente:** [licencia MIT](../LICENSE).
-- **Textos, explicaciones e imágenes:** [Creative Commons Atribución 4.0 Internacional (CC BY 4.0)](../LICENSE-CONTENT.md).
+- **Textos, explicaciones e imágenes:** [Creative Commons Atribución 4.0 Internacional (CC BY 4.0)](LICENSE-CONTENT.md).
 - **Bibliotecas de terceros:** Three.js (MIT), MathJax (Apache-2.0) y jsPDF (MIT) se cargan desde un CDN con sus propias licencias.
 
 ## Contacto

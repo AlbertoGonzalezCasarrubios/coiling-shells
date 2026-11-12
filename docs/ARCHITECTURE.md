@@ -1,6 +1,6 @@
 # Architecture
 
-Technical notes for anyone who wants to understand, modify or extend the app. The scientific background and the user guide are in the [README](README.md).
+Technical notes for anyone who wants to understand, modify or extend the app. The scientific background and the user guide are in the [README](../README.md).
 
 ## Technology
 
@@ -59,11 +59,15 @@ js/i18n/
   theory-en.js · theory-es.js   The long About pages (theory, controls, credits)
   tex.js              Formulas (TeX) and reference lists shared by both languages
 tests/*.test.mjs      Automated tests (node:test); browser.test.mjs drives the real interface in headless Chrome
+docs/ARCHITECTURE.md  This file
+docs/CHANGELOG.md     Changes in each version
+docs/LICENSE-CONTENT.md  CC BY 4.0 licence of the texts and images
 docs/README.es.md     Spanish translation of the README
 docs/introduccion-divulgativa.md  Non-technical introduction in Spanish
 docs/images/          Images used by the documentation
-package.json          Scripts (test, lint, format) and development dependencies (npm ci)
-eslint.config.js · .prettierrc.json · .prettierignore   Linter and formatter settings
+package.json          Scripts (test, lint, format), Prettier settings and development dependencies (npm ci)
+config/eslint.config.js  Linter settings
+config/jsconfig.json  Type check settings
 .git-blame-ignore-revs  Formatting-only commits that git blame skips
 .github/workflows/    Continuous integration: lint, then tests on Node 20, 22 and 24
 ```
@@ -334,10 +338,10 @@ Everything happens in a dialog (`#exportDlg`) in the browser, with no server.
 ```bash
 npm ci          # optional: lint tools and local copies of the CDN libraries
 npm test        # node --test, Node.js ≥ 20
-npm run lint      # eslint . && prettier --check . && tsc (type check)
+npm run lint      # ESLint, Prettier and tsc (type check)
 npm run typecheck # only the type check
 npm run coverage  # node tests with coverage (at least 98 % of lines and 90 % of branches)
-npm run format    # prettier --write .
+npm run format    # Prettier rewrites the JavaScript in place
 ```
 
 | File | What it checks |
@@ -355,7 +359,7 @@ npm run format    # prettier --write .
 
 The tests run on every push and pull request through GitHub Actions (`.github/workflows/tests.yml`): one job runs the linter, the type check and the coverage thresholds, and another runs the tests on Node 20, 22 and 24 after `npm ci --ignore-scripts`; the browser test runs as a separate step, outside `node --test`, so that its error lines reach the run as annotations.
 
-**Code style.** ESLint (`eslint.config.js`: the recommended rules, browser, worker and Node globals) and Prettier (`.prettierrc.json`: single quotes, lines of 140 characters) cover the JavaScript; `.prettierignore` leaves the other files alone. **Types.** `jsconfig.json` makes TypeScript check the JavaScript as it is (`checkJs`, no build): JSDoc types describe the data (`ShellShape`, `ShellParams` and `Shell` in raup.js; `OrnamentParams`, `ApertureGeometry`, `Crests` and `Ornament` in ornament.js; `PatternParams` in pigment.js; the `state` object in state.js), Three.js is checked against `@types/three` at the same version, and `js/globals.d.ts` declares the libraries loaded with `<script>` (MathJax, jsPDF). Strict mode is off, and `$`/`qsa` (util.js) return loosely typed elements, so the check is about the data rather than about each DOM control.
+**Code style.** ESLint (`config/eslint.config.js`, passed with `-c`: the recommended rules, browser, worker and Node globals) and Prettier (the `prettier` field of `package.json`: single quotes, lines of 140 characters) cover the JavaScript; the `lint` and `format` scripts give Prettier only the `.js` and `.mjs` files, so the other files are left alone. Editors find the Prettier settings on their own, but the ESLint and TypeScript settings only if pointed to `config/`. **Types.** `config/jsconfig.json` makes TypeScript check the JavaScript as it is (`checkJs`, no build): JSDoc types describe the data (`ShellShape`, `ShellParams` and `Shell` in raup.js; `OrnamentParams`, `ApertureGeometry`, `Crests` and `Ornament` in ornament.js; `PatternParams` in pigment.js; the `state` object in state.js), Three.js is checked against `@types/three` at the same version, and `js/globals.d.ts` declares the libraries loaded with `<script>` (MathJax, jsPDF). Strict mode is off, and `$`/`qsa` (util.js) return loosely typed elements, so the check is about the data rather than about each DOM control.
 
 **Accessibility.** Text meets WCAG AA contrast (4.5:1) in both themes; every control has an accessible name; dialogs are native `<dialog>` elements; the About text can be scrolled with the keyboard; with *reduce motion* in the system settings, transitions and camera animations are instantaneous (`motion()` in views.js). The browser test audits this with axe-core.
 

@@ -19,9 +19,9 @@
     "test": "node --test",
     "test:fast": "SKIP_BROWSER=1 node --test",
     "coverage": "SKIP_BROWSER=1 node --test --experimental-test-coverage --test-coverage-include='js/**' --test-coverage-lines=98 --test-coverage-branches=90",
-    "lint": "eslint . && prettier --check . && tsc -p jsconfig.json",
-    "typecheck": "tsc -p jsconfig.json",
-    "format": "prettier --write .",
+    "lint": "eslint -c config/eslint.config.js . && prettier --check \"**/*.{js,mjs}\" && tsc -p config/jsconfig.json",
+    "typecheck": "tsc -p config/jsconfig.json",
+    "format": "prettier --write \"**/*.{js,mjs}\"",
     "serve": "python3 -m http.server 8000"
   },
   "keywords": [
@@ -44,5 +44,9 @@
     "prettier": "3.9.10",
     "three": "0.160.0",
     "typescript": "7.0.2"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "printWidth": 140
   }
 }

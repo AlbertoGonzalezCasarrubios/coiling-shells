@@ -15,7 +15,7 @@ export default [
     languageOptions: { globals: globals.worker },
   },
   {
-    files: ['tests/**/*.mjs', 'eslint.config.js'],
+    files: ['tests/**/*.mjs', 'config/*.js'],
     languageOptions: { globals: globals.node },
   },
   {
