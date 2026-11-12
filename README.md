@@ -6,7 +6,7 @@
 
 [![Tests](https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/actions/workflows/tests.yml/badge.svg)](https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/code-MIT-blue.svg)](LICENSE)
-[![Content: CC BY 4.0](https://img.shields.io/badge/content-CC%20BY%204.0-lightgrey.svg)](LICENSE-CONTENT.md)
+[![Content: CC BY 4.0](https://img.shields.io/badge/content-CC%20BY%204.0-lightgrey.svg)](docs/LICENSE-CONTENT.md)
 [![Live app](https://img.shields.io/badge/app-live-2a9d8f.svg)](https://albertogonzalezcasarrubios.github.io/coiling-shells/)
 
 **English** · [Español](docs/README.es.md)
@@ -193,7 +193,7 @@ The tests check, among other things, that:
 
 The code is also type-checked (TypeScript on the JSDoc of the JavaScript) and every line of the modules that run in Node is covered by the tests.
 
-They run on every push through GitHub Actions. [ARCHITECTURE.md](ARCHITECTURE.md) describes how the program is organised and what each test covers.
+They run on every push through GitHub Actions. [ARCHITECTURE.md](docs/ARCHITECTURE.md) describes how the program is organised and what each test covers.
 
 ## Limitations
 
@@ -209,12 +209,12 @@ These are minimal models:
 
 > González Casarrubios, A. (2026). *Theoretical Shells: Form and Colour* (version 1.3.0) [Computer software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells
 
-Citation metadata are in [CITATION.cff](CITATION.cff); GitHub shows them under *Cite this repository*.
+Citation metadata are in [CITATION.cff](CITATION.cff); GitHub shows them under *Cite this repository*. The changes in each version are listed in the [changelog](docs/CHANGELOG.md).
 
 ## License
 
 - **Source code:** [MIT License](LICENSE).
-- **Texts, explanations and images:** [Creative Commons Attribution 4.0 International (CC BY 4.0)](LICENSE-CONTENT.md).
+- **Texts, explanations and images:** [Creative Commons Attribution 4.0 International (CC BY 4.0)](docs/LICENSE-CONTENT.md).
 - **Third-party libraries:** Three.js (MIT), MathJax (Apache-2.0) and jsPDF (MIT) are loaded from a CDN under their own licences.
 
 ## Contact

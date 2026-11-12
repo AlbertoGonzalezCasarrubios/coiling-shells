@@ -185,7 +185,7 @@ Aproximaciones a los tipos de patrón de cada especie, no ajustes a ejemplares r
 
 ## Para desarrolladores
 
-Los detalles técnicos (estructura del código, cómo se construye la malla, convenciones de ejes, renderizado, exportación y tests) están en [ARCHITECTURE.md](../ARCHITECTURE.md), en inglés.
+Los detalles técnicos (estructura del código, cómo se construye la malla, convenciones de ejes, renderizado, exportación y tests) están en [ARCHITECTURE.md](ARCHITECTURE.md), en inglés.
 
 ## Contacto
 
@@ -193,7 +193,7 @@ Para cualquier duda o comentario: **Alberto González Casarrubios** (Universidad
 
 ## Licencia
 
-© 2026 Alberto González Casarrubios. El código fuente se publica con la [licencia MIT](../LICENSE). Los textos, explicaciones e imágenes están bajo una licencia [Creative Commons Atribución 4.0 Internacional (CC BY 4.0)](../LICENSE-CONTENT.md). Puedes usar, compartir y adaptar ambos libremente, también con fines comerciales, siempre que reconozcas la autoría.
+© 2026 Alberto González Casarrubios. El código fuente se publica con la [licencia MIT](../LICENSE). Los textos, explicaciones e imágenes están bajo una licencia [Creative Commons Atribución 4.0 Internacional (CC BY 4.0)](LICENSE-CONTENT.md). Puedes usar, compartir y adaptar ambos libremente, también con fines comerciales, siempre que reconozcas la autoría.
 
 ## Cómo citar
 

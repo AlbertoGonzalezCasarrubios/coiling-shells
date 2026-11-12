@@ -9,9 +9,9 @@
     "lib": ["es2023", "dom", "dom.iterable"],
     "skipLibCheck": true,
     "paths": {
-      "three": ["./node_modules/@types/three/index.d.ts"],
-      "three/addons/*": ["./node_modules/@types/three/examples/jsm/*"]
+      "three": ["../node_modules/@types/three/index.d.ts"],
+      "three/addons/*": ["../node_modules/@types/three/examples/jsm/*"]
     }
   },
-  "include": ["js/**/*.js", "js/globals.d.ts"]
+  "include": ["../js/**/*.js", "../js/globals.d.ts"]
 }
