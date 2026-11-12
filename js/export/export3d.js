@@ -262,7 +262,7 @@ export function toSTL({ positions: p, indices: ix }, name = 'shell') {
   const n = ix.length / 3;
   const buf = new ArrayBuffer(84 + n * 50);
   const dv = new DataView(buf);
-  const header = `Theoretical Shells: ${name}`.slice(0, 79);
+  const header = `Coiling Shells: ${name}`.slice(0, 79);
   for (let i = 0; i < header.length; i++) dv.setUint8(i, header.charCodeAt(i) & 0x7f);
   dv.setUint32(80, n, true);
   let o = 84;
@@ -306,7 +306,7 @@ export async function to3MF({ positions: p, indices: ix }, name = 'Shell') {
   const model = `<?xml version="1.0" encoding="UTF-8"?>
 <model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">
 <metadata name="Title">${esc(name)}</metadata>
-<metadata name="Application">Theoretical Shells: Form and Colour</metadata>
+<metadata name="Application">Coiling Shells: Form and Colour</metadata>
 <resources><object id="1" type="model" name="${esc(name)}"><mesh>
 <vertices>${v.join('')}</vertices>
 <triangles>${t.join('')}</triangles>

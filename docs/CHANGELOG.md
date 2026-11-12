@@ -12,6 +12,7 @@ All notable changes to this project are documented in this file. The format is b
 ### Changed
 - *Global control* is now the hormone of Meinhardt and Klingler in both models; in the activator–substrate model it replaces a simplified version that raised the basal production. The theory page, the equations and the PDF sheet show it. The growth time slider reaches 60000, saturation 4, and the production of inhibitor or substrate goes down to 0.0001.
 - Smoother patterns at any definition: the margin is turned into the texture with a Gaussian of 0.6 cells instead of straight lines between cells, and the record has 4096 rows instead of 2048 (when the graphics card allows it), so fronts are no longer drawn as staircases on the last whorls.
+- The app is now called *Coiling Shells: Form and Colour* (in Spanish, *Conchas en espiral: forma y color*), like its repository and address; version 1.3.0 was published as *Theoretical Shells: Form and Colour*.
 - Tidier repository: `ARCHITECTURE.md`, `CHANGELOG.md` and `LICENSE-CONTENT.md` are now in `docs/`, the ESLint and TypeScript settings in `config/`, and the Prettier settings in `package.json`.
 
 ### Fixed

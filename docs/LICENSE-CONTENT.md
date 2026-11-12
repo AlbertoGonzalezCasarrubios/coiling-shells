@@ -14,6 +14,6 @@ You are free to share (copy and redistribute the material in any medium or forma
 
 Full licence text: https://creativecommons.org/licenses/by/4.0/legalcode
 
-Suggested attribution: *"Theoretical Shells: Form and Colour" by Alberto González Casarrubios, https://github.com/AlbertoGonzalezCasarrubios/coiling-shells, licensed under CC BY 4.0.*
+Suggested attribution: *"Coiling Shells: Form and Colour" by Alberto González Casarrubios, https://github.com/AlbertoGonzalezCasarrubios/coiling-shells, licensed under CC BY 4.0.*
 
 Images and models that you create with the app are yours to use as you wish.

@@ -80,7 +80,7 @@ test('binary STL has the right header, triangle count and length', () => {
   const n = mesh.indices.length / 3;
   assert.equal(view.getUint32(80, true), n);
   assert.equal(stl.length, 84 + 50 * n);
-  assert.match(new TextDecoder().decode(stl.slice(0, 20)), /^Theoretical Shells/);
+  assert.match(new TextDecoder().decode(stl.slice(0, 20)), /^Coiling Shells/);
 });
 
 /** Files of a ZIP package, with the compression method of each entry. */

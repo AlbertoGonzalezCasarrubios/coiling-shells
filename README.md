@@ -2,7 +2,7 @@
 >
 > — David M. Raup, *Science* (1962)
 
-# Theoretical Shells: Form and Colour
+# Coiling Shells: Form and Colour
 
 [![Tests](https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/actions/workflows/tests.yml/badge.svg)](https://github.com/AlbertoGonzalezCasarrubios/coiling-shells/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/code-MIT-blue.svg)](LICENSE)
@@ -207,7 +207,7 @@ These are minimal models:
 
 ## Citation
 
-> González Casarrubios, A. (2026). *Theoretical Shells: Form and Colour* (version 1.3.0) [Computer software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells
+> González Casarrubios, A. (2026). *Coiling Shells: Form and Colour* (version 1.3.0) [Computer software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells
 
 Citation metadata are in [CITATION.cff](CITATION.cff); GitHub shows them under *Cite this repository*. The changes in each version are listed in the [changelog](docs/CHANGELOG.md).
 
