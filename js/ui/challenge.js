@@ -20,9 +20,10 @@ import { ORNAMENT_DEFAULTS } from '../model/ornament.js';
 import { ORNAMENT_PRESETS, PATTERN_PRESETS, PRESETS } from '../model/presets.js';
 import { colorize } from './pigment.js';
 import { welcomeDlg } from './guide.js';
-import { camera, inner, innerMat, renderer, scene, setViewport, shellGroup, solid, solidMat } from './scene.js';
+import { camera, ground, inner, innerMat, renderer, scene, setViewport, shellGroup, solid, solidMat } from './scene.js';
 import { GEO_PARAMS, ORN_PARAMS, RAUP_PARAMS, pauseAddress, state, storage } from './state.js';
 import { loadState, saveState } from './undo.js';
+import { lowestPoint } from './views.js';
 import { $, qsa } from './util.js';
 
 // Provided by main.js through init()
@@ -169,6 +170,18 @@ function drawTarget() {
   }
 }
 
+const LIGHT_BACKDROP = '#cfd8de';
+
+// The height of the target's ground, measured again only when the shell is turned
+let groundOf = { geometry: null, turn: new THREE.Quaternion(), y: 0 };
+function targetGround() {
+  const g = targetSolid.geometry;
+  if (groundOf.geometry !== g || !groundOf.turn.equals(shellGroup.quaternion)) {
+    groundOf = { geometry: g, turn: shellGroup.quaternion.clone(), y: (lowestPoint(g) ?? 0) - 0.002 };
+  }
+  return groundOf.y;
+}
+
 /**
  * Draws the scene twice, the target in one half and the player's shell in the
  * other (side by side, or one above the other on a portrait screen), with the
@@ -186,20 +199,29 @@ export function renderChallengeSplit(w, h) {
   camera.fov = camera.aspect >= 1 ? 35 : THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(17.5)) / camera.aspect));
   camera.updateProjectionMatrix();
   const own = [solid, inner];
+  // Each shell stands on its own ground, so its shadow does not move with the other one
   const halves = [
-    { meshes: [targetSolid, targetInner], x: 0, y: portrait ? hh : 0 },
-    { meshes: own, x: portrait ? 0 : hw, y: 0 },
+    { meshes: [targetSolid, targetInner], x: 0, y: portrait ? hh : 0, ground: targetGround() },
+    { meshes: own, x: portrait ? 0 : hw, y: 0, ground: ground.position.y },
   ];
+  const ownGround = ground.position.y;
+  // On a light background the cream shell hardly stands out: a cooler, darker backdrop
+  const bg = /** @type {THREE.Color} */ (scene.background);
+  const userBg = bg.getHex();
+  if (bg.getHSL({ h: 0, s: 0, l: 0 }).l > 0.6) bg.set(LIGHT_BACKDROP);
   // The labels and the divider of the window follow the orientation of the split
   if (chView.classList.contains('portrait') !== portrait) chView.classList.toggle('portrait', portrait);
   renderer.setScissorTest(true);
   for (const half of halves) {
     for (const m of [targetSolid, targetInner, ...own]) m.visible = half.meshes.includes(m);
+    ground.position.y = half.ground;
     renderer.setViewport(half.x, half.y, hw, hh);
     renderer.setScissor(half.x, half.y, hw, hh);
     renderer.render(scene, camera);
   }
   renderer.setScissorTest(false);
+  ground.position.y = ownGround;
+  bg.setHex(userBg);
   targetSolid.visible = targetInner.visible = false;
   solid.visible = inner.visible = true;
   camera.aspect = aspect;

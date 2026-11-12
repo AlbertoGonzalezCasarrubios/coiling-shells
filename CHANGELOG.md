@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [semantic versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- Challenge: the target's shadow no longer moves when the player's shell changes; each shell stands on its own ground.
+- Challenge: on the light theme the shells are drawn on a cooler, darker backdrop, so the cream shell stands out.
+
 ## [1.3.0] - 2026-11-11
 
 ### Added
