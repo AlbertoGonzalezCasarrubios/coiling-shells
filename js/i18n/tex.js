@@ -68,6 +68,12 @@ export const HORMONE_TEX = String.raw`\[
   \end{aligned}
 \]`;
 
+/** Gradient along the margin (Meinhardt 2009, ch. 4): the reaction terms F of each cell run at the pace ρ(u). */
+export const GRADIENT_TEX = String.raw`\[
+  \frac{\partial c}{\partial t} = \rho(u)\,F(c) + D_c\,\frac{\partial^2 c}{\partial x^2},\qquad
+  \rho(u) = 1 + G\,\frac{1 + \cos 2\pi u}{2},\qquad u = \frac{x}{N}
+\]`;
+
 export const MEIN_REFS = `
   <ul class="refs-list">
     <li>Turing, A. M. (1952). The chemical basis of morphogenesis. <i>Phil. Trans. R. Soc. B</i> 237, 37–72.</li>

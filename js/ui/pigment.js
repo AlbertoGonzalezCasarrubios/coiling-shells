@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 import { t, tPattern } from '../i18n/i18n.js';
 import { PROFILE_WIDTH, simulatePattern } from '../model/meinhardt.js';
+import { unrolledProportions } from '../model/raup.js';
 import { DEFAULT_PATTERN, MODEL_DEFAULTS, PATTERN_PRESETS } from '../model/presets.js';
 import { downloadImage } from './export-dialog.js';
 import { formulaView, openInfo, scheduleFormula } from './formulas.js';
@@ -30,7 +31,10 @@ export const PATTERN_CELLS = 256; // margin cells at the aperture (size ×1)
 // Half-width of the pigmentation threshold: pigment is laid down where the
 // activator exceeds a threshold, as in Meinhardt's simulations, with sharp edges
 const PIGMENT_EDGE = 0.12;
-const THUMB = { rows: 144, width: 256 }; // one-cell lines must not be lost when downscaling
+const THUMB = { rows: 192, width: 256 }; // 4:3, like the card; one-cell lines must not be lost when downscaling
+// Shape of the thumbnails. They show only the last part of the growth, at the
+// proportions of the shell, so the record is not squeezed into the card.
+const THUMB_SHAPE = { W: 2.4, D: 0.1, T: 0, S: 1, turns: 4.5 };
 
 const PATTERN_KEYS = [
   'model',
@@ -43,6 +47,7 @@ const PATTERN_KEYS = [
   'b2',
   'noise',
   'globalCtl',
+  'grad',
   'T',
   'insertion',
   'base',
@@ -50,7 +55,7 @@ const PATTERN_KEYS = [
   'size',
   'amount',
 ];
-const PATTERN_DEFAULTS = { size: 1, amount: 0.5 };
+const PATTERN_DEFAULTS = { size: 1, amount: 0.5, grad: 0 };
 
 /**
  * Pattern parameters: the constants of the model and how it is shown.
@@ -65,6 +70,7 @@ const PATTERN_DEFAULTS = { size: 1, amount: 0.5 };
  * @property {number} b2
  * @property {number} noise
  * @property {number} globalCtl
+ * @property {number} grad  gradient along the margin: the outer side runs 1 + grad times faster
  * @property {number} T
  * @property {boolean} insertion
  * @property {string} base  background colour, '#rrggbb'
@@ -93,6 +99,7 @@ const PATTERN_HASH = {
   pb2: 'b2',
   pn: 'noise',
   pgc: 'globalCtl',
+  pgr: 'grad',
   pT: 'T',
   ps: 'seed',
   pz: 'size',
@@ -115,6 +122,7 @@ const patternTex = new THREE.DataTexture(patternPixels, PATTERN_WIDTH, PATTERN_R
 export const patternCanvas = document.createElement('canvas');
 const patternImage = new ImageData(new Uint8ClampedArray(patternPixels.buffer), PATTERN_WIDTH, PATTERN_ROWS);
 const spacetime = $('spacetime');
+const stScroll = $('stScroll');
 
 export let patternValues = null;
 let patternSecond = null; // inhibitor or substrate (rows × PROFILE_WIDTH), relative to its maximum
@@ -159,19 +167,12 @@ let patternVersion = 0;
 let unrolledCache = { key: '', canvas: null };
 
 /** Proportions of the unrolled shell and relative size of the apex (g0). */
-function unrolledGeometry() {
-  const W = Math.max(state.W, 1.0001),
-    N = state.turns;
-  const k = Math.log(W) / (2 * Math.PI);
-  const rc = (1 + state.D) / 2,
-    a = (1 - state.D) / 2,
-    b = state.S * a;
-  // Aperture perimeter (Ramanujan's approximation) and advance of its centre per radian
-  const P = Math.PI * (3 * (a + b) - Math.sqrt((3 * a + b) * (a + 3 * b)));
-  const v = rc * Math.sqrt(1 + k * k * (1 + state.T * state.T));
-  const g0 = Math.exp(-2 * Math.PI * N * k);
-  return { k, N, g0, aspect: (v * (1 - g0)) / (k * P) };
-}
+const unrolledGeometry = () => unrolledProportions(state);
+
+// Height/width of the record in time: every whorl takes the same height, that of
+// the last whorl on the shell, so near the aperture shapes keep their proportions
+/** @param {{ W: number, D: number, T: number, S: number, turns: number }} [p] */
+export const timeAspect = (p = state) => p.turns * unrolledProportions(p).whorl;
 
 /** Record row → vertical position (0 = apex, 1 = aperture) in the current view. */
 function rowToFrac(row) {
@@ -235,15 +236,31 @@ function unrolledImage(wpx, hpx) {
   return c;
 }
 
+/** The record in time as an image to save, with the proportions of the record panel. */
+export function recordImage() {
+  const aspect = timeAspect();
+  const w = Math.round(Math.min(PATTERN_WIDTH, PATTERN_ROWS / aspect));
+  const h = Math.max(1, Math.round(w * aspect));
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(patternCanvas, 0, 0, w, h);
+  return c;
+}
+
 export function drawSpacetime() {
-  // Canvas height: fixed in the time view; true proportions in the unrolled view
-  let aspect = 0;
-  if (stView === 'shell') {
-    aspect = unrolledGeometry().aspect;
-    const cw = spacetime.clientWidth;
-    if (cw) spacetime.style.height = `${Math.round(Math.min(440, Math.max(170, cw * aspect)))}px`;
-  } else {
-    spacetime.style.height = '';
+  // Canvas height: the proportions of the shell in both views. In time the record
+  // can be much taller than wide, so it scrolls; it opens on the aperture.
+  const aspect = stView === 'shell' ? unrolledGeometry().aspect : timeAspect();
+  const cw = spacetime.clientWidth;
+  if (cw) {
+    const hpx = Math.round(stView === 'shell' ? Math.min(440, Math.max(170, cw * aspect)) : Math.min(6000, Math.max(170, cw * aspect)));
+    if (spacetime.style.height !== `${hpx}px`) {
+      spacetime.style.height = `${hpx}px`;
+      stScroll.scrollTop = stScroll.scrollHeight;
+    }
   }
   const w = spacetime.clientWidth;
   const h = spacetime.clientHeight;
@@ -443,8 +460,8 @@ let patternGeomKey = '';
 
 /** Simulation parameters from the state. */
 function simParams(p) {
-  const { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl, T, seed, insertion } = p;
-  return { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl, T, seed, insertion };
+  const { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl, grad, T, seed, insertion } = p;
+  return { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl, grad, T, seed, insertion };
 }
 
 export function computePattern() {
@@ -458,7 +475,6 @@ export function computePattern() {
     rows: PATTERN_ROWS,
     width: PATTERN_WIDTH,
     nMax: Math.round(PATTERN_CELLS / pattern.size),
-    refine: state.patternDef,
   };
   patternGeomKey = `${state.W}|${state.turns}`;
   $('patternStatus').hidden = false;
@@ -512,7 +528,7 @@ export function onGeometryForPattern() {
 const sub = (x, y) => `${x}<sub>${y}</sub>`;
 const second = () => (pattern.model === 'AS' ? 'b' : 'h');
 export const PIG_SIMPLE = [
-  { key: 'size', id: 'pSize', i18n: 'pSize', log: true, min: 0.5, max: 4, digits: 2 },
+  { key: 'size', id: 'pSize', i18n: 'pSize', log: true, min: 0.2, max: 4, digits: 2 },
   { key: 'T', id: 'pT', i18n: 'pT', log: true, min: 500, max: 60000, format: (v) => v.toFixed(0) },
   { key: 'noise', id: 'pnoise', i18n: 'pNoise', min: 0, max: 0.5, step: 0.01, digits: 2 },
   { key: 'amount', id: 'pAmount', i18n: 'pAmount', min: 0.15, max: 0.85, step: 0.01, digits: 2 },
@@ -544,7 +560,7 @@ const PIG_ADVANCED = [
     max: 0.3,
     format: sig,
   },
-  { key: 'kappa', id: 'pkappa', sym: 'κ', min: 0, max: 4, step: 0.01, digits: 2 },
+  { key: 'kappa', id: 'pkappa', sym: 'κ', log: true, zero: true, min: 0.01, max: 50, format: sig },
   { key: 'ba', id: 'pba', sym: sub('b', 'a'), log: true, zero: true, min: 0.0001, max: 0.1, format: sig },
   {
     key: 'b2',
@@ -565,9 +581,10 @@ const PIG_ADVANCED = [
     log: true,
     zero: true,
     min: 0.0005,
-    max: 0.05,
+    max: 0.2,
     format: sig,
   },
+  { key: 'grad', id: 'pgrad', sym: 'G', min: 0, max: 2, step: 0.05, digits: 2 },
 ];
 const PIG_PARAMS = [...PIG_SIMPLE, ...PIG_ADVANCED];
 
@@ -614,15 +631,22 @@ let thumbsDone = false;
 export function computeThumbs() {
   if (thumbsDone) return;
   thumbsDone = true;
+  // Rows of the whole record so that its last THUMB.rows rows have the proportions of the shell
+  const rows = Math.max(THUMB.rows, Math.round(THUMB.width * timeAspect(THUMB_SHAPE)));
   const jobs = Object.entries(PATTERN_PRESETS).map(([key, preset]) => {
     const p = { ...pickPattern(preset), seed: 7 };
-    return { id: key, p: simParams(p), g: { W: 2.4, turns: 4.5, ...THUMB, nMax: Math.round(PATTERN_CELLS / p.size) }, preset: p };
+    return {
+      id: key,
+      p: simParams(p),
+      g: { W: THUMB_SHAPE.W, turns: THUMB_SHAPE.turns, rows, width: THUMB.width, nMax: Math.round(PATTERN_CELLS / p.size) },
+      preset: p,
+    };
   });
   const draw = (key, values) => {
     const job = jobs.find((j) => j.id === key);
     const canvas = gallery.querySelector(`.pattern-card[data-pattern="${key}"] canvas`);
     const img = new ImageData(THUMB.width, THUMB.rows);
-    colorize(values, job.preset.base, job.preset.pigment, job.preset.amount, img.data);
+    colorize(values.subarray((rows - THUMB.rows) * THUMB.width), job.preset.base, job.preset.pigment, job.preset.amount, img.data);
     canvas.getContext('2d').putImageData(img, 0, 0);
   };
   const onMainThread = () => jobs.forEach(({ id, p, g }) => setTimeout(() => draw(id, simulatePattern(p, g).values)));
@@ -828,7 +852,7 @@ export function initPigment(ctx) {
   $('pigClear').addEventListener('click', () => setPatternOn(false));
 
   $('savePattern').addEventListener('click', () => {
-    if (patternValues) downloadImage(patternCanvas, `meinhardt_${pattern.preset}_seed${pattern.seed}`, $('savePatternFormat').value);
+    if (patternValues) downloadImage(recordImage(), `meinhardt_${pattern.preset}_seed${pattern.seed}`, $('savePatternFormat').value);
   });
   // The same format choice here and in the export window
   const formats = [$('savePatternFormat'), $('exPatternFormat')];

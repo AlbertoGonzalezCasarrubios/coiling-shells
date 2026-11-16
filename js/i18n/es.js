@@ -35,10 +35,6 @@ export default {
   'look.shell': 'Concha',
   'look.bg': 'Fondo',
   'look.quality': 'Resolución de la malla',
-  'look.patternDef': 'Definición del patrón',
-  'look.defNormal': 'Normal',
-  'look.defHigh': 'Alta',
-  'look.patternDefHint': 'Células más finas a lo largo del borde: bordes del patrón más suaves, cálculo más lento.',
   'look.low': 'Baja',
   'look.medium': 'Media',
   'look.high': 'Alta',
@@ -349,7 +345,7 @@ export default {
   'pig.st.time': 'En el tiempo',
   'pig.st.shell': 'Concha desenrollada',
   'pig.st.note.time':
-    'Cada vuelta ocupa la misma altura, porque tarda lo mismo en crecer: es el diagrama espacio-tiempo de Meinhardt y lo que calcula el modelo. En la concha, en cambio, cada vuelta es W veces mayor que la anterior. Por eso las primeras vueltas, arriba en el registro, son diminutas en la concha, y los anchos cambian: un elemento que mantiene su tamaño en la concha se estrecha aquí hacia abajo, y uno que se ensancha en la concha mantiene aquí su anchura.',
+    'Cada vuelta ocupa la misma altura, porque tarda lo mismo en crecer: es el diagrama espacio-tiempo de Meinhardt y lo que calcula el modelo. En la concha, en cambio, cada vuelta es W veces mayor que la anterior. Por eso las primeras vueltas, arriba en el registro, son diminutas en la concha, y los anchos cambian: un elemento que mantiene su tamaño en la concha se estrecha aquí hacia abajo, y uno que se ensancha en la concha mantiene aquí su anchura. Cada vuelta se dibuja tan alta como la última vuelta en la concha, así que cerca de la apertura las formas tienen sus proporciones reales; desplázate hacia arriba para ver las vueltas anteriores.',
   'pig.st.note.shell':
     'El mismo registro con las proporciones de la concha: cada fila mide lo que el borde en ese instante y tiene la altura del crecimiento que registra. Como el tamaño y la distancia al ápice crecen a la vez, la superficie desenrollada es un abanico que se abre desde el ápice, y la última vuelta ocupa la mayor parte. Las formas se ven como en la concha, de forma aproximada: una superficie enrollada no se puede aplanar exactamente.',
   'pig.computing': 'Calculando…',
@@ -472,6 +468,10 @@ export default {
     'globalCtl.AS': {
       name: 'Control global',
       desc: 'Hormona que cuenta las ondas: si quedan pocas, sube el sustrato y las células quedan pigmentadas (Conus). Su valor es lo rápido que las sigue; 0, ninguna',
+    },
+    grad: {
+      name: 'Gradiente a lo largo del borde',
+      desc: 'El lado externo de la vuelta va 1 + G veces más rápido que el interno: más líneas por fuera, que se funden o terminan hacia dentro (Nautilus). 0, ninguno',
     },
     pT: {
       name: 'Tiempo de crecimiento',

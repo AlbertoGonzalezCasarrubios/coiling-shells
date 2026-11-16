@@ -35,10 +35,6 @@ export default {
   'look.shell': 'Shell',
   'look.bg': 'Background',
   'look.quality': 'Mesh resolution',
-  'look.patternDef': 'Pattern definition',
-  'look.defNormal': 'Normal',
-  'look.defHigh': 'High',
-  'look.patternDefHint': 'Finer cells along the margin: smoother pattern edges, slower to compute.',
   'look.low': 'Low',
   'look.medium': 'Medium',
   'look.high': 'High',
@@ -345,7 +341,7 @@ export default {
   'pig.st.time': 'In time',
   'pig.st.shell': 'Unrolled shell',
   'pig.st.note.time':
-    'Each whorl gets the same height, because each takes the same time to grow: this is Meinhardt’s space–time diagram, and it is what the model computes. On the shell, however, each whorl is W times larger than the one before. So the first whorls, at the top of the record, are tiny on the shell, and widths change: an element that keeps its size on the shell narrows downwards here, and one that widens on the shell keeps its width here.',
+    'Each whorl gets the same height, because each takes the same time to grow: this is Meinhardt’s space–time diagram, and it is what the model computes. On the shell, however, each whorl is W times larger than the one before. So the first whorls, at the top of the record, are tiny on the shell, and widths change: an element that keeps its size on the shell narrows downwards here, and one that widens on the shell keeps its width here. Each whorl is drawn as tall as the last whorl on the shell, so near the aperture shapes have their real proportions; scroll up to see the earlier whorls.',
   'pig.st.note.shell':
     'The same record with the proportions of the shell: each row is as long as the margin at that moment and as tall as the growth it records. Because size and distance from the apex grow together, the unrolled surface is a fan that opens from the apex, and the last whorl takes up most of it. Shapes look as they do on the shell, approximately: a coiled surface cannot be flattened exactly.',
   'pig.computing': 'Computing…',
@@ -465,6 +461,10 @@ export default {
     'globalCtl.AS': {
       name: 'Global control',
       desc: 'Hormone that counts the waves: when few are left, it raises the substrate and cells stay pigmented (Conus). Its value is how fast it follows; 0, none',
+    },
+    grad: {
+      name: 'Gradient along the margin',
+      desc: 'The outer side of the whorl runs 1 + G times faster than the inner side: more lines on the outside, which merge or end towards the inside (Nautilus). 0, none',
     },
     pT: { name: 'Growth time', desc: 'Simulated time from apex to aperture: more time, more stripes along the direction of growth' },
     pSize: { name: 'Pattern size', desc: 'Sets the number of cells along the margin: a larger pattern means fewer cells' },

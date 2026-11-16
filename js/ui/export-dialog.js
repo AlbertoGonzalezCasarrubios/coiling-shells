@@ -17,7 +17,7 @@ import { pickOrnament, pickShape, state, writeHashNow } from './state.js';
 import { $, f, formatW, luminance, qsa } from './util.js';
 
 // Provided by main.js through init()
-let PATTERN_CELLS, PATTERN_ROWS, VIEWS, drawProfileOn, pattern, patternCanvas, presetSel, resize;
+let PATTERN_CELLS, PATTERN_ROWS, VIEWS, drawProfileOn, pattern, patternCanvas, presetSel, recordImage, resize;
 // Values that main.js reassigns, read through getters
 let live;
 
@@ -462,7 +462,7 @@ function fillFixedSizes() {
 
 /** Connects this part of the interface to the rest of the app. */
 export function initExport(ctx) {
-  ({ PATTERN_CELLS, PATTERN_ROWS, VIEWS, drawProfileOn, pattern, patternCanvas, presetSel, resize } = ctx);
+  ({ PATTERN_CELLS, PATTERN_ROWS, VIEWS, drawProfileOn, pattern, patternCanvas, presetSel, recordImage, resize } = ctx);
   live = ctx.live;
   // --- PDF (js/ui/pdf.js) ------------------------------------------------------
   // The sheet reads the app through this context, built when the PDF is made
@@ -544,7 +544,7 @@ export function initExport(ctx) {
     if (!live.patternValues()) return;
     const own = slugify(customName());
     busy(e.currentTarget, () =>
-      downloadImage(patternCanvas, own ? `${own}_pattern` : `meinhardt_${pattern.preset}_seed${pattern.seed}`, $('exPatternFormat').value),
+      downloadImage(recordImage(), own ? `${own}_pattern` : `meinhardt_${pattern.preset}_seed${pattern.seed}`, $('exPatternFormat').value),
     );
   });
 }

@@ -115,23 +115,31 @@ export const DEFAULT_PRESET = 'caracol';
  */
 export const PATTERN_PRESETS = {
   nautilus: {
-    // Oscillation: the inhibitor outlives the activator, so the whole margin flashes
-    // periodically and draws stripes parallel to the growth lines. Fast rates give
-    // about ten stripes per whorl; strong saturation (κ) widens each stripe and weak
-    // coupling between cells (D_a) makes them wavy, like the flames of Nautilus.
-    model: 'AI',
-    Da: 0.04,
+    // Meinhardt (2009, §4.1 and §4.5, Fig. 4.8): an oscillating
+    // activator–substrate system. Each cell fires when enough substrate has
+    // built up, uses it and waits; strong saturation (κ) makes each burst last
+    // longer, so the stripes are about as wide as the gaps. A graded signal makes
+    // the outer side of the whorl run faster (substrate production, activator
+    // decay and source density alike, his Fig. 4.2): it oscillates about twice as
+    // fast as the inner side and acts as a pacemaker. Weak activator diffusion
+    // keeps neighbouring cells only partly in step, so the lines stay continuous
+    // where they can, bend, and merge or end towards the umbilicus, as on the
+    // real shell, which has about 8 lines a year at the periphery and 4 inside.
+    // Parameters tuned on the shell (the book does not give them).
+    model: 'AS',
+    Da: 0.007,
     D2: 0,
-    ra: 0.24,
-    r2: 0.06,
-    kappa: 2,
-    ba: 0.05,
-    b2: 0,
-    noise: 0.4,
+    ra: 0.3,
+    r2: 0,
+    kappa: 20,
+    ba: 0.001,
+    b2: 0.045,
+    noise: 0.2,
     globalCtl: 0,
-    T: 3000,
+    grad: 1,
+    T: 12000,
     insertion: true,
-    amount: 0.8,
+    amount: 0.85,
     base: '#f1e7d6',
     pigment: '#9c4a1f',
   },
@@ -177,34 +185,34 @@ export const PATTERN_PRESETS = {
     pigment: '#8b4a24',
   },
   oliva: {
-    // Meinhardt & Klingler (1987, Fig. 8), with the constants of Fowler,
-    // Meinhardt & Prusinkiewicz (1992, Fig. 14). Each cell oscillates (the
-    // inhibitor outlives the activator) and is coupled only weakly to its
-    // neighbours, so activation travels as waves that draw oblique lines and die
-    // when they meet. A hormone shared by the whole margin (global control)
-    // counts the waves: when few are left, the inhibitor is removed quickly, the
-    // active cells stay active and start backward waves. Many lines branch at
-    // once, opening the tent-shaped triangles. Changes from Fowler: the hormone
-    // follows the activity at 0.05 instead of 0.1 (the top of the slider), with
-    // the same pattern; the inhibitor decays faster (0.025 instead of 0.014) and
-    // the margin has more cells, so that areas of small triangles alternate with
-    // large ones, as on the real shell; the long growth time keeps them from
-    // being stretched along the spiral; and with cell insertion they keep their
-    // size as the shell grows instead of widening towards the aperture.
+    // Meinhardt & Klingler (1987, Fig. 8) and Meinhardt (2009, eq. 6.1), with the
+    // constants of Meinhardt's own program for Oliva porphyria (OLIVA.BAS, from
+    // the book's CD and his web page): D_a 0.015, r_a 0.1, κ 0.25, r_h 0.014,
+    // D_h 0, hormone 0.1, ±4 % source density, no basal production. Activation
+    // travels as waves that draw oblique lines and die when they meet. A hormone
+    // shared by the whole margin (global control) counts the waves: when few are
+    // left, the inhibitor is removed quickly, the active cells stay active and
+    // start backward waves. Many lines branch at once, opening the tent-shaped
+    // triangles; phases of large triangles alternate with phases of small ones
+    // and of dense parallel lines. His 630 cells cover one side of the shell; the
+    // whole margin has 853 (size 0.3), and the long growth time keeps the
+    // triangles about as tall as they are wide, as in his figures. With cell
+    // insertion they keep their size as the shell grows; a high pigment amount
+    // draws the lines about as thick as on the real shell.
     model: 'AI',
     Da: 0.015,
     D2: 0,
     ra: 0.1,
-    r2: 0.025,
+    r2: 0.014,
     kappa: 0.25,
-    ba: 0.0001,
-    b2: 0.0002,
-    noise: 0.03,
-    globalCtl: 0.05,
-    T: 22000,
+    ba: 0,
+    b2: 0,
+    noise: 0.04,
+    globalCtl: 0.1,
+    T: 55000,
     insertion: true,
-    size: 0.5,
-    amount: 0.6,
+    size: 0.3,
+    amount: 0.8,
     base: '#f1dcd6',
     pigment: '#4b1f2c',
   },
@@ -220,6 +228,8 @@ export const PATTERN_PRESETS = {
     // many more cells than its 69; 2.5 keeps the triangles with any seed. A high pigment amount (low threshold) is what makes the steady
     // activation show; growth time and cell size are set so that the triangles
     // are about as long as they are wide on the shell.
+    // Meinhardt (2009, ch. 7) later explained this shell with a separate
+    // extinguishing reaction instead; this preset keeps the model of 1987.
     model: 'AS',
     Da: 0.005,
     D2: 0,
@@ -249,7 +259,26 @@ export const DEFAULT_PATTERN = 'nautilus';
  * species preset.
  */
 export const MODEL_DEFAULTS = {
-  AI: PATTERN_PRESETS.nautilus,
+  // Oscillation: the inhibitor outlives the activator, so the whole margin flashes
+  // periodically and draws stripes parallel to the growth lines; strong
+  // saturation widens them and weak coupling makes them wavy, like flames.
+  AI: {
+    model: 'AI',
+    Da: 0.04,
+    D2: 0,
+    ra: 0.24,
+    r2: 0.06,
+    kappa: 2,
+    ba: 0.05,
+    b2: 0,
+    noise: 0.4,
+    globalCtl: 0,
+    T: 3000,
+    insertion: true,
+    amount: 0.8,
+    base: '#f1e7d6',
+    pigment: '#9c4a1f',
+  },
   AS: {
     model: 'AS',
     Da: 0.01,

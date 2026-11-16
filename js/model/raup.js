@@ -77,6 +77,28 @@ export { bump, hasOrnament } from './ornament.js';
  */
 
 /**
+ * Proportions of the shell surface unrolled flat, used to draw the pigment record.
+ * @param {{ W: number, D: number, T: number, S: number, turns: number }} p
+ * @returns {{ k: number, N: number, g0: number, aspect: number, whorl: number }}
+ *   k: log growth per radian; g0: size of the apex relative to the aperture;
+ *   aspect: height/width of the whole unrolled surface (width = margin at the aperture);
+ *   whorl: height/width of the last whorl, the same proportions it has on the shell
+ */
+export function unrolledProportions(p) {
+  const W = Math.max(p.W, 1.0001),
+    N = p.turns;
+  const k = Math.log(W) / (2 * Math.PI);
+  const rc = (1 + p.D) / 2,
+    a = (1 - p.D) / 2,
+    b = p.S * a;
+  // Aperture perimeter (Ramanujan's approximation) and advance of its centre per radian
+  const P = Math.PI * (3 * (a + b) - Math.sqrt((3 * a + b) * (a + 3 * b)));
+  const v = rc * Math.sqrt(1 + k * k * (1 + p.T * p.T));
+  const g0 = Math.exp(-2 * Math.PI * N * k);
+  return { k, N, g0, aspect: (v * (1 - g0)) / (k * P), whorl: (v * (1 - 1 / W)) / (k * P) };
+}
+
+/**
  * Builds the mesh and the line drawing of a shell.
  * @param {ShellParams} p
  * @returns {Shell}

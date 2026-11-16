@@ -338,12 +338,6 @@ const TOUR = String.raw`(async () => {
   // Then undo goes back through the slider drag to the plain shell
   for (let i = 0; i < 3 && !/pg=0/.test(location.hash); i++) { await sl(600); $('undo').click(); await until(() => !$('patternStatus').hidden || /pg=0/.test(location.hash), 1500); }
   log.undone = await until(() => /pg=0/.test(location.hash), 3000);
-  // The definition of the pattern is part of the appearance, and of the address
-  const setDef = (v) => { $('patternDef').value = v; $('patternDef').dispatchEvent(new Event('change')); };
-  setDef('2');
-  log.patternDef = await until(() => /pd=2/.test(location.hash), 3000);
-  setDef('1');
-  log.patternDef &&= await until(() => !/pd=/.test(location.hash), 3000);
   console.info('stage shell creator');
   $('openWizard').click(); await sl(500);
   await audit('shell creator', $('wizard'));
@@ -460,7 +454,6 @@ test('the whole interface works in a real browser', { skip, timeout: 400_000 }, 
     assert.equal(log.lookHash, true, 'the colours reach the address');
     assert.equal(log.lookUndone, true, 'undo restores the previous colours');
     assert.equal(log.undone, true, 'undo removes it again');
-    assert.equal(log.patternDef, true, 'the pattern definition reaches the address');
     assert.equal(log.spineOk, true, 'no spine warning at 80 mm');
     assert.equal(log.spineWarn, true, 'spine warning at 20 mm');
     assert.equal(log.wizardClosed, true, 'the shell creator gives the canvas back');
