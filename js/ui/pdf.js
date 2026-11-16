@@ -10,6 +10,7 @@ import { $, formatW, f, sig, hexRgb, luminance } from './util.js';
 import { t, tParam, tPattern, getLang } from '../i18n/i18n.js';
 import { PATTERN_PRESETS } from '../model/presets.js';
 import { hasOrnament } from '../model/ornament.js';
+import { unrolledProportions } from '../model/raup.js';
 
 /** One line describing the relief in use, for the PDF ("" if the shell is smooth). */
 function ornamentSummary(state) {
@@ -290,10 +291,14 @@ export async function exportPDF(app) {
 
     // Space–time record with its axes
     heading(t('pig.spacetime'), 39);
-    const ax = M + 7; // leave room for the vertical axis
-    const stW = 64,
-      stH = 118,
+    // The record keeps the proportions of the shell (each whorl as tall as the last
+    // one on the shell), inside a column 64 mm wide and 118 mm tall
+    const stCol = 64,
+      aspect = state.turns * unrolledProportions(state).whorl;
+    const stW = Math.max(20, Math.min(stCol, 118 / aspect)),
+      stH = Math.min(118, stW * aspect),
       stY = 51;
+    const ax = M + 7 + (stCol - stW) / 2; // leave room for the vertical axis
     const st = document.createElement('canvas');
     st.width = 512;
     st.height = Math.round((512 * stH) / stW);
@@ -328,14 +333,14 @@ export async function exportPDF(app) {
       .setFont('helvetica', 'normal')
       .setFontSize(7.5)
       .setTextColor(...dark);
-    doc.text(t('ex.pdf.axis.x'), ax + stW / 2, 44.5, { align: 'center', maxWidth: stW + 6 });
+    doc.text(t('ex.pdf.axis.x'), ax + stW / 2, 44.5, { align: 'center', maxWidth: stCol + 6 });
     arrow(ax + stW / 2, 47.5, ax + stW, 47.5);
     arrow(ax + stW / 2, 47.5, ax, 47.5);
     // Vertical axis: time, from the apex to the aperture
-    arrow(M + 4.5, stY, M + 4.5, stY + stH);
+    arrow(ax - 2.5, stY, ax - 2.5, stY + stH);
     const tLabel = t('ex.pdf.axis.t');
     // Rotated 90° clockwise: the glyphs lie to the right of the anchor point
-    doc.text(tLabel, M - 0.8, stY + stH / 2 - doc.getTextWidth(pdfSafe(tLabel)) / 2, { angle: -90 });
+    doc.text(tLabel, ax - 7.8, stY + stH / 2 - doc.getTextWidth(pdfSafe(tLabel)) / 2, { angle: -90 });
     doc.setFontSize(7).setTextColor(...muted);
     doc.text(t('ex.pdf.apex'), ax + stW + 1.5, stY + 2.5);
     doc.text(t('ex.pdf.aperture'), ax + stW + 1.5, stY + stH);
@@ -347,10 +352,10 @@ export async function exportPDF(app) {
       .setLineWidth(0.5)
       .line(ax - 1, ry, ax + stW + 1, ry);
     doc.setFontSize(7.5).setTextColor(...muted);
-    doc.text(t('ex.pdf.st.caption'), M, stY + stH + 5, { maxWidth: stW + 7 });
+    doc.text(t('ex.pdf.st.caption'), M, stY + stH + 5, { maxWidth: stCol + 7 });
 
     // Pigmented shell in apertural and 3/4 views
-    const sx = M + 7 + stW + 17,
+    const sx = M + 7 + stCol + 17,
       sw = W - (sx - M);
     const two = renderPlateSubset(['apertural', 'iso'], 520, imgBg);
     doc.addImage(two.toDataURL('image/jpeg', 0.92), 'JPEG', sx, 39, sw, sw / 2);
@@ -409,6 +414,7 @@ export async function exportPDF(app) {
       ba: 'ba',
       b2: pattern.model === 'AS' ? 'bb' : 'bh',
       globalCtl: 'g',
+      grad: 'G',
     };
     const name = (k) => tParam(['D2', 'r2', 'b2', 'globalCtl'].includes(k) ? `${k}.${pattern.model}` : k).name;
     const rows = Object.keys(sym).map((k) => [`${sym[k]} · ${name(k)}`, sig(pattern[k])]);
@@ -419,7 +425,6 @@ export async function exportPDF(app) {
       [tParam('pAmount').name, f(pattern.amount, 2)],
       [t('pig.insertion'), t(pattern.insertion ? 'ex.yes' : 'ex.no')],
       [t('pig.seed'), pattern.seed],
-      [t('look.patternDef'), t(state.patternDef === 2 ? 'look.defHigh' : 'look.defNormal')],
     );
     rowsTable(rows, sx, yy + 6.5, sw - 22, 22);
     footer();

@@ -33,7 +33,20 @@
  * - Activator–substrate (their Fig. 9, Conus marmoreus): R slows the production
  *   of substrate, which becomes b_b/R. The steady activation is low but above
  *   the pigment threshold: the region between two branches is pigmented, which
- *   leaves white triangles on a dark background.
+ *   leaves white triangles on a dark background. This reproduces the 1987
+ *   paper; in his later book Meinhardt (2009, ch. 7) explains this shell
+ *   instead with a separate reaction that switches pigmentation off at once
+ *   over a wide region.
+ *
+ * Gradient along the margin (Meinhardt 2009, ch. 4): the cells do not all run
+ * at the same pace. Every reaction term of a cell (production and decay, not
+ * diffusion) is multiplied by 1 + G·w, with w = (1 + cos 2πu)/2 going from 1
+ * on the outer side of the whorl (u = 0, farthest from the axis) to 0 on the
+ * inner side (u = 1/2). In the activator–substrate model this is Meinhardt's
+ * graded substrate production with the activator decay and the source density
+ * graded alike (his Fig. 4.2), so the outer side oscillates up to 1 + G times
+ * faster and acts as a pacemaker, as on Nautilus, which has about twice as many
+ * lines at the periphery as near the umbilicus: lines merge or end on the way.
  */
 
 export const MODELS = ['AI', 'AS'];
@@ -64,6 +77,7 @@ export function rng32(seed) {
  * @param {number} p.b2         basal production of the second substance
  * @param {number} p.noise      fluctuation of the source density (0–1)
  * @param {number} p.globalCtl  strength of the global control (0 = no control)
+ * @param {number} [p.grad]     gradient along the margin: the outer side runs up to 1 + grad times faster (0 = none)
  * @param {number} p.T          total simulated time from the apex to the aperture
  * @param {number} p.seed       seed of the random cell-to-cell differences
  * @param {boolean} p.insertion cell insertion: the margin grows with the shell
@@ -73,7 +87,6 @@ export function rng32(seed) {
  * @param {number} g.rows       rows of the result
  * @param {number} g.width      columns of the result (the margin is resampled)
  * @param {number} g.nMax       cells at the aperture
- * @param {number} [g.refine]   definition: sub-cells per cell (1 by default)
  * @returns {{ values: Float32Array, second: Float32Array, state: 'pattern'|'uniform'|'extinct' }}
  *   values: normalised activator 0–1 (rows × width); second: inhibitor or
  *   substrate relative to its maximum (rows × PROFILE_WIDTH), for the profile
@@ -82,21 +95,18 @@ export function rng32(seed) {
  */
 export function simulatePattern(p, g) {
   const { rows, width } = g;
-  // Definition: each cell of the model is split into K sub-cells that share its
-  // source density, with the diffusion scaled by K² so that the coupling, and the
-  // size of the pattern, stay the same; a front then advances in steps K times
-  // finer. Counts below (nMax, nMin, the insertion) are in sub-cells.
-  const K = Math.max(1, Math.round(g.refine ?? 1));
-  const nMax = g.nMax * K;
-  const Da = p.Da * K * K;
-  const D2 = p.D2 * K * K;
+  // The cells are those of the model, not a discretisation of a continuum: with
+  // the weak coupling of most presets a front jumps from cell to cell, and
+  // splitting the cells would change the pattern
+  const { nMax } = g;
+  const { Da, D2 } = p;
   const rand = rng32(p.seed);
   const isAS = p.model === 'AS';
   // The hormone of Meinhardt & Klingler (global control), in either model
   const global = p.globalCtl > 0;
   const hormone = !isAS && global; // activator–inhibitor with the hormone
   // With the hormone a very short margin loses all its waves before the hormone can react
-  const nMin = Math.min(nMax, (global ? 48 : 8) * K);
+  const nMin = Math.min(nMax, global ? 48 : 8);
 
   // Relative size of the shell at each row (1 at the aperture)
   const lnW = Math.log(Math.max(g.W, 1.0001));
@@ -113,28 +123,25 @@ export function simulatePattern(p, g) {
 
   // Stable explicit Euler step: diffusion (dt·D ≤ 0.4 with Δx = 1) and reaction
   const Dmax = Math.max(Da, D2, 1e-6);
-  const rmax = Math.max(p.ra, p.r2, 1e-6);
+  const G = Math.max(0, p.grad ?? 0);
+  const rmax = Math.max(p.ra, p.r2, 1e-6) * (1 + G);
   const dt = Math.min(0.5, 0.4 / Dmax, 0.4 / rmax);
 
   // State of the margin (capacity nMax; the first n cells are used)
-  let n = p.insertion ? Math.max(nMin, K * Math.round(g.nMax * size[0])) : nMax;
+  let n = p.insertion ? Math.max(nMin, Math.round(nMax * size[0])) : nMax;
   const a = new Float64Array(nMax);
   const b = new Float64Array(nMax);
   const s = new Float64Array(nMax);
   const na = new Float64Array(nMax);
   const nb = new Float64Array(nMax);
+  // Pace of each cell (gradient along the margin), recomputed when cells are inserted
+  const pace = new Float64Array(nMax).fill(1);
+  let paceN = 0;
 
   const source = () => p.ra * (1 + p.noise * (2 * rand() - 1));
   const a0 = isAS ? 1 : Math.max(p.r2 / p.ra, 0.05);
   const b0 = isAS ? p.b2 / Math.max(p.r2 + p.ra, 1e-6) : a0;
   for (let i = 0; i < n; i++) {
-    // A new cell every K sub-cells (the same random draws as without refinement)
-    if (i % K) {
-      s[i] = s[i - 1];
-      a[i] = a[i - 1];
-      b[i] = b[i - 1];
-      continue;
-    }
     s[i] = source();
     // With the hormone the margin starts at rest with a few active cells, which start the first waves
     // (at least the first one, so that a short margin at the apex also starts)
@@ -151,22 +158,27 @@ export function simulatePattern(p, g) {
   let carry = 0;
 
   for (let row = 0; row < rows; row++) {
-    // Cell insertion: a random cell (its K sub-cells) is duplicated, with its own source density
+    // Cell insertion: a random cell is duplicated, with its own source density
     if (p.insertion) {
-      const target = Math.min(nMax, Math.max(nMin, K * Math.round((nMax / K) * size[row])));
+      const target = Math.min(nMax, Math.max(nMin, Math.round(nMax * size[row])));
       while (n < target) {
-        const k = Math.floor(rand() * (n / K)) * K;
-        a.copyWithin(k + K, k, n);
-        b.copyWithin(k + K, k, n);
-        s.copyWithin(k + K, k, n);
-        s.fill(source(), k + K, k + 2 * K);
-        n += K;
+        const k = Math.floor(rand() * n);
+        a.copyWithin(k + 1, k, n);
+        b.copyWithin(k + 1, k, n);
+        s.copyWithin(k + 1, k, n);
+        s[k + 1] = source();
+        n++;
       }
     }
 
     carry += p.T / rows / dt;
     const steps = Math.floor(carry);
     carry -= steps;
+
+    if (G > 0 && paceN !== n) {
+      for (let i = 0; i < n; i++) pace[i] = 1 + G * 0.5 * (1 + Math.cos((2 * Math.PI * i) / n));
+      paceN = n;
+    }
 
     for (let step = 0; step < steps; step++) {
       let mean = 0;
@@ -185,18 +197,19 @@ export function simulatePattern(p, g) {
         const lapA = a[l] + a[r] - 2 * ai;
         const lapB = b[l] + b[r] - 2 * bi;
         const a2 = ai * ai;
+        const f = pace[i];
         if (isAS) {
           const prod = s[i] * bi * (a2 / (1 + p.kappa * a2) + p.ba);
-          na[i] = ai + dt * (prod - p.ra * ai + Da * lapA);
-          nb[i] = bi + dt * (bb - prod - p.r2 * bi + D2 * lapB);
+          na[i] = ai + dt * (f * (prod - p.ra * ai) + Da * lapA);
+          nb[i] = bi + dt * (f * (bb - prod - p.r2 * bi) + D2 * lapB);
         } else if (hormone) {
           const sat = a2 / (1 + p.kappa * a2);
-          na[i] = ai + dt * ((s[i] * (sat + p.ba)) / (0.1 + bi) - p.ra * ai + Da * lapA);
-          nb[i] = bi + dt * (s[i] * sat - rh * bi + D2 * lapB + p.b2);
+          na[i] = ai + dt * (f * ((s[i] * (sat + p.ba)) / (0.1 + bi) - p.ra * ai) + Da * lapA);
+          nb[i] = bi + dt * (f * s[i] * sat - Math.min(f * rh, 1 / dt) * bi + D2 * lapB + f * p.b2);
         } else {
           const prod = s[i] * (a2 / ((bi + 1e-9) * (1 + p.kappa * a2)) + p.ba);
-          na[i] = ai + dt * (prod - p.ra * ai + Da * lapA);
-          nb[i] = bi + dt * (s[i] * a2 - p.r2 * bi + D2 * lapB + p.b2);
+          na[i] = ai + dt * (f * (prod - p.ra * ai) + Da * lapA);
+          nb[i] = bi + dt * (f * (s[i] * a2 - p.r2 * bi) + D2 * lapB + f * p.b2);
         }
       }
       // Clamping so that extreme parameters cannot overflow (NaN > 0 is false → 0)

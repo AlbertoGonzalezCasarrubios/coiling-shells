@@ -32,19 +32,6 @@ test('every pattern preset forms a pattern, with values in [0, 1]', () => {
   }
 });
 
-test('with a higher definition every preset keeps its pattern, and definition 1 changes nothing', () => {
-  for (const key of Object.keys(PATTERN_PRESETS)) {
-    if (PATTERN_PRESETS[key].D2 > 5) continue; // a far-reaching inhibitor makes the finer step slow; its bands are smooth anyway
-    const fine = simulatePattern(preset(key), { ...g, refine: 2 });
-    assert.equal(fine.state, 'pattern', key);
-    assert.ok(
-      fine.values.every((v) => v >= 0 && v <= 1),
-      key,
-    );
-  }
-  assert.deepEqual(simulatePattern(preset('nautilus'), { ...g, refine: 1 }).values, simulatePattern(preset('nautilus'), g).values);
-});
-
 test('the same seed gives the same pattern; another seed a different one', () => {
   const a = simulatePattern(preset('nautilus'), g).values;
   const b = simulatePattern(preset('nautilus'), g).values;
@@ -201,4 +188,35 @@ test('in the Conus preset the hormone leaves white triangles on a pigmented back
   assert.ok(conus.white > 0.15, `white ${conus.white}`);
   // Without the hormone the cells never rest long enough to leave white areas
   assert.ok(shares(preset('conus', { globalCtl: 0 })).white < 0.1);
+});
+
+test('with the gradient along the margin the outer side of the whorl draws about twice as many stripes', () => {
+  const gn = { W: 3.2, turns: 4, rows: 800, width: 256, nMax: 256 };
+  // Stripes crossed by one column (position u along the margin) over the last whorl
+  const stripes = (values, col) => {
+    let n = 0,
+      up = false;
+    for (let r = Math.round(gn.rows * 0.75); r < gn.rows; r++) {
+      const v = values[r * gn.width + col];
+      if (v > 0.5 && !up) {
+        n++;
+        up = true;
+      }
+      if (v < 0.3) up = false;
+    }
+    return n;
+  };
+  const ratio = (p) => {
+    const { values } = simulatePattern(p, gn);
+    return stripes(values, 0) / stripes(values, gn.width / 2); // u = 0 outer side, u = 1/2 inner side
+  };
+  // The Nautilus preset (G = 1): about 8 lines at the periphery for 4 near the umbilicus
+  const nautilus = ratio(preset('nautilus'));
+  assert.ok(nautilus > 1.5 && nautilus < 2.2, `outer / inner ${nautilus}`);
+  // Without the gradient both sides keep the same pace
+  assert.ok(Math.abs(ratio(preset('nautilus', { grad: 0 })) - 1) < 0.15);
+  // The gradient changes nothing when it is 0 or missing
+  const noGrad = preset('nautilus');
+  delete noGrad.grad;
+  assert.deepEqual(simulatePattern(noGrad, g).values, simulatePattern({ ...noGrad, grad: 0 }, g).values);
 });

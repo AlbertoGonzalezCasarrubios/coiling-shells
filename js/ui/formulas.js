@@ -2,7 +2,7 @@
  * The equation panel (general form and current values, typeset by MathJax only
  * while it is visible) and the About window with its pages.
  */
-import { AI_TEX, AS_TEX, DEFS_TEX, GENERAL_TEX, GLOBAL_TEX, HORMONE_TEX, MIRROR_TEX, t } from '../i18n/i18n.js';
+import { AI_TEX, AS_TEX, DEFS_TEX, GENERAL_TEX, GLOBAL_TEX, GRADIENT_TEX, HORMONE_TEX, MIRROR_TEX, t } from '../i18n/i18n.js';
 import { hasOrnament } from '../model/ornament.js';
 import { state } from './state.js';
 import { $, f, formatW, sig, qsa } from './util.js';
@@ -49,8 +49,8 @@ export function generalTeX(view = formulaView) {
     const isAS = pattern.model === 'AS';
     const global = pattern.globalCtl > 0;
     // With global control, the activator–inhibitor model takes the hormone of Meinhardt & Klingler
-    if (!isAS) return (global ? HORMONE_TEX : AI_TEX) + SOURCE_TEX;
-    return (global ? GLOBAL_TEX : AS_TEX) + SOURCE_TEX;
+    const model = isAS ? (global ? GLOBAL_TEX : AS_TEX) : global ? HORMONE_TEX : AI_TEX;
+    return model + SOURCE_TEX + (pattern.grad > 0 ? GRADIENT_TEX : '');
   }
   return GENERAL_TEX + DEFS_TEX + (state.mirror ? MIRROR_TEX : '') + (hasOrnament(state) ? ORNAMENT_TEX : '');
 }
@@ -90,7 +90,7 @@ function ornamentLiveTeX() {
 }
 
 function meinhardtLiveTeX() {
-  const { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl, T } = pattern;
+  const { model, Da, D2, ra, r2, kappa, ba, b2, noise, globalCtl, grad, T } = pattern;
   // Optional terms: omitted when their coefficient is 0
   const term = (sign, c, tex) => (c > 0 ? ` ${sign} ${sig(c)}${tex ? String.raw`\,${tex}` : ''}` : '');
   const lap = (v) => String.raw`\frac{\partial^2 ${v}}{\partial x^2}`;
@@ -119,7 +119,11 @@ function meinhardtLiveTeX() {
     \end{aligned}`;
   }
   const cells = Math.round(PATTERN_CELLS / pattern.size);
-  return String.raw`\[ ${eqs} \]` + String.raw`\[ s_i = ${sig(ra)}\,(1 \pm ${sig(noise)}),\quad N = ${cells},\quad T = ${Math.round(T)} \]`;
+  const pace = grad > 0 ? String.raw`,\quad \rho = 1 + ${sig(grad)}\,\frac{1 + \cos 2\pi u}{2}` : '';
+  return (
+    String.raw`\[ ${eqs} \]` +
+    String.raw`\[ s_i = ${sig(ra)}\,(1 \pm ${sig(noise)}),\quad N = ${cells},\quad T = ${Math.round(T)}${pace} \]`
+  );
 }
 
 export function liveTeX(view = formulaView) {

@@ -100,9 +100,9 @@ The plane is a **section of Raup's W–D–T cube at the current T**. The groups
 
 A mollusc only adds pigment at the growing margin, so a shell pattern is a **time record of a one-dimensional process**: space runs along the margin and time along the direction of growth. The app simulates the margin with Meinhardt's reaction–diffusion models and wraps the resulting space–time record onto Raup's surface, as Fowler, Meinhardt and Prusinkiewicz (1992) did.
 
-![A moon snail in 3/4 view with the spots in spiral rows of the Naticarius preset, with the pattern gallery and the space–time record in the sidebar and, over the 3D view, the morphospace and the activator and inhibitor profile along the margin at a moment when the spots are switched on](docs/images/pigmentation.png)
+![A garden snail in 3/4 view with the branching lines and tent-shaped triangles of the Oliva porphyria preset, with the pattern gallery in the sidebar and, over the 3D view, the morphospace and the activator and inhibitor profile along the margin](docs/images/pigmentation.png)
 
-- **Activator–inhibitor model.** A self-enhancing activator and a fast, far-reaching inhibitor give stable peaks, which draw bands along the spiral (*Cepaea nemoralis*). If the inhibitor outlives the activator, the margin oscillates and draws stripes parallel to the growth lines (the flames of *Nautilus*). With both at once, a medium-range inhibitor that also outlives the activator, each peak stays in place but switches on and off, and leaves a spiral row of spots (the moon snails *Naticarius*).
+- **Activator–inhibitor model.** A self-enhancing activator and a fast, far-reaching inhibitor give stable peaks, which draw bands along the spiral (*Cepaea nemoralis*). If the inhibitor outlives the activator, the margin oscillates and draws stripes parallel to the growth lines. With both at once, a medium-range inhibitor that also outlives the activator, each peak stays in place but switches on and off, and leaves a spiral row of spots (the moon snails *Naticarius*).
 
   ```
   ∂a/∂t = s·(a²/(h·(1 + κa²)) + b_a) − r_a·a + D_a·∂²a/∂x²
@@ -110,13 +110,14 @@ A mollusc only adds pigment at the growing margin, so a shell pattern is a **tim
   ```
 
 - **Activator–substrate model.** The activator consumes a substrate that recovers slowly, so activation travels as waves that draw oblique lines and annihilate when they meet. With a weak global control (below) the waves keep going and draw oblique lines and V shapes.
-- **Global control: *Oliva porphyria*.** Meinhardt and Klingler (1987) explained the branching lines and triangles of *Oliva porphyria* with a hormone made by the active cells, which measures how many waves there are. In the activator–inhibitor model with global control, a low hormone level makes the inhibitor vanish quickly, so the active cells stay active and send out backward waves: many lines branch at once. The *Oliva porphyria* preset starts from the constants of Fowler, Meinhardt and Prusinkiewicz (1992). In the activator–substrate model the same hormone raises the production of substrate, so the cells between branches stay in a low, pigmented activation: white triangles on a dark net, as in the marble cone (*Conus marmoreus* preset, Meinhardt and Klingler's Fig. 9).
+- **Global control: *Oliva porphyria*.** Meinhardt and Klingler (1987) explained the branching lines and triangles of *Oliva porphyria* with a hormone made by the active cells, which measures how many waves there are. In the activator–inhibitor model with global control, a low hormone level makes the inhibitor vanish quickly, so the active cells stay active and send out backward waves: many lines branch at once. The *Oliva porphyria* preset uses the constants of Meinhardt's own program for this shell, with excitable cells, as he argued in his later book (Meinhardt 2009). In the activator–substrate model the same hormone raises the production of substrate, so the cells between branches stay in a low, pigmented activation: white triangles on a dark net, as in the marble cone (*Conus marmoreus* preset, Meinhardt and Klingler's Fig. 9). In his later book Meinhardt (2009) explains this shell instead with a separate extinguishing reaction that switches pigmentation off at once over a wide region; the About pages describe both.
+- **Gradient along the margin: *Nautilus*.** On *Nautilus* the outer side of the whorl lays down about twice as many stripes as the side next to the umbilicus (Meinhardt 2009). The *Gradient along the margin* G makes every reaction of a cell run up to 1 + G times faster on the outer side, in either model, so extra stripes merge or end on the way to the inside. The *Nautilus* preset follows Meinhardt's simulation: an activator–substrate model with strong saturation, in which each cell oscillates, and G = 1.
 
-In the global-control presets each margin cell is barely coupled to its neighbours, so a front does not slide but jumps from cell to cell, and on the last whorls each jump can be seen. The *Pattern definition* of the Appearance menu splits each cell in two, with the diffusion scaled so that the pattern keeps its size and look, and the fronts advance in steps twice as fine. At any definition the cells are joined with a slight smoothing, less than a cell, and the record has 4096 rows, so edges are not drawn as staircases.
+In the global-control presets each margin cell is barely coupled to its neighbours, so a front does not slide but jumps from cell to cell, and on the last whorls each jump can be seen. These cells are part of the model, as in Meinhardt's own programs: splitting them would change the pattern. The cells are joined with a slight smoothing, less than a cell, and the record has 4096 rows, so edges are not drawn as staircases.
 
 Five presets reproduce real pattern types: the flame stripes of *Nautilus*, the spiral bands of *Cepaea nemoralis*, the spots in spiral rows of *Naticarius*, the branching triangles of *Oliva porphyria* and the white triangles on a dark net of *Conus marmoreus*.
 
-**Simple controls** set real quantities of the model: the number of cells along the margin, the growth time, the irregularity between cells and the pigment threshold. A seed chooses the random differences between cells. **Advanced controls** expose every constant of the equations, the choice of model and the insertion of new cells as the margin grows. The space–time record can be seen in time, which is Meinhardt's diagram, or unrolled with the true proportions of the shell. A **margin profile** plots the activator and the inhibitor or substrate at any moment of growth. If a set of values forms no pattern, the app says so instead of showing an empty shell.
+**Simple controls** set real quantities of the model: the number of cells along the margin, the growth time, the irregularity between cells and the pigment threshold. A seed chooses the random differences between cells. **Advanced controls** expose every constant of the equations, the choice of model and the insertion of new cells as the margin grows. The space–time record can be seen in time, which is Meinhardt's diagram, with each whorl as tall as the last whorl of the shell, or unrolled with the true proportions of the shell. A **margin profile** plots the activator and the inhibitor or substrate at any moment of growth. If a set of values forms no pattern, the app says so instead of showing an empty shell.
 
 ## Exporting
 
@@ -131,7 +132,7 @@ The **Export…** button at the bottom of the sidebar opens a dialog with every 
 | 3D model | GLB (glTF) | The surface with its colour and pattern, for 3D viewers, Blender or augmented reality |
 | Pattern | PNG, JPG, TIFF | The space–time record of the pigmentation |
 
-The page address also stores the current shell, the pattern and the look (colours, mesh resolution, pattern definition, growth bands and axis), so copying the link shares exactly what is on screen. The colours enter the address once you choose them; until then each visitor sees the palette of their own light or dark theme.
+The page address also stores the current shell, the pattern and the look (colours, mesh resolution, growth bands and axis), so copying the link shares exactly what is on screen. The colours enter the address once you choose them; until then each visitor sees the palette of their own light or dark theme.
 
 **Example report** (garden snail with the *Cepaea nemoralis* pattern, three pages):
 
@@ -178,7 +179,7 @@ The tests check, among other things, that:
 - pattern cells are evenly spaced along elliptical apertures;
 - every pigmentation preset forms a pattern, and the same seed always gives the same pattern;
 - with the hormone of global control, the *Oliva* waves keep branching and the *Conus* cells leave white triangles on a pigmented background, and without it neither pattern forms;
-- with the high pattern definition every preset keeps its pattern;
+- with the gradient along the margin the *Nautilus* preset draws about twice as many stripes on the outer side of the whorl as on the inner side, and without it the same number;
 - each shape preset lies in the morphospace region of its group;
 - the printable solid is closed, faces outwards and has exactly the requested size. This is checked for every preset, every ornamented example and extreme parameters;
 - ribs, cords, nodules, keel and spines appear exactly where they should, and spines never open the lip of the aperture;
