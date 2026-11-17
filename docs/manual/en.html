@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Coiling Shells: Form and Colour · User manual</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="manual.css" />
+  </head>
+  <body>
+    <section class="cover">
+      <h1>Coiling Shells</h1>
+      <p class="sub">Form and Colour</p>
+      <img src="images/en/cover.jpg" alt="" />
+      <p class="sub" style="letter-spacing: 0.2em">User manual</p>
+      <p class="author">Alberto González Casarrubios</p>
+    </section>
+
+    <section class="toc">
+      <h2>Contents</h2>
+      <p class="lead">
+        <em>Coiling Shells</em> builds the shells of snails, ammonites and clams from four numbers, adds ribs, cords and spines, and paints
+        them with patterns that grow like those of real shells. This manual explains how to use it, step by step. The science behind it,
+        the models of David Raup and Hans Meinhardt, is explained in the app itself, under <span class="ui">About</span>.
+      </p>
+      <ol id="toc"></ol>
+    </section>
+
+    <!-- 1 -->
+    <h2 style="margin-top: 0"><span class="num">1</span>Getting started</h2>
+    <p>
+      The app runs in the web browser, with nothing to install. Open
+      <a href="https://albertogonzalezcasarrubios.github.io/coiling-shells/">albertogonzalezcasarrubios.github.io/coiling-shells</a> in a
+      recent version of Chrome, Edge, Firefox or Safari. It works best on a computer, and also on a tablet with touch gestures. The first
+      time it needs an internet connection, to load the 3D engine and the formulas.
+    </p>
+    <p>
+      On your first visit a <strong>welcome guide</strong> shows the parts of a coiled shell on a snail that you can turn with the mouse,
+      and six short steps on how to use the app. <span class="ui">Start exploring</span> closes it and <span class="ui">Read the theory</span>
+      opens the explanations. The <span class="ui">Guide</span> button opens it again at any time.
+    </p>
+    <figure>
+      <img src="images/en/welcome.jpg" alt="The welcome guide" />
+      <figcaption>The welcome guide, with the parts of a shell labelled on a 3D snail.</figcaption>
+    </figure>
+    <h3>Language and colours</h3>
+    <p>
+      The <span class="ui">EN</span> and <span class="ui">ES</span> buttons, next to the title, switch the whole app between English and
+      Spanish, and the app remembers your choice. It also follows the light or dark theme of your device; the
+      <span class="ui">Appearance</span> menu changes the colours of the shell, the lines and the background (chapter 7).
+    </p>
+    <div class="tip">
+      <strong>Nothing is lost.</strong> Every change is kept in the page address, and <kbd>Ctrl</kbd> <kbd>Z</kbd> (<kbd>⌘</kbd>
+      <kbd>Z</kbd> on a Mac) undoes it. Experiment freely.
+    </div>
+
+    <!-- 2 -->
+    <div class="keep">
+    <h2><span class="num">2</span>The screen at a glance</h2>
+    <p>The sidebar on the left holds the controls; the 3D view of the shell fills the rest of the screen.</p>
+    <figure>
+      <img src="images/en/overview.jpg" alt="The main screen with numbered parts" />
+      <figcaption>The main screen. The numbers are explained in the table below.</figcaption>
+    </figure>
+    </div>
+    <table class="markers">
+      <tr>
+        <td><span class="badge">1</span></td>
+        <td>Title of the app and the language buttons.</td>
+      </tr>
+      <tr>
+        <td><span class="badge">2</span></td>
+        <td><span class="ui">Create your own shell</span>: a short step-by-step window for building a shell (chapter 8).</td>
+      </tr>
+      <tr>
+        <td><span class="badge">3</span></td>
+        <td><span class="ui">Challenge</span>: a game in which you copy a hidden shell (chapter 9).</td>
+      </tr>
+      <tr>
+        <td><span class="badge">4</span></td>
+        <td>
+          The tabs <span class="ui">Shape</span>, <span class="ui">Ornament</span> and <span class="ui">Pigment</span> (chapters 4 to 6).
+          The controls of the chosen tab are below them, and the <span class="ui">Export…</span> button at the very end (chapter 10).
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge">5</span></td>
+        <td>
+          How the shell is drawn: <span class="ui">Lines</span>, <span class="ui">Solid</span> or <span class="ui">Both</span>. The arrow
+          next to it undoes the last change.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge">6</span></td>
+        <td>
+          The toolbar: <span class="ui">Equation</span>, <span class="ui">Axes</span>, <span class="ui">Appearance</span>,
+          <span class="ui">Graphs</span>, <span class="ui">Guide</span>, <span class="ui">About</span>, <span class="ui">Fullscreen</span>
+          and <span class="ui">Hide info</span>.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge">7</span></td>
+        <td>The standard views and the three ways of turning the shell (chapter 3).</td>
+      </tr>
+      <tr>
+        <td><span class="badge">8</span></td>
+        <td>The 3D view. The shell is rebuilt as soon as you change a value.</td>
+      </tr>
+    </table>
+    <p>
+      Many panels have a <span class="ui">Theory →</span> link next to their title, which opens the page of <span class="ui">About</span>
+      that explains them.
+    </p>
+
+    <!-- 3 -->
+    <div class="keep">
+    <h2><span class="num">3</span>Looking at the shell</h2>
+    <table>
+      <tr>
+        <th>Mouse · touch</th>
+        <th>What it does</th>
+      </tr>
+      <tr>
+        <td>Drag · one finger</td>
+        <td>Turn around the shell.</td>
+      </tr>
+      <tr>
+        <td>Wheel · pinch</td>
+        <td>Zoom in and out.</td>
+      </tr>
+      <tr>
+        <td>Right-drag · two fingers</td>
+        <td>Move the view.</td>
+      </tr>
+    </table>
+    </div>
+    <h3>Standard views</h3>
+    <p>
+      Malacologists, who study molluscs, draw shells from a few fixed directions. The bar at the bottom of the view gives each of them in
+      one click: <span class="ui">3/4</span>, a three-quarter view; <span class="ui">Apertural</span>, facing the opening with the apex up;
+      <span class="ui">Dorsal</span>, from the opposite side; <span class="ui">Apical</span>, from the apex, along the coiling axis;
+      <span class="ui">Umbilical</span>, from below; and <span class="ui">Profile</span>, from the side.
+    </p>
+    <figure>
+      <img src="images/en/views.jpg" alt="Apical view of a nautilus" />
+      <figcaption>A nautilus in apical view, looking straight down the coiling axis.</figcaption>
+    </figure>
+    <p>
+      The three buttons at the end of the bar choose how dragging turns the shell: around a <strong>vertical</strong> axis, the usual way
+      for snails; around a <strong>horizontal</strong> one, for flat shells such as ammonites seen face-on; or <strong>freely</strong>, in
+      any direction. After a free rotation, any standard view sets the shell upright again.
+    </p>
+    <h3>Lines, solid or both</h3>
+    <p>
+      <span class="ui">Lines</span> draws the shell as a mesh of spiral lines and growth lines, the way Raup drew his shells in the 1960s.
+      <span class="ui">Solid</span> shows a surface with light and shadow; it is the mode that shows colour patterns.
+      <span class="ui">Both</span> draws the lines on top of the surface.
+    </p>
+    <h3>Only the shell</h3>
+    <p>
+      <span class="ui">Hide info</span>, or the <kbd>H</kbd> key, hides every panel so that only the shell is left; <kbd>H</kbd> or
+      <kbd>Esc</kbd> brings them back. <span class="ui">Fullscreen</span>, or <kbd>F</kbd>, fills the screen, and
+      <span class="ui">Axes</span> shows or hides the small x, y, z axes in the corner.
+    </p>
+
+    <!-- 4 -->
+    <h2><span class="num">4</span>Shape: Raup’s four numbers</h2>
+    <figure class="float">
+      <img src="images/en/shape.jpg" alt="Raup's parameters" />
+      <figcaption>The four parameters, here for <i>Turritella</i>.</figcaption>
+    </figure>
+    <p>
+      In 1966 the palaeontologist David Raup showed that a coiled shell is a tube that grows as it turns around an axis, and that four
+      numbers are enough to describe it. The <span class="ui">Shape</span> tab has a slider for each.
+    </p>
+    <ul>
+      <li>
+        <strong>W, whorl expansion rate.</strong> How much the tube widens in each turn. Low values give many tight whorls; high values a
+        tube that widens very fast. A clam is a shell with a huge W.
+      </li>
+      <li>
+        <strong>D, distance from the axis.</strong> With 0 the whorls touch the axis; higher values open a hollow in the centre, the
+        umbilicus, and the whorls draw apart.
+      </li>
+      <li>
+        <strong>T, translation rate.</strong> How far the tube moves along the axis as it grows. With 0 the shell is flat, like a nautilus;
+        with high values it is tall and slender, like <i>Turritella</i>.
+      </li>
+      <li>
+        <strong>S, aperture shape.</strong> The shape of the opening: 1 is a circle, lower values flatten it and higher values make it
+        taller.
+      </li>
+    </ul>
+    <p>
+      Drag a slider or type a value in its box; with a slider selected, the arrow keys move it step by step. W can be shown on a linear
+      scale, from 1 to 10, or a logarithmic one, up to 10<sup>4</sup> to reach clams: choose with the <span class="ui">Lin</span> and
+      <span class="ui">Log</span> buttons under its slider.
+    </p>
+    <h3>Presets</h3>
+    <p>
+      The <span class="ui">Preset</span> list, at the top of the tab, loads real shells: the garden snail, <i>Turritella</i>, a top shell,
+      ramshorn and bladder snails, the nautilus, an ammonite and a clam, among others. It is the quickest way to start; change any value afterwards.
+    </p>
+    <h3 class="clear">Geometry</h3>
+    <ul>
+      <li><strong>Number of whorls</strong>: how many turns are drawn, from the apex to the opening.</li>
+      <li>
+        <strong>Coiling</strong>: <span class="ui">Dextral</span>, with the opening on the right as in most snails, or
+        <span class="ui">Sinistral</span>, on the left.
+      </li>
+      <li><strong>Mirror valve</strong>: adds a mirrored copy, to make the two valves of a clam.</li>
+      <li><strong>Animate growth</strong>: shows the shell growing from the apex to its final size.</li>
+    </ul>
+    <div class="keep">
+    <h3>The morphospace</h3>
+    <figure class="float">
+      <img src="images/en/morphospace.jpg" alt="The morphospace panel" />
+      <figcaption>The morphospace: the dot is the current shell.</figcaption>
+    </figure>
+    <p>
+      Every combination of the four numbers is a possible shell. The <span class="ui">Morphospace W – D</span> panel, at the end of the
+      Shape tab, is a map of those shells. The dot is your shell; the shaded regions are where real groups live: gastropods, ammonoids and
+      nautiloids, and bivalves.
+    </p>
+    <p>
+      Click or drag on the map to move to another shell, or click the name of a group to load a typical one. The buttons at the top change
+      the range of W, so that clams fit on the map.
+    </p>
+    <p>
+      Large parts of the map are empty: nature uses only a few of the possible shapes. Asking why was one of the reasons Raup drew this
+      map. Try a point in an empty region and look at the shell you get.
+    </p>
+    </div>
+
+    <!-- 5 -->
+    <div class="keep">
+    <h2><span class="num">5</span>Ornament: ribs, cords and spines</h2>
+    <p>
+      Real shells are rarely smooth. The <span class="ui">Ornament</span> tab adds relief to any shape. The
+      <span class="ui">Ornamented shells</span> list loads real examples with both their shape and their relief: a wentletrap with thin
+      ribs, a top shell with a keel, a sun shell with spines, two ammonites, a cockle and others.
+    </p>
+    <figure>
+      <img src="images/en/ornament.jpg" alt="The Ornament tab with a spiny sun shell" />
+      <figcaption>The sun shell (<i>Astraea</i>) example: spines along the edge of the whorls.</figcaption>
+    </figure>
+    </div>
+    <ul>
+      <li><strong>Axial ribs</strong>: ridges across the whorls, like the growth lines. Set how many per whorl, their height and width.</li>
+      <li><strong>Spiral cords</strong>: ridges along the whorls. In clams they are the radial ribs that fan out from the hinge.</li>
+      <li><strong>Nodules</strong>: bumps where ribs and cords cross.</li>
+      <li><strong>Spines</strong>: points at regular intervals, in one row or in two symmetric rows.</li>
+    </ul>
+    <p>
+      The <span class="ui">Simple</span> / <span class="ui">Advanced</span> switch shows more controls: the asymmetry of the ribs, the
+      position of cords and spines, a <strong>keel</strong> (a single sharp ridge), and <strong>Change with growth</strong>, which makes
+      the relief fade as the shell grows, as in many shells that are smooth when adult, or appear only late. <span class="ui">Remove
+        ornament</span> makes the shell smooth again.
+    </p>
+    <div class="keep">
+    <h3>Why this number of cords?</h3>
+    <figure class="float" style="width: 44mm">
+      <img src="images/en/mechanics.jpg" alt="The mechanical model" />
+      <figcaption>The mechanical model: the dot marks the number of cords that grows.</figcaption>
+    </figure>
+    <p>
+      The advanced controls end with a small model that explains where cords come from. The shell is built by the edge of the
+      <strong>mantle</strong>, the soft tissue that lines it. If that edge grows a little faster than the shell, it wrinkles into waves,
+      like a rug pushed against a wall, and each wave leaves a cord.
+    </p>
+    <p>Two sliders set the balance:</p>
+    <ul>
+      <li>
+        <strong>Attachment / bending Λ</strong>: how firmly the edge is held to the shell, against how stiff it is. A stiff edge prefers
+        few, wide waves; a firmly held one, many narrow ones.
+      </li>
+      <li><strong>Push of growth η</strong>: how much faster the edge grows. Below 1 it does not wrinkle and the shell stays smooth.</li>
+    </ul>
+    <p>
+      The curve shows the push needed for each number of waves, and its lowest point, the dot, is the number that appears. The ring next
+      to it shows the wrinkled edge. <span class="ui">Grow these cords on the shell</span> applies that number to your shell.
+    </p>
+    </div>
+
+    <!-- 6 -->
+    <h2><span class="num">6</span>Pigment: patterns that grow</h2>
+    <p>
+      A mollusc can only add colour at the edge of its shell, while it grows, so a shell pattern is a record of what happened along that
+      edge over time. The physicist and biologist Hans Meinhardt simulated it with substances that react with each other and spread
+      between neighbouring cells. The <span class="ui">Pigment</span> tab runs his simulations on your shell.
+    </p>
+    <figure>
+      <img src="images/en/pigment.jpg" alt="The Pigment tab with the Oliva pattern" />
+      <figcaption>The <i>Oliva porphyria</i> pattern: lines that branch into triangles.</figcaption>
+    </figure>
+    <h3>Choosing a pattern</h3>
+    <p>
+      When you open the tab the shell switches to <span class="ui">Solid</span> but keeps its plain colour: choose a pattern in the gallery
+      to paint it. Each of the five comes from a real shell: the flames of the nautilus, the spiral bands of the banded snail
+      <i>Cepaea</i>, the rows of spots of moon snails (<i>Naticarius</i>), the triangles of <i>Oliva</i> and the white tents of the marbled
+      cone (<i>Conus</i>). <span class="ui">Solid colour</span> or <span class="ui">Remove colour</span> take you back to a plain shell.
+      Patterns are computed, not drawn, so a new one can take a second or two; “Computing…” is shown meanwhile.
+    </p>
+    <h3>Simple controls</h3>
+    <ul>
+      <li><strong>Pattern size</strong>: how large each element is. It sets the number of cells along the edge.</li>
+      <li><strong>Growth time</strong>: how long the shell takes to grow. More time leaves more stripes along the direction of growth.</li>
+      <li><strong>Irregularity</strong>: from regular, tidy patterns to irregular, branching ones.</li>
+      <li><strong>Pigment amount</strong>: makes the dark areas wider or narrower, without changing the simulation.</li>
+      <li>
+        <strong>Seed</strong> and <span class="ui">New seed</span>: each seed is a different individual of the same species, as no two real
+        shells are identical.
+      </li>
+      <li><strong>Pigment colours</strong>: the colours of the background and of the pigment.</li>
+    </ul>
+    <h3>The space–time record</h3>
+    <p>
+      Below the gallery, the <span class="ui">Space–time record</span> lays the whole pattern flat. The edge of the shell runs across and
+      time runs down, from the apex to the opening. <span class="ui">In time</span> gives every whorl the same height, as in Meinhardt’s
+      diagrams; scroll it up to see the first whorls. <span class="ui">Unrolled shell</span> draws it with the proportions of the shell, as
+      a fan. <span class="ui">Save pattern</span> downloads it as an image.
+    </p>
+    <h3>Advanced controls</h3>
+    <figure class="float">
+      <img src="images/en/pigment-advanced.jpg" alt="The margin profile" />
+      <figcaption>The margin profile of the nautilus pattern.</figcaption>
+    </figure>
+    <p><span class="ui">Advanced</span> shows every constant of the equations, for those who want to explore the models themselves.</p>
+    <ul>
+      <li>
+        <strong>Model</strong>: <em>activator–inhibitor</em> or <em>activator–substrate</em>, the two kinds of reaction Meinhardt used.
+        Changing it loads values that work.
+      </li>
+      <li><strong>Constants</strong>: how fast each substance spreads, decays and is produced, and the saturation.</li>
+      <li><strong>Global control</strong>: a hormone that counts the waves, used by <i>Oliva</i> and <i>Conus</i>.</li>
+      <li>
+        <strong>Gradient along the margin</strong>: makes the outer side of the whorl run faster, as in the nautilus, which has more stripes
+        outside than inside.
+      </li>
+      <li>
+        <strong>Growing margin</strong>: adds cells as the shell grows, so that elements keep their size and new ones appear between the
+        old.
+      </li>
+    </ul>
+    <p>
+      The <strong>margin profile</strong> plots the activator and its antagonist along the edge at one moment; click or drag on the record
+      to choose the moment. Pigment is laid down where the activator rises above the dotted threshold.
+    </p>
+    <p>
+      Near some values the pattern jumps from one type to another: that is how the models behave, not an error. If a combination forms no
+      pattern at all, the app says so and suggests recipes.
+    </p>
+    <h3 class="clear">Graphs over the shell</h3>
+    <p>
+      The <span class="ui">Graphs</span> menu places the morphospace and the margin profile over the 3D view, to watch them while you move
+      the sliders. The slider under the profile moves along the growth of the shell.
+    </p>
+    <figure>
+      <img src="images/en/graphs.jpg" alt="Graphs over the 3D view" />
+      <figcaption>The nautilus pattern, with the morphospace and the margin profile over the 3D view.</figcaption>
+    </figure>
+
+    <!-- 7 -->
+    <h2><span class="num">7</span>Equations, theory and appearance</h2>
+    <h3>Equation</h3>
+    <p>
+      The <span class="ui">Equation</span> button opens a panel with the formula of Raup’s model, in general form and with the current
+      values, which change as you move the sliders. With a pattern applied, a second tab shows Meinhardt’s equations.
+    </p>
+    <figure>
+      <img src="images/en/equation.jpg" alt="The equation panel" />
+      <figcaption>The equation panel, with the general form and the current values.</figcaption>
+    </figure>
+    <h3>About</h3>
+    <p>
+      <span class="ui">About</span> explains the science behind the app in five pages: Raup’s model of the shape, Meinhardt’s models of the
+      pigment, the mechanics of the ornament, a summary of the controls, and the credits, with how to cite the app.
+    </p>
+    <h3>Appearance</h3>
+    <figure class="float">
+      <img src="images/en/appearance.jpg" alt="The Appearance menu" />
+      <figcaption>The Appearance menu.</figcaption>
+    </figure>
+    <p>The <span class="ui">Appearance</span> menu, in the toolbar, changes how the shell is drawn:</p>
+    <ul>
+      <li>
+        <strong>Colour presets</strong>, light and dark, and the colours of the lines, the shell and the background, each with its own
+        colour picker.
+      </li>
+      <li><strong>Mesh resolution</strong>: low is faster on modest computers; high is smoother, for images.</li>
+      <li>The number of <strong>spiral lines</strong> and <strong>growth lines</strong>, and the width and opacity of the lines.</li>
+      <li>
+        <strong>Hide back lines</strong>: in line mode, hides the lines behind the shell. Turned off, the shell looks transparent, like a
+        wire sculpture, as on the cover of this manual.
+      </li>
+      <li><strong>Growth bands</strong>: faint bands on the solid surface that mark its growth.</li>
+      <li><strong>Show coiling axis</strong>, and <strong>Auto-rotate</strong> to turn the shell slowly on its own.</li>
+    </ul>
+
+    <!-- 8 -->
+    <h2><span class="num">8</span>Create your own shell</h2>
+    <p>
+      <span class="ui">Create your own shell</span> is the easiest way to make a shell of your own. It opens a window with five steps, each
+      with a few simple sliders, and the shell turning on the left:
+    </p>
+    <ol>
+      <li>
+        <strong>Shape</strong>: it starts from the garden snail; choose another real shell, or press
+        <span class="ui">Use the shell of the main view</span> to bring in the one you were looking at. Then change how the tube grows.
+      </li>
+      <li><strong>Ornament</strong>: add ribs, cords or spines, or load an example.</li>
+      <li>
+        <strong>Colour</strong>: choose a kind of pattern and its colours; <span class="ui">Another variant of this pattern</span> gives a new
+        individual.
+      </li>
+      <li><strong>Look</strong>: how the shell is drawn and on what background.</li>
+      <li><strong>Export</strong>: give it a name and take it with you as a wallpaper for your screen, as a PDF sheet, or in other formats.</li>
+    </ol>
+    <figure>
+      <img src="images/en/wizard.jpg" alt="Create your own shell, colour step" />
+      <figcaption>The colour step. <span class="ui">Back</span> and <span class="ui">Next</span> move between steps; <span class="ui">Undo</span> reverses the last change.</figcaption>
+    </figure>
+    <p>
+      When you finish, the shell stays on the main screen, where every control can keep changing it. If you close the window without
+      changing anything, the shell you had before comes back.
+    </p>
+
+    <!-- 9 -->
+    <div class="keep">
+    <h2><span class="num">9</span>The challenge</h2>
+    <p>
+      <span class="ui">Challenge: match the shell</span> is a game for learning what each number does. A target shell is shown above and
+      yours below, turning together. Move the sliders until they look alike, then press <span class="ui">Check</span>.
+    </p>
+    <figure>
+      <img src="images/en/challenge.jpg" alt="The challenge" />
+      <figcaption>The first level: only W is free.</figcaption>
+    </figure>
+    </div>
+    <ul>
+      <li>
+        There are eight levels in three blocks. <strong>Shape</strong> frees the parameters one at a time: W, then T, then D, then all of
+        them. <strong>Ornament</strong> asks for the relief, and <strong>Colour</strong> for the pattern and its colours; the last level
+        asks for everything at once.
+      </li>
+      <li>
+        The <strong>likeness</strong> compares the two shells seen from several sides. With 85&nbsp;% in the first levels, and 90&nbsp;% in the later ones, you pass the level; after each try
+        a hint tells you what to change.
+      </li>
+      <li><span class="ui">Another shell</span> gives a new target in the same level. The app remembers how far you got.</li>
+      <li>
+        <span class="ui">Start again from level 1</span> forgets your progress, and the round arrow in the corner of each block plays that
+        block again from its first level.
+      </li>
+      <li>Closing the challenge gives you back the shell you had before.</li>
+    </ul>
+
+    <!-- 10 -->
+    <h2><span class="num">10</span>Saving and sharing</h2>
+    <p>
+      <span class="ui">Export…</span>, at the end of the sidebar, opens a window with every way of saving your shell. The optional
+      <strong>name</strong> at the top becomes the title of the PDF and the name of the files.
+    </p>
+    <figure>
+      <img src="images/en/export.jpg" alt="The export window" />
+      <figcaption>The export window, with the plate of standard views of the nautilus.</figcaption>
+    </figure>
+    <table>
+      <tr>
+        <th>Option</th>
+        <th>What you get</th>
+      </tr>
+      <tr>
+        <td>Image of the current view</td>
+        <td>
+          Exactly what the 3D view shows, without panels, as PNG, JPG or TIFF: from the size of the screen to four times larger for
+          printing, or at fixed sizes for wallpapers.
+        </td>
+      </tr>
+      <tr>
+        <td>Plate of standard views</td>
+        <td>The six standard views on one image, without perspective, as in a scientific figure, with or without labels.</td>
+      </tr>
+      <tr>
+        <td>PDF sheet</td>
+        <td>
+          An A4 report with the plate, the values, the morphospace and a link that reopens the shell. With a pattern it adds a page with
+          the record, the margin profile and the constants, and optionally one with the equations.
+        </td>
+      </tr>
+      <tr>
+        <td>3D printing</td>
+        <td>
+          STL or 3MF files with a real wall thickness, in millimetres, ready for a slicer. A warning appears if the spines are too thin to
+          print.
+        </td>
+      </tr>
+      <tr>
+        <td>3D model with colour</td>
+        <td>A GLB file with the surface and its pattern, for 3D viewers, Blender or augmented reality.</td>
+      </tr>
+      <tr>
+        <td>Pattern</td>
+        <td>The space–time record of the pigment, as an image.</td>
+      </tr>
+    </table>
+    <div class="tip">
+      <strong>Share a link.</strong> The page address always holds the current shell, with its ornament, pattern and appearance. Copy it
+      from the browser, and anyone who opens it sees exactly the same shell.
+    </div>
+
+    <!-- 11 -->
+    <div class="keep">
+    <h2><span class="num">11</span>Quick reference and tips</h2>
+    <table>
+      <tr>
+        <th>Key</th>
+        <th>What it does</th>
+      </tr>
+      <tr>
+        <td><kbd>Ctrl</kbd> <kbd>Z</kbd> · <kbd>⌘</kbd> <kbd>Z</kbd></td>
+        <td>Undo the last change.</td>
+      </tr>
+      <tr>
+        <td><kbd>F</kbd></td>
+        <td>Full screen.</td>
+      </tr>
+      <tr>
+        <td><kbd>H</kbd></td>
+        <td>Hide or show the panels.</td>
+      </tr>
+      <tr>
+        <td><kbd>Esc</kbd></td>
+        <td>Show the panels again, or close a window.</td>
+      </tr>
+      <tr>
+        <td>Arrow keys</td>
+        <td>Move the selected slider step by step.</td>
+      </tr>
+    </table>
+    </div>
+    <h3>Ideas to try</h3>
+    <ul>
+      <li>Start from the garden snail and lower T to 0: the shell flattens like a ramshorn snail. Raise D and the whorls come apart.</li>
+      <li>Load the clam and look at W on the logarithmic scale: snails and clams are ends of a single slider.</li>
+      <li>Put the same pattern on a snail and on a nautilus: the pattern is the same, but the shape changes how it looks.</li>
+      <li>With the <i>Cepaea</i> pattern, press <span class="ui">New seed</span> several times: each seed is a different snail.</li>
+      <li>Draw a <i>Turritella</i> with lines on a black background and turn off <span class="ui">Hide back lines</span>.</li>
+    </ul>
+    <h3>If something does not work</h3>
+    <ul>
+      <li>
+        <strong>The shell does not appear.</strong> Use a recent browser with hardware acceleration (WebGL) turned on, and an internet
+        connection the first time.
+      </li>
+      <li><strong>The formulas do not show.</strong> They are loaded from the internet; check the connection.</li>
+      <li>
+        <strong>The pattern is not visible.</strong> Choose <span class="ui">Solid</span> or <span class="ui">Both</span>: in
+        <span class="ui">Lines</span> there is no surface to paint.
+      </li>
+      <li><strong>“No pattern”.</strong> The values form no pattern; pick one from the gallery or follow the recipes shown.</li>
+      <li>
+        <strong>Everything is slow.</strong> Lower the mesh resolution in <span class="ui">Appearance</span>, or the pattern size and the
+        growth time.
+      </li>
+    </ul>
+
+    <!-- 12 -->
+    <h2><span class="num">12</span>Glossary</h2>
+    <dl>
+      <dt>Activator</dt>
+      <dd>In Meinhardt’s models, the substance that switches pigment on and enhances its own production.</dd>
+      <dt>Antagonist</dt>
+      <dd>The substance that stops the activator: an inhibitor it produces, or a substrate it uses up.</dd>
+      <dt>Aperture</dt>
+      <dd>The opening of the shell, where the animal comes out and where the shell grows.</dd>
+      <dt>Apex</dt>
+      <dd>The tip of the shell: its oldest part, where growth began.</dd>
+      <dt>Body whorl</dt>
+      <dd>The last and largest whorl, which ends at the aperture.</dd>
+      <dt>Coiling axis</dt>
+      <dd>The imaginary line around which the tube turns.</dd>
+      <dt>Cord</dt>
+      <dd>A ridge that runs along the whorls, in the direction of coiling.</dd>
+      <dt>Dextral, sinistral</dt>
+      <dd>Coiled to the right or to the left: with the apex up and the aperture facing you, the aperture is on the right or on the left.</dd>
+      <dt>Keel</dt>
+      <dd>A single sharp ridge along the whorls.</dd>
+      <dt>Mantle</dt>
+      <dd>The soft tissue that lines the shell and builds it at its edge.</dd>
+      <dt>Morphospace</dt>
+      <dd>The space of all possible shapes; here, the shells given by W, D, T and S.</dd>
+      <dt>Rib</dt>
+      <dd>A ridge across the whorls, parallel to the growth lines.</dd>
+      <dt>Space–time record</dt>
+      <dd>The pattern laid flat: the edge of the shell across, and time, from the apex to the aperture, down.</dd>
+      <dt>Spire</dt>
+      <dd>All the whorls above the body whorl.</dd>
+      <dt>Suture</dt>
+      <dd>The line where one whorl meets the next.</dd>
+      <dt>Umbilicus</dt>
+      <dd>The hollow around the coiling axis, at the base of the shell, when the whorls do not touch it.</dd>
+      <dt>Whorl</dt>
+      <dd>One complete turn of the tube.</dd>
+    </dl>
+    <p class="colophon">
+      <strong>Coiling Shells: Form and Colour</strong> · Alberto González Casarrubios, Universidad Complutense de Madrid ·
+      albertogonzalezcasarrubios.github.io/coiling-shells<br />
+      Code under the MIT licence; texts and images under CC BY 4.0. To cite the app, see <span class="ui">About → Credits</span>.
+    </p>
+    <script>
+      // Contents: the chapters and their sections, numbered as in the text
+      const toc = document.getElementById('toc');
+      let ch = 0,
+        sec = 0,
+        sub = null;
+      for (const h of document.querySelectorAll('body > h2, body > .keep > h2, body > h3, body > .keep > h3')) {
+        if (h.tagName === 'H2') {
+          ch++;
+          sec = 0;
+          const li = document.createElement('li');
+          li.innerHTML = `<span>${ch}</span><div><b>${h.textContent.replace(/^\d+/, '')}</b><small></small></div>`;
+          toc.append(li);
+          sub = li.querySelector('small');
+        } else if (sub) {
+          sec++;
+          sub.textContent += `${sec > 1 ? ' · ' : ''}${ch}.${sec} ${h.textContent}`;
+        }
+      }
+    </script>
+  </body>
+</html>

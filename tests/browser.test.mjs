@@ -339,7 +339,12 @@ const TOUR = String.raw`(async () => {
   for (let i = 0; i < 3 && !/pg=0/.test(location.hash); i++) { await sl(600); $('undo').click(); await until(() => !$('patternStatus').hidden || /pg=0/.test(location.hash), 1500); }
   log.undone = await until(() => /pg=0/.test(location.hash), 3000);
   console.info('stage shell creator');
+  // The creator starts from the garden snail; the shell of the main view can be brought in
+  $('preset').value = 'turritella'; $('preset').dispatchEvent(new Event('change')); await sl(800);
   $('openWizard').click(); await sl(500);
+  log.wzFresh = $('preset').value === 'caracol' && !$('wzImport').disabled;
+  $('wzImport').click(); await sl(500);
+  log.wzImport = $('preset').value === 'turritella' && $('wzPreset').value === 'turritella' && $('wzImport').disabled;
   await audit('shell creator', $('wizard'));
   for (let i = 0; i < 4; i++) { $('wzNext').click(); await sl(400); }
   $('wzNext').click(); await sl(300);
@@ -353,6 +358,8 @@ const TOUR = String.raw`(async () => {
   $('openChallenge').click(); await sl(1500);
   log.chTarget = await until(() => !!$('chView').querySelector('canvas') && !!$('chView').querySelector('.ch-label-target'), 5000);
   log.chCanvasIn = document.querySelector('canvas')?.parentElement?.id;
+  // The creator, opened before, does not hide the controls of the challenge (same class of panel)
+  log.chSliders = $('p-ch-W').closest('.param').offsetParent !== null;
   const wBox = $('p-ch-W').closest('.param').querySelector('input[type=number]');
   let lo = 1, hi = 10;
   for (let i = 0; i < 30 && !$('chResult').classList.contains('passed'); i++) {
@@ -372,7 +379,13 @@ const TOUR = String.raw`(async () => {
   $('chCheck').click(); await sl(300);
   log.chColour = !$('chKinds').closest('.ch-group').hidden && /\d+/.test($('chScore').textContent) && $('chMessage').textContent.length > 0;
   log.chProgress = localStorage.getItem('coiling-shells.challenge') === '1';
-  // Starting again (offered once the last level is passed) forgets the progress
+  // A block can be played again from its first level; progress before it is kept
+  document.querySelector('#chLevels [data-block=ornament]').click(); await sl(1500);
+  log.chBlock = document.querySelector('#chLevels [aria-current=step]')?.dataset.level === '5' && localStorage.getItem('coiling-shells.challenge') === '1';
+  // Starting again (always offered, and again once the last level is passed) forgets the progress
+  $('chReset').click(); await sl(1500);
+  log.chReset = localStorage.getItem('coiling-shells.challenge') === null && document.querySelector('#chLevels [aria-current=step]')?.dataset.level === '1';
+  localStorage.setItem('coiling-shells.challenge', '1');
   $('chRestart').click(); await sl(1500);
   log.chRestart = localStorage.getItem('coiling-shells.challenge') === null && document.querySelector('#chLevels [aria-current=step]')?.dataset.level === '1';
   $('closeChallenge').click(); await sl(1500);
@@ -457,7 +470,12 @@ test('the whole interface works in a real browser', { skip, timeout: 400_000 }, 
     assert.equal(log.spineOk, true, 'no spine warning at 80 mm');
     assert.equal(log.spineWarn, true, 'spine warning at 20 mm');
     assert.equal(log.wizardClosed, true, 'the shell creator gives the canvas back');
+    assert.equal(log.wzFresh, true, 'the shell creator starts from the garden snail');
+    assert.equal(log.wzImport, true, 'the shell creator brings in the shell of the main view');
     assert.equal(log.chTarget, true, "the challenge shows the target and the player's shell in its 3D view");
+    assert.equal(log.chSliders, true, 'the sliders of the challenge show after the shell creator was used');
+    assert.equal(log.chBlock, true, 'a block of the challenge can be played again from its first level');
+    assert.equal(log.chReset, true, 'the challenge can be started again from level 1 at any time');
     assert.equal(log.chPassed && log.chNext, true, 'level 1 of the challenge can be passed by following its hints');
     assert.equal(log.chAddressPaused, true, 'the game does not touch the address');
     assert.equal(log.chColour, true, 'the colour level can be played');

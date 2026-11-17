@@ -715,6 +715,7 @@
           <section class="wizard-panel" data-step="0">
             <p class="note" data-i18n="wz.shape.intro"></p>
             <label class="field"><span data-i18n="wz.start">Start from</span><select id="wzPreset" class="select"></select></label>
+            <button type="button" class="btn btn-wide" id="wzImport" data-i18n="wz.import">Use the shell of the main view</button>
             <div id="wz-shape"></div>
             <div class="segmented two" id="wzHand" role="radiogroup" data-i18n-title="geo.hand">
               <button type="button" data-hand="1" data-i18n="geo.dextral">Dextral</button>
@@ -798,7 +799,7 @@
       <div class="wizard-side">
         <div class="ch-levels" id="chLevels">
           <div class="ch-block">
-            <span class="ch-block-name" data-i18n="ch.b.shape">Shape</span>
+            <div class="ch-block-head"><span class="ch-block-name" data-i18n="ch.b.shape">Shape</span><button type="button" class="ch-block-reset" data-block="shape" data-i18n-title="ch.resetBlock"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10a5.5 5.5 0 1 0 1.7-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M5.6 2.8l.6 3.4 3.3-.7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
             <div class="ch-block-steps">
               <button type="button" data-level="1" data-i18n-title="ch.l1">1</button>
               <button type="button" data-level="2" data-i18n-title="ch.l2">2</button>
@@ -807,19 +808,20 @@
             </div>
           </div>
           <div class="ch-block">
-            <span class="ch-block-name" data-i18n="ch.b.ornament">Ornament</span>
+            <div class="ch-block-head"><span class="ch-block-name" data-i18n="ch.b.ornament">Ornament</span><button type="button" class="ch-block-reset" data-block="ornament" data-i18n-title="ch.resetBlock"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10a5.5 5.5 0 1 0 1.7-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M5.6 2.8l.6 3.4 3.3-.7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
             <div class="ch-block-steps">
               <button type="button" data-level="5" data-i18n-title="ch.l5">1</button>
               <button type="button" data-level="6" data-i18n-title="ch.l6">2</button>
             </div>
           </div>
           <div class="ch-block">
-            <span class="ch-block-name" data-i18n="ch.b.colour">Colour</span>
+            <div class="ch-block-head"><span class="ch-block-name" data-i18n="ch.b.colour">Colour</span><button type="button" class="ch-block-reset" data-block="colour" data-i18n-title="ch.resetBlock"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10a5.5 5.5 0 1 0 1.7-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M5.6 2.8l.6 3.4 3.3-.7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
             <div class="ch-block-steps">
               <button type="button" data-level="7" data-i18n-title="ch.l7">1</button>
               <button type="button" data-level="8" data-i18n-title="ch.l8">2</button>
             </div>
           </div>
+          <button type="button" class="link-btn ch-reset" id="chReset"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10a5.5 5.5 0 1 0 1.7-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M5.6 2.8l.6 3.4 3.3-.7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="ch.reset">Start again from level 1</span></button>
         </div>
         <div class="wizard-panels">
           <section class="wizard-panel">
@@ -850,7 +852,7 @@
                 <label class="color-field"><input type="color" id="chPigment" /><span data-i18n="pig.pigment">Pigment</span></label>
               </div>
             </section>
-            <p class="note ch-how" data-i18n="ch.how"></p>
+            <p class="note ch-how"></p>
           </section>
         </div>
         <!-- The result stays in view, outside the scrolling controls -->

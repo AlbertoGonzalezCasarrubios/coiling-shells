@@ -47,6 +47,14 @@ export function loadState(json) {
   committed = takeSnapshot();
 }
 
+/**
+ * Applies a shell saved with saveState as an ordinary change, which undo can reverse.
+ * @param {string} json
+ */
+export function restoreState(json) {
+  restoreSnapshot(JSON.parse(json));
+}
+
 function takeSnapshot() {
   return JSON.stringify({
     shape: pickShape(state),

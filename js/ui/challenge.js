@@ -257,7 +257,9 @@ function syncControls() {
   $('chLevelName').textContent = `${t(`ch.b.${L.block}`)} · ${inBlock.indexOf(L) + 1}/${inBlock.length} · ${t(`ch.l${level}`)}`;
   $('chIntro').textContent = t(`ch.level${level}`);
   // The note about outlines only applies to the shape levels; the others explain their score
-  /** @type {HTMLElement} */ (document.querySelector('.ch-how')).hidden = L.parts.join() !== 'shape';
+  const how = /** @type {HTMLElement} */ (document.querySelector('.ch-how'));
+  how.hidden = L.parts.join() !== 'shape';
+  how.textContent = t('ch.how', passScore(level));
 }
 
 function newRound() {
@@ -326,6 +328,13 @@ function chooseKind(key) {
 function setLevel(k) {
   level = Math.min(LEVELS.length, Math.max(1, k));
   newRound();
+}
+
+/** Plays again from the first level of a block, forgetting the progress from there on. */
+function restartFrom(first) {
+  if (first <= 1) storage.remove(PROGRESS_KEY);
+  else if (best() >= first) storage.set(PROGRESS_KEY, String(first - 1));
+  setLevel(first);
 }
 
 function openChallenge() {
@@ -428,14 +437,16 @@ export function initChallenge(ctx) {
   $('chCheck').addEventListener('click', check);
   $('chNew').addEventListener('click', newRound);
   $('chNext').addEventListener('click', () => setLevel(level + 1));
-  // Starting again forgets the progress kept in the browser
-  $('chRestart').addEventListener('click', () => {
-    storage.remove(PROGRESS_KEY);
-    setLevel(1);
-  });
+  // Starting again forgets the progress kept in the browser: all of it, or that of one block
+  $('chRestart').addEventListener('click', () => restartFrom(1));
+  $('chReset').addEventListener('click', () => restartFrom(1));
+  qsa('#chLevels [data-block]').forEach((b) =>
+    b.addEventListener('click', () => restartFrom(LEVELS.findIndex((L) => L.block === b.dataset.block) + 1)),
+  );
 }
 
 /** Names of the kinds of pattern (after a change of language). */
 export function relabelChallenge() {
   qsa('#chKinds [data-kind]').forEach((b) => (b.textContent = tPattern(b.dataset.kind)));
+  /** @type {HTMLElement} */ (document.querySelector('.ch-how')).textContent = t('ch.how', passScore(level));
 }

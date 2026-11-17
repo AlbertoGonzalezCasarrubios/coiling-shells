@@ -15,7 +15,7 @@ export default [
     languageOptions: { globals: globals.worker },
   },
   {
-    files: ['tests/**/*.mjs', 'config/*.js'],
+    files: ['tests/**/*.mjs', 'config/*.js', 'docs/manual/*.mjs'],
     languageOptions: { globals: globals.node },
   },
   {
