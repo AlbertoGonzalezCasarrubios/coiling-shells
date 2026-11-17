@@ -22,7 +22,8 @@
     "lint": "eslint -c config/eslint.config.js . && prettier --check \"**/*.{js,mjs}\" && tsc -p config/jsconfig.json",
     "typecheck": "tsc -p config/jsconfig.json",
     "format": "prettier --write \"**/*.{js,mjs}\"",
-    "serve": "python3 -m http.server 8000"
+    "serve": "python3 -m http.server 8000",
+    "manual": "node docs/manual/build.mjs"
   },
   "keywords": [
     "theoretical morphology",

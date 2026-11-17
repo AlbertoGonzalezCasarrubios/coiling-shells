@@ -164,8 +164,8 @@ export default {
     'Toda la forma: W, D, T, la forma de la apertura S, el número de vueltas y el sentido de enrollamiento. Desde aquí la pista te dice en qué fijarte, pero solo te da la dirección cuando ya estás cerca.',
   'ch.level5':
     'La forma ya está hecha: imita su relieve, el número y la altura de costillas, cordones y espinas. En este nivel la nota mide el propio relieve, porque apenas cambia el contorno.',
-  'ch.how':
-    'La nota compara los contornos de las dos conchas vistas de frente, de lado y desde arriba. Con un 90 % o más superas el nivel. Una pista te dice qué cambiar.',
+  'ch.how': (p) =>
+    `La nota compara los contornos de las dos conchas vistas de frente, de lado y desde arriba. Con un ${p} % o más superas el nivel. Una pista te dice qué cambiar.`,
   'ch.level6':
     'Las dos cosas a la vez: encuentra la forma de la concha (W, D, T, S, vueltas y sentido) y su relieve. La nota exige que acierten las dos.',
   'ch.level7':
@@ -189,6 +189,8 @@ export default {
   'ch.hue': (p) => `«${p}» es de otro tono.`,
   'ch.new': 'Otra concha',
   'ch.check': 'Comprobar',
+  'ch.reset': 'Empezar de nuevo desde el nivel 1',
+  'ch.resetBlock': 'Repetir este bloque desde su primer nivel',
   'ch.restart': 'Empezar de nuevo',
   'ch.done': '¡Has completado el reto! Empezar de nuevo lo juega desde el primer nivel y olvida tu progreso.',
   'ch.next': 'Siguiente nivel',
@@ -207,7 +209,9 @@ export default {
   'wz.s.colour': 'Color',
   'wz.s.look': 'Aspecto',
   'wz.s.export': 'Exportar',
-  'wz.shape.intro': 'Parte de una concha real o de la actual y cambia cómo crece el tubo. Arrastra la concha para girarla.',
+  'wz.shape.intro':
+    'Parte del caracol de jardín, de una concha real o de la de la vista principal, y cambia cómo crece el tubo. Arrastra la concha para girarla.',
+  'wz.import': 'Usar la concha de la vista principal',
   'wz.start': 'Partir de',
   'wz.orn.intro':
     'Añade relieve: costillas que cruzan las vueltas, cordones que las recorren o espinas. Un ejemplo carga una concha ornamentada real.',

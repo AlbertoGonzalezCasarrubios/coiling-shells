@@ -6,10 +6,11 @@
  * page address and every export keep working.
  */
 import { t, tPattern } from '../i18n/i18n.js';
-import { MODEL_DEFAULTS, ORNAMENT_PRESETS, PATTERN_PRESETS, PRESETS } from '../model/presets.js';
+import { DEFAULT_PRESET, MODEL_DEFAULTS, ORNAMENT_PRESETS, PATTERN_PRESETS, PRESETS } from '../model/presets.js';
 import { welcomeDlg } from './guide.js';
 import { renderer, setViewport } from './scene.js';
 import { GEO_PARAMS, ORN_PARAMS, RAUP_PARAMS, state, writeHash } from './state.js';
+import { loadState, restoreState, saveState } from './undo.js';
 import { $, qsa } from './util.js';
 
 // Provided by main.js through init()
@@ -117,7 +118,8 @@ export function syncWizard() {
 
 function showWizardStep(i) {
   wzStep = Math.max(0, Math.min(WZ_STEPS - 1, i));
-  qsa('.wizard-panel').forEach((p) => (p.hidden = +p.dataset.step !== wzStep));
+  // Only the creator's own panels: the challenge window uses the same class
+  qsa('.wizard-panel', wizardDlg).forEach((p) => (p.hidden = +p.dataset.step !== wzStep));
   qsa('#wizSteps [data-step]').forEach((b) => {
     const k = +b.dataset.step;
     b.setAttribute('aria-current', k === wzStep ? 'step' : 'false');
@@ -134,8 +136,26 @@ function showWizardStep(i) {
   syncWizard();
 }
 
+// The creator starts from the shell the app opens with; the shell of the main
+// view is kept, so that it can be brought in, and comes back if nothing is made
+let mainShell = null,
+  freshShell = null;
+
+/** The shell the app opens with: the default preset, no relief, no pattern (the look is kept). */
+function startFresh() {
+  presetSel.value = DEFAULT_PRESET;
+  presetSel.dispatchEvent(new Event('change'));
+  $('ornClear').click();
+  setPatternOn(false);
+  writeHash();
+}
+
 function openWizard() {
   if (welcomeDlg.open) welcomeDlg.close();
+  mainShell = saveState();
+  startFresh();
+  freshShell = saveState();
+  $('wzImport').disabled = freshShell === mainShell;
   buildWzPatterns();
   wizardDlg.showModal();
   // The app's own 3D canvas moves into the window
@@ -145,6 +165,9 @@ function openWizard() {
 }
 
 function closeWizardView() {
+  // Closed without making anything: the shell of the main view comes back as it was
+  if (mainShell && saveState() === freshShell) loadState(mainShell);
+  mainShell = freshShell = null;
   // The close event comes a moment later: if another window (the challenge) has already taken the canvas, it keeps it
   if (renderer.domElement.parentElement !== $('wizView')) return;
   setViewport($('viewport'));
@@ -239,6 +262,13 @@ export function initWizard(ctx) {
   $('wzNext').addEventListener('click', () => (wzStep === WZ_STEPS - 1 ? wizardDlg.close() : showWizardStep(wzStep + 1)));
   qsa('#wizSteps [data-step]').forEach((b) => b.addEventListener('click', () => showWizardStep(+b.dataset.step)));
 
+  // Brings the shell of the main view into the creator (an undo step, like any change)
+  $('wzImport').addEventListener('click', () => {
+    if (!mainShell) return;
+    restoreState(mainShell);
+    $('wzImport').disabled = true;
+    syncWizard();
+  });
   $('wzPreset').addEventListener('change', (e) => {
     if (!PRESETS[e.target.value]) return;
     presetSel.value = e.target.value;

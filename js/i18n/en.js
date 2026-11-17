@@ -164,8 +164,8 @@ export default {
     'The whole shape: W, D, T, the shape of the aperture S, the number of whorls and the direction of coiling. From here on the hint names what to look at, but gives the direction only once you are close.',
   'ch.level5':
     'The shape is given: copy its relief, the number and height of the ribs, cords and spines. In this level the score measures the relief itself, because it barely changes the outline.',
-  'ch.how':
-    'The score compares the outlines of the two shells seen from the front, the side and above. With 90 % or more you pass the level. A hint tells you what to change.',
+  'ch.how': (p) =>
+    `The score compares the outlines of the two shells seen from the front, the side and above. With ${p} % or more you pass the level. A hint tells you what to change.`,
   'ch.level6':
     'Both at once: find the shape of the shell (W, D, T, S, whorls and coiling) and its relief. The score asks for both to be right.',
   'ch.level7':
@@ -189,6 +189,8 @@ export default {
   'ch.hue': (p) => `“${p}” is of another hue.`,
   'ch.new': 'Another shell',
   'ch.check': 'Check',
+  'ch.reset': 'Start again from level 1',
+  'ch.resetBlock': 'Play this block again from its first level',
   'ch.restart': 'Start again',
   'ch.done': 'You have completed the challenge! Start again plays it from the first level and forgets your progress.',
   'ch.next': 'Next level',
@@ -207,7 +209,9 @@ export default {
   'wz.s.colour': 'Colour',
   'wz.s.look': 'Look',
   'wz.s.export': 'Export',
-  'wz.shape.intro': 'Start from a real shell or from the current one, and change how the tube grows. Drag the shell to turn it.',
+  'wz.shape.intro':
+    'Start from the garden snail, from a real shell or from the one in the main view, and change how the tube grows. Drag the shell to turn it.',
+  'wz.import': 'Use the shell of the main view',
   'wz.start': 'Start from',
   'wz.orn.intro': 'Add relief: ribs across the whorls, cords along them, or spines. An example loads a real ornamented shell.',
   'wz.example': 'Example',

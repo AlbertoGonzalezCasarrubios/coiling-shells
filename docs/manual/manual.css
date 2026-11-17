@@ -1,0 +1,369 @@
+/* Print style of the user manual (en.html): A4, made into a PDF by build.mjs.
+   A technical-manual layout: compact justified text, numbered sections and
+   figures, running header and footer. Chapters flow one after another; wide
+   screenshots span the text, narrow ones (parts of the sidebar) float to the
+   right with the text around them. */
+:root {
+  --ink: #1d2126;
+  --muted: #5d646d;
+  --faint: #8a9099;
+  --accent: #155e54;
+  --accent-soft: #e8f1ef;
+  --rule: #d6d9d3;
+  --mark: #c2410c;
+}
+
+@page {
+  size: A4;
+  margin: 22mm 22mm 20mm;
+  @top-left {
+    content: 'Coiling Shells: Form and Colour';
+    font: 600 7.5pt Inter, sans-serif;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--faint);
+    vertical-align: bottom;
+    padding-bottom: 3mm;
+  }
+  @top-right {
+    content: 'User manual';
+    font: 7.5pt Inter, sans-serif;
+    color: var(--faint);
+    vertical-align: bottom;
+    padding-bottom: 3mm;
+  }
+  @bottom-right {
+    content: counter(page);
+    font: 600 8pt Inter, sans-serif;
+    color: var(--muted);
+  }
+  @bottom-left {
+    content: 'albertogonzalezcasarrubios.github.io/coiling-shells';
+    font: 7.5pt Inter, sans-serif;
+    color: var(--faint);
+  }
+}
+@page cover {
+  margin: 0;
+  @top-left {
+    content: none;
+  }
+  @top-right {
+    content: none;
+  }
+  @bottom-left {
+    content: none;
+  }
+  @bottom-right {
+    content: none;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  font: 9.5pt/1.48 Inter, system-ui, sans-serif;
+  color: var(--ink);
+  background: #fff;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  font-feature-settings: 'tnum' 0, 'cv11' 1;
+}
+body {
+  margin: 0;
+  counter-reset: chapter figure;
+}
+
+/* Cover: black, centred, the shell in lines */
+.cover {
+  page: cover;
+  break-after: page;
+  height: 297mm;
+  background: #000;
+  color: #efe6d2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 26mm 20mm 18mm;
+}
+.cover h1 {
+  margin: 0;
+  color: #efe6d2;
+  font-weight: 300;
+  font-size: 34pt;
+  line-height: 1.1;
+}
+.cover .sub {
+  margin: 4mm 0 0;
+  font-size: 11pt;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: #a79f8c;
+}
+.cover img {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  object-fit: contain;
+  margin: 8mm 0;
+}
+.cover .author {
+  margin: 1.5mm 0 0;
+  font-size: 9pt;
+  letter-spacing: 0.08em;
+  color: #a79f8c;
+}
+
+/* Headings: chapters numbered by hand, sections numbered from them (4.1, 4.2…) */
+h2,
+h3 {
+  line-height: 1.25;
+  break-after: avoid;
+  text-align: left;
+}
+h2 {
+  clear: both;
+  counter-increment: chapter;
+  counter-reset: section;
+  font-size: 14pt;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  margin: 8mm 0 3mm;
+  padding-bottom: 1.6mm;
+  border-bottom: 0.8pt solid var(--ink);
+}
+h2 .num {
+  display: inline-block;
+  min-width: 8mm;
+  color: var(--accent);
+}
+h3 {
+  counter-increment: section;
+  font-size: 10pt;
+  font-weight: 600;
+  margin: 4.5mm 0 1.2mm;
+}
+h3::before {
+  content: counter(chapter) '.' counter(section);
+  display: inline-block;
+  min-width: 8mm;
+  color: var(--accent);
+}
+h2 + *,
+h3 + * {
+  break-before: avoid;
+}
+
+/* Text: justified, hyphenated */
+p,
+li,
+dd,
+td {
+  hyphens: auto;
+}
+p {
+  margin: 0 0 2mm;
+  text-align: justify;
+}
+ul,
+ol {
+  margin: 0 0 2.5mm;
+  padding-left: 5mm;
+}
+li {
+  margin-bottom: 0.8mm;
+  text-align: justify;
+}
+li::marker {
+  color: var(--accent);
+}
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.ui {
+  font-weight: 600;
+}
+kbd {
+  font: 500 7.5pt 'JetBrains Mono', monospace;
+  border: 0.6pt solid var(--rule);
+  border-bottom-width: 1.4pt;
+  border-radius: 2px;
+  padding: 0 1mm;
+  background: #f6f6f3;
+  white-space: nowrap;
+}
+.lead {
+  font-size: 10.5pt;
+  line-height: 1.5;
+  color: var(--muted);
+  text-align: left;
+}
+
+/* Figures, numbered: wide ones across the text, narrow ones floating on the right */
+figure {
+  counter-increment: figure;
+  margin: 3mm 0 3.5mm;
+  break-inside: avoid;
+}
+figure img {
+  display: block;
+  max-width: 100%;
+  max-height: 92mm;
+  margin: 0 auto;
+  border: 0.6pt solid var(--rule);
+}
+figure.float {
+  float: right;
+  width: 50mm;
+  margin: 0.5mm 0 3mm 6mm;
+}
+figure.float img {
+  width: 100%;
+  max-height: none;
+}
+figcaption {
+  margin-top: 1.4mm;
+  font-size: 7.8pt;
+  line-height: 1.35;
+  color: var(--muted);
+  text-align: left;
+}
+figure:not(.float) figcaption {
+  text-align: center;
+}
+figcaption::before {
+  content: 'Figure ' counter(figure) '. ';
+  font-weight: 600;
+  color: var(--ink);
+}
+.clear {
+  clear: both;
+}
+/* A heading kept on the same page as its first figure or table */
+.keep {
+  break-inside: avoid;
+}
+
+/* Boxes and tables */
+.tip {
+  background: var(--accent-soft);
+  border-left: 2pt solid var(--accent);
+  padding: 2mm 3.5mm;
+  margin: 3mm 0 3.5mm;
+  break-inside: avoid;
+}
+.tip p,
+.tip {
+  text-align: left;
+}
+.tip strong:first-child {
+  color: var(--accent);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2mm 0 3.5mm;
+  font-size: 8.8pt;
+  border-top: 0.8pt solid var(--ink);
+  border-bottom: 0.8pt solid var(--ink);
+}
+tr {
+  break-inside: avoid;
+}
+th,
+td {
+  text-align: left;
+  vertical-align: top;
+  padding: 1.3mm 2mm;
+  border-bottom: 0.5pt solid var(--rule);
+}
+th {
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 7.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 0.6pt solid var(--ink);
+}
+td:first-child {
+  font-weight: 600;
+  width: 36mm;
+}
+.markers td:first-child {
+  width: 8mm;
+}
+.badge {
+  display: inline-grid;
+  place-items: center;
+  width: 4.8mm;
+  height: 4.8mm;
+  border-radius: 50%;
+  background: var(--mark);
+  color: #fff;
+  font-size: 7pt;
+  font-weight: 600;
+}
+
+/* Contents */
+.toc {
+  break-after: page;
+}
+.toc h2 {
+  counter-increment: none;
+  margin-top: 0;
+}
+.toc ol {
+  list-style: none;
+  padding: 0;
+  margin-top: 6mm;
+}
+.toc li {
+  display: flex;
+  gap: 3mm;
+  padding: 1.6mm 0;
+  border-bottom: 0.5pt solid var(--rule);
+  font-size: 10pt;
+  margin: 0;
+}
+.toc li span {
+  color: var(--accent);
+  font-weight: 600;
+  width: 7mm;
+  flex: none;
+}
+.toc li b {
+  font-weight: 600;
+}
+.toc li small {
+  display: block;
+  margin-top: 0.6mm;
+  font-size: 7.8pt;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+/* Glossary */
+dl {
+  display: grid;
+  grid-template-columns: 32mm 1fr;
+  gap: 1.3mm 5mm;
+  margin: 0;
+}
+dt {
+  font-weight: 600;
+}
+dd {
+  margin: 0;
+  text-align: justify;
+}
+.colophon {
+  margin-top: 8mm;
+  padding-top: 2mm;
+  border-top: 0.5pt solid var(--rule);
+  font-size: 7.8pt;
+  color: var(--muted);
+  text-align: left;
+}

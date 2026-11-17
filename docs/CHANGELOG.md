@@ -5,10 +5,13 @@ All notable changes to this project are documented in this file. The format is b
 ## [Unreleased]
 
 ### Added
+- Challenge: *Start again from level 1* is always at hand, and each block has a button to play it again from its first level.
+- User manual in PDF, in English, for students and the general public: every part of the app step by step, with screenshots, tips and a glossary (`docs/manual/`). `npm run manual` rebuilds it, screenshots included, from the app itself.
 - *Oliva porphyria* and *Conus marmoreus* pattern presets, with the global control of Meinhardt and Klingler (1987): a hormone made by the active cells counts the travelling waves, and when few are left the active cells switch to a steady activation and send out backward waves on many lines at once. In *Oliva* (activator–inhibitor, with the constants of Meinhardt's own program `OLIVA.BAS`: no basal production, so the cells are excitable) the hormone makes the inhibitor vanish quickly, and the lines branch into tent-shaped triangles, small ones mixed with large ones and with stretches of dense parallel lines. In *Conus* (activator–substrate) it raises the production of substrate, and the cells between branches stay pigmented: white triangles on a dark net. Neither is used in the challenge.
 - *Gradient along the margin* (G) in the advanced pattern controls, after Meinhardt's *The Algorithmic Beauty of Sea Shells* (2009, ch. 4): the cells on the outer side of the whorl run up to 1 + G times faster. The *Nautilus* preset now follows Meinhardt's simulation (Fig. 4.2): the activator–substrate model with strong saturation and G = 1, so, as on the real shell, the outer side has about twice as many stripes and the extra ones merge or end towards the inside. It is in the equations, the PDF sheet and the address (`pgr`).
 
 ### Changed
+- *Create your own shell* starts from the garden snail the app opens with; *Use the shell of the main view* brings in the shell you were looking at, and closing the window without changing anything gives it back.
 - About pages: *Conus marmoreus* follows the model of Meinhardt and Klingler (1987), and the text now explains that Meinhardt (2009) later proposed a separate extinguishing reaction for it; *Nautilus* and *Oliva* follow the book; *Naticarius* notes that Meinhardt later proposed two coupled systems for rows of spots. Saturation reaches 50 on a logarithmic scale, global control 0.2 and pattern size goes down to 0.2.
 - *Global control* is now the hormone of Meinhardt and Klingler in both models; in the activator–substrate model it replaces a simplified version that raised the basal production. The theory page, the equations and the PDF sheet show it. The growth time slider reaches 60000, saturation 4, and the production of inhibitor or substrate goes down to 0.0001.
 - Smoother patterns: the margin is turned into the texture with a Gaussian of 0.6 cells instead of straight lines between cells, and the record has 4096 rows instead of 2048 (when the graphics card allows it), so fronts are no longer drawn as staircases on the last whorls.
@@ -16,6 +19,8 @@ All notable changes to this project are documented in this file. The format is b
 - Tidier repository: `ARCHITECTURE.md`, `CHANGELOG.md` and `LICENSE-CONTENT.md` are now in `docs/`, the ESLint and TypeScript settings in `config/`, and the Prettier settings in `package.json`.
 
 ### Fixed
+- After *Create your own shell* had been opened, the challenge showed no sliders: the creator hid every step panel on the page, including the challenge's, which uses the same class.
+- The challenge said that 90 % passes every level; it now gives the score of the current level (85 % in the first one).
 - The space–time record in time, its PDF version and the gallery thumbnails squeezed the whole growth into a fixed box, so long records such as *Oliva* looked flattened into horizontal streaks. Each whorl is now as tall as the last whorl on the shell: the record scrolls and opens on the aperture, the PDF draws it narrower when it is tall, the saved pattern image has the same proportions, and the thumbnails show the last part of the growth.
 - With a long panel in the sidebar (for example the pigment tab with a pattern), the whole page could scroll and push the app up: the hidden labels for screen readers hung from the page instead of from the sidebar.
 - Challenge: the target's shadow no longer moves when the player's shell changes; each shell stands on its own ground.
