@@ -212,6 +212,8 @@ Son modelos mínimos:
 - **Los modelos de Meinhardt** tratan el borde como un anillo cerrado de células equivalentes, y las moléculas implicadas no se han identificado en ningún molusco.
 - **Los presets** reproducen el tipo de forma o de patrón de cada especie, no ejemplares concretos.
 
+[ROADMAP.md](ROADMAP.md) (en inglés) recoge ideas que cualquiera puede desarrollar: una base de datos compartida para el reto y la clase, canales sifonales y aperturas que no son elipses, y ajustar los parámetros a una foto de una concha real.
+
 ## Cómo citar
 
 > González Casarrubios, A. (2026). *Coiling Shells: Form and Colour* (versión 1.3.0) [Software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells

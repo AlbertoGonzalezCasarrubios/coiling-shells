@@ -210,6 +210,8 @@ These are minimal models:
 - **Meinhardt's models** treat the margin as a closed ring of equivalent cells, and the molecules involved have not been identified in any mollusc.
 - **The presets** reproduce the type of form or pattern of each species, not particular specimens.
 
+[ROADMAP.md](docs/ROADMAP.md) lists ideas that anyone can pick up: a shared database for the challenge and the classroom, siphonal canals and apertures that are not ellipses, and fitting the parameters to a photo of a real shell.
+
 ## Citation
 
 > González Casarrubios, A. (2026). *Coiling Shells: Form and Colour* (version 1.3.0) [Computer software]. https://github.com/AlbertoGonzalezCasarrubios/coiling-shells

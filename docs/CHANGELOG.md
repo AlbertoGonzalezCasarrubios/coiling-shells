@@ -5,6 +5,7 @@ All notable changes to this project are documented in this file. The format is b
 ## [Unreleased]
 
 ### Added
+- [ROADMAP.md](ROADMAP.md): ideas for future work that anyone can pick up.
 - Challenge: *Start again from level 1* is always at hand, and each block has a button to play it again from its first level.
 - User manual in PDF, in English, for students and the general public: every part of the app step by step, with screenshots, tips and a glossary (`docs/manual/`). `npm run manual` rebuilds it, screenshots included, from the app itself.
 - *Oliva porphyria* and *Conus marmoreus* pattern presets, with the global control of Meinhardt and Klingler (1987): a hormone made by the active cells counts the travelling waves, and when few are left the active cells switch to a steady activation and send out backward waves on many lines at once. In *Oliva* (activator–inhibitor, with the constants of Meinhardt's own program `OLIVA.BAS`: no basal production, so the cells are excitable) the hormone makes the inhibitor vanish quickly, and the lines branch into tent-shaped triangles, small ones mixed with large ones and with stretches of dense parallel lines. In *Conus* (activator–substrate) it raises the production of substrate, and the cells between branches stay pigmented: white triangles on a dark net. Neither is used in the challenge.
