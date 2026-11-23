@@ -6,7 +6,8 @@ import { $, fixSeamNormals, qsa } from './ui/util.js';
 import {
   LANG_KEY,
   QUALITY,
-  SHAPE_KEYS,
+  CANAL_PARAMS,
+  FORM_KEYS,
   SHELL_SIZE,
   WELCOME_KEY,
   fromHash,
@@ -267,15 +268,17 @@ function setMirror(on) {
 }
 setMirror(state.mirror);
 
-/** Loads Raup's parameters of a shell (from a shape or an ornament preset). */
-function applyShape(shape) {
+/** Loads the form of a shell, Raup's parameters and canal (from a shape or an ornament preset). */
+function applyShape(given) {
+  const shape = pickShape(given);
   for (const k of ['W', 'D', 'T', 'S', 'turns']) controlsByKey[k].set(shape[k], { fitScale: true });
+  for (const d of CANAL_PARAMS) controlsByKey[d.key].set(shape[d.key]);
   state.hand = shape.hand;
   $('hand').value = String(shape.hand);
   setMirror(shape.mirror);
   // Planispiral shells are shown with the plane of coiling upright (unless rotating freely)
   if (state.orient !== 'free') setOrient(shape.T === 0 && !shape.mirror ? 'horizontal' : 'vertical');
-  const match = Object.keys(PRESETS).find((k) => SHAPE_KEYS.every((key) => pickShape(PRESETS[k])[key] === shape[key]));
+  const match = Object.keys(PRESETS).find((k) => FORM_KEYS.every((key) => pickShape(PRESETS[k])[key] === shape[key]));
   presetSel.value = match ?? 'custom';
   dirty = true;
 }

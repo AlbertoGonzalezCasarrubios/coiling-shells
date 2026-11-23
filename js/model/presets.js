@@ -71,6 +71,119 @@ export const PRESETS = {
     hand: 1,
     mirror: false,
   },
+  // Siphonal canal (aperture.js): canalL its length and canalW its width, in aperture
+  // radii; canalTaper where the body whorl starts to taper into it (0 at its base, 1 at
+  // the periphery); canalOpen how open it is in front (0: an almost closed tube);
+  // canalNarrow how much it narrows towards its tip; canalBend how much it is bent back;
+  // canalNotch how deep the lip is cut back at the canal (a short canal is mostly a notch)
+  // Common whelk: the broad base of a large aperture ends in a short, notched beak, bent back
+  buccinum: {
+    group: 'Gasterópodos',
+    name: 'Bocina (Buccinum undatum)',
+    W: 2.3,
+    D: 0.03,
+    T: 1.9,
+    S: 1.3,
+    turns: 6,
+    hand: 1,
+    mirror: false,
+    canalL: 0.15,
+    canalNotch: 0.6,
+    canalW: 1.2,
+    canalTaper: 0.6,
+    canalOpen: 1,
+    canalNarrow: 0.4,
+    canalBend: 0.3,
+  },
+  // Dog whelk: no canal at all, only a notch in the lip at the base of the aperture
+  nucella: {
+    group: 'Gasterópodos',
+    name: 'Púrpura (Nucella lapillus)',
+    W: 2.4,
+    D: 0.02,
+    T: 2.2,
+    S: 1.4,
+    turns: 6,
+    hand: 1,
+    mirror: false,
+    canalNotch: 0.7,
+    canalW: 1.2,
+    canalTaper: 0.4,
+    canalOpen: 1,
+    canalNarrow: 0.8,
+  },
+  // Spindle shell: a tall spire and a long canal that continues it below, so the
+  // whole shell is a spindle; the round whorl narrows into it in a short neck
+  fusinus: {
+    group: 'Gasterópodos',
+    name: 'Huso (Fusinus colus)',
+    W: 1.7,
+    D: 0.02,
+    T: 3.5,
+    S: 1.4,
+    turns: 8,
+    hand: 1,
+    mirror: false,
+    canalL: 3,
+    canalW: 0.7,
+    canalTaper: 0.5,
+    canalOpen: 0.5,
+    canalNarrow: 0.4,
+  },
+  // Lightning whelk: sinistral, a low spire and a large body whorl that tapers
+  // like a pear into a long, open canal
+  busycon: {
+    group: 'Gasterópodos',
+    name: 'Busycon (Sinistrofulgur perversum)',
+    W: 3.5,
+    D: 0.05,
+    T: 1.2,
+    S: 1.4,
+    turns: 5,
+    hand: -1,
+    mirror: false,
+    canalL: 2.5,
+    canalW: 1,
+    canalTaper: 0.9,
+    canalOpen: 0.7,
+    canalNarrow: 0.5,
+  },
+  // Fig shell: an almost flat spire and a thin body whorl that is all aperture,
+  // tapering into the canal from the periphery
+  ficus: {
+    group: 'Gasterópodos',
+    name: 'Higuera (Ficus ficus)',
+    W: 3.4,
+    D: 0.05,
+    T: 0.5,
+    S: 1.6,
+    turns: 4,
+    hand: 1,
+    mirror: false,
+    canalL: 2,
+    canalW: 1,
+    canalTaper: 1,
+    canalOpen: 0.8,
+    canalNarrow: 0.5,
+  },
+  // Spindle stromb: a very tall spire and a long, thin canal, slightly bent forwards
+  tibia: {
+    group: 'Gasterópodos',
+    name: 'Tibia (Tibia fusus)',
+    W: 1.5,
+    D: 0.01,
+    T: 5,
+    S: 1.5,
+    turns: 10,
+    hand: 1,
+    mirror: false,
+    canalL: 4,
+    canalW: 0.5,
+    canalTaper: 0.4,
+    canalOpen: 0.3,
+    canalNarrow: 0.3,
+    canalBend: -0.15,
+  },
   nautilus: {
     group: 'Cefalópodos',
     name: 'Nautilus (Nautilus pompilius)',
@@ -301,8 +414,7 @@ export const MODEL_DEFAULTS = {
 /**
  * Ornamented shells. Ornament is part of the shape, so each preset sets Raup's
  * parameters of a real shell together with its relief (`shape: null` keeps the
- * current shape). Shells whose form Raup's model cannot draw are left out: for
- * example *Murex*, whose long siphonal canal is not a coiled tube.
+ * current shape).
  */
 const SHAPE = (k, extra = {}) => ({ ...pick(PRESETS[k]), ...extra });
 function pick(p) {
@@ -337,12 +449,66 @@ export const ORNAMENT_PRESETS = {
     shape: { W: 2.2, D: 0.02, T: 1.6, S: 0.7, turns: 4.5, hand: 1, mirror: false },
     orn: { ribN: 16, ribH: 0.04, ribW: 0.3, spineN: 10, spineH: 0.9, spineW: 0.35, spinePos: 0 },
   },
+  // Snipe's head murex (Haustellum haustellum): a low spire, three varices per
+  // whorl and a very long, straight siphonal canal along the axis
+  haustellum: {
+    shape: {
+      W: 2.6,
+      D: 0.02,
+      T: 1.3,
+      S: 1.1,
+      turns: 5,
+      hand: 1,
+      mirror: false,
+      canalL: 4.5,
+      canalW: 0.8,
+      canalTaper: 0.5,
+      canalOpen: 0.1,
+      canalNarrow: 0.2,
+    },
+    orn: { ribN: 3, ribH: 0.25, ribW: 0.2, ribSkew: 0.5, cordN: 10, cordH: 0.04, cordW: 0.4 },
+  },
+  // Venus comb (Murex pecten): three varices per whorl, each a comb of long, thin
+  // spines in many rows, down the whole of a very long canal
+  murexPecten: {
+    shape: {
+      W: 2.4,
+      D: 0.02,
+      T: 1.5,
+      S: 1.1,
+      turns: 5,
+      hand: 1,
+      mirror: false,
+      canalL: 5,
+      canalW: 0.8,
+      canalTaper: 0.4,
+      canalOpen: 0.1,
+      canalNarrow: 0.2,
+    },
+    orn: {
+      ribN: 3,
+      ribH: 0.2,
+      ribW: 0.15,
+      ribSkew: 0.5,
+      spineN: 3,
+      spineH: 1.2,
+      spineW: 0.06,
+      spinePos: -0.1,
+      spineRows: 13,
+      spineGap: 0.05,
+    },
+  },
   // Ribbed ammonite
   dactylioceras: { shape: SHAPE('ammonite'), orn: { ribN: 34, ribH: 0.12, ribW: 0.4 } },
   // Ammonite with ribs ending in a pair of spines on the flanks of the venter
   spinyAmmonite: {
     shape: { W: 2.3, D: 0.3, T: 0, S: 1.15, turns: 5, hand: 1, mirror: false },
     orn: { ribN: 12, ribH: 0.1, ribW: 0.4, spineN: 12, spineH: 0.55, spineW: 0.35, spinePos: 0.12, spineBoth: true },
+  },
+  // Thorny oyster (Spondylus): radial ribs covered with spines, in rows over the whole valve
+  spondylus: {
+    shape: SHAPE('almeja', { T: 0.2, S: 1 }),
+    orn: { cordN: 9, cordH: 0.05, cordW: 0.4, spineN: 24, spineH: 0.45, spineW: 0.4, spinePos: 0, spineRows: 9, spineGap: 0.05 },
   },
   // Cockle: radial ribs, which run along the growth direction (spiral cords in Raup's terms)
   cerastoderma: { shape: SHAPE('almeja'), orn: { cordN: 24, cordH: 0.07, cordW: 0.7 } },

@@ -2,7 +2,8 @@
  * The equation panel (general form and current values, typeset by MathJax only
  * while it is visible) and the About window with its pages.
  */
-import { AI_TEX, AS_TEX, DEFS_TEX, GENERAL_TEX, GLOBAL_TEX, GRADIENT_TEX, HORMONE_TEX, MIRROR_TEX, t } from '../i18n/i18n.js';
+import { AI_TEX, AS_TEX, CANAL_TEX, DEFS_TEX, GENERAL_TEX, GLOBAL_TEX, GRADIENT_TEX, HORMONE_TEX, MIRROR_TEX, t } from '../i18n/i18n.js';
+import { hasCanal } from '../model/aperture.js';
 import { hasOrnament } from '../model/ornament.js';
 import { state } from './state.js';
 import { $, f, formatW, sig, qsa } from './util.js';
@@ -52,7 +53,13 @@ export function generalTeX(view = formulaView) {
     const model = isAS ? (global ? GLOBAL_TEX : AS_TEX) : global ? HORMONE_TEX : AI_TEX;
     return model + SOURCE_TEX + (pattern.grad > 0 ? GRADIENT_TEX : '');
   }
-  return GENERAL_TEX + DEFS_TEX + (state.mirror ? MIRROR_TEX : '') + (hasOrnament(state) ? ORNAMENT_TEX : '');
+  return (
+    GENERAL_TEX +
+    DEFS_TEX +
+    (state.mirror ? MIRROR_TEX : '') +
+    (hasCanal(state) ? CANAL_TEX : '') +
+    (hasOrnament(state) ? ORNAMENT_TEX : '')
+  );
 }
 
 /** Relief added along the outward normal of the aperture (descriptive model of ornament). */
@@ -83,7 +90,7 @@ function ornamentLiveTeX() {
   if (s.keelH > 0) parts.push(String.raw`h_k = ${f(s.keelH, 2)},\; w_k = ${f(s.keelW, 2)},\; u_k = ${f(s.keelPos, 2)}`);
   if (s.spineN > 0 && s.spineH > 0)
     parts.push(
-      String.raw`n_s = ${s.spineN},\; h_s = ${f(s.spineH, 2)},\; w_s = ${f(s.spineW, 2)},\; u_s = ${s.spineBoth ? '\\pm' : ''}${f(s.spinePos, 2)}`,
+      String.raw`n_s = ${s.spineN},\; h_s = ${f(s.spineH, 2)},\; w_s = ${f(s.spineW, 2)},\; u_s = ${s.spineBoth ? '\\pm' : ''}${f(s.spinePos, 2)}${s.spineRows > 1 ? String.raw`,\; m_s = ${s.spineRows},\; \Delta u_s = ${f(s.spineGap, 3)}` : ''}`,
     );
   if (s.ornGrowth) parts.push(String.raw`c = ${f(s.ornGrowth, 2)}`);
   return parts.map((p) => String.raw`\[ ${p} \]`).join('');
@@ -140,6 +147,9 @@ export function liveTeX(view = formulaView) {
     `\\[ \\mathbf{P}(\\theta,\\varphi) = ${formatW(W)}^{\\theta/2\\pi}` +
     `\\begin{pmatrix} ${R}\\cos\\theta \\\\ ${ySign}${R}\\sin\\theta \\\\ ${zTerm} \\end{pmatrix} \\]` +
     (state.mirror ? `\\[ \\mathbf{P}' = (x,\\,-y,\\,z) \\]` : '') +
+    (hasCanal(state)
+      ? `\\[ L = ${f(state.canalL, 2)},\\; k = ${f(state.canalNotch, 2)},\\; w = ${f(state.canalW, 2)},\\; h = ${f(state.canalTaper, 2)},\\; o = ${f(state.canalOpen, 2)},\\; n = ${f(state.canalNarrow, 2)},\\; \\beta = ${f(state.canalBend, 2)} \\]`
+      : '') +
     (hasOrnament(state) ? ornamentLiveTeX() : '')
   );
 }

@@ -18,7 +18,11 @@
  * Pure module (no Three.js, no DOM): it runs in the browser and in Node.
  */
 import { buildShell } from './raup.js';
+import { CANAL_DEFAULTS, CANAL_KEYS } from './aperture.js';
 import { ORNAMENT_DEFAULTS, ORNAMENT_NEEDS, ornamentResolution } from './ornament.js';
+
+/** The siphonal canal of a preset (none if it has no canal keys). */
+const canalOf = (p) => Object.fromEntries(CANAL_KEYS.filter((k) => k in p).map((k) => [k, p[k]]));
 import { PRESETS, ORNAMENT_PRESETS, PATTERN_PRESETS } from './presets.js';
 
 const SIZE = 4;
@@ -467,16 +471,17 @@ const ORNAMENTED = (shapeFree) =>
 export function makeTarget(level, rand = Math.random) {
   const L = LEVELS[level - 1];
   const pick = (list) => list[Math.floor(rand() * list.length)];
+  // The whole form, siphonal canal included (it is never a free parameter: the player's shell takes the target's)
   const shapeOf = (k) => {
     const { W, D, T, S, turns, hand, mirror } = PRESETS[k];
-    return { ...ORNAMENT_DEFAULTS, W, D, T, S, turns, hand, mirror };
+    return { ...ORNAMENT_DEFAULTS, ...CANAL_DEFAULTS, ...canalOf(PRESETS[k]), W, D, T, S, turns, hand, mirror };
   };
   const shapeFree = L.parts.includes('shape');
   let name, shell, pattern;
   if (L.parts.includes('relief')) {
     name = pick(ORNAMENTED(shapeFree));
     const p = ORNAMENT_PRESETS[name];
-    shell = { ...ORNAMENT_DEFAULTS, ...p.shape, ...p.orn };
+    shell = { ...ORNAMENT_DEFAULTS, ...CANAL_DEFAULTS, ...p.shape, ...p.orn };
   } else if (L.parts.includes('shape')) {
     name = pick(SHAPE_TARGETS);
     shell = shapeOf(name);

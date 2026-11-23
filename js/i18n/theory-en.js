@@ -11,6 +11,7 @@ import {
   AI_TEX,
   AS_TEX,
   GLOBAL_TEX,
+  CANAL_TEX,
   GRADIENT_TEX,
   HORMONE_TEX,
   MEIN_REFS,
@@ -73,6 +74,11 @@ export default {
     ${MIRROR_TEX}
     <p>The mirror construction does not apply to oysters and scallops, whose two valves are different, or to brachiopods: although they look like clams, their two valves are dorsal and ventral rather than left and right, and are not mirror images of each other.</p>
 
+    <h3>Siphonal canal</h3>
+    <p>In many marine snails the base of the aperture is drawn out into a canal that holds the siphon, the tube through which the animal, which lives inside the shell, draws water over its gills and tastes it: a short notch in whelks, a long straight tube in spindle shells and murexes. The canal comes out of the aperture and is built by its margin as the shell grows, so the <em>Siphonal canal</em> panel of the Shape tab makes it part of the generating curve. Below, Raup's ellipse is replaced by the outline of a real aperture: from the inner side the columella runs down to the coiling axis; there the canal begins, \\(L\\) aperture radii long, with its inner wall on the axis and its outer wall at the canal's width \\(w\\); and from the top of the outer wall a shoulder curves up, tangent to both, to the outer lip. The shoulder \\(h\\) sets where the body whorl starts to taper into the canal: low, a round whorl with a short neck, as in spindle shells; high, a long cone, so the whole shell is a pear, as in fig shells and <i>Busycon</i>. Swept along the spiral with the rest of the outline, the canal turns about its inner wall on the axis, so it is a straight tube along the axis, joined to the body whorl without a seam and with the hollow of the aperture running down inside it, as in real shells, where the canal is not coiled; the canals of earlier whorls, smaller, stay inside it as the columella:</p>
+    ${CANAL_TEX}
+    <p>\\(u\\) runs along the canal, from its rounded tip (0) to its top (1), and \\(n\\) narrows it towards the tip. An open canal (\\(o = 1\\)) is a groove open in front, through which the pearly inside shows, as in whelks; to close it, its walls are carried forwards along the spiral, as if they had grown a little further, in proportion to their distance from the axis across the canal, so the turn is the same all along it and does not twist it, until it is an almost closed tube (\\(o = 0\\)), as in murexes. In many whelks and helmet shells the canal is bent back, away from the aperture: \\(\\beta\\) bends the space below the body whorl, moving a point at depth \\(d\\) below the top of the canal backwards by \\(\\beta d^2/(La)\\), so the canal curves without coiling. Most short canals, though, are not drawn out but cut into the lip: in dog whelks, whelks and helmet shells the outer lip curves back at the base of the aperture, leaving a notch for the siphon. The notch \\(k\\) moves the points of the margin at the canal back along the spiral, to where they were earlier in its growth (\\(\\theta'\\), fading out on either side): the surface they draw is the same, and only the rim of the aperture is notched. The columella and the inner wall of the canal are smooth, so ribs and spines only run down its outer wall, as on the varices of murexes. Fowler, Meinhardt and Prusinkiewicz (1992) also used free-form generating curves. The lip does not flare, as it does in conchs.</p>
+
     <h3>What the model leaves out</h3>
     <p>Raup's model is deliberately minimal. It assumes that the aperture keeps the same shape and orientation throughout life, so it ignores changes of proportion with age (allometry). It also assumes that the aperture lies in a plane containing the axis and that growth is perfectly regular. The basic model does not include ornament (ribs, spines, varices, keels; the <em>Ornament</em> tab adds them, explained on their own page), the thickened lip of adult snails, internal structures such as the septa of ammonites and nautiloids, or the hinge of bivalves. Its value is not in reproducing one species in detail, but in showing how much of the diversity of shells follows from a few simple rules of growth.</p>
 
@@ -105,7 +111,7 @@ export default {
     <table class="keys plain">
       <tr><td>Axial ribs</td><td><em>Ribs per whorl</em>, <em>Height</em>; in advanced, <em>Width</em> (1 = a smooth wave) and <em>Asymmetry</em> (for varices).</td></tr>
       <tr><td>Spiral cords</td><td><em>Cords</em>, <em>Height</em>; in advanced, <em>Width</em>. The <em>Nodules</em> box keeps the relief only where they cross the ribs.</td></tr>
-      <tr><td>Spines</td><td><em>Spines per whorl</em>, <em>Length</em>; in advanced, <em>Base</em>, <em>Position</em> (0 = periphery) and two symmetric rows.</td></tr>
+      <tr><td>Spines</td><td><em>Spines per whorl</em>, <em>Length</em>; <em>Rows</em> and <em>Gap between rows</em>; in advanced, <em>Base</em>, <em>Position</em> (0 = periphery) and rows mirrored about the periphery.</td></tr>
       <tr><td>Keel</td><td>In advanced: <em>Height</em>, <em>Width</em> and <em>Position</em>.</td></tr>
       <tr><td>Change with growth</td><td>In advanced. Below 0, the relief fades towards the aperture (many shells are smooth when adult); above 0, it appears late.</td></tr>
     </table>
@@ -120,10 +126,10 @@ export default {
       <li>\\(R(\\theta)\\): the ribs, \\(n_r\\) per whorl. Each is a smooth bump (shaped as \\(\\cos^2\\)) covering a fraction \\(w_r\\) of the space between ribs; the asymmetry \\(k\\) makes it steep in front and gentle behind.</li>
       <li>\\(C(u)\\): the cords, \\(n_c\\) around the aperture, of width \\(w_c\\). With nodules, ribs and cords multiply, \\((h_r + h_c)\\,R\\,C\\), so the relief only rises where both coincide.</li>
       <li>\\(K(u)\\): the keel, one cord at position \\(u_k\\).</li>
-      <li>\\(\\Sigma(\\theta,u)\\): the spines, cones of length \\(h_s\\), \\(n_s\\) per whorl, in one row at \\(u_s\\) or two at \\(\\pm u_s\\).</li>
+      <li>\\(\\Sigma(\\theta,u)\\): the spines, cones of length \\(h_s\\), \\(n_s\\) per whorl, in \\(m_s\\) rows \\(\\Delta u_s\\) apart, centred on \\(u_s\\) (and mirrored at \\(-u_s\\) if asked). Many rows make a band of spines, or cover the whole valve of a thorny oyster (<i>Spondylus</i>).</li>
       <li>\\(f(s) = 1 + c\\,(2s-1)\\), limited between 0 and 2, with \\(s\\) the fraction of growth (0 at the apex, 1 at the aperture): this is the <em>change with growth</em> \\(c\\).</li>
     </ul>
-    <p>This part is <strong>descriptive</strong>, like Raup's model: it reproduces the form of the relief without explaining why it appears (Fowler, Meinhardt &amp; Prusinkiewicz, 1992; Cortie, 1993). It also inherits Raup's limits. The aperture always keeps the same shape, so shells with a long canal, such as <i>Murex</i>, cannot be drawn and are left out of the examples. Spines stand perpendicular to the surface, while real ones often curve back or are open gutters.</p>
+    <p>This part is <strong>descriptive</strong>, like Raup's model: it reproduces the form of the relief without explaining why it appears (Fowler, Meinhardt &amp; Prusinkiewicz, 1992; Cortie, 1993). It also inherits Raup's limits. The aperture always keeps the same shape. Spines stand perpendicular to the surface, while real ones often curve back or are open gutters.</p>
 
     <h3 id="mech-theory">Why this number of cords? A mechanical explanation</h3>
     <p>Why should a shell have nine cords and not twenty? Moulton, Goriely &amp; Chirat (2012) proposed a mechanical answer. The shell is made by the <strong>edge of the mantle</strong>, a soft strip of tissue that runs along the margin of the aperture and is attached to the freshly made shell. If the mantle grows a little faster than the shell, it has length to spare; since it is attached, it cannot simply stretch out, and it <strong>wrinkles into waves</strong>, like a rug pushed against a wall. Each wave leaves a cord on the shell.</p>

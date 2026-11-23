@@ -262,7 +262,12 @@ const TOUR = String.raw`(async () => {
   $('welcomeStart').click(); await sl(500);
   await audit('shape tab');
   for (const t of ['ornament', 'pigment', 'shape']) { $('tabbtn-' + t).click(); await sl(300); await audit(t + ' tab'); }
+  // A shell with a siphonal canal: the preset sets its sliders and the canal reaches the address
+  $('canalDrawer').open = true;
+  $('preset').value = 'fusinus'; $('preset').dispatchEvent(new Event('change')); await sl(800);
+  log.canal = /yl=3/.test(location.hash) && $('p-canalL').value === '3' && $('preset').value === 'fusinus';
   $('ornPreset').value = 'spinyAmmonite'; $('ornPreset').dispatchEvent(new Event('change')); await sl(1200);
+  log.canalOff = !/yl=/.test(location.hash);
   console.info('stage advanced controls');
   // Advanced ornament controls and the mechanical model of the cords
   document.querySelector('#ornMode [data-omode=advanced]').click(); await sl(200);
@@ -492,6 +497,8 @@ test('the whole interface works in a real browser', { skip, timeout: 400_000 }, 
     assert.equal(log.mechCords, true, 'the mechanical model grows cords on the shell');
     assert.equal(log.custom, true, 'moving a shape slider leaves the preset');
     assert.equal(log.presetLoaded && log.morphoPick, true, 'a click on the morphospace chart picks W and D');
+    assert.equal(log.canal, true, 'a preset with a siphonal canal sets it and writes it to the address');
+    assert.equal(log.canalOff, true, 'a shell without a canal leaves it out of the address');
     assert.equal(log.clean, true, 'H hides the panels');
     for (const f of log.files) assert.ok(+f.split(':')[1] > 1000, `non-empty file ${f}`);
     assert.equal(log.lang, 'es');

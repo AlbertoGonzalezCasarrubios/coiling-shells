@@ -9,6 +9,7 @@
 import { $, formatW, f, sig, hexRgb, luminance } from './util.js';
 import { t, tParam, tPattern, getLang } from '../i18n/i18n.js';
 import { PATTERN_PRESETS } from '../model/presets.js';
+import { hasCanal } from '../model/aperture.js';
 import { hasOrnament } from '../model/ornament.js';
 import { unrolledProportions } from '../model/raup.js';
 
@@ -36,7 +37,8 @@ function ornamentRows(state) {
   if (s.cordN > 0 && s.cordH > 0) rows.push([`${t('orn.cords')} (n, h, w)`, `${s.cordN}, ${f(s.cordH, 2)}, ${f(s.cordW, 2)}`]);
   if (s.nodules) rows.push([t('orn.nodules.short'), t('ex.yes')]);
   if (s.keelH > 0) rows.push([`${t('orn.keel')} (h, w, u)`, `${f(s.keelH, 2)}, ${f(s.keelW, 2)}, ${f(s.keelPos, 2)}`]);
-  if (s.spineN > 0 && s.spineH > 0) rows.push([`${t('orn.spines')} (n, h, w)`, `${s.spineN}, ${f(s.spineH, 2)}, ${f(s.spineW, 2)}`]);
+  if (s.spineN > 0 && s.spineH > 0)
+    rows.push([`${t('orn.spines')} (n, h, w, m)`, `${s.spineN}, ${f(s.spineH, 2)}, ${f(s.spineW, 2)}, ${s.spineRows}`]);
   if (s.ornGrowth) rows.push([t('orn.growth'), f(s.ornGrowth, 2)]);
   return rows;
 }
@@ -236,6 +238,16 @@ export async function exportPDF(app) {
       [`N · ${tParam('turns').name}`, f(state.turns, 2)],
       [t('geo.hand'), t(state.hand > 0 ? 'geo.dextral' : 'geo.sinistral')],
       [t('geo.mirror'), t(state.mirror ? 'ex.yes' : 'ex.no')],
+      ...(hasCanal(state)
+        ? [
+            [
+              `${t('canal.title')} (L, k, w, h, o, n, β)`,
+              [state.canalL, state.canalNotch, state.canalW, state.canalTaper, state.canalOpen, state.canalNarrow, state.canalBend]
+                .map((v) => f(v, 2))
+                .join(', '),
+            ],
+          ]
+        : []),
       ...ornamentRows(state),
     ],
     M,

@@ -185,6 +185,13 @@ const SHOTS = [
     clip: '#morpho',
   },
   {
+    name: 'canal',
+    url: '#m=solid&pg=1&pp=nautilus',
+    height: 1800,
+    wait: 8000,
+    js: `__m.select('#preset', 'fusinus'); const d = __m.$('#canalDrawer'); d.open = true; d.scrollIntoView()`,
+  },
+  {
     name: 'ornament',
     url: '#m=solid',
     js: `__m.click('[data-tab=ornament]'); __m.select('#ornPreset', 'astraea')`,

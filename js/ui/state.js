@@ -7,6 +7,7 @@
  */
 import { PRESETS, DEFAULT_PRESET } from '../model/presets.js';
 import { hasOrnament, ORNAMENT_DEFAULTS } from '../model/ornament.js';
+import { CANAL_DEFAULTS, CANAL_KEYS, hasCanal } from '../model/aperture.js';
 import { formatW } from './util.js';
 
 // ---------------------------------------------------------------------------
@@ -22,6 +23,17 @@ export const RAUP_PARAMS = [
 ];
 
 export const GEO_PARAMS = [{ key: 'turns', sym: 'N', min: 0.25, max: 20, step: 0.25, digits: 2 }];
+
+// Siphonal canal: the aperture drawn out at its base (aperture.js)
+export const CANAL_PARAMS = [
+  { key: 'canalL', sym: 'L', min: 0, max: 6, step: 0.05, digits: 2 },
+  { key: 'canalNotch', sym: 'k', min: 0, max: 1, step: 0.01, digits: 2 },
+  { key: 'canalW', sym: 'w', min: 0.05, max: 1.2, step: 0.01, digits: 2 },
+  { key: 'canalTaper', sym: 'h', min: 0, max: 1, step: 0.01, digits: 2 },
+  { key: 'canalOpen', sym: 'o', min: 0, max: 1, step: 0.01, digits: 2 },
+  { key: 'canalNarrow', sym: 'n', min: 0, max: 0.9, step: 0.01, digits: 2 },
+  { key: 'canalBend', sym: 'β', min: -0.6, max: 0.6, step: 0.01, digits: 2 },
+];
 
 export const VIS_PARAMS = [
   { key: 'spiralLines', min: 0, max: 48, step: 1, digits: 0 },
@@ -45,6 +57,8 @@ export const ORN_PARAMS = [
   { key: 'keelPos', min: -0.5, max: 0.5, step: 0.01, digits: 2, box: 'keel' },
   { key: 'spineN', min: 0, max: 40, step: 1, digits: 0, box: 'spine' },
   { key: 'spineH', min: 0, max: 1.5, step: 0.01, digits: 2, box: 'spine' },
+  { key: 'spineRows', min: 1, max: 15, step: 1, digits: 0, box: 'spine' },
+  { key: 'spineGap', min: 0.02, max: 0.25, step: 0.005, digits: 3, box: 'spine' },
   { key: 'spineW', min: 0.1, max: 1, step: 0.01, digits: 2, box: 'spineAdv' },
   { key: 'spinePos', min: -0.5, max: 0.5, step: 0.01, digits: 2, box: 'spineAdv' },
   { key: 'ornGrowth', min: -1, max: 1, step: 0.05, digits: 2, box: 'growth' },
@@ -60,12 +74,14 @@ export const QUALITY = {
 };
 
 export const SHAPE_KEYS = ['W', 'D', 'T', 'S', 'turns', 'hand', 'mirror'];
+// The whole form of the tube: Raup's parameters and the siphonal canal
+export const FORM_KEYS = [...SHAPE_KEYS, ...CANAL_KEYS];
 export const SHELL_SIZE = 4;
 export const MODES = ['lines', 'solid', 'both'];
 
 /**
  * State of the shell and of its view.
- * @type {import('../model/raup.js').ShellShape & import('../model/ornament.js').OrnamentParams & {
+ * @type {import('../model/raup.js').ShellShape & Required<import('../model/aperture.js').CanalParams> & import('../model/ornament.js').OrnamentParams & {
  *   grow: number, quality: 'low' | 'medium' | 'high', mode: 'lines' | 'solid' | 'both',
  *   spiralLines: number, ringsPerTurn: number, lineWidth: number, lineOpacity: number,
  *   axisWidth: number, orient: 'vertical' | 'horizontal' | 'free' }}
@@ -85,12 +101,12 @@ export const state = {
 };
 
 /**
- * Raup's parameters of a preset or a state.
+ * The form of a preset or a state: Raup's parameters and the canal (none if not given).
  * @param {object} p
- * @returns {import('../model/raup.js').ShellShape}
+ * @returns {import('../model/raup.js').ShellShape & Required<import('../model/aperture.js').CanalParams>}
  */
 export function pickShape(p) {
-  return /** @type {import('../model/raup.js').ShellShape} */ (Object.fromEntries(SHAPE_KEYS.map((k) => [k, p[k]])));
+  return /** @type {any} */ (Object.fromEntries(FORM_KEYS.map((k) => [k, p[k] ?? CANAL_DEFAULTS[k]])));
 }
 
 // ---------------------------------------------------------------------------
@@ -107,6 +123,20 @@ for (const [short, key] of Object.entries(HASH_KEYS)) {
 }
 if (fromHash.has('v')) state.mirror = fromHash.get('v') === '1';
 if (MODES.includes(fromHash.get('m'))) state.mode = /** @type {'lines' | 'solid' | 'both'} */ (fromHash.get('m'));
+// The canal, only when there is one: yl length, yw width, yh shoulder, yo opening, yn narrowing, yb bend, yk notch
+export const CANAL_HASH = {
+  yl: 'canalL',
+  yk: 'canalNotch',
+  yw: 'canalW',
+  yh: 'canalTaper',
+  yo: 'canalOpen',
+  yn: 'canalNarrow',
+  yb: 'canalBend',
+};
+for (const [short, key] of Object.entries(CANAL_HASH)) {
+  const v = parseFloat(fromHash.get(short));
+  if (Number.isFinite(v)) state[key] = v;
+}
 export const ORN_HASH = {
   rn: 'ribN',
   rh: 'ribH',
@@ -122,6 +152,8 @@ export const ORN_HASH = {
   sh: 'spineH',
   sw: 'spineW',
   sp: 'spinePos',
+  sr: 'spineRows',
+  sg: 'spineGap',
   og: 'ornGrowth',
 };
 for (const [short, key] of Object.entries(ORN_HASH)) {
@@ -192,6 +224,11 @@ export function writeHashNow() {
   for (const [short, key] of Object.entries(HASH_KEYS)) q.set(short, String(+Number(state[key]).toFixed(3)));
   q.set('v', state.mirror ? '1' : '0');
   q.set('m', state.mode);
+  if (hasCanal(state)) {
+    for (const [short, key] of Object.entries(CANAL_HASH)) {
+      if (key === 'canalL' || state[key] !== CANAL_DEFAULTS[key]) q.set(short, String(+Number(state[key]).toFixed(3)));
+    }
+  }
   if (hasOrnament(state)) {
     for (const [short, key] of Object.entries(ORN_HASH)) {
       if (state[key] !== ORNAMENT_DEFAULTS[key]) q.set(short, String(+Number(state[key]).toFixed(3)));

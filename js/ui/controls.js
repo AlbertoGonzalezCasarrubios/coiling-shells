@@ -7,7 +7,7 @@ import { t, tParam } from '../i18n/i18n.js';
 import { ornPresetKey, ornPresetSel } from './ornament-tab.js';
 import { ORNAMENT_NEEDS } from '../model/ornament.js';
 import { lineMat } from './scene.js';
-import { GEO_PARAMS, RAUP_PARAMS, VIS_PARAMS, state } from './state.js';
+import { CANAL_PARAMS, GEO_PARAMS, RAUP_PARAMS, VIS_PARAMS, state } from './state.js';
 import { $, f, qsa } from './util.js';
 
 // Provided by main.js through init()
@@ -183,6 +183,7 @@ export function initControls(ctx) {
   ({ markDirty } = ctx);
   RAUP_PARAMS.forEach((d) => createParam(d, $('raup-params'), { onChange: onShapeChange }));
   GEO_PARAMS.forEach((d) => createParam(d, $('geo-params'), { onChange: onShapeChange }));
+  CANAL_PARAMS.forEach((d) => createParam(d, $('canal-params'), { onChange: onShapeChange }));
   VIS_PARAMS.forEach((d) =>
     createParam(d, $('vis-params'), {
       compact: true,

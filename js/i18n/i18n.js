@@ -17,7 +17,7 @@ export const STRINGS = {
   es: { ...ES, ...THEORY_ES },
 };
 
-export { GENERAL_TEX, DEFS_TEX, MIRROR_TEX, AI_TEX, AS_TEX, GLOBAL_TEX, GRADIENT_TEX, HORMONE_TEX } from './tex.js';
+export { GENERAL_TEX, DEFS_TEX, MIRROR_TEX, AI_TEX, AS_TEX, CANAL_TEX, GLOBAL_TEX, GRADIENT_TEX, HORMONE_TEX } from './tex.js';
 
 let current = 'en';
 

@@ -14,8 +14,11 @@
  *   C   spiral cords: n_c around the margin (u = arc length, 0–1 from the
  *       periphery, φ = 0).
  *   K   keel: a single cord at position u_k.
- *   Σ   spines: cones on n_s positions per whorl, in one row at u_s or in two
- *       rows at ±u_s; their base covers a fraction w_s of the spacing. A spine
+ *   Σ   spines: cones on n_s positions per whorl, in m_s rows around the margin,
+ *       centred on u_s and Δu_s apart (and mirrored at −u_s if asked: two
+ *       symmetric sets); their base covers a fraction w_s of the spacing. Many
+ *       rows cover a band of the whorl, or the whole valve of a bivalve, as in
+ *       the thorny oysters (Spondylus) or the varices of Murex pecten. A spine
  *       is only drawn when it lies whole on the shell: not across the lip of
  *       the aperture (it would open the lip into a funnel) and not where the
  *       shell is still tiny and spines would be specks. That is the first
@@ -57,7 +60,9 @@ const SPINE_MIN_SIZE = 0.2;
  * @property {number} [spineH]  spine length, in units of the aperture radius
  * @property {number} [spineW]  fraction of the spacing covered by a spine base
  * @property {number} [spinePos]  position of the spine row along the margin (u)
- * @property {boolean} [spineBoth]  two rows, at ±spinePos
+ * @property {number} [spineRows]  number of rows, centred on spinePos
+ * @property {number} [spineGap]  distance between rows along the margin (u)
+ * @property {boolean} [spineBoth]  the rows mirrored at −spinePos too
  * @property {number} [ornGrowth]  change with growth, −1 to 1
  * @property {number} [W]  whorl expansion rate
  * @property {number} [turns]  number of whorls
@@ -113,6 +118,8 @@ export const ORNAMENT_NEEDS = {
   spineH: 'spineN',
   spineW: 'spineN',
   spinePos: 'spineN',
+  spineRows: 'spineN',
+  spineGap: 'spineN',
 };
 
 export const ORNAMENT_DEFAULTS = {
@@ -131,6 +138,8 @@ export const ORNAMENT_DEFAULTS = {
   spineH: 0.5,
   spineW: 0.35,
   spinePos: 0.12,
+  spineRows: 1,
+  spineGap: 0.06,
   spineBoth: false,
   ornGrowth: 0,
 };
@@ -205,7 +214,10 @@ export function makeOrnament(p, { a, b, rc, cols, cosPhi, sinPhi, arcU, perimete
     for (let j = 0; j < cols; j++) if (circDist(arcU[j], u) < circDist(best, u)) best = arcU[j];
     return best;
   };
-  const rows = (o.spineBoth && o.spinePos !== 0 ? [o.spinePos, -o.spinePos] : [o.spinePos]).map((u) => snap(((u % 1) + 1) % 1));
+  const nRows = Math.max(1, Math.round(o.spineRows));
+  const centres = Array.from({ length: nRows }, (_, k) => o.spinePos + (k - (nRows - 1) / 2) * o.spineGap);
+  if (o.spineBoth) centres.push(...centres.map((u) => -u));
+  const rows = [...new Set(centres.map((u) => snap(((u % 1) + 1) % 1)))];
   // Spines centred between these angles are drawn whole (θ = 0 is the final aperture)
   const nTurns = p.turns ?? 1;
   // Spines start after the first whorls (at least one, or 30 % of them) or where the

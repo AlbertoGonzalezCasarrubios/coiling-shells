@@ -9,7 +9,7 @@ import { t, tPattern } from '../i18n/i18n.js';
 import { DEFAULT_PRESET, MODEL_DEFAULTS, ORNAMENT_PRESETS, PATTERN_PRESETS, PRESETS } from '../model/presets.js';
 import { welcomeDlg } from './guide.js';
 import { renderer, setViewport } from './scene.js';
-import { GEO_PARAMS, ORN_PARAMS, RAUP_PARAMS, state, writeHash } from './state.js';
+import { CANAL_PARAMS, GEO_PARAMS, ORN_PARAMS, RAUP_PARAMS, state, writeHash } from './state.js';
 import { loadState, restoreState, saveState } from './undo.js';
 import { $, qsa } from './util.js';
 
@@ -47,8 +47,8 @@ const WZ_STEPS = 5;
 let wzStep = 0;
 
 // Plain-language names for the creator (wzW, wzD…), the symbols stay in brackets
-const WZ_SHAPE = ['W', 'D', 'T', 'S', 'turns'].map((k) => ({
-  ...[...RAUP_PARAMS, ...GEO_PARAMS].find((d) => d.key === k),
+const WZ_SHAPE = ['W', 'D', 'T', 'S', 'turns', 'canalL'].map((k) => ({
+  ...[...RAUP_PARAMS, ...GEO_PARAMS, ...CANAL_PARAMS].find((d) => d.key === k),
   id: `wz-${k}`,
   i18n: `wz${k}`,
 }));

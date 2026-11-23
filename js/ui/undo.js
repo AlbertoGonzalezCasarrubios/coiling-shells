@@ -5,7 +5,7 @@
  * The view (camera, orientation) is not a step.
  */
 import { PRESETS } from '../model/presets.js';
-import { SHAPE_KEYS, pickOrnament, pickShape, state } from './state.js';
+import { CANAL_PARAMS, FORM_KEYS, pickOrnament, pickShape, state } from './state.js';
 import { $ } from './util.js';
 import { syncWizard } from './wizard.js';
 
@@ -96,7 +96,8 @@ function restoreSnapshot({ shape, orn, mode, pattern: pat, look }) {
   state.hand = shape.hand;
   $('hand').value = String(shape.hand);
   setMirror(shape.mirror);
-  presetSel.value = Object.keys(PRESETS).find((k) => SHAPE_KEYS.every((key) => pickShape(PRESETS[k])[key] === shape[key])) ?? 'custom';
+  for (const d of CANAL_PARAMS) controlsByKey[d.key].set(shape[d.key]);
+  presetSel.value = Object.keys(PRESETS).find((k) => FORM_KEYS.every((key) => pickShape(PRESETS[k])[key] === shape[key])) ?? 'custom';
   Object.assign(state, orn);
   syncOrnamentControls();
   state.mode = mode;

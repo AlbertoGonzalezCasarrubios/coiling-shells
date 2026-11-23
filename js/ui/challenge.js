@@ -16,6 +16,7 @@ import * as THREE from 'three';
 import { t, tParam, tPattern, tPreset } from '../i18n/i18n.js';
 import { CHALLENGE_PATTERNS, LEVELS, bestHint, levelScore, makeTarget, passScore, silhouettes, startShell } from '../model/challenge.js';
 import { simulatePattern } from '../model/meinhardt.js';
+import { CANAL_DEFAULTS } from '../model/aperture.js';
 import { ORNAMENT_DEFAULTS } from '../model/ornament.js';
 import { ORNAMENT_PRESETS, PATTERN_PRESETS, PRESETS } from '../model/presets.js';
 import { colorize } from './pigment.js';
@@ -110,7 +111,7 @@ function shellName() {
 
 /** The relief and the shape of a target go to the state; colour is left plain. */
 function applyShell(shell) {
-  Object.assign(state, ORNAMENT_DEFAULTS, shell);
+  Object.assign(state, ORNAMENT_DEFAULTS, CANAL_DEFAULTS, shell);
   $('hand').value = String(state.hand);
 }
 

@@ -15,13 +15,14 @@ import {
   silhouettes,
   startShell,
 } from '../js/model/challenge.js';
+import { CANAL_DEFAULTS } from '../js/model/aperture.js';
 import { ORNAMENT_DEFAULTS } from '../js/model/ornament.js';
 import { ORNAMENT_PRESETS, PATTERN_PRESETS, PRESETS } from '../js/model/presets.js';
 
 const SHAPES = ['caracol', 'turritella', 'trochus', 'planorbis', 'physa', 'peringia', 'nautilus', 'ammonite'];
 const shape = (k) => {
   const { W, D, T, S, turns, hand, mirror } = PRESETS[k];
-  return { ...ORNAMENT_DEFAULTS, W, D, T, S, turns, hand, mirror };
+  return { ...ORNAMENT_DEFAULTS, ...CANAL_DEFAULTS, W, D, T, S, turns, hand, mirror };
 };
 const score = (a, b) => scoreFromOverlap(overlap(silhouettes(a), silhouettes(b)));
 const makeTargetFor = (kind) => {

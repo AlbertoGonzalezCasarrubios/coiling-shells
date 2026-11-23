@@ -34,6 +34,7 @@ export const REFS = `
     <li>Raup, D. M. (1962). Computer as aid in describing form in gastropod shells. <i>Science</i> 138, 150–152.</li>
     <li>Raup, D. M. &amp; Michelson, A. (1965). Theoretical morphology of the coiled shell. <i>Science</i> 147, 1294–1295.</li>
     <li>Raup, D. M. (1966). Geometric analysis of shell coiling: general problems. <i>J. Paleontology</i> 40, 1178–1190.</li>
+    <li>Fowler, D. R., Meinhardt, H. &amp; Prusinkiewicz, P. (1992). Modeling seashells. <i>Computer Graphics (SIGGRAPH '92)</i> 26(2), 379–387.</li>
   </ul>`;
 
 export const AI_TEX = String.raw`\[
@@ -66,6 +67,22 @@ export const HORMONE_TEX = String.raw`\[
     \frac{\partial h}{\partial t} &= s\,a^{*2} - \frac{r_h}{R}\,h + D_h\,\frac{\partial^2 h}{\partial x^2} + b_h \\
     \frac{dR}{dt} &= g\,\big(\langle a \rangle - R\big), \qquad a^{*2} = \frac{a^2}{1+\kappa a^2}
   \end{aligned}
+\]`;
+
+/** Siphonal canal (aperture.js): the aperture drawn out at its base into a spout, swept with the rest. */
+export const CANAL_TEX = String.raw`\[
+  \mathbf{C} = \begin{cases}
+    \big(\,r_c + a\cos\varphi,\ \ b\sin\varphi\,\big) & \text{ellipse, } \varphi_s - 2\pi \le \varphi \le \varphi_c \\
+    \big(\,0,\ \ -b - L\,a\,(1 - u)\,\big) & \text{inner wall, on the axis} \\
+    \big(\,2\rho,\ \ -b - L\,a\,(1 - u)\,\big) & \text{outer wall}
+  \end{cases},\qquad
+  \rho = \tfrac{w\,a}{2}\,\big(1 - n\,(1 - u)\big)
+\]
+\[
+  \varphi_s = \tfrac{3\pi}{2} + 0.45\pi\,h,\qquad
+  \Delta\theta = (1 - o)\,0.6\pi\,\frac{r}{2\rho},\qquad
+  \Delta_{\text{back}} = \beta\,\frac{d^2}{L\,a},\qquad
+  \theta' = \theta - k\,\tfrac{\pi}{2}\ \ \text{(notch, on the canal)}
 \]`;
 
 /** Gradient along the margin (Meinhardt 2009, ch. 4): the reaction terms F of each cell run at the pace ρ(u). */

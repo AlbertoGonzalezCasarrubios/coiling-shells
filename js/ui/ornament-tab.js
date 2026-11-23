@@ -9,7 +9,7 @@ import { criticalWaves, firstMode, lambdaForWaves, loadRatio, mechanicalCords, u
 import { ORNAMENT_DEFAULTS, hasOrnament } from '../model/ornament.js';
 import { ORNAMENT_PRESETS } from '../model/presets.js';
 import { openInfo } from './formulas.js';
-import { ORN_BOOLS, ORN_KEYS, ORN_PARAMS, SHAPE_KEYS, state } from './state.js';
+import { FORM_KEYS, ORN_BOOLS, ORN_KEYS, ORN_PARAMS, pickShape, state } from './state.js';
 import { $, f, qsa } from './util.js';
 
 // Provided by main.js through init()
@@ -39,7 +39,9 @@ export function ornPresetKey() {
       const p = ORNAMENT_PRESETS[k];
       const orn = { ...ORNAMENT_DEFAULTS, ...p.orn };
       if (!ORN_KEYS.every((key) => same(orn[key], state[key]))) return false;
-      return !p.shape || SHAPE_KEYS.every((key) => same(p.shape[key], state[key]));
+      if (!p.shape) return true;
+      const shape = pickShape(p.shape);
+      return FORM_KEYS.every((key) => same(shape[key], state[key]));
     }) ?? 'custom'
   );
 }

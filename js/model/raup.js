@@ -28,8 +28,13 @@
  *
  * Ornament (optional): a relief added along the outward normal of the
  * generating curve, which grows with the shell (see ornament.js).
+ *
+ * Siphonal canal (optional): the generating curve is drawn out at its base into
+ * a spout that, swept with the rest, forms the canal, and its lip can be cut back
+ * into a notch (see aperture.js).
  */
 
+import { apertureCurve, bendCanal, hasCanal } from './aperture.js';
 import { growthFactor, makeOrnament } from './ornament.js';
 export { bump, hasOrnament } from './ornament.js';
 
@@ -58,8 +63,9 @@ export { bump, hasOrnament } from './ornament.js';
 
 /**
  * Everything buildShell needs: the shape, the drawing settings and, optionally,
- * the ornament (ribs, cords, keel, spines, change with growth: see ornament.js).
- * @typedef {ShellShape & ShellDrawing & import('./ornament.js').OrnamentParams} ShellParams
+ * the ornament (ribs, cords, keel, spines, change with growth: see ornament.js)
+ * and the siphonal canal (aperture.js).
+ * @typedef {ShellShape & ShellDrawing & import('./ornament.js').OrnamentParams & import('./aperture.js').CanalParams} ShellParams
  */
 
 /**
@@ -106,7 +112,8 @@ export function unrolledProportions(p) {
 export function buildShell(p) {
   const W = Math.max(p.W, 1.0001);
   const { D, T, S, hand } = p;
-  const segPhi = p.segPhi;
+  // A canal lengthens the margin: more columns, so the body whorl keeps its detail
+  const segPhi = hasCanal(p) ? 4 * Math.ceil((p.segPhi * Math.min(3, 1 + (2 * (p.canalL ?? 0)) / (Math.PI * (1 + p.S)))) / 4) : p.segPhi;
   const nTheta = Math.max(2, Math.round(p.turns * p.segPerTurn));
   const thetaMin = -2 * Math.PI * p.turns;
   const grow = p.grow ?? 1;
@@ -126,6 +133,8 @@ export function buildShell(p) {
   const colors = new Float32Array(count * 3 * copies);
   const uvs = new Float32Array(count * 2 * copies);
 
+  // With a siphonal canal the curve has a spout, and the columns follow its arc length
+  const canal = hasCanal(p) ? apertureCurve(p, { a, b, rc, segPhi }) : null;
   const cosPhi = new Float32Array(cols);
   const sinPhi = new Float32Array(cols);
   for (let j = 0; j < segPhi; j++) {
@@ -139,8 +148,8 @@ export function buildShell(p) {
   // Pattern coordinate u: arc length along the margin (not the angle φ). In an
   // elliptical aperture (S ≠ 1) the same Δφ covers more or less margin; this way
   // the cells of Meinhardt's model are evenly spaced along the real margin.
-  const arcU = new Float64Array(cols);
-  {
+  const arcU = canal?.arcU ?? new Float64Array(cols);
+  if (!canal) {
     const sub = 8;
     let L = 0;
     for (let j = 0; j < segPhi; j++) {
@@ -153,10 +162,18 @@ export function buildShell(p) {
     for (let j = 0; j <= segPhi; j++) arcU[j] = L > 0 ? arcU[j] / L : j / segPhi;
   }
 
-  // Ornament: per-column normals and profiles (perimeter of the ellipse in
-  // units of a, Ramanujan's approximation, to make spines round)
-  const perimeter = Math.PI * (3 * (1 + S) - Math.sqrt((3 + S) * (1 + 3 * S)));
+  // Ornament: per-column normals and profiles (perimeter of the margin in units
+  // of a, to make spines round: Ramanujan's approximation for the ellipse)
+  const perimeter = canal ? canal.length / a : Math.PI * (3 * (1 + S) - Math.sqrt((3 + S) * (1 + 3 * S)));
   const orn = makeOrnament(p, { a, b, rc, cols, cosPhi, sinPhi, arcU, perimeter });
+  // With a canal the relief follows the normals of the real outline
+  if (canal) {
+    orn.nR.set(canal.nR);
+    orn.nZ.set(canal.nZ);
+  }
+  // A recurved canal is bent below the top of the canal at the final aperture
+  const canalTop = canal ? -T * rc + canal.top : 0;
+  const bend = canal ? (p.canalBend ?? 0) : 0;
 
   const logW = Math.log(W);
   let minX = Infinity,
@@ -175,11 +192,29 @@ export function buildShell(p) {
     const growth = 0.5 + 0.5 * Math.cos(theta * 3.0);
     const sGrow = i / nTheta; // fraction of growth, 0 at the apex
     for (let j = 0; j < cols; j++) {
-      const delta = orn.active ? a * orn.delta(theta, sGrow, j) : 0;
-      const R = g * (rc + a * cosPhi[j] + delta * orn.nR[j]);
-      const x = R * ct;
-      const z = R * st;
-      const y = g * (-T * rc + b * sinPhi[j] + delta * orn.nZ[j]);
+      let x, z, y;
+      if (canal) {
+        // The notch: this part of the margin is where the rest was a little earlier in
+        // its growth, so the surface is the same and only the aperture is cut back
+        const back = canal.dG[j];
+        const th0 = theta + back;
+        const gj = back ? Math.exp((th0 / (2 * Math.PI)) * logW) : g;
+        const delta = orn.active ? a * orn.delta(th0, sGrow + back / -thetaMin, j) * canal.relief[j] : 0;
+        // The outline with the canal, its walls turned along the spiral to close it
+        const R = gj * (canal.r[j] + delta * orn.nR[j]);
+        const th = th0 + canal.dT[j];
+        x = R * Math.cos(th);
+        z = R * Math.sin(th) * hand;
+        y = gj * (-T * rc + canal.z[j] + delta * orn.nZ[j]);
+        // Recurved: moved backwards, away from the aperture (against the growth at θ = 0)
+        if (bend) z -= hand * bendCanal(y, canalTop, canal.ell, bend);
+      } else {
+        const delta = orn.active ? a * orn.delta(theta, sGrow, j) : 0;
+        const R = g * (rc + a * cosPhi[j] + delta * orn.nR[j]);
+        x = R * ct;
+        z = R * st;
+        y = g * (-T * rc + b * sinPhi[j] + delta * orn.nZ[j]);
+      }
       const k = (i * cols + j) * 3;
       positions[k] = x;
       positions[k + 1] = y;
