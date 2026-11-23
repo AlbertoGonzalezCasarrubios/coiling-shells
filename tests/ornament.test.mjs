@@ -73,6 +73,17 @@ test('spines rise at their positions, whole, and not on the lip or the first who
   const two = makeOrnament({ turns: 3, spineN: 4, spineH: 0.8, spineW: 0.4, spinePos: 0.25, spineBoth: true }, g);
   assert.ok(two.delta(T, 0.5, 16) > 0.79 && two.delta(T, 0.5, 48) > 0.79);
   assert.equal(two.delta(T, 0.5, 0), 0);
+  // Several rows, Δu apart, centred on the position: a band of spines
+  const band = makeOrnament({ turns: 3, spineN: 4, spineH: 0.8, spineW: 0.4, spinePos: 0, spineRows: 3, spineGap: 0.125 }, g);
+  for (const j of [0, 8, 56]) assert.ok(band.delta(T, 0.5, j) > 0.79, `row at column ${j}`);
+  assert.equal(band.delta(T, 0.5, 32), 0);
+  assert.equal(band.crests.spines.filter((s) => s.theta === T).length, 3);
+  // Mirrored rows that fall on each other are drawn once
+  const both = makeOrnament(
+    { turns: 3, spineN: 4, spineH: 0.8, spineW: 0.4, spinePos: 0, spineRows: 3, spineGap: 0.125, spineBoth: true },
+    g,
+  );
+  assert.equal(both.crests.spines.filter((s) => s.theta === T).length, 3);
 });
 
 test('bivalves carry spines once the valve is a fifth of its final size; coiled shells keep their smooth first whorls', () => {

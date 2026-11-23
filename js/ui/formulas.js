@@ -83,7 +83,7 @@ function ornamentLiveTeX() {
   if (s.keelH > 0) parts.push(String.raw`h_k = ${f(s.keelH, 2)},\; w_k = ${f(s.keelW, 2)},\; u_k = ${f(s.keelPos, 2)}`);
   if (s.spineN > 0 && s.spineH > 0)
     parts.push(
-      String.raw`n_s = ${s.spineN},\; h_s = ${f(s.spineH, 2)},\; w_s = ${f(s.spineW, 2)},\; u_s = ${s.spineBoth ? '\\pm' : ''}${f(s.spinePos, 2)}`,
+      String.raw`n_s = ${s.spineN},\; h_s = ${f(s.spineH, 2)},\; w_s = ${f(s.spineW, 2)},\; u_s = ${s.spineBoth ? '\\pm' : ''}${f(s.spinePos, 2)}${s.spineRows > 1 ? String.raw`,\; m_s = ${s.spineRows},\; \Delta u_s = ${f(s.spineGap, 3)}` : ''}`,
     );
   if (s.ornGrowth) parts.push(String.raw`c = ${f(s.ornGrowth, 2)}`);
   return parts.map((p) => String.raw`\[ ${p} \]`).join('');

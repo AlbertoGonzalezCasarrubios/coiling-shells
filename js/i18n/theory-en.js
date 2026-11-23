@@ -105,7 +105,7 @@ export default {
     <table class="keys plain">
       <tr><td>Axial ribs</td><td><em>Ribs per whorl</em>, <em>Height</em>; in advanced, <em>Width</em> (1 = a smooth wave) and <em>Asymmetry</em> (for varices).</td></tr>
       <tr><td>Spiral cords</td><td><em>Cords</em>, <em>Height</em>; in advanced, <em>Width</em>. The <em>Nodules</em> box keeps the relief only where they cross the ribs.</td></tr>
-      <tr><td>Spines</td><td><em>Spines per whorl</em>, <em>Length</em>; in advanced, <em>Base</em>, <em>Position</em> (0 = periphery) and two symmetric rows.</td></tr>
+      <tr><td>Spines</td><td><em>Spines per whorl</em>, <em>Length</em>, <em>Position</em> (0 = periphery), <em>Rows</em> (centred on the position) and <em>Gap between rows</em>; in advanced, <em>Base</em> and rows mirrored about the periphery.</td></tr>
       <tr><td>Keel</td><td>In advanced: <em>Height</em>, <em>Width</em> and <em>Position</em>.</td></tr>
       <tr><td>Change with growth</td><td>In advanced. Below 0, the relief fades towards the aperture (many shells are smooth when adult); above 0, it appears late.</td></tr>
     </table>
@@ -120,7 +120,7 @@ export default {
       <li>\\(R(\\theta)\\): the ribs, \\(n_r\\) per whorl. Each is a smooth bump (shaped as \\(\\cos^2\\)) covering a fraction \\(w_r\\) of the space between ribs; the asymmetry \\(k\\) makes it steep in front and gentle behind.</li>
       <li>\\(C(u)\\): the cords, \\(n_c\\) around the aperture, of width \\(w_c\\). With nodules, ribs and cords multiply, \\((h_r + h_c)\\,R\\,C\\), so the relief only rises where both coincide.</li>
       <li>\\(K(u)\\): the keel, one cord at position \\(u_k\\).</li>
-      <li>\\(\\Sigma(\\theta,u)\\): the spines, cones of length \\(h_s\\), \\(n_s\\) per whorl, in one row at \\(u_s\\) or two at \\(\\pm u_s\\).</li>
+      <li>\\(\\Sigma(\\theta,u)\\): the spines, cones of length \\(h_s\\), \\(n_s\\) per whorl, in \\(m_s\\) rows \\(\\Delta u_s\\) apart, centred on \\(u_s\\) (and mirrored at \\(-u_s\\) if asked). Many rows make a band of spines, or cover the whole valve of a thorny oyster (<i>Spondylus</i>).</li>
       <li>\\(f(s) = 1 + c\\,(2s-1)\\), limited between 0 and 2, with \\(s\\) the fraction of growth (0 at the apex, 1 at the aperture): this is the <em>change with growth</em> \\(c\\).</li>
     </ul>
     <p>This part is <strong>descriptive</strong>, like Raup's model: it reproduces the form of the relief without explaining why it appears (Fowler, Meinhardt &amp; Prusinkiewicz, 1992; Cortie, 1993). It also inherits Raup's limits. The aperture always keeps the same shape, so shells with a long canal, such as <i>Murex</i>, cannot be drawn and are left out of the examples. Spines stand perpendicular to the surface, while real ones often curve back or are open gutters.</p>

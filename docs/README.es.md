@@ -79,7 +79,7 @@ P*(θ, φ) = P(θ, φ) + W^(θ/2π) · a · δ(θ, φ) · n(φ)
 
 - Las **costillas axiales** R cruzan las vueltas, paralelas a las líneas de crecimiento; una asimetría las hace abruptas hacia la apertura, como las **várices** que dejan los labios antiguos.
 - Los **cordones espirales** C recorren las vueltas (en los bivalvos, las costillas radiales). Junto con las costillas forman un dibujo **reticulado**, o **nódulos** donde ambos se multiplican.
-- Una **quilla** K es un solo cordón fuerte, y las **espinas** Σ son conos en una o dos filas.
+- Una **quilla** K es un solo cordón fuerte, y las **espinas** Σ son conos en una fila o en varias, una banda de espinas o una valva entera cubierta de ellas.
 - f(s) permite que el relieve **se desvanezca o aparezca** a medida que crece la concha.
 
 ![Cuatro conchas ornamentadas generadas con la app: un ammonites con costillas (Dactylioceras), un caracol con cordones espirales y los puntos del patrón Naticarius, un ammonites con costillas y espinas dibujado con líneas, y un bivalvo de dos valvas con una retícula de costillas radiales y concéntricas y nódulos espinosos donde se cruzan](images/ornament.png)

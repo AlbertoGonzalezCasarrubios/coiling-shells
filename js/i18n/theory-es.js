@@ -106,7 +106,7 @@ export default {
     <table class="keys plain">
       <tr><td>Costillas axiales</td><td><em>Costillas por vuelta</em>, <em>Altura</em>; en avanzado, <em>Anchura</em> (1 = ondulación suave) y <em>Asimetría</em> (para várices).</td></tr>
       <tr><td>Cordones espirales</td><td><em>Cordones</em>, <em>Altura</em>; en avanzado, <em>Anchura</em>. La casilla <em>Nódulos</em> deja el relieve solo en los cruces con las costillas.</td></tr>
-      <tr><td>Espinas</td><td><em>Espinas por vuelta</em>, <em>Longitud</em>; en avanzado, <em>Base</em>, <em>Posición</em> (0 = periferia) y dos filas simétricas.</td></tr>
+      <tr><td>Espinas</td><td><em>Espinas por vuelta</em>, <em>Longitud</em>, <em>Posición</em> (0 = periferia), <em>Filas</em> (centradas en la posición) y <em>Separación entre filas</em>; en avanzado, <em>Base</em> y filas reflejadas respecto a la periferia.</td></tr>
       <tr><td>Quilla</td><td>En avanzado: <em>Altura</em>, <em>Anchura</em> y <em>Posición</em>.</td></tr>
       <tr><td>Cambio con el crecimiento</td><td>En avanzado. Por debajo de 0, el relieve se va borrando hacia la apertura (muchas conchas son lisas de adultas); por encima de 0, aparece tarde.</td></tr>
     </table>
@@ -121,7 +121,7 @@ export default {
       <li>\\(R(\\theta)\\): las costillas, \\(n_r\\) por vuelta. Cada una es un bulto suave (con forma de \\(\\cos^2\\)) que ocupa una fracción \\(w_r\\) del espacio entre costillas; la asimetría \\(k\\) lo hace abrupto por delante y suave por detrás.</li>
       <li>\\(C(u)\\): los cordones, \\(n_c\\) alrededor de la apertura, con anchura \\(w_c\\). Con nódulos, costillas y cordones se multiplican, \\((h_r + h_c)\\,R\\,C\\), así que el relieve solo sube donde coinciden los dos.</li>
       <li>\\(K(u)\\): la quilla, un cordón en la posición \\(u_k\\).</li>
-      <li>\\(\\Sigma(\\theta,u)\\): las espinas, conos de longitud \\(h_s\\), \\(n_s\\) por vuelta, en una fila en \\(u_s\\) o en dos en \\(\\pm u_s\\).</li>
+      <li>\\(\\Sigma(\\theta,u)\\): las espinas, conos de longitud \\(h_s\\), \\(n_s\\) por vuelta, en \\(m_s\\) filas separadas \\(\\Delta u_s\\), centradas en \\(u_s\\) (y reflejadas en \\(-u_s\\) si se pide). Muchas filas forman una banda de espinas, o cubren toda la valva de una ostra espinosa (<i>Spondylus</i>).</li>
       <li>\\(f(s) = 1 + c\\,(2s-1)\\), limitado entre 0 y 2, con \\(s\\) la fracción de crecimiento (0 en el ápice, 1 en la apertura): es el <em>cambio con el crecimiento</em> \\(c\\).</li>
     </ul>
     <p>Esta parte es <strong>descriptiva</strong>, como el modelo de Raup: reproduce la forma del relieve sin explicar por qué aparece (Fowler, Meinhardt y Prusinkiewicz, 1992; Cortie, 1993). También hereda los límites de Raup. La apertura conserva siempre la misma forma, así que no se pueden dibujar conchas con un canal largo, como <i>Murex</i>, y quedan fuera de los ejemplos. Las espinas salen perpendiculares a la superficie, mientras que las reales a menudo se curvan hacia atrás o son canales abiertos.</p>
