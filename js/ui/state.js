@@ -45,8 +45,10 @@ export const ORN_PARAMS = [
   { key: 'keelPos', min: -0.5, max: 0.5, step: 0.01, digits: 2, box: 'keel' },
   { key: 'spineN', min: 0, max: 40, step: 1, digits: 0, box: 'spine' },
   { key: 'spineH', min: 0, max: 1.5, step: 0.01, digits: 2, box: 'spine' },
+  { key: 'spinePos', min: -0.5, max: 0.5, step: 0.01, digits: 2, box: 'spine' },
+  { key: 'spineRows', min: 1, max: 15, step: 1, digits: 0, box: 'spine' },
+  { key: 'spineGap', min: 0.02, max: 0.25, step: 0.005, digits: 3, box: 'spine' },
   { key: 'spineW', min: 0.1, max: 1, step: 0.01, digits: 2, box: 'spineAdv' },
-  { key: 'spinePos', min: -0.5, max: 0.5, step: 0.01, digits: 2, box: 'spineAdv' },
   { key: 'ornGrowth', min: -1, max: 1, step: 0.05, digits: 2, box: 'growth' },
 ];
 export const ORN_KEYS = Object.keys(ORNAMENT_DEFAULTS);
@@ -122,6 +124,8 @@ export const ORN_HASH = {
   sh: 'spineH',
   sw: 'spineW',
   sp: 'spinePos',
+  sr: 'spineRows',
+  sg: 'spineGap',
   og: 'ornGrowth',
 };
 for (const [short, key] of Object.entries(ORN_HASH)) {

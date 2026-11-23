@@ -36,7 +36,8 @@ function ornamentRows(state) {
   if (s.cordN > 0 && s.cordH > 0) rows.push([`${t('orn.cords')} (n, h, w)`, `${s.cordN}, ${f(s.cordH, 2)}, ${f(s.cordW, 2)}`]);
   if (s.nodules) rows.push([t('orn.nodules.short'), t('ex.yes')]);
   if (s.keelH > 0) rows.push([`${t('orn.keel')} (h, w, u)`, `${f(s.keelH, 2)}, ${f(s.keelW, 2)}, ${f(s.keelPos, 2)}`]);
-  if (s.spineN > 0 && s.spineH > 0) rows.push([`${t('orn.spines')} (n, h, w)`, `${s.spineN}, ${f(s.spineH, 2)}, ${f(s.spineW, 2)}`]);
+  if (s.spineN > 0 && s.spineH > 0)
+    rows.push([`${t('orn.spines')} (n, h, w, m)`, `${s.spineN}, ${f(s.spineH, 2)}, ${f(s.spineW, 2)}, ${s.spineRows}`]);
   if (s.ornGrowth) rows.push([t('orn.growth'), f(s.ornGrowth, 2)]);
   return rows;
 }
