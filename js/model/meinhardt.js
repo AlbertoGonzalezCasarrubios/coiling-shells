@@ -7,11 +7,13 @@
  * recorded in the shell. Each row of the result is the state of the margin at
  * one moment; row 0 is the apex and the last row is the aperture.
  *
- * Activator–inhibitor (stable peaks, oscillations, waves):
+ * Activator–inhibitor (stable peaks, oscillations, waves), Meinhardt (2009),
+ * eqs. 2.1 and 2.3:
  *   ∂a/∂t = s·(a²/(h·(1 + κa²)) + b_a) − r_a·a + D_a·∂²a/∂x²
  *   ∂h/∂t = s·a² − r_h·h + D_h·∂²h/∂x² + b_h
  *
- * Activator–substrate (travelling waves: depleted substrate takes time to recover):
+ * Activator–substrate (travelling waves: depleted substrate takes time to
+ * recover), Meinhardt & Klingler (1987), eq. 1:
  *   ∂a/∂t = s·b·(a²/(1 + κa²) + b_a) − r_a·a + D_a·∂²a/∂x²
  *   ∂b/∂t = b_b − s·b·(a²/(1 + κa²) + b_a) − r_b·b + D_b·∂²b/∂x²
  *
@@ -26,10 +28,14 @@
  * active cells switch from oscillating to a steady activation and, once their
  * neighbours have recovered, start backward waves: branches. Since R is the
  * same everywhere, many lines branch at once.
- * - Activator–inhibitor (their Fig. 8, Oliva porphyria): R slows the decay of
- *   the inhibitor, which becomes r_h/R, and the activator production becomes
- *   s·(a*² + b_a)/(0.1 + h) with a*² = a²/(1 + κa²) (also in the production of h).
- *   The steady activation is high: lines branch into triangles.
+ * - Activator–inhibitor (their eq. 2 with the changes of Fig. 8, Oliva porphyria):
+ *   R slows the decay of the inhibitor, which becomes r_h/R, and the activator
+ *   production becomes s·(a*² + b_a)/(0.1 + h) with a*² = a²/(1 + κa²) (also in
+ *   the production of h). The steady activation is high: lines branch into
+ *   triangles. This is eq. 9 of Fowler, Meinhardt & Prusinkiewicz (1992) with
+ *   h₀ = 0.1 and their hormone dc/dt = ρ′⟨a⟩ − ηc with ρ′ = η = g; with ρ′ ≠ η
+ *   the hormone is only scaled by ρ′/η, the same as dividing r_h by it. Their
+ *   paper has global control only in this model.
  * - Activator–substrate (their Fig. 9, Conus marmoreus): R slows the production
  *   of substrate, which becomes b_b/R. The steady activation is low but above
  *   the pigment threshold: the region between two branches is pigmented, which
@@ -53,6 +59,18 @@ export const MODELS = ['AI', 'AS'];
 
 /** Number of columns of the returned profile of the second substance (inhibitor or substrate). */
 export const PROFILE_WIDTH = 256;
+
+/**
+ * Time step of the explicit Euler scheme: stable for diffusion (dt·D ≤ 0.4 < ½
+ * with Δx = 1) and for the linear decays, sped up by the gradient (dt·r·(1 + G) ≤ 0.4).
+ * The nonlinear terms are not in the bound (see ARCHITECTURE.md, Integration).
+ * @param {{ Da: number, D2: number, ra: number, r2: number, grad?: number, dtScale?: number }} p
+ */
+export function timeStep(p) {
+  const Dmax = Math.max(p.Da, p.D2, 1e-6);
+  const rmax = Math.max(p.ra, p.r2, 1e-6) * (1 + Math.max(0, p.grad ?? 0));
+  return Math.min(0.5, 0.4 / Dmax, 0.4 / rmax) * (p.dtScale ?? 1);
+}
 
 /** Seeded pseudo-random generator (mulberry32): the same seed always gives the same pattern. */
 export function rng32(seed) {
@@ -81,6 +99,7 @@ export function rng32(seed) {
  * @param {number} p.T          total simulated time from the apex to the aperture
  * @param {number} p.seed       seed of the random cell-to-cell differences
  * @param {boolean} p.insertion cell insertion: the margin grows with the shell
+ * @param {number} [p.dtScale]  scales the time step (tests only; 1 by default)
  * @param {object} g  growth geometry
  * @param {number} g.W         whorl expansion rate (for the size at each row)
  * @param {number} g.turns     number of whorls
@@ -122,10 +141,8 @@ export function simulatePattern(p, g) {
   // (insertion) in proportion to the size of the shell.
 
   // Stable explicit Euler step: diffusion (dt·D ≤ 0.4 with Δx = 1) and reaction
-  const Dmax = Math.max(Da, D2, 1e-6);
   const G = Math.max(0, p.grad ?? 0);
-  const rmax = Math.max(p.ra, p.r2, 1e-6) * (1 + G);
-  const dt = Math.min(0.5, 0.4 / Dmax, 0.4 / rmax);
+  const dt = timeStep(p);
 
   // State of the margin (capacity nMax; the first n cells are used)
   let n = p.insertion ? Math.max(nMin, Math.round(nMax * size[0])) : nMax;

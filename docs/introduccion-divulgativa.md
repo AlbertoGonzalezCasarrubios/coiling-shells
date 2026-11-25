@@ -52,7 +52,7 @@ r_c = (1 + D) / 2      a = (1 − D) / 2      b = S · a
 
 ## El morfoespacio
 
-Cada combinación de W, D, T y S es un punto en un espacio de conchas posibles: el **morfoespacio teórico**. El gran hallazgo de Raup fue que las conchas reales solo ocupan unas pocas regiones de ese espacio. Por ejemplo, en las conchas planas (T = 0) las vueltas solo se tocan si D ≤ 1/W; por encima de esa curva quedan separadas, una forma rarísima en la naturaleza. ¿Por qué está vacío el resto del espacio? Por restricciones funcionales, de desarrollo o simplemente históricas: es una de las preguntas que abrió la **morfología teórica**.
+Cada combinación de W, D, T y S es un punto en un espacio de conchas posibles: el **morfoespacio teórico**. El gran hallazgo de Raup fue que las conchas reales solo ocupan unas pocas regiones de ese espacio. Por ejemplo, en las conchas planas (T = 0) las vueltas sucesivas se tocan justo cuando D = 1/W, se solapan si D < 1/W y quedan separadas si D > 1/W, una forma rarísima en la naturaleza. ¿Por qué está vacío el resto del espacio? Por restricciones funcionales, de desarrollo o simplemente históricas: es una de las preguntas que abrió la **morfología teórica**.
 
 En la app, el panel **Morphospace W – D** dibuja este plano con la curva D = 1/W y las regiones aproximadas de ammonoideos, gasterópodos y bivalvos. Puedes pinchar en él para saltar a cualquier punto.
 
@@ -153,7 +153,7 @@ Los valores son aproximaciones dentro del morfoespacio de Raup, no medidas de ej
 | | *Peringia ulvae* | 1.8 | 0 | 3.8 | 1.2 | |
 | Cefalópodos | Nautilus (*N. pompilius*) | 3.2 | 0.02 | 0 | 0.85 | |
 | | Ammonite evoluto (*Dactylioceras*) | 1.9 | 0.45 | 0 | 0.9 | |
-| Bivalvos | Almeja (*Venus*) | 1000 | 0 | 0.35 | 1.1 | ✓ |
+| Bivalvos | Almeja (*Venus*) | 100 | 0 | 0.35 | 1.1 | ✓ |
 
 ### Conchas ornamentadas
 

@@ -30,7 +30,7 @@ Raup's model sweeps an ellipse along the spiral. Many real shells have apertures
 
 **Work already done.** The `canal-sifonal` branch has an unfinished attempt. Below, the ellipse is replaced by the outline of a real aperture (columella, canal along the axis, shoulder), with parameters for length, width, shoulder, opening, narrowing, bend and a notch. Long canals look right, but short canals and notches are not yet realistic, so the branch has not been merged. The same branch also adds spines in several rows, which work well and could be merged on their own.
 
-**Possible approach.** Make the generating curve a general closed outline (for example a spline or a Fourier series) instead of an ellipse, as Fowler, Meinhardt and Prusinkiewicz (1992) did. A canal, a slit or a cone's aperture is then just another outline. Parts that change during growth, such as the flared lip of conchs, need the outline to depend on θ as well.
+**Possible approach.** Make the generating curve a general closed outline (for example a spline or a Fourier series) instead of an ellipse, as Fowler, Meinhardt and Prusinkiewicz (1992) did. A canal, a slit or a cone's aperture is then just another outline. Parts that change during growth, such as the flared lip of conchs, need the outline to depend on θ as well. The orientation of the aperture matters too: in Raup's model it lies in a plane that contains the axis, while in real shells it is tilted. Contreras-Figueroa and Aragón (2023) place the aperture with the Frenet frame of the spiral and add two angles, a tilt and a turn, which could be added here as well.
 
 ## 3. From a photo of a shell to the parameters
 
@@ -38,6 +38,7 @@ A user takes a photo of a real shell, and the app finds the parameters (W, D, T,
 
 Possible approaches:
 
+- **Measuring by hand.** Contreras-Figueroa and Aragón (2023) give a standard way to obtain each parameter of their model from two measurements on apertural and apical photographs, and publish it as a Mathematica notebook. Adapted to W, D, T and S, it would let a user click a few points on a photo, and it is the natural baseline for any automatic method.
 - **Render and compare.** Render the model, compare it with the photo (silhouette, edges, or features from an image model) and adjust the parameters with an optimiser (for example CMA-ES, or gradient descent with a differentiable renderer). The app already renders any shell from standard views, which helps.
 - **A trained model.** The app can generate as many synthetic images with known parameters as needed, which is the training data a network needs to predict the parameters from an image. It could then be refined with real photos.
 - **A multimodal AI model.** Send the photo to a vision-capable AI model and ask it for a first estimate of the parameters, then refine it with render and compare.
@@ -48,6 +49,10 @@ Things to keep in mind:
 - Shape is the easiest part. Ornament and, above all, the pigmentation pattern are much harder.
 - A model that runs on an external service needs a backend and has a cost. If it runs in the browser, the photo never leaves the user's device, which matters in schools.
 - This would also make a good teaching tool: students photograph shells from a collection and see where they fall in Raup's morphospace.
+
+## References
+
+- Contreras-Figueroa, G., & Aragón, J. L. (2023). A mathematical model for mollusc shells based on parametric surfaces and the construction of theoretical morphospaces. *Diversity*, 15, 431. https://doi.org/10.3390/d15030431
 
 ## Other ideas
 

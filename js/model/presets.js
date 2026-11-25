@@ -93,10 +93,12 @@ export const PRESETS = {
     hand: 1,
     mirror: false,
   },
+  // W ≈ 100, as measured on the valves of Cucullaea and Glycymeris (W = e^{2πb}
+  // with b ≈ 0.72–0.80, Contreras-Figueroa & Aragón 2023, Table 1)
   almeja: {
     group: 'Bivalvos',
     name: 'Almeja (Venus)',
-    W: 1000,
+    W: 100,
     D: 0.0,
     T: 0.35,
     S: 1.1,
