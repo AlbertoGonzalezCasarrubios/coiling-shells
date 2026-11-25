@@ -133,7 +133,58 @@ test('planispiral whorls touch exactly at D = 1/W, for any aperture shape', () =
     assert.ok(at < 2e-3, `touching at D = 1/W (W = ${W}, S = ${S}): ${at}`);
     assert.ok(below < 2e-3, `overlapping below the curve: ${below}`);
     assert.ok(above > 0.02, `separated above the curve: ${above}`);
+    // The curve holds only for planispiral shells: with a translation T > 0 the
+    // previous whorl lies higher up the axis, and at D = 1/W the whorls are apart
+    const lifted = whorlGap(W, c, S, 2);
+    assert.ok(lifted > 0.05, `apart at D = 1/W with T = 2 (W = ${W}, S = ${S}): ${lifted}`);
   }
+});
+
+test('dextral shells coil clockwise seen from the apex, sinistral ones anticlockwise', () => {
+  for (const hand of [1, -1]) {
+    const s = buildShell({ ...base, hand });
+    const { cols, rows } = s.grid;
+    const P = s.positions;
+    const at = (i) => i * cols * 3; // periphery (φ = 0) of row i
+    // The apex is above the aperture
+    assert.ok(P[at(0) + 1] > P[at(rows - 1) + 1]);
+    // Seen from the apex (from +y, x to the right, −z up the screen), the angle
+    // swept by the periphery from the apex to the aperture
+    let turn = 0;
+    for (let i = 1; i < rows; i++) {
+      const x1 = P[at(i - 1)] - s.axis.x,
+        y1 = -(P[at(i - 1) + 2] - s.axis.z);
+      const x2 = P[at(i)] - s.axis.x,
+        y2 = -(P[at(i) + 2] - s.axis.z);
+      turn += Math.atan2(x1 * y2 - y1 * x2, x1 * x2 + y1 * y2);
+    }
+    // N whorls, clockwise (negative) when dextral (hand = 1, ε = −1)
+    assert.ok(Math.abs(Math.abs(turn) - 2 * Math.PI * base.turns) < 1e-6, `${turn}`);
+    assert.equal(Math.sign(turn), -hand);
+  }
+});
+
+test('with T = 0 the shell is planispiral: every whorl is centred on the same plane', () => {
+  // Height of the centre of each ring (halfway between its highest and lowest points)
+  const centres = (T) => {
+    const s = buildShell({ ...base, T, D: 0.3 });
+    const { cols, rows } = s.grid;
+    return Array.from({ length: rows }, (_, i) => {
+      let lo = Infinity,
+        hi = -Infinity;
+      for (let j = 0; j < cols; j++) {
+        const y = s.positions[(i * cols + j) * 3 + 1];
+        lo = Math.min(lo, y);
+        hi = Math.max(hi, y);
+      }
+      return (lo + hi) / 2;
+    });
+  };
+  const flat = centres(0);
+  for (const y of flat) assert.ok(Math.abs(y - flat[0]) < 1e-9);
+  // With T > 0 each ring is lower than the one before: the spire
+  const tall = centres(1.6);
+  for (let i = 1; i < tall.length; i++) assert.ok(tall[i] < tall[i - 1]);
 });
 
 test('growth animation shows a fraction of the triangles', () => {

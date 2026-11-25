@@ -94,7 +94,7 @@ so the first wave to appear, and the number of cords, is set by the ratio betwee
 
 ### Morphospace
 
-The W–D panel shows Raup's morphospace with the contact curve D = 1/W, where successive whorls of a planispiral shell just touch, and the approximate regions occupied by gastropods, ammonoids and nautiloids, and bivalves and brachiopods.
+The W–D panel shows Raup's morphospace with the contact curve D = 1/W, where successive whorls of a planispiral shell (T = 0) just touch (below it they overlap, above it they separate), and the approximate regions occupied by gastropods, ammonoids and nautiloids, and bivalves and brachiopods.
 
 The plane is a **section of Raup's W–D–T cube at the current T**. The groups differ mainly in T, so the regions of groups that do not exist at that T are faded. Clicking a group's name loads a typical shell of that group. Clicking anywhere else moves the shell to that point, changing only W and D. The W axis can span 1–10, to see snails and cephalopods in detail, or 1–10⁴, to include the bivalves. The morphospace can also be shown on top of the 3D view.
 
@@ -104,6 +104,8 @@ A mollusc only adds pigment at the growing margin, so a shell pattern is a **tim
 
 ![A garden snail in 3/4 view with the branching lines and tent-shaped triangles of the Oliva porphyria preset, with the pattern gallery in the sidebar and, over the 3D view, the morphospace and the activator and inhibitor profile along the margin](docs/images/pigmentation.png)
 
+The models keep the usual notation of the reaction–diffusion literature: here a, b and h are concentrations and D_a, D_b, D_h diffusion constants, unrelated to the semi-axes a, b and the distance D of Raup's model.
+
 - **Activator–inhibitor model.** A self-enhancing activator and a fast, far-reaching inhibitor give stable peaks, which draw bands along the spiral (*Cepaea nemoralis*). If the inhibitor outlives the activator, the margin oscillates and draws stripes parallel to the growth lines. With both at once, a medium-range inhibitor that also outlives the activator, each peak stays in place but switches on and off, and leaves a spiral row of spots (the moon snails *Naticarius*).
 
   ```
@@ -111,8 +113,10 @@ A mollusc only adds pigment at the growing margin, so a shell pattern is a **tim
   ∂h/∂t = s·a² − r_h·h + D_h·∂²h/∂x² + b_h
   ```
 
+  These are equations 2.1 and 2.3 of Meinhardt (2009).
+
 - **Activator–substrate model.** The activator consumes a substrate that recovers slowly, so activation travels as waves that draw oblique lines and annihilate when they meet. With a weak global control (below) the waves keep going and draw oblique lines and V shapes.
-- **Global control: *Oliva porphyria*.** Meinhardt and Klingler (1987) explained the branching lines and triangles of *Oliva porphyria* with a hormone made by the active cells, which measures how many waves there are. In the activator–inhibitor model with global control, a low hormone level makes the inhibitor vanish quickly, so the active cells stay active and send out backward waves: many lines branch at once. The *Oliva porphyria* preset uses the constants of Meinhardt's own program for this shell, with excitable cells, as he argued in his later book (Meinhardt 2009). In the activator–substrate model the same hormone raises the production of substrate, so the cells between branches stay in a low, pigmented activation: white triangles on a dark net, as in the marble cone (*Conus marmoreus* preset, Meinhardt and Klingler's Fig. 9). In his later book Meinhardt (2009) explains this shell instead with a separate extinguishing reaction that switches pigmentation off at once over a wide region; the About pages describe both.
+- **Global control: *Oliva porphyria*.** Meinhardt and Klingler (1987) explained the branching lines and triangles of *Oliva porphyria* with a hormone made by the active cells, which measures how many waves there are. In the activator–inhibitor model with global control, a low hormone level makes the inhibitor vanish quickly, so the active cells stay active and send out backward waves: many lines branch at once. With the hormone the equations change in two more ways: the activator production, basal production included, is divided by 0.1 + h, and the inhibitor is made from the saturated activator. This is Meinhardt and Klingler's eq. 2 with the changes of their Fig. 8, the same system as eq. 9 of Fowler, Meinhardt and Prusinkiewicz (1992) with h₀ = 0.1 and a single rate g for the hormone (their ρ′ = η). The *Oliva porphyria* preset uses the constants of Meinhardt's own program for this shell, with excitable cells, as he argued in his later book (Meinhardt 2009). In the activator–substrate model the same hormone raises the production of substrate, so the cells between branches stay in a low, pigmented activation: white triangles on a dark net, as in the marble cone (*Conus marmoreus* preset, Meinhardt and Klingler's Fig. 9; Fowler et al. show this shell but give no equations for it, and their global control is only in the activator–inhibitor model). In his later book Meinhardt (2009) explains this shell instead with a separate extinguishing reaction that switches pigmentation off at once over a wide region; the About pages describe both.
 - **Gradient along the margin: *Nautilus*.** On *Nautilus* the outer side of the whorl lays down about twice as many stripes as the side next to the umbilicus (Meinhardt 2009). The *Gradient along the margin* G makes every reaction of a cell run up to 1 + G times faster on the outer side, in either model, so extra stripes merge or end on the way to the inside. The *Nautilus* preset follows Meinhardt's simulation: an activator–substrate model with strong saturation, in which each cell oscillates, and G = 1.
 
 In the global-control presets each margin cell is barely coupled to its neighbours, so a front does not slide but jumps from cell to cell, and on the last whorls each jump can be seen. These cells are part of the model, as in Meinhardt's own programs: splitting them would change the pattern. The cells are joined with a slight smoothing, less than a cell, and the record has 4096 rows, so edges are not drawn as staircases.
@@ -231,6 +235,7 @@ Alberto González Casarrubios, Universidad Complutense de Madrid · [albert23@uc
 ## References
 
 - Chirat, R., Moulton, D. E., & Goriely, A. (2013). Mechanical basis of morphogenesis and convergent evolution of spiny seashells. *Proceedings of the National Academy of Sciences*, 110, 6015–6020.
+- Contreras-Figueroa, G., & Aragón, J. L. (2023). A mathematical model for mollusc shells based on parametric surfaces and the construction of theoretical morphospaces. *Diversity*, 15, 431. https://doi.org/10.3390/d15030431
 - Cortie, M. B. (1993). Digital seashells. *Computers & Graphics*, 17, 79–84.
 - Ermentrout, B., Campbell, J., & Oster, G. (1986). A model for shell patterns based on neural activity. *The Veliger*, 28, 369–388.
 - Fowler, D. R., Meinhardt, H., & Prusinkiewicz, P. (1992). Modeling seashells. *Computer Graphics (SIGGRAPH '92)*, 26(2), 379–387.

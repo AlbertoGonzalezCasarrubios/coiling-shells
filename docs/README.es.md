@@ -96,7 +96,7 @@ así que la primera onda que aparece, y el número de cordones, los fija la raz�
 
 ### Morfoespacio
 
-El panel W–D muestra el morfoespacio de Raup con la curva de contacto D = 1/W, donde las vueltas sucesivas de una concha planispiral justo se tocan, y las regiones aproximadas que ocupan los gasterópodos, los ammonoideos y nautiloideos, y los bivalvos y braquiópodos.
+El panel W–D muestra el morfoespacio de Raup con la curva de contacto D = 1/W, donde las vueltas sucesivas de una concha planispiral (T = 0) justo se tocan (por debajo se solapan y por encima se separan), y las regiones aproximadas que ocupan los gasterópodos, los ammonoideos y nautiloideos, y los bivalvos y braquiópodos.
 
 El plano es un **corte del cubo W–D–T de Raup con el T actual**. Los grupos se distinguen sobre todo por T, así que las regiones de los grupos que no existen con ese T aparecen atenuadas. Al pinchar en el nombre de un grupo se carga una concha típica de ese grupo. Al pinchar en cualquier otro punto, la concha se mueve a ese punto y solo cambian W y D. El eje W puede abarcar de 1 a 10, para ver caracoles y cefalópodos en detalle, o de 1 a 10⁴, para incluir los bivalvos. El morfoespacio también puede mostrarse sobre la vista 3D.
 
@@ -106,6 +106,8 @@ Un molusco solo añade pigmento en el borde que crece, así que un patrón de co
 
 ![Un caracol en vista 3/4 con las líneas que se ramifican y los triángulos en tienda del preset Oliva porphyria, con la galería de patrones en la barra lateral y, sobre la vista 3D, el morfoespacio y el perfil del activador y el inhibidor a lo largo del borde](images/pigmentation.png)
 
+Los modelos mantienen la notación habitual de la literatura de reacción–difusión: aquí a, b y h son concentraciones y D_a, D_b, D_h constantes de difusión, sin relación con los semiejes a, b ni con la distancia D del modelo de Raup.
+
 - **Modelo activador-inhibidor.** Un activador que se refuerza a sí mismo y un inhibidor rápido y de largo alcance dan picos estables, que dibujan bandas a lo largo de la espiral (*Cepaea nemoralis*). Si el inhibidor dura más que el activador, el borde oscila y dibuja rayas paralelas a las líneas de crecimiento. Con las dos cosas a la vez, un inhibidor de alcance medio que además dura más que el activador, cada pico se queda en su sitio pero se enciende y se apaga, y deja una fila espiral de puntos (los *Naticarius*).
 
   ```
@@ -113,8 +115,10 @@ Un molusco solo añade pigmento en el borde que crece, así que un patrón de co
   ∂h/∂t = s·a² − r_h·h + D_h·∂²h/∂x² + b_h
   ```
 
+  Son las ecuaciones 2.1 y 2.3 de Meinhardt (2009).
+
 - **Modelo activador-sustrato.** El activador consume un sustrato que se recupera despacio, así que la activación avanza como ondas que dibujan líneas oblicuas y se aniquilan al encontrarse. Con un control global débil (abajo) las ondas se mantienen y dibujan líneas oblicuas y uves.
-- **Control global: *Oliva porphyria*.** Meinhardt y Klingler (1987) explicaron las líneas que se ramifican y los triángulos de *Oliva porphyria* con una hormona que fabrican las células activas y que mide cuántas ondas hay. En el modelo activador-inhibidor con control global, cuando la hormona baja el inhibidor desaparece deprisa, así que las células activas siguen activas y lanzan ondas hacia atrás: muchas líneas se ramifican a la vez. El preset *Oliva porphyria* usa las constantes del propio programa de Meinhardt para esta concha, con células excitables, como defendió en su libro posterior (Meinhardt 2009). En el modelo activador-sustrato la misma hormona aumenta la producción de sustrato, así que las células entre ramas quedan en una activación baja y pigmentada: triángulos blancos sobre una red oscura, como en el cono marmóreo (preset *Conus marmoreus*, figura 9 de Meinhardt y Klingler). En su libro posterior, Meinhardt (2009) explica en cambio esta concha con una reacción de extinción aparte, que apaga la pigmentación de golpe en una zona amplia; las páginas de *Acerca de* describen las dos.
+- **Control global: *Oliva porphyria*.** Meinhardt y Klingler (1987) explicaron las líneas que se ramifican y los triángulos de *Oliva porphyria* con una hormona que fabrican las células activas y que mide cuántas ondas hay. En el modelo activador-inhibidor con control global, cuando la hormona baja el inhibidor desaparece deprisa, así que las células activas siguen activas y lanzan ondas hacia atrás: muchas líneas se ramifican a la vez. Con la hormona las ecuaciones cambian en dos cosas más: la producción de activador, también la basal, se divide entre 0,1 + h, y el inhibidor se produce a partir del activador saturado. Es la ecuación 2 de Meinhardt y Klingler con los cambios de su figura 8, el mismo sistema que la ecuación 9 de Fowler, Meinhardt y Prusinkiewicz (1992) con h₀ = 0,1 y una sola tasa g para la hormona (su ρ′ = η). El preset *Oliva porphyria* usa las constantes del propio programa de Meinhardt para esta concha, con células excitables, como defendió en su libro posterior (Meinhardt 2009). En el modelo activador-sustrato la misma hormona aumenta la producción de sustrato, así que las células entre ramas quedan en una activación baja y pigmentada: triángulos blancos sobre una red oscura, como en el cono marmóreo (preset *Conus marmoreus*, figura 9 de Meinhardt y Klingler; Fowler et al. muestran esta concha pero no dan sus ecuaciones, y su control global solo está en el modelo activador-inhibidor). En su libro posterior, Meinhardt (2009) explica en cambio esta concha con una reacción de extinción aparte, que apaga la pigmentación de golpe en una zona amplia; las páginas de *Acerca de* describen las dos.
 - **Gradiente a lo largo del borde: *Nautilus*.** En el *Nautilus*, el lado externo de la vuelta deposita más o menos el doble de rayas que el lado junto al ombligo (Meinhardt 2009). El *Gradiente a lo largo del borde* G hace que cada reacción de una célula vaya hasta 1 + G veces más rápido en el lado externo, en los dos modelos, así que las rayas que sobran se funden o terminan camino del interior. El preset *Nautilus* sigue la simulación de Meinhardt: un modelo activador-sustrato con saturación fuerte, en el que cada célula oscila, y G = 1.
 
 En los presets con control global cada célula del borde está muy poco acoplada a sus vecinas, así que un frente no se desliza, sino que salta de célula en célula, y en las últimas vueltas cada salto se ve. Esas células forman parte del modelo, como en los propios programas de Meinhardt: dividirlas cambiaría el patrón. Las células se unen con un ligero suavizado, menor que una célula, y el registro tiene 4096 filas, así que los bordes no se dibujan como escaleras.
@@ -233,6 +237,7 @@ Alberto González Casarrubios, Universidad Complutense de Madrid · [albert23@uc
 ## Referencias
 
 - Chirat, R., Moulton, D. E., & Goriely, A. (2013). Mechanical basis of morphogenesis and convergent evolution of spiny seashells. *Proceedings of the National Academy of Sciences*, 110, 6015–6020.
+- Contreras-Figueroa, G., & Aragón, J. L. (2023). A mathematical model for mollusc shells based on parametric surfaces and the construction of theoretical morphospaces. *Diversity*, 15, 431. https://doi.org/10.3390/d15030431
 - Cortie, M. B. (1993). Digital seashells. *Computers & Graphics*, 17, 79–84.
 - Ermentrout, B., Campbell, J., & Oster, G. (1986). A model for shell patterns based on neural activity. *The Veliger*, 28, 369–388.
 - Fowler, D. R., Meinhardt, H., & Prusinkiewicz, P. (1992). Modeling seashells. *Computer Graphics (SIGGRAPH '92)*, 26(2), 379–387.

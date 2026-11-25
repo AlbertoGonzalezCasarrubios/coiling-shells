@@ -1,7 +1,7 @@
 // Tests for Meinhardt's pigmentation models (js/meinhardt.js).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { simulatePattern, PROFILE_WIDTH, rng32 } from '../js/model/meinhardt.js';
+import { simulatePattern, PROFILE_WIDTH, rng32, timeStep } from '../js/model/meinhardt.js';
 import { PATTERN_PRESETS, MODEL_DEFAULTS } from '../js/model/presets.js';
 
 const g = { W: 2.4, turns: 4.5, rows: 256, width: 256, nMax: 256 };
@@ -219,4 +219,49 @@ test('with the gradient along the margin the outer side of the whorl draws about
   const noGrad = preset('nautilus');
   delete noGrad.grad;
   assert.deepEqual(simulatePattern(noGrad, g).values, simulatePattern({ ...noGrad, grad: 0 }, g).values);
+});
+
+test('the time step keeps diffusion and the linear decays stable', () => {
+  for (const p of [...Object.values(PATTERN_PRESETS), ...Object.values(MODEL_DEFAULTS)]) {
+    const dt = timeStep(p);
+    assert.ok(dt > 0 && dt <= 0.5);
+    // Explicit Euler on the discrete Laplacian (Δx = 1) is stable for dt·D ≤ 1/2
+    assert.ok(dt * Math.max(p.Da, p.D2) <= 0.4 + 1e-12);
+    assert.ok(dt * Math.max(p.ra, p.r2) * (1 + (p.grad ?? 0)) <= 0.4 + 1e-12);
+  }
+  assert.equal(timeStep({ Da: 0.01, D2: 0.4, ra: 0.1, r2: 0.1 }), 0.5);
+  assert.equal(timeStep({ Da: 0.01, D2: 0.4, ra: 0.1, r2: 0.1, dtScale: 0.5 }), 0.25);
+});
+
+test('halving the time step keeps the kind of pattern of every preset', () => {
+  // Waves and oscillations amplify any difference, so single lines move; what must
+  // not change is the pattern itself: how much is pigmented, how many lines cross
+  // the margin and how often each cell switches on
+  const stats = (v) => {
+    const { rows, width: W } = g;
+    let on = 0,
+      across = 0,
+      along = 0;
+    for (let r = rows / 4; r < rows; r++) {
+      for (let k = 0; k < W; k++) {
+        const x = v[r * W + k] > 0.5;
+        if (x) on++;
+        if (x && !(v[r * W + ((k + W - 1) % W)] > 0.5)) across++;
+        if (x && !(v[(r - 1) * W + k] > 0.5)) along++;
+      }
+    }
+    const n = (rows * 3) / 4;
+    return [on / (n * W), across / n, along / W];
+  };
+  for (const [key, p] of Object.entries(PATTERN_PRESETS)) {
+    const geo = { ...g, nMax: Math.round(256 / (p.size ?? 1)) };
+    const mean = (dtScale) => {
+      const sum = [0, 0, 0];
+      for (const seed of [7, 8]) stats(simulatePattern({ ...p, seed, dtScale }, geo).values).forEach((x, i) => (sum[i] += x / 2));
+      return sum;
+    };
+    const [a, b] = [mean(1), mean(0.5)];
+    const floor = [0.01, 0.5, 0.5];
+    a.forEach((x, i) => assert.ok(Math.abs(x - b[i]) <= Math.max(0.1 * Math.max(x, b[i]), floor[i]), `${key}: ${a} vs ${b}`));
+  }
 });

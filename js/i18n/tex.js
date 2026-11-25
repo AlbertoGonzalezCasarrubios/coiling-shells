@@ -34,6 +34,7 @@ export const REFS = `
     <li>Raup, D. M. (1962). Computer as aid in describing form in gastropod shells. <i>Science</i> 138, 150–152.</li>
     <li>Raup, D. M. &amp; Michelson, A. (1965). Theoretical morphology of the coiled shell. <i>Science</i> 147, 1294–1295.</li>
     <li>Raup, D. M. (1966). Geometric analysis of shell coiling: general problems. <i>J. Paleontology</i> 40, 1178–1190.</li>
+    <li>Contreras-Figueroa, G. &amp; Aragón, J. L. (2023). A mathematical model for mollusc shells based on parametric surfaces and the construction of theoretical morphospaces. <i>Diversity</i> 15, 431.</li>
   </ul>`;
 
 export const AI_TEX = String.raw`\[

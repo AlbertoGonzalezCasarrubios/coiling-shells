@@ -42,7 +42,7 @@ function typeset(el, html) {
 
 export let formulaView = 'raup';
 
-const SOURCE_TEX = String.raw`\[ s_i = r_a\,(1 + \sigma\,\xi_i),\quad \xi_i \in [-1,\,1],\quad x = 1,\dots,N \]`;
+const SOURCE_TEX = String.raw`\[ s_i = r_a\,(1 + \sigma\,\xi_i),\quad \xi_i \in [-1,\,1],\quad i = 1,\dots,n \]`;
 
 export function generalTeX(view = formulaView) {
   if (view === 'meinhardt') {
